@@ -1,0 +1,218 @@
+[
+  {
+    "context": {
+      "domain": "energy-trading:p2p",
+      "action": "publish",
+      "protocol": "beckn-style (illustrative, not schema-validated)",
+      "country": "IND",
+      "version": "0.1"
+    },
+    "message": {
+      "catalog": {
+        "provider": {
+          "id": "shop-pune"
+        },
+        "offers": [
+          {
+            "id": "shop-pune-20260222T1100-fd6590",
+            "quantity": {
+              "unit": "kWh",
+              "value": 3.372
+            },
+            "window": {
+              "start": "2026-02-22T11:00:00+05:30",
+              "end": "2026-02-22T12:00:00+05:30"
+            },
+            "price": {
+              "floor": 4.51,
+              "currency": "INR",
+              "unit": "kWh"
+            },
+            "commit_ratio_of_planned_export": 0.62,
+            "sizing": "P10 generation minus P90 load, capped by planned export"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "context": {
+      "domain": "energy-trading:p2p",
+      "action": "publish",
+      "protocol": "beckn-style (illustrative, not schema-validated)",
+      "country": "IND",
+      "version": "0.1"
+    },
+    "message": {
+      "catalog": {
+        "provider": {
+          "id": "shop-pune"
+        },
+        "offers": [
+          {
+            "id": "shop-pune-20260222T1200-917e98",
+            "quantity": {
+              "unit": "kWh",
+              "value": 4.241
+            },
+            "window": {
+              "start": "2026-02-22T12:00:00+05:30",
+              "end": "2026-02-22T13:00:00+05:30"
+            },
+            "price": {
+              "floor": 4.51,
+              "currency": "INR",
+              "unit": "kWh"
+            },
+            "commit_ratio_of_planned_export": 0.58,
+            "sizing": "P10 generation minus P90 load, capped by planned export"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "context": {
+      "domain": "energy-trading:p2p",
+      "action": "publish",
+      "protocol": "beckn-style (illustrative, not schema-validated)",
+      "country": "IND",
+      "version": "0.1"
+    },
+    "message": {
+      "catalog": {
+        "provider": {
+          "id": "shop-pune"
+        },
+        "offers": [
+          {
+            "id": "shop-pune-20260222T1300-e874a6",
+            "quantity": {
+              "unit": "kWh",
+              "value": 4.746
+            },
+            "window": {
+              "start": "2026-02-22T13:00:00+05:30",
+              "end": "2026-02-22T14:00:00+05:30"
+            },
+            "price": {
+              "floor": 4.51,
+              "currency": "INR",
+              "unit": "kWh"
+            },
+            "commit_ratio_of_planned_export": 0.65,
+            "sizing": "P10 generation minus P90 load, capped by planned export"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "context": {
+      "domain": "energy-trading:p2p",
+      "action": "publish",
+      "protocol": "beckn-style (illustrative, not schema-validated)",
+      "country": "IND",
+      "version": "0.1"
+    },
+    "message": {
+      "catalog": {
+        "provider": {
+          "id": "shop-pune"
+        },
+        "offers": [
+          {
+            "id": "shop-pune-20260222T1400-a95d4b",
+            "quantity": {
+              "unit": "kWh",
+              "value": 3.797
+            },
+            "window": {
+              "start": "2026-02-22T14:00:00+05:30",
+              "end": "2026-02-22T15:00:00+05:30"
+            },
+            "price": {
+              "floor": 4.51,
+              "currency": "INR",
+              "unit": "kWh"
+            },
+            "commit_ratio_of_planned_export": 0.57,
+            "sizing": "P10 generation minus P90 load, capped by planned export"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "context": {
+      "domain": "energy-trading:p2p",
+      "action": "publish",
+      "protocol": "beckn-style (illustrative, not schema-validated)",
+      "country": "IND",
+      "version": "0.1"
+    },
+    "message": {
+      "catalog": {
+        "provider": {
+          "id": "shop-pune"
+        },
+        "offers": [
+          {
+            "id": "shop-pune-20260222T1500-c79512",
+            "quantity": {
+              "unit": "kWh",
+              "value": 2.268
+            },
+            "window": {
+              "start": "2026-02-22T15:00:00+05:30",
+              "end": "2026-02-22T16:00:00+05:30"
+            },
+            "price": {
+              "floor": 4.51,
+              "currency": "INR",
+              "unit": "kWh"
+            },
+            "commit_ratio_of_planned_export": 0.46,
+            "sizing": "P10 generation minus P90 load, capped by planned export"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "context": {
+      "domain": "energy-trading:p2p",
+      "action": "publish",
+      "protocol": "beckn-style (illustrative, not schema-validated)",
+      "country": "IND",
+      "version": "0.1"
+    },
+    "message": {
+      "catalog": {
+        "provider": {
+          "id": "shop-pune"
+        },
+        "offers": [
+          {
+            "id": "shop-pune-20260222T1600-f2016e",
+            "quantity": {
+              "unit": "kWh",
+              "value": 1.122
+            },
+            "window": {
+              "start": "2026-02-22T16:00:00+05:30",
+              "end": "2026-02-22T17:00:00+05:30"
+            },
+            "price": {
+              "floor": 4.65,
+              "currency": "INR",
+              "unit": "kWh"
+            },
+            "commit_ratio_of_planned_export": 0.36,
+            "sizing": "P10 generation minus P90 load, capped by planned export"
+          }
+        ]
+      }
+    }
+  }
+]
