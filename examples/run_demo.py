@@ -13,7 +13,7 @@ import pandas as pd
 
 from avishkar_ems.demo import day_view, forecast_quality, prepare, run_payback
 from avishkar_ems.ies import catalog_publish
-from avishkar_ems.sim import demo_sites
+from avishkar_ems.realdata import real_sites
 
 logging.disable(logging.WARNING)
 OUT = pathlib.Path(__file__).resolve().parent.parent / "results"
@@ -26,7 +26,7 @@ def main() -> None:
     OUT.mkdir(exist_ok=True)
     every = 21 if args.quick else 7
     rows, fq_rows = [], []
-    for key in demo_sites():
+    for key in real_sites():
         p = prepare(key)
         ev = run_payback(p, every_days=every)
         t = ev.payback_table()

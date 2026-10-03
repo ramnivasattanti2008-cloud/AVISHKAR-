@@ -14,7 +14,8 @@ from plotly.subplots import make_subplots
 from avishkar_ems.demo import day_view, forecast_quality, prepare, run_payback
 from avishkar_ems.ies import catalog_publish, validate_publish
 from avishkar_ems.monitor import daily_summary, deviation_flags
-from avishkar_ems.sim import demo_sites
+from avishkar_ems.realdata import real_sites
+from avishkar_ems.summary import plain_summary
 
 logging.disable(logging.WARNING)
 st.set_page_config(page_title="AVISHKAR EMS", layout="wide")
@@ -35,7 +36,7 @@ st.title("AVISHKAR EMS: predictive energy management for Indian solar sites")
 st.caption("Built on EMHASS. Weather is real (PVGIS/ERA5, 2021-2023) and load is a measured profile; outages, P2P prices "
            "and tariffs are assumptions until the organisers' dataset is loaded.")
 
-key = st.sidebar.selectbox("Site", list(demo_sites()), index=1)
+key = st.sidebar.selectbox("Site", list(real_sites()), index=1)
 p = get_site(key)
 site = p.site
 st.sidebar.markdown(
@@ -47,12 +48,17 @@ day = st.sidebar.date_input("Day to plan", value=(p.test_start + pd.Timedelta(da
                             min_value=test_days[0].date(), max_value=test_days[-1].date())
 soc0 = st.sidebar.slider("Battery charge at midnight", 0.2, 1.0, 0.5, 0.05)
 
+lang = st.sidebar.radio("Language / भाषा", ["en", "hi"], format_func=lambda x: {"en": "English", "hi": "हिन्दी"}[x])
 tab_plan, tab_offers, tab_payback, tab_monitor = st.tabs(
     ["Plan for the day", "Offers and settlement", "Payback", "Monitoring"])
 
 dv = day_view(p, str(day), soc_init=soc0)
 s, ex = dv.plan.steps, dv.ems.steps
 hours = s.index
+
+st.info(plain_summary(dv, site.backup_hours, lang))
+st.sidebar.caption("Privacy: all meter data stays on this machine. Only an offer (window, quantity, price) is ever "
+                   "published, never your load profile.")
 
 with tab_plan:
     c1, c2, c3, c4 = st.columns(4)

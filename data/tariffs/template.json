@@ -1,0 +1,7 @@
+{
+  "name": "REPLACE-with-DISCOM-and-category",
+  "tou_blocks": [[0, 24, 7.0]],
+  "export_rate": 3.0,
+  "p2p_charges": 0.6,
+  "shortfall_penalty": 5.0
+}

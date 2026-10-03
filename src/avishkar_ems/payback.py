@@ -18,6 +18,7 @@ from avishkar_ems.bands import QuantileBands, load_features, pv_features
 from avishkar_ems.dispatch import Offer, offer_mask
 from avishkar_ems.engine import plan_and_offer
 from avishkar_ems.execute import DT, execute_day
+from avishkar_ems.intraday import execute_with_replan
 from avishkar_ems.reserve import outage_rate_90d, outage_risk, reserve_floor
 from avishkar_ems.settle import TradeResult, settle
 from avishkar_ems.sim import STEPS_PER_DAY
@@ -59,6 +60,7 @@ class Evaluation:
     baseline_idle: Totals
     baseline_rule: Totals
     hindsight: Totals | None = None  # same planner with perfect foresight, the upper bound
+    replan: Totals | None = None  # EMS with a noon re-plan on the morning's observed error
     trades: list[TradeResult] = field(default_factory=list)
     offers: list[Offer] = field(default_factory=list)
     daily: pd.DataFrame | None = None
@@ -67,6 +69,8 @@ class Evaluation:
         rows = {}
         entries = [("EMS", self.ems), ("Baseline: self-consume + export (battery idle)", self.baseline_idle),
                    ("Baseline: fixed-rule battery", self.baseline_rule)]
+        if self.replan is not None:
+            entries.insert(1, ("EMS + noon re-plan", self.replan))
         if self.hindsight is not None:
             entries.append(("Reference: EMS with perfect foresight", self.hindsight))
         for name, t in entries:
@@ -103,7 +107,7 @@ def _account(t: Totals, site: SiteSpec, res: pd.DataFrame, trades: list[TradeRes
 
 
 def train_models(site: SiteSpec, train: pd.DataFrame, max_iter: int = 200) -> tuple[QuantileBands, QuantileBands]:
-    pv_model = QuantileBands(max_iter=max_iter).fit(pv_features(train), train["pv_kw"], scale=train["pv_clear_kw"])
+    pv_model = QuantileBands(max_iter=max_iter, calib_days=120).fit(pv_features(train), train["pv_kw"], scale=train["pv_clear_kw"])
     lf = load_features(train)
     ok = lf.notna().all(axis=1)
     load_model = QuantileBands(max_iter=max_iter).fit(lf[ok], train.loc[ok, "load_kw"])
@@ -119,10 +123,11 @@ def evaluate(
     soc_start: float = 0.5,
     use_risk_reserve: bool = True,
     with_hindsight: bool = True,
+    with_replan: bool = True,
 ) -> Evaluation:
     """Run the EMS and both baselines on the given days of `df` (which includes history for lags)."""
-    ems, idle, rule, hind = Totals(), Totals(), Totals(), Totals()
-    soc_e, soc_i, soc_r, soc_h = soc_start, soc_start, soc_start, soc_start
+    ems, idle, rule, hind, rep = Totals(), Totals(), Totals(), Totals(), Totals()
+    soc_e, soc_i, soc_r, soc_h, soc_p = soc_start, soc_start, soc_start, soc_start, soc_start
     all_trades: list[TradeResult] = []
     all_offers: list[Offer] = []
     daily_rows = []
@@ -153,6 +158,11 @@ def evaluate(
         soc_e = r_e.end_soc
         all_trades += trades
         all_offers += offers
+        if with_replan:
+            r_p = execute_with_replan(site, actual, pv_b, ld_b, plan, offers, actual["p2p_price_fcst"].to_numpy(),
+                                      soc_p, rsv)
+            _account(rep, site, r_p.steps, settle(site, offers, r_p.steps), r_p.end_soc - soc_p)
+            soc_p = r_p.end_soc
         # --- reference: the same EMS (reserve, offers, settlement) but with perfect foresight
         if with_hindsight:
             exact = pd.DataFrame({"p10": actual["pv_kw"], "p50": actual["pv_kw"], "p90": actual["pv_kw"]})
@@ -175,5 +185,5 @@ def evaluate(
         soc_r = r_r.end_soc
         daily_rows.append({"day": d0, "reserve_floor": rsv.floor_soc, "risk": risk, "status": plan.status,
                            "offers": len(offers), "ems_unserved_critical_kwh": float(r_e.steps["unserved_critical_kwh"].sum())})
-    return Evaluation(site, ems, idle, rule, hind if with_hindsight else None, all_trades, all_offers,
-                      pd.DataFrame(daily_rows))
+    return Evaluation(site, ems, idle, rule, hind if with_hindsight else None,
+                      rep if with_replan else None, all_trades, all_offers, pd.DataFrame(daily_rows))

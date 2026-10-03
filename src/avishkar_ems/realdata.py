@@ -1,6 +1,6 @@
 """Real-data adapter: measured weather and a measured load profile instead of simulated ones.
 
-What is real here:
+What is real here (see also ceew.py: measured Indian household load and outages, CC0):
   * Weather: hourly plane-of-array irradiance and air temperature at the site's own tilt/azimuth from
     PVGIS (EU JRC, ERA5 reanalysis), fetched with pvlib's `get_pvgis_hourly` and cached under data/real/.
   * Load: a measured 15-minute commercial load profile (Tjaden, Zenodo 4683455, CC-BY 4.0), scaled to
@@ -12,15 +12,18 @@ What is still an assumption (no public source reachable): outage log (`sim.simul
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from pvlib.iotools import get_pvgis_hourly
 
+from avishkar_ems.ceew import household_series
 from avishkar_ems.pvmodel import clearsky_poa, pv_power_kw
 from avishkar_ems.sim import STEPS_PER_DAY, simulate_outages
 from avishkar_ems.site import SiteSpec
+from avishkar_ems.tariffs import load_tariff
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "real"
 LOAD_CSV = DATA / "load_tool.csv"  # Tjaden, Zenodo 4683455, CC-BY 4.0, measured, 2018, 15-minute
@@ -53,10 +56,21 @@ def measured_load(index: pd.DatetimeIndex, avg_kw: float) -> np.ndarray:
 
 
 def real_site_frame(site: SiteSpec, start: int = 2021, end: int = 2023, avg_load_kw: float | None = None,
-                    seed: int = 0) -> pd.DataFrame:
-    """15-minute frame in the `schema.py` contract, built from measured weather and load."""
+                    seed: int = 0, meter: str | None = None) -> pd.DataFrame:
+    """15-minute frame in the `schema.py` contract, built from measured weather and load.
+
+    With `meter` (a CEEW household id such as 'MH43') the load AND the grid outages are measured, and the
+    period is that meter's own span; otherwise the German profile is used with assumed outages."""
+    hh = None
+    if meter:
+        hh = household_series(meter)
+        hh.index = hh.index.tz_localize(site.tz, nonexistent="shift_forward", ambiguous="NaT")
+        hh = hh[hh.index.notna()]
+        start, end = hh.index[0].year, hh.index[-1].year
+        index = hh.index
+    else:
+        index = pd.date_range(f"{start}-01-01", f"{end}-12-31 23:45", freq="15min", tz=site.tz)
     w = pvgis_weather(site, start, end)
-    index = pd.date_range(f"{start}-01-01", f"{end}-12-31 23:45", freq="15min", tz=site.tz)
     cs_h = clearsky_poa(site, w.index)
     kt_h = (w["poa_global"].to_numpy() / cs_h["poa_clear"].replace(0, np.nan).to_numpy())
     kt_h = pd.Series(kt_h, index=w.index).clip(0, 1.2)
@@ -75,10 +89,13 @@ def real_site_frame(site: SiteSpec, start: int = 2021, end: int = 2023, avg_load
     temp_fcst = pd.Series(temp, index=index).shift(STEPS_PER_DAY).bfill().to_numpy()
     storm_prob = 1.0 / (1.0 + np.exp(-8.0 * (0.45 - kt_fcst)))
 
-    avg = avg_load_kw if avg_load_kw is not None else 0.22 * site.dc_kwp
-    load = np.maximum(measured_load(index, avg), site.critical_kw)
-    rng = np.random.default_rng(seed)
-    outage, planned = simulate_outages(index, rng)
+    if hh is not None:
+        load, outage = hh["load_kw"].to_numpy(), hh["outage"].to_numpy()
+        planned = np.zeros(len(index), dtype=bool)  # the dataset does not record outage notices
+    else:
+        avg = avg_load_kw if avg_load_kw is not None else 0.22 * site.dc_kwp
+        load = np.maximum(measured_load(index, avg), site.critical_kw)
+        outage, planned = simulate_outages(index, np.random.default_rng(seed))
     imp, exp = site.tariff.import_rates(index), site.tariff.export_rates(index)
     p2p = exp + (imp - exp) * 0.55  # no market data reachable: midpoint between export and retail
     return pd.DataFrame({
@@ -86,3 +103,20 @@ def real_site_frame(site: SiteSpec, start: int = 2021, end: int = 2023, avg_load
         "temp_c": temp, "kt_actual": kt, "kt_fcst": kt_fcst, "temp_fcst": temp_fcst, "storm_prob": storm_prob,
         "outage": outage, "planned_notice": planned, "import_rate": imp, "export_rate": exp,
         "p2p_price": p2p, "p2p_price_fcst": p2p}, index=index)
+
+
+def real_sites() -> dict[str, tuple[SiteSpec, str, str | None]]:
+    """Real-data sites: (spec, load kind, CEEW meter id or None for the German commercial profile)."""
+    from avishkar_ems.sim import demo_sites
+    from avishkar_ems.tariffs import DOMESTIC_FLAT
+
+    ds = demo_sites()
+    home = SiteSpec("home-mathura", 27.49, 77.67, 3.0, 3.0, 20, 180, 5.0, 3.0, 0.3, 4.0, 305_000,
+                    tariff=DOMESTIC_FLAT)
+    out = {"home-mathura": (home, "home", "MH43"),
+           "shop-pune": (*ds["shop-pune"], None), "clinic-jaipur": (*ds["clinic-jaipur"], None)}
+    for key, (site, kind, meter) in out.items():  # a real tariff file, if provided, replaces the illustrative preset
+        f = DATA.parent / "tariffs" / f"{key}.json"
+        if f.exists():
+            out[key] = (replace(site, tariff=load_tariff(f)), kind, meter)
+    return out

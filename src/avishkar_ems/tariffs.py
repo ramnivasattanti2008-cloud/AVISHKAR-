@@ -6,7 +6,9 @@ them with the rates in the organisers' dataset or the site's actual bill.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -60,5 +62,13 @@ DOMESTIC_FLAT = Tariff(
     shortfall_penalty=5.0,
     name="domestic_flat_illustrative",
 )
+
+def load_tariff(path: str | Path) -> Tariff:
+    """Read a tariff from JSON (see data/tariffs/template.json)."""
+    d = json.loads(Path(path).read_text())
+    blocks = tuple((float(a), float(b), float(r)) for a, b, r in d["tou_blocks"])
+    return Tariff(blocks, float(d["export_rate"]), float(d["p2p_charges"]), float(d["shortfall_penalty"]),
+                  d.get("name", "custom"))
+
 
 PRESETS = {t.name: t for t in (COMMERCIAL_TOD, DOMESTIC_FLAT)}

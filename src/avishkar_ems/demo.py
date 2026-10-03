@@ -16,7 +16,7 @@ from avishkar_ems.engine import plan_and_offer
 from avishkar_ems.execute import DayResult, execute_day
 from avishkar_ems.payback import Evaluation, evaluate, train_models
 from avishkar_ems.planner import DayPlan
-from avishkar_ems.realdata import real_site_frame
+from avishkar_ems.realdata import real_site_frame, real_sites
 from avishkar_ems.reserve import ReserveDecision, outage_rate_90d, outage_risk, reserve_floor
 from avishkar_ems.settle import TradeResult, settle
 from avishkar_ems.sim import STEPS_PER_DAY, demo_sites, simulate_site
@@ -24,6 +24,7 @@ from avishkar_ems.site import SiteSpec
 
 TRAIN_END = "2026-01-01"
 REAL_TRAIN_END = "2023-01-01"
+METER_TRAIN_END = "2020-07-01"  # CEEW meters: train Jun 2019 to Jun 2020, test Jul 2020 to Feb 2021
 
 
 @dataclass
@@ -59,12 +60,14 @@ class DayView:
 
 
 def prepare(site_key: str, seed: int = 7, days: int = 730, source: str = "real") -> Prepared:
-    """source='real': PVGIS/ERA5 weather and a measured load profile, train 2021-22, test 2023.
+    """source='real': PVGIS/ERA5 weather plus measured load; the Mathura home also has measured outages.
     source='sim': fully simulated (used by the unit tests)."""
-    site, kind = demo_sites()[site_key]
     if source == "real":
-        df, train_end = real_site_frame(site, seed=seed), REAL_TRAIN_END
+        site, kind, meter = real_sites()[site_key]
+        df = real_site_frame(site, seed=seed, meter=meter)
+        train_end = METER_TRAIN_END if meter else REAL_TRAIN_END
     else:
+        site, kind = demo_sites()[site_key]
         df, train_end = simulate_site(site, "2025-01-01", days, seed=seed, load_kind=kind), TRAIN_END
     pv_model, load_model = train_models(site, df[df.index < train_end])
     return Prepared(site, kind, df, pv_model, load_model, train_end, source)

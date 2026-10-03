@@ -5,8 +5,8 @@
     "action": "catalog/publish",
     "bppId": "sellerapp.example.com",
     "bppUri": "http://sellerapp.example.com/bpp/receiver",
-    "transactionId": "4f5e33c8-04ad-42b2-9df3-fe1f2b19168f",
-    "messageId": "de23c446-5966-487a-b25c-083f74d2b70c",
+    "transactionId": "2e68f268-2968-4a7a-9916-abc3ea4222e6",
+    "messageId": "836ac7a7-a0bf-498a-8af7-146cc84051d8",
     "timestamp": "2023-01-14T12:30:00Z",
     "schemaContext": [
       "https://schema.nfh.global/EnergyTradeOffer/v2.0/context.jsonld",
@@ -60,8 +60,8 @@
           {
             "id": "offer-shop-pune-20230115T1200-0",
             "descriptor": {
-              "name": "Solar surplus 12:00-17:00 IST",
-              "shortDesc": "15.8 kWh from 15 kWp + battery"
+              "name": "Solar surplus 12:00-16:00 IST",
+              "shortDesc": "13.2 kWh from 15 kWp + battery"
             },
             "resourceIds": [
               "energy-resource-shop-pune"
@@ -131,7 +131,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          5.006
+                          4.426
                         ]
                       }
                     ]
@@ -148,7 +148,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          4.559
+                          3.988
                         ]
                       }
                     ]
@@ -165,7 +165,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          3.553
+                          3.035
                         ]
                       }
                     ]
@@ -182,24 +182,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          2.152
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "id": 4,
-                    "payloads": [
-                      {
-                        "type": "PRICE_PER_KWH",
-                        "values": [
-                          4.65
-                        ]
-                      },
-                      {
-                        "type": "AVAILABLE_QTY",
-                        "values": [
-                          0.515
+                          1.726
                         ]
                       }
                     ]
