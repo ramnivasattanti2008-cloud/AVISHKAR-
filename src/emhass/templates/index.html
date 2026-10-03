@@ -1,0 +1,79 @@
+<!-- Index page html -->
+<!DOCTYPE html>
+<html lang="en" class="adaptive">
+
+<head>
+    <meta charset="UTF-8"> <title>EMHASS: Energy Management Optimization for Home Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="static/style.css?version=2">
+    <link rel="icon" type="image/x-icon" href="static/img/emhass_logo_short.svg">
+    <script src="static/script.js"></script>
+</head>
+
+<body style="margin: auto; align-items:center; text-align:center;">
+
+    <div>
+        <!-- Icons by feather https://github.com/feathericons/feather -->
+        <div id="top-links">
+            <!-- configuration page  -->
+            <a href="configuration" title="Configuration Page" style="margin-right: 12px; cursor: pointer; z-index: 1">
+                <svg class="feather">
+                    <use class="feather" href="static/img/feather-sprite.svg#settings" />
+                </svg>
+            </a>
+            <!-- advanced or basic page switch -->
+            <a id="basicOrAdvanced" title="Advanced Toggle" style="margin-right: 24px; cursor: pointer; z-index: 1">
+                <svg class="feather">
+                    <use class="feather" href="static/img/feather-sprite.svg#tool" />
+                </svg>
+            </a>
+            <a href="https://emhass.readthedocs.io/en/latest/">
+                <svg class="feather" title="EMHASS Docs" style="margin-right: 12px;" ;>
+                    <use class="feather" href="static/img/feather-sprite.svg#book" />
+                </svg>
+            </a>
+            <a href="https://github.com/davidusb-geek/emhass" target="_blank" rel="noopener noreferrer">
+                <svg class="feather" title="EMHASS Git repo" style="margin-right: 0px;">
+                    <use class="feather" href="static/img/feather-sprite.svg#git-branch" />
+                </svg>
+            </a>
+        </div>
+        <!-- Title -->
+        <img src="static/img/emhass_icon.png" alt="">
+        <h2>EMHASS: Energy Management Optimization for Home Assistant</h2>
+    </div>
+
+
+    <div class="center">
+        <div id=TabSelection class="form">
+            <!-- Basic and Advance pages will be dynamically loaded here  -->
+        </div>
+    </div>
+    <!-- alert box element -->
+    <div style="display: none;" id="alert" class="alert">
+        <div>
+            <button type="button" class="close-btn" onclick="this.parentElement.parentElement.style.display='none';" aria-label="Close">
+  &times;
+</button>
+            <p id="alert-text"></p>
+        </div>
+    </div>
+    <br>
+
+    <!-- dynamic table/diagram elements section -->
+    </div>
+    <div id="template"> <!-- table/diagram container element  -->
+        {% for plot in injection_dict %} <!-- diagrams/tables elements will be added here -->
+        <div class="table_div">
+            {{injection_dict[plot] | mark_safe}}
+        </div>
+        {% endfor %}
+        <div>
+
+            <footer class="footer">
+                <p style="margin-top:10px; text-align:center;">&copy; MIT License | Copyright (c) 2021-2025 David
+                    HERNANDEZ</p>
+            </footer>
+</body>
+
+</html>

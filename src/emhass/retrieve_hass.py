@@ -1,0 +1,2350 @@
+import ast
+import asyncio
+import copy
+import logging
+import operator
+import os
+import pathlib
+import re
+import time
+import uuid
+from datetime import datetime, timezone
+from typing import Any, Self
+
+import aiofiles
+import aiohttp
+import numpy as np
+import orjson
+import pandas as pd
+
+from emhass.connection_manager import get_websocket_client
+from emhass.utils import set_df_index_freq
+
+logger = logging.getLogger(__name__)
+
+# Serializes the read-modify-write of the shared entities/metadata.json across
+# every RetrieveHass instance in this process. Concurrent publishes (e.g. the
+# day-ahead, MPC and HWC pipelines) otherwise interleave on their await points
+# and corrupt the single shared index. Module-level so it is shared by all
+# instances; binds to the running loop on first use (Python >= 3.10).
+_metadata_lock = asyncio.Lock()
+
+header_accept = "application/json"
+header_auth = "Bearer"
+hass_url = "http://supervisor/core/api"
+sensor_prefix = "sensor."
+
+# When a var_list entry is an arithmetic expression, every entity it references is
+# queried over a window padded this much earlier than the requested start, then sliced
+# back. This lets InfluxDB's GROUP BY time() FILL(previous) seed the leading in-window
+# buckets from the most recent prior value instead of returning leading NaNs (which would
+# misalign two series that update at different phases). A prior value older than this is
+# not recovered; the downstream regression absorbs the residual leading gap.
+INFLUX_EXPRESSION_LOOKBACK = pd.Timedelta(days=1)
+
+# Upper bound on a constant exponent in an InfluxDB var_list expression. Real energy
+# arithmetic never needs large exponents; the cap stops a crafted ``10 ** 1000000`` style
+# entry from materializing a multi-megabyte integer and exhausting CPU/memory.
+INFLUX_EXPRESSION_MAX_POW_EXPONENT = 1000
+
+# VictoriaMetrics refuses a single /api/v1/query_range call that would return more than
+# -search.maxPointsPerTimeseries points (30000 by default). A year at a 15 min step is
+# 35040 points, so long training windows are fetched in consecutive chunks of at most
+# this many steps each and concatenated.
+VM_MAX_POINTS_PER_REQUEST = 10000
+
+# Metric name pattern used to locate a sensor in VictoriaMetrics. The Home Assistant
+# InfluxDB integration (which VictoriaMetrics ingests over the InfluxDB line protocol)
+# stores the numeric state of a sensor as ``<unit_of_measurement>_value`` with the
+# entity id (without its domain) as the ``entity_id`` label, e.g.
+# ``W_value{entity_id="power_load", domain="sensor", db="homeassistant"}``. Matching on
+# the label and a name regex means EMHASS does not need to know the unit of every sensor.
+VM_DEFAULT_METRIC_REGEX = ".+_value"
+
+
+class RetrieveHass:
+    r"""
+    Retrieve data from Home Assistant using the restful API.
+
+    This class allows the user to retrieve data from a Home Assistant instance \
+    using the provided restful API (https://developers.home-assistant.io/docs/api/rest/)
+
+    This class methods are:
+
+    - get_data: to retrieve the actual data from hass
+
+    - prepare_data: to apply some data treatment in preparation for the optimization task
+
+    - post_data: Post passed data to hass
+
+    """
+
+    def __init__(
+        self,
+        hass_url: str,
+        long_lived_token: str,
+        freq: pd.Timedelta,
+        time_zone: timezone,
+        params: str,
+        emhass_conf: dict,
+        logger: logging.Logger,
+        get_data_from_file: bool | None = False,
+    ) -> None:
+        """
+        Define constructor for RetrieveHass class.
+
+        :param hass_url: The URL of the Home Assistant instance
+        :type hass_url: str
+        :param long_lived_token: The long lived token retrieved from the configuration pane
+        :type long_lived_token: str
+        :param freq: The frequency of the data DateTimeIndexes
+        :type freq: pd.TimeDelta
+        :param time_zone: The time zone
+        :type time_zone: datetime.timezone
+        :param params: Configuration parameters passed from data/options.json
+        :type params: str
+        :param emhass_conf: Dictionary containing the needed emhass paths
+        :type emhass_conf: dict
+        :param logger: The passed logger object
+        :type logger: logging object
+        :param get_data_from_file: Select if data should be retrieved from a
+        previously saved pickle useful for testing or directly from connection to
+        hass database
+        :type get_data_from_file: bool, optional
+
+        """
+        self.hass_url = hass_url
+        self.long_lived_token = long_lived_token
+        if isinstance(freq, int | float | str):
+            self.freq = pd.Timedelta(minutes=int(freq))
+        else:
+            self.freq = freq
+        self.time_zone = time_zone
+        if (params is None) or (params == "null"):
+            self.params = {}
+        elif type(params) is dict:
+            self.params = params
+        else:
+            self.params = orjson.loads(params)
+        self.emhass_conf = emhass_conf
+        self.logger = logger
+        self.get_data_from_file = get_data_from_file
+        self.var_list = []
+        # #1077: opt-in control for attaching the full optimisation horizon to
+        # Home Assistant state attributes. Default (unset) keeps the historical
+        # behaviour; setting retrieve_hass_conf.publish_horizon_attributes to
+        # false keeps HA entities compact (scalar state + normal metadata only)
+        # while /api/v1/plan still exposes the complete plan. Resolved once here
+        # so every publication path (direct publish, post-optimisation,
+        # saved-entity and continual_publish) shares one contract via this
+        # RetrieveHass instance.
+        self.publish_horizon_attributes = self.params.get("retrieve_hass_conf", {}).get(
+            "publish_horizon_attributes", True
+        )
+        # Check if we should verify SSL certificates (defaults to True)
+        self.ssl_verify = None
+        ssl_no_verify = False
+        if self.params:
+            # Check root params
+            if self.params.get("ssl_no_verify", False):
+                ssl_no_verify = True
+            # Check passed_data (runtime parameters)
+            elif "passed_data" in self.params and self.params["passed_data"].get(
+                "ssl_no_verify", False
+            ):
+                ssl_no_verify = True
+        if ssl_no_verify:
+            self.ssl_verify = False
+            self.logger.warning("SSL verification is disabled for Home Assistant connection.")
+        # Check websocket activation
+        self.use_websocket = self.params.get("retrieve_hass_conf", {}).get("use_websocket", False)
+        if self.use_websocket:
+            self._client = None
+        else:
+            self.logger.debug("Websocket integration disabled, using Home Assistant API")
+        # Initialize InfluxDB configuration
+        self.use_influxdb = self.params.get("retrieve_hass_conf", {}).get("use_influxdb", False)
+        if self.use_influxdb:
+            influx_conf = self.params.get("retrieve_hass_conf", {})
+            self.influxdb_host = influx_conf.get("influxdb_host", "localhost")
+            self.influxdb_port = influx_conf.get("influxdb_port", 8086)
+            self.influxdb_username = influx_conf.get("influxdb_username", "")
+            self.influxdb_password = influx_conf.get("influxdb_password", "")
+            self.influxdb_database = influx_conf.get("influxdb_database", "homeassistant")
+            self.influxdb_measurement = influx_conf.get("influxdb_measurement", "W")
+            self.influxdb_retention_policy = influx_conf.get("influxdb_retention_policy", "autogen")
+            self.influxdb_use_ssl = influx_conf.get("influxdb_use_ssl", False)
+            self.influxdb_verify_ssl = influx_conf.get("influxdb_verify_ssl", False)
+            self.logger.info(
+                f"InfluxDB integration enabled: {self.influxdb_host}:{self.influxdb_port}/{self.influxdb_database}"
+            )
+        else:
+            self.logger.debug("InfluxDB integration disabled, using Home Assistant API")
+        # Initialize VictoriaMetrics configuration (PromQL/MetricsQL over HTTP, no client lib)
+        self.use_victoriametrics = self.params.get("retrieve_hass_conf", {}).get(
+            "use_victoriametrics", False
+        )
+        if self.use_victoriametrics:
+            vm_conf = self.params.get("retrieve_hass_conf", {})
+            self.victoriametrics_host = vm_conf.get("victoriametrics_host", "localhost")
+            self.victoriametrics_port = vm_conf.get("victoriametrics_port", 8428)
+            self.victoriametrics_username = vm_conf.get("victoriametrics_username", "")
+            self.victoriametrics_password = vm_conf.get("victoriametrics_password", "")
+            self.victoriametrics_database = vm_conf.get("victoriametrics_database", "")
+            self.victoriametrics_metric_regex = (
+                vm_conf.get("victoriametrics_metric_regex", "") or VM_DEFAULT_METRIC_REGEX
+            )
+            self.victoriametrics_use_ssl = vm_conf.get("victoriametrics_use_ssl", False)
+            self.victoriametrics_verify_ssl = vm_conf.get("victoriametrics_verify_ssl", False)
+            if self.use_influxdb:
+                self.logger.warning(
+                    "Both use_influxdb and use_victoriametrics are enabled, InfluxDB takes precedence"
+                )
+            self.logger.info(
+                f"VictoriaMetrics integration enabled: {self.victoriametrics_host}:{self.victoriametrics_port}"
+            )
+        else:
+            self.logger.debug("VictoriaMetrics integration disabled")
+        # Persistent HTTP session for connection reuse (lazy-initialized)
+        self._session: aiohttp.ClientSession | None = None
+        self._session_lock = asyncio.Lock()
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        """
+        Get or create a persistent aiohttp session for HTTP requests.
+
+        This enables connection reuse and avoids the overhead of creating
+        a new TCP connection + TLS handshake for each request.
+        Uses an asyncio.Lock to prevent concurrent callers from creating
+        multiple sessions.
+        """
+        async with self._session_lock:
+            if self._session is None or self._session.closed:
+                connector = aiohttp.TCPConnector(force_close=True)
+                self._session = aiohttp.ClientSession(connector=connector)
+            return self._session
+
+    async def close(self) -> None:
+        """
+        Close the persistent HTTP session.
+
+        Should be called when the RetrieveHass instance is no longer needed
+        to properly release resources.
+        """
+        async with self._session_lock:
+            if self._session is not None and not self._session.closed:
+                await self._session.close()
+                self._session = None
+
+    async def __aenter__(self) -> Self:
+        """Enter async context manager."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit async context manager, closing the HTTP session."""
+        await self.close()
+
+    async def get_ha_config(self):
+        """
+        Extract some configuration data from HA.
+
+        :rtype: bool
+        """
+        # Initialize empty config immediately for safety
+        self.ha_config = {}
+
+        # Resolve the token: if empty, fall back to SUPERVISOR_TOKEN env var (injected by HA addon supervisor)
+        token = self.long_lived_token
+        if not token or token == "empty":
+            token = os.getenv("SUPERVISOR_TOKEN", "")
+            if token:
+                self.logger.debug(
+                    "Using SUPERVISOR_TOKEN from environment for HA config retrieval."
+                )
+
+        # Resolve the URL: if empty, use the default supervisor URL
+        url_to_use = self.hass_url
+        if not url_to_use or url_to_use == "empty":
+            url_to_use = hass_url  # default: http://supervisor/core/api
+
+        # If we still have no token after checking env, skip HA config retrieval
+        if not token:
+            self.logger.info(
+                "No Home Assistant URL or Long Lived Token found. Using only local configuration file."
+            )
+            return True
+
+        # Use WebSocket if configured
+        if self.use_websocket:
+            return await self.get_ha_config_websocket()
+
+        self.logger.info("get HA config from rest api.")
+
+        # Set up headers
+        headers = {
+            "Authorization": header_auth + " " + token,
+            "content-type": header_accept,
+        }
+
+        # Construct the URL (incorporating the PR's helpful checks)
+        # The Supervisor API sometimes uses a different path structure
+        if url_to_use == hass_url:
+            url = url_to_use + "/config"
+        else:
+            # Helpful check for users who forget the trailing slash
+            if not url_to_use.endswith("/"):
+                self.logger.warning(
+                    "The defined HA URL is missing a trailing slash </>. Appending it, but please fix your configuration."
+                )
+                url_to_use = url_to_use + "/"
+            url = url_to_use + "api/config"
+
+        # Attempt the connection using persistent session for connection reuse
+        try:
+            session = await self._get_session()
+            async with session.get(url, headers=headers, ssl=self.ssl_verify) as response:
+                # Check for HTTP errors (404, 401, 500) before trying to parse JSON
+                response.raise_for_status()
+                data = await response.read()
+                self.ha_config = orjson.loads(data)
+                return True
+
+        except Exception as e:
+            # Granular Error Logging
+            # We log the specific error 'e' so the user knows if it's a Timeout, Connection Refused, or 401 Auth error
+            self.logger.error(f"Unable to obtain configuration from Home Assistant at: {url}")
+            self.logger.error(f"Error details: {e}")
+
+            # Helpful hint for Add-on users without confusing Docker users
+            if "supervisor" in self.hass_url:
+                self.logger.error(
+                    "If using the add-on, try setting url and token to 'empty' to force local config."
+                )
+
+            return False
+
+    async def get_ha_config_websocket(self) -> dict[str, Any]:
+        """Get Home Assistant configuration."""
+        try:
+            self._client = await get_websocket_client(
+                self.hass_url, self.long_lived_token, self.logger
+            )
+            self.ha_config = await self._client.get_config()
+            return self.ha_config
+        except Exception as e:
+            self.logger.error(
+                f"EMHASS was unable to obtain configuration data from Home Assistant through websocket: {e}"
+            )
+            raise
+
+    async def get_data(
+        self,
+        days_list: pd.date_range,
+        var_list: list,
+        minimal_response: bool | None = False,
+        significant_changes_only: bool | None = False,
+        test_url: str | None = "empty",
+        keep_partial_days: bool = False,
+    ) -> None:
+        r"""
+        Retrieve the actual data from hass.
+
+        :param days_list: A list of days to retrieve. The ISO format should be used \
+            and the timezone is UTC. The frequency of the data_range should be freq='D'
+        :type days_list: pandas.date_range
+        :param var_list: The list of variables to retrive from hass. These should \
+            be the exact name of the sensor in Home Assistant. \
+            For example: ['sensor.home_load', 'sensor.home_pv']
+        :type var_list: list
+        :param minimal_response: Retrieve a minimal response using the hass \
+            restful API, defaults to False
+        :type minimal_response: bool, optional
+        :param significant_changes_only: Retrieve significant changes only \
+            using the hass restful API, defaults to False
+        :type significant_changes_only: bool, optional
+        :param keep_partial_days: Only applies to the REST API path, including \
+            when a websocket-configured retrieval falls back to REST. When False \
+            (default), a day is dropped for every variable in var_list if any one \
+            variable has no data for that day, matching today's behaviour. When \
+            True, a day is only dropped if every variable is missing for it; a \
+            variable missing on an otherwise-kept day shows up as NaN for that \
+            stretch instead. Used by battery self-identification so one stale \
+            sensor doesn't cost other sensors days they did have data for. \
+            Defaults to False
+        :type keep_partial_days: bool, optional
+        :return: The DataFrame populated with the retrieved data from hass
+        :rtype: pandas.DataFrame
+        """
+        # Use InfluxDB if configured (Prioritize over WebSocket/REST for history)
+        if self.use_influxdb:
+            return self.get_data_influxdb(days_list, var_list)
+
+        # Use VictoriaMetrics if configured (same role as InfluxDB: long history for ML)
+        if self.use_victoriametrics:
+            return await self.get_data_victoriametrics(days_list, var_list)
+
+        # Use WebSockets if configured, otherwise use Home Assistant REST API
+        if self.use_websocket:
+            success = await self.get_data_websocket(days_list, var_list)
+            if not success:
+                self.logger.warning("WebSocket data retrieval failed, falling back to REST API")
+                # Fall back to REST API if websocket fails
+                return await self._get_data_rest_api(
+                    days_list,
+                    var_list,
+                    minimal_response,
+                    significant_changes_only,
+                    test_url,
+                    keep_partial_days=keep_partial_days,
+                )
+            return success
+
+        self.logger.info("Using REST API for data retrieval")
+        return await self._get_data_rest_api(
+            days_list,
+            var_list,
+            minimal_response,
+            significant_changes_only,
+            test_url,
+            keep_partial_days=keep_partial_days,
+        )
+
+    def _build_history_url(
+        self,
+        day: pd.Timestamp,
+        var: str,
+        test_url: str,
+        minimal_response: bool,
+        significant_changes_only: bool,
+    ) -> str:
+        """Helper to construct the Home Assistant History URL."""
+        if test_url != "empty":
+            return test_url
+        # Format the date with a strict 'Z' suffix instead of '+00:00'
+        day_str = day.strftime("%Y-%m-%dT%H:%M:%SZ")
+        # Check if using supervisor API or Core API
+        if self.hass_url == hass_url:
+            base_url = f"{self.hass_url}/history/period/{day_str}"
+        else:
+            # Ensure trailing slash for Core API
+            if self.hass_url[-1] != "/":
+                self.logger.warning(
+                    "Missing slash </> at the end of the defined URL, appending a slash but please fix your URL"
+                )
+                self.hass_url = self.hass_url + "/"
+            base_url = f"{self.hass_url}api/history/period/{day_str}"
+        url = f"{base_url}?filter_entity_id={var}"
+        if minimal_response:
+            url += "&minimal_response"  # Note: fixed to & if query params exist, but ? is fine if it's the only one. Actually, filter_entity_id uses ?, so we MUST use & here.
+        if significant_changes_only:
+            url += "&significant_changes_only"
+        return url
+
+    async def _fetch_history_data(
+        self,
+        session: aiohttp.ClientSession,
+        url: str,
+        headers: dict,
+        var: str,
+        day: pd.Timestamp,
+        is_first_day: bool,
+    ) -> list | bool:
+        """Helper to execute the HTTP request and return the raw JSON list."""
+        try:
+            async with session.get(url, headers=headers, ssl=self.ssl_verify) as response:
+                # Catch specific HTTP errors before trying to parse the JSON
+                if response.status == 400:
+                    self.logger.error(f"Home Assistant returned 400 Bad Request. URL: {url}")
+                    return False
+                elif response.status == 401:
+                    self.logger.error(
+                        "Unable to access Home Assistant instance, TOKEN/KEY is invalid or missing"
+                    )
+                    return False
+                elif response.status > 299:
+                    self.logger.error(
+                        f"Home assistant request GET error: {response.status} for var {var}. URL: {url}"
+                    )
+                    return False
+                # If status is 200 OK, proceed to read and parse
+                data = await response.read()
+                data_list = orjson.loads(data)
+        except aiohttp.ClientError as e:
+            self.logger.error(f"Network error connecting to Home Assistant: {e}")
+            self.logger.error("If using addon, try setting url and token to 'empty'")
+            return False
+        except Exception as e:
+            self.logger.error(f"Unexpected error retrieving data from Home Assistant: {e}")
+            return False
+        try:
+            return data_list[0]
+        except IndexError:
+            if is_first_day:
+                self.logger.debug(
+                    f"No history data for sensor: {var} on {day.date()}. "
+                    "The sensor may not have existed yet, or days_to_retrieve "
+                    "may exceed the available history. Skipping this day."
+                )
+            else:
+                self.logger.debug(
+                    f"No history data for sensor: {var} on day: {day.date()}. Skipping this day."
+                )
+            return None
+
+    def _process_history_dataframe(
+        self, data: list, var: str, day: pd.Timestamp, is_first_day: bool, is_last_day: bool
+    ) -> pd.DataFrame | None:
+        """Helper to convert raw data to a resampled DataFrame."""
+        df_raw = pd.DataFrame.from_dict(data)
+        # Check for empty DataFrame
+        if len(df_raw) == 0:
+            if is_first_day:
+                self.logger.debug(
+                    f"Empty dataframe for sensor: {var} on {day.date()}. "
+                    "The sensor may not have existed yet. Skipping this day."
+                )
+            else:
+                self.logger.debug(
+                    f"Empty dataframe for sensor: {var} on day: {day.date()}. Skipping this day."
+                )
+            return None
+        freq_minutes = self.freq.total_seconds() / 60.0
+        expected_count = (60.0 / freq_minutes) * 24.0
+        if len(df_raw) < expected_count and not is_last_day:
+            self.logger.debug(
+                f"sensor: {var} retrieved Dataframe count: {len(df_raw)}, on day: {day}. "
+                f"This is less than expected count: {expected_count} (freq: {self.freq})"
+            )
+        # Process and Resample
+        df_tp = (
+            df_raw.copy()[["state"]]
+            .replace(["unknown", "unavailable", ""], np.nan)
+            .astype(float)
+            .rename(columns={"state": var})
+        )
+        df_tp.set_index(pd.to_datetime(df_raw["last_changed"], format="ISO8601"), inplace=True)
+        df_tp = df_tp.resample(self.freq).mean()
+        return df_tp
+
+    async def _get_data_rest_api(
+        self,
+        days_list: pd.date_range,
+        var_list: list,
+        minimal_response: bool | None = False,
+        significant_changes_only: bool | None = False,
+        test_url: str | None = "empty",
+        keep_partial_days: bool = False,
+    ) -> None:
+        """Internal method to handle REST API data retrieval."""
+        self.logger.info("Retrieve hass get data method initiated...")
+        # Resolve the token to use for authentication.
+        # If long_lived_token is empty or not set, fall back to the SUPERVISOR_TOKEN
+        # environment variable injected by Home Assistant when running as an addon.
+        token = self.long_lived_token
+        if not token or token == "empty":
+            token = os.getenv("SUPERVISOR_TOKEN", "")
+            if token:
+                self.logger.debug(
+                    "Using SUPERVISOR_TOKEN from environment for REST API authentication."
+                )
+            else:
+                self.logger.error(
+                    "No valid authentication token found. Set a long_lived_token or run as a HA addon."
+                )
+                return False
+        headers = {
+            "Authorization": header_auth + " " + token,
+            "content-type": header_accept,
+        }
+        var_list = [var for var in var_list if var != ""]
+        self.df_final = pd.DataFrame()
+
+        days_skipped = 0
+        # Concurrent fetch: run all (day, var) HTTP requests in parallel, bounded
+        # by a Semaphore so we don't hammer Home Assistant's recorder. The
+        # post-fetch processing (resampling + per-day concat) is then done
+        # sequentially to preserve the original day order and the
+        # "first-var's resampled index is the day's spine" behaviour.
+        max_concurrency = 8
+        semaphore = asyncio.Semaphore(max_concurrency)
+
+        async def _fetch_one(day_idx: int, day, var: str):
+            url = self._build_history_url(
+                day, var, test_url, minimal_response, significant_changes_only
+            )
+            async with semaphore:
+                data = await self._fetch_history_data(
+                    session, url, headers, var, day, is_first_day=(day_idx == 0)
+                )
+            return day_idx, var, data
+
+        async with aiohttp.ClientSession() as session:
+            tasks = [
+                _fetch_one(day_idx, day, var)
+                for day_idx, day in enumerate(days_list)
+                for var in var_list
+            ]
+            fetched = await asyncio.gather(*tasks)
+
+            # Map (day_idx, var) -> data; fail-fast on any False sentinel.
+            results: dict[tuple[int, str], Any] = {}
+            for day_idx, var, data in fetched:
+                if data is False:
+                    return False
+                results[(day_idx, var)] = data
+
+            partial_days = 0
+            for day_idx, day in enumerate(days_list):
+                day_frames = []
+                skip_day = False
+                missing_var = False
+                for var in var_list:
+                    # Fetched concurrently above; just pick the result out
+                    data = results.get((day_idx, var))
+                    df_resampled = None
+                    if data is not None:
+                        df_resampled = self._process_history_dataframe(
+                            data,
+                            var,
+                            day,
+                            is_first_day=(day_idx == 0),
+                            is_last_day=(day_idx == len(days_list) - 1),
+                        )
+                    if df_resampled is None:
+                        missing_var = True
+                        if not keep_partial_days:
+                            skip_day = True
+                            break
+                        # Keep going: this variable is missing for this day,
+                        # but other variables may still have data for it.
+                        continue
+                    day_frames.append(df_resampled)
+                # In default mode this only triggers via skip_day (exact legacy
+                # behaviour). In keep_partial_days mode a day is only skipped
+                # once every requested variable came back empty for it.
+                if skip_day or (keep_partial_days and not day_frames):
+                    days_skipped += 1
+                    continue
+                if keep_partial_days and missing_var:
+                    partial_days += 1
+                # Merge the day's per-variable frames on their real resampled
+                # indices; a variable missing for this day (kept mode) is just
+                # absent from the day's frame, and the cross-day concat below
+                # unions columns so it surfaces as a NaN stretch rather than
+                # forcing a synthetic index.
+                df_day = pd.concat(day_frames, axis=1) if day_frames else pd.DataFrame()
+                self.df_final = pd.concat([self.df_final, df_day], axis=0)
+        if days_skipped > 0:
+            self.logger.warning(
+                f"Skipped {days_skipped} of {len(days_list)} days due to missing history data"
+            )
+        if keep_partial_days and partial_days > 0:
+            self.logger.warning(
+                f"Kept {partial_days} of {len(days_list)} days with partial data "
+                "(one or more variables missing for part of the requested range)"
+            )
+        if self.df_final.empty:
+            self.logger.error(
+                "No data was retrieved for any day in the requested range. "
+                "Check sensor names and recorder history settings."
+            )
+            return False
+
+        # Final Cleanup
+        self.df_final = set_df_index_freq(self.df_final)
+        if self.df_final.index.freq != self.freq:
+            self.logger.error(
+                f"The inferred freq: {self.df_final.index.freq} from data is not equal "
+                f"to the defined freq in passed: {self.freq}"
+            )
+            return False
+        # With keep_partial_days, a variable that returned no data for the
+        # entire range is listed here without a matching df_final column, so
+        # consumers must key off df_final.columns rather than this list.
+        self.var_list = var_list
+        return True
+
+    async def get_data_websocket(
+        self,
+        days_list: pd.date_range,
+        var_list: list[str],
+    ) -> bool:
+        r"""
+        Retrieve the actual data from hass.
+
+        :param days_list: A list of days to retrieve. The ISO format should be used \
+            and the timezone is UTC. The frequency of the data_range should be freq='D'
+        :type days_list: pandas.date_range
+        :param var_list: The list of variables to retrive from hass. These should \
+            be the exact name of the sensor in Home Assistant. \
+            For example: ['sensor.home_load', 'sensor.home_pv']
+        :type var_list: list
+        :return: The DataFrame populated with the retrieved data from hass
+        :rtype: pandas.DataFrame
+        """
+        try:
+            self._client = await asyncio.wait_for(
+                get_websocket_client(self.hass_url, self.long_lived_token, self.logger),
+                timeout=20.0,
+            )
+        except TimeoutError:
+            self.logger.error("WebSocket connection timed out")
+            return False
+        except Exception as e:
+            self.logger.error(f"Websocket connection error: {e}")
+            return False
+
+        self.var_list = var_list
+
+        # Calculate time range
+        start_time = min(days_list).to_pydatetime()
+        end_time = datetime.now()
+
+        # Try to get statistics data (which contains the actual historical data)
+        try:
+            # Get statistics data with 5-minute period for good resolution
+            t0 = time.time()
+            stats_data = await asyncio.wait_for(
+                self._client.get_statistics(
+                    start_time=start_time,
+                    end_time=end_time,
+                    statistic_ids=var_list,
+                    period="5minute",
+                ),
+                timeout=30.0,
+            )
+
+            # Convert statistics data to DataFrame
+            self.df_final = self._convert_statistics_to_dataframe(stats_data, var_list)
+
+            t1 = time.time()
+            self.logger.info(f"Statistics data retrieval took {t1 - t0:.2f} seconds")
+
+            return not self.df_final.empty
+
+        except Exception as e:
+            self.logger.error(f"Failed to get data via WebSocket: {e}")
+            return False
+
+    def get_data_influxdb(
+        self,
+        days_list: pd.date_range,
+        var_list: list,
+    ) -> bool:
+        """
+        Retrieve data from InfluxDB database.
+
+        This method provides an alternative data source to Home Assistant API,
+        enabling longer historical data retention for better machine learning model training.
+
+        :param days_list: A list of days to retrieve data for
+        :type days_list: pandas.date_range
+        :param var_list: List of variables to retrieve. Each entry is either a plain
+            sensor entity id (e.g. ``'sensor.power_a'``) or an arithmetic expression
+            combining several timeseries with the ``{{ ... }}`` syntax, for example
+            ``"{{'sensor.power_a' - 'sensor.power_b' * 1000}}"``. For an expression every
+            referenced entity is queried separately and the operation (``+``, ``-``,
+            ``*``, ``/``, ``**``, ``%``, unary ``+``/``-`` and numeric constants only) is
+            applied element-wise on the values returned for the matching timestamps.
+        :type var_list: list
+        :return: Success status of data retrieval
+        :rtype: bool
+        """
+        self.logger.info("Retrieve InfluxDB get data method initiated...")
+
+        # Check for empty inputs
+        if not days_list.size:
+            self.logger.error("Empty days_list provided")
+            return False
+
+        client = self._init_influx_client()
+        if not client:
+            return False
+
+        # Convert all timestamps to UTC for comparison, then make naive for InfluxDB
+        # This ensures we compare actual instants in time, not wall clock times
+        # InfluxDB queries expect naive UTC timestamps (with 'Z' suffix). The end is
+        # capped at the current time so FILL(previous) cannot create fake future points.
+        start_time, requested_end, end_time = self._utc_query_window(days_list)
+        total_days = (end_time - start_time).days
+
+        self.logger.info(f"Retrieving {len(var_list)} sensors over {total_days} days from InfluxDB")
+        self.logger.debug(f"Time range: {start_time} to {end_time}")
+        if end_time < requested_end:
+            self.logger.debug(f"End time capped at current time (requested: {requested_end})")
+
+        # Collect dataframes for every variable (plain sensors and expression outputs).
+        # Plain sensors and expression entities use separate caches: plain sensors are queried
+        # over the requested window (the same query as before, now de-duplicated through the
+        # cache), expression entities over a padded window so leading buckets can be
+        # forward-filled (see _build_influx_expression_df).
+        sensor_dfs = []
+        sensor_cache: dict[str, pd.DataFrame | None] = {}
+        expr_entity_cache: dict[str, pd.DataFrame | None] = {}
+        failed_variables: list[str] = []
+
+        for variable in filter(None, var_list):
+            if self._is_influx_expression(variable):
+                df_variable = self._build_influx_expression_df(
+                    client, variable, start_time, end_time, expr_entity_cache
+                )
+                if df_variable is None or df_variable.empty:
+                    failed_variables.append(variable)
+                    continue
+            else:
+                if variable not in sensor_cache:
+                    sensor_cache[variable] = self._fetch_sensor_data(
+                        client, variable, start_time, end_time
+                    )
+                df_variable = sensor_cache[variable]
+                if df_variable is None:
+                    # Preserve existing behavior: a missing plain sensor is skipped, not
+                    # treated as a hard failure. Only expressions abort the retrieval, since
+                    # they cannot be evaluated when a referenced entity has no data.
+                    continue
+
+            sensor_dfs.append(df_variable)
+
+        client.close()
+
+        if failed_variables:
+            self.logger.error(
+                f"InfluxDB expression evaluation failed for: {sorted(set(failed_variables))}"
+            )
+            return False
+
+        return self._assemble_timeseries_source_df(sensor_dfs, var_list, "InfluxDB")
+
+    def _assemble_timeseries_source_df(
+        self, sensor_dfs: list[pd.DataFrame], var_list: list, source: str
+    ) -> bool:
+        """Merge per-variable frames from an external time series database into df_final.
+
+        Shared by the InfluxDB and VictoriaMetrics paths so both produce the exact same
+        frame shape: one column per var_list entry on a complete ``self.freq`` index
+        spanning the earliest to the latest retrieved timestamp (UTC).
+        """
+        if not sensor_dfs:
+            self.logger.error(f"No data retrieved from {source}")
+            return False
+
+        # Create complete time index covering all sensors
+        global_min_time = min(df.index.min() for df in sensor_dfs)
+        global_max_time = max(df.index.max() for df in sensor_dfs)
+        complete_index = pd.date_range(start=global_min_time, end=global_max_time, freq=self.freq)
+        self.df_final = pd.DataFrame(index=complete_index)
+
+        # Merge all sensor dataframes
+        for df_sensor in sensor_dfs:
+            self.df_final = pd.concat([self.df_final, df_sensor], axis=1)
+
+        # Set frequency and validate with error handling
+        try:
+            self.df_final = set_df_index_freq(self.df_final)
+        except Exception as e:
+            self.logger.error(f"Exception occurred while setting DataFrame index frequency: {e}")
+            return False
+
+        if self.df_final.index.freq != self.freq:
+            self.logger.warning(
+                f"{source} data frequency ({self.df_final.index.freq}) differs from expected ({self.freq})"
+            )
+
+        self.var_list = var_list
+        self.logger.info(f"{source} data retrieval completed: {self.df_final.shape}")
+        return True
+
+    @staticmethod
+    def _utc_query_window(
+        days_list: pd.date_range,
+    ) -> tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp]:
+        """Return (start, requested_end, end) as naive UTC timestamps for a days_list.
+
+        ``end`` is ``requested_end`` capped at the current time so no future buckets are
+        requested (a forward-fill would otherwise fabricate data points).
+        """
+        start_time = pd.Timestamp(days_list[0])
+        if start_time.tz is not None:
+            start_time = start_time.tz_convert("UTC").tz_localize(None)
+        requested_end = pd.Timestamp(days_list[-1]) + pd.Timedelta(days=1)
+        if requested_end.tz is not None:
+            requested_end = requested_end.tz_convert("UTC").tz_localize(None)
+        now = pd.Timestamp.now(tz="UTC").tz_localize(None)
+        return start_time, requested_end, min(now, requested_end)
+
+    async def get_data_victoriametrics(
+        self,
+        days_list: pd.date_range,
+        var_list: list,
+    ) -> bool:
+        """
+        Retrieve data from a VictoriaMetrics instance.
+
+        VictoriaMetrics accepts the InfluxDB line protocol for writes (so the standard Home
+        Assistant ``influxdb`` integration can feed it) but is queried with PromQL /
+        MetricsQL over its HTTP API, so the InfluxDB (InfluxQL) path cannot be reused. This
+        method fills the same role as :meth:`get_data_influxdb`: an alternative to the Home
+        Assistant recorder offering a much longer history for machine learning model training.
+
+        Every sensor is fetched with ``avg_over_time(<selector>[<step>])`` through
+        ``/api/v1/query_range`` at ``step = optimization_time_step`` and produces the same
+        DataFrame shape as the InfluxDB and Home Assistant paths (UTC index, one column per
+        var_list entry). The metric is located by the ``entity_id`` label plus a metric
+        name regex (default ``.+_value``), see :meth:`_vm_selector`.
+
+        :param days_list: A list of days to retrieve data for
+        :type days_list: pandas.date_range
+        :param var_list: List of variables to retrieve. As for InfluxDB, each entry is
+            either a plain sensor entity id or a ``{{ ... }}`` arithmetic expression over
+            several entities (see :meth:`get_data_influxdb`).
+        :type var_list: list
+        :return: Success status of data retrieval
+        :rtype: bool
+        """
+        self.logger.info("Retrieve VictoriaMetrics get data method initiated...")
+
+        if not days_list.size:
+            self.logger.error("Empty days_list provided")
+            return False
+
+        start_time, requested_end, end_time = self._utc_query_window(days_list)
+        total_days = (end_time - start_time).days
+        self.logger.info(
+            f"Retrieving {len(var_list)} sensors over {total_days} days from VictoriaMetrics"
+        )
+        self.logger.debug(f"Time range: {start_time} to {end_time}")
+        if end_time < requested_end:
+            self.logger.debug(f"End time capped at current time (requested: {requested_end})")
+
+        # Work out every entity to fetch up front so all HTTP calls can run concurrently.
+        # Plain sensors are fetched over the requested window; entities referenced by an
+        # expression over a window padded by INFLUX_EXPRESSION_LOOKBACK (the expression
+        # builder slices them back and forward-fills the leading buckets).
+        failed_variables: list[str] = []
+        plain_sensors: list[str] = []
+        expression_entities: list[str] = []
+        for variable in filter(None, var_list):
+            if self._is_influx_expression(variable):
+                try:
+                    _, entities, _ = self._extract_influx_expression_entities(variable)
+                except ValueError:
+                    self.logger.exception(f"Invalid VictoriaMetrics expression '{variable}'")
+                    failed_variables.append(variable)
+                    continue
+                expression_entities.extend(e for e in entities if e not in expression_entities)
+            elif variable not in plain_sensors:
+                plain_sensors.append(variable)
+
+        padded_start = start_time - INFLUX_EXPRESSION_LOOKBACK
+        semaphore = asyncio.Semaphore(4)
+
+        async def _fetch_one(session, entity, window_start):
+            async with semaphore:
+                return await self._fetch_sensor_data_vm(session, entity, window_start, end_time)
+
+        async with aiohttp.ClientSession() as session:
+            fetched = await asyncio.gather(
+                *[_fetch_one(session, s, start_time) for s in plain_sensors],
+                *[_fetch_one(session, e, padded_start) for e in expression_entities],
+            )
+        sensor_cache = dict(zip(plain_sensors, fetched[: len(plain_sensors)], strict=True))
+        expression_raw = dict(zip(expression_entities, fetched[len(plain_sensors) :], strict=True))
+
+        def _prefetched(_client, entity, _start, _end):
+            return expression_raw.get(entity)
+
+        # Assemble in var_list order, mirroring get_data_influxdb: a missing plain sensor is
+        # skipped, a failing expression aborts the retrieval.
+        sensor_dfs: list[pd.DataFrame] = []
+        expr_entity_cache: dict[str, pd.DataFrame | None] = {}
+        for variable in filter(None, var_list):
+            if self._is_influx_expression(variable):
+                if variable in failed_variables:
+                    continue
+                df_variable = self._build_influx_expression_df(
+                    None,
+                    variable,
+                    start_time,
+                    end_time,
+                    expr_entity_cache,
+                    fetch_fn=_prefetched,
+                )
+                if df_variable is None or df_variable.empty:
+                    failed_variables.append(variable)
+                    continue
+            else:
+                df_variable = sensor_cache.get(variable)
+                if df_variable is None:
+                    continue
+            sensor_dfs.append(df_variable)
+
+        if failed_variables:
+            self.logger.error(
+                f"VictoriaMetrics expression evaluation failed for: {sorted(set(failed_variables))}"
+            )
+            return False
+
+        return self._assemble_timeseries_source_df(sensor_dfs, var_list, "VictoriaMetrics")
+
+    def _vm_base_url(self) -> str:
+        """Base URL of the VictoriaMetrics HTTP API."""
+        scheme = "https" if self.victoriametrics_use_ssl else "http"
+        return f"{scheme}://{self.victoriametrics_host}:{self.victoriametrics_port}"
+
+    def _vm_auth(self) -> aiohttp.BasicAuth | None:
+        """HTTP Basic auth for VictoriaMetrics, or None when no username is configured."""
+        if self.victoriametrics_username:
+            return aiohttp.BasicAuth(
+                self.victoriametrics_username, self.victoriametrics_password or ""
+            )
+        return None
+
+    def _vm_ssl(self) -> bool | None:
+        """aiohttp ``ssl`` argument: False disables certificate verification over HTTPS."""
+        if self.victoriametrics_use_ssl and not self.victoriametrics_verify_ssl:
+            return False
+        return None
+
+    def _vm_selector(self, sensor: str) -> str:
+        """Build the PromQL series selector locating ``sensor`` in VictoriaMetrics.
+
+        Data written by the Home Assistant InfluxDB integration lands as
+        ``<unit_of_measurement>_value{entity_id="<object_id>", domain="<domain>", db="<database>"}``.
+        EMHASS configuration only knows the entity id, not the unit, so the metric name is
+        matched with ``victoriametrics_metric_regex`` (default ``.+_value``) and the entity
+        with its ``entity_id`` (object id) and ``domain`` labels. ``victoriametrics_database``
+        adds a ``db`` label filter when set (VictoriaMetrics attaches it from the ``?db=``
+        write parameter unless started with ``-influxSkipDatabaseLabel``).
+        """
+
+        def _quote(value: str) -> str:
+            return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+        domain, _, entity_id = sensor.rpartition(".")
+        matchers = [
+            f"entity_id={_quote(entity_id)}",
+            f"__name__=~{_quote(self.victoriametrics_metric_regex)}",
+        ]
+        if domain:
+            matchers.append(f"domain={_quote(domain)}")
+        if self.victoriametrics_database:
+            matchers.append(f"db={_quote(self.victoriametrics_database)}")
+        return "{" + ",".join(matchers) + "}"
+
+    async def _vm_query_range(
+        self,
+        session: aiohttp.ClientSession,
+        query: str,
+        start_s: int,
+        end_s: int,
+        step_s: int,
+    ) -> list[dict] | None:
+        """Run one ``/api/v1/query_range`` call and return the matrix result list.
+
+        Returns None on any HTTP, network or query error (already logged).
+        """
+        url = f"{self._vm_base_url()}/api/v1/query_range"
+        params = {"query": query, "start": start_s, "end": end_s, "step": step_s}
+        try:
+            async with session.get(
+                url, params=params, auth=self._vm_auth(), ssl=self._vm_ssl()
+            ) as response:
+                body = await response.read()
+                if response.status == 401:
+                    self.logger.error(
+                        "VictoriaMetrics returned 401 Unauthorized, check victoriametrics_username/password"
+                    )
+                    return None
+                if response.status > 299:
+                    self.logger.error(
+                        f"VictoriaMetrics query_range error {response.status}: {body[:300]!r}"
+                    )
+                    return None
+                payload = orjson.loads(body)
+        except aiohttp.ClientError as e:
+            self.logger.error(f"Network error connecting to VictoriaMetrics at {url}: {e}")
+            return None
+        except (orjson.JSONDecodeError, ValueError) as e:
+            self.logger.error(f"Invalid JSON from VictoriaMetrics: {e}")
+            return None
+        if payload.get("status") != "success":
+            self.logger.error(f"VictoriaMetrics query failed: {payload.get('error', payload)}")
+            return None
+        return payload.get("data", {}).get("result", [])
+
+    @staticmethod
+    def _to_epoch_seconds(ts: pd.Timestamp) -> int:
+        """Epoch seconds of a timestamp, treating a naive timestamp as UTC."""
+        if ts.tzinfo is None:
+            ts = ts.tz_localize("UTC")
+        return int(ts.timestamp())
+
+    async def _fetch_sensor_data_vm(
+        self,
+        session: aiohttp.ClientSession,
+        sensor: str,
+        start_time: pd.Timestamp,
+        end_time: pd.Timestamp,
+    ) -> pd.DataFrame | None:
+        """Fetch one sensor from VictoriaMetrics resampled to ``self.freq``.
+
+        The series is evaluated with ``avg_over_time(<selector>[step])`` on a grid aligned
+        to whole steps. At evaluation time ``t`` that rollup covers ``(t - step, t]``, so the
+        returned timestamps are shifted back by one step to label each bucket by its
+        start, matching the InfluxDB ``GROUP BY time()`` and the pandas ``resample`` paths.
+        Empty buckets are forward-filled like InfluxDB's ``FILL(previous)`` (leading buckets
+        before the first sample stay absent).
+        """
+        self.logger.debug(f"Retrieving sensor: {sensor}")
+        step_s = int(self.freq.total_seconds())
+        if step_s <= 0:
+            self.logger.error(f"Invalid optimization time step for VictoriaMetrics: {self.freq}")
+            return None
+        query = f"avg_over_time({self._vm_selector(sensor)}[{step_s}s])"
+        self.logger.debug(f"VictoriaMetrics query: {query}")
+
+        # Align the grid on whole steps; the first evaluation point is the end of the
+        # first bucket that starts at (or after) start_time.
+        aligned_start = (self._to_epoch_seconds(start_time) // step_s) * step_s
+        first_eval = aligned_start + step_s
+        last_eval = self._to_epoch_seconds(end_time)
+        if last_eval < first_eval:
+            self.logger.warning(f"Requested window for {sensor} is shorter than one step")
+            return None
+
+        # Chunk long windows to stay under VictoriaMetrics' max points per request.
+        series_values: dict[str, list] = {}
+        chunk_span = VM_MAX_POINTS_PER_REQUEST * step_s
+        chunk_start = first_eval
+        while chunk_start <= last_eval:
+            chunk_end = min(chunk_start + chunk_span - step_s, last_eval)
+            result = await self._vm_query_range(session, query, chunk_start, chunk_end, step_s)
+            if result is None:
+                return None
+            for item in result:
+                labels = item.get("metric", {})
+                # MetricsQL keeps __name__ through avg_over_time; a plain PromQL backend
+                # drops it, so fall back to the full label set as the series key.
+                name = labels.get("__name__") or ",".join(
+                    f"{k}={v}" for k, v in sorted(labels.items())
+                )
+                series_values.setdefault(name, []).extend(item.get("values", []))
+            chunk_start = chunk_end + step_s
+
+        if not series_values:
+            self.logger.warning(f"No data found in VictoriaMetrics for entity: {sensor}")
+            return None
+        if len(series_values) > 1:
+            # Several metrics matched: the sensor changed unit at some point (e.g. W -> kW).
+            # Keep the one with the most samples rather than mixing units.
+            self.logger.warning(
+                f"Entity '{sensor}' matches several VictoriaMetrics metrics "
+                f"{sorted(series_values)}, keeping the one with the most samples. "
+                "Set victoriametrics_metric_regex to pin the metric."
+            )
+        metric_name, values = max(series_values.items(), key=lambda kv: len(kv[1]))
+        if not values:
+            self.logger.warning(f"No data found in VictoriaMetrics for entity: {sensor}")
+            return None
+        self.logger.info(f"Retrieved {len(values)} data points for {sensor} ({metric_name})")
+
+        df_sensor = pd.DataFrame(values, columns=["time", sensor])
+        df_sensor["time"] = pd.to_datetime(
+            df_sensor["time"].astype("int64") - step_s, unit="s", utc=True
+        )
+        df_sensor = df_sensor.set_index("time")
+        df_sensor[sensor] = pd.to_numeric(df_sensor[sensor], errors="coerce")
+        duplicated = df_sensor.index.duplicated()
+        if duplicated.any():
+            # Only happens when several series came back under one key (backend dropped the
+            # metric names): the samples overlap and cannot be told apart, keep the first.
+            self.logger.warning(
+                f"Entity '{sensor}': {int(duplicated.sum())} duplicate timestamps in the "
+                "VictoriaMetrics result (overlapping series without a metric name), "
+                "keeping the first value of each"
+            )
+        df_sensor = df_sensor[~duplicated].sort_index()
+        # FILL(previous): complete the grid between the first and last sample.
+        full_index = pd.date_range(df_sensor.index.min(), df_sensor.index.max(), freq=self.freq)
+        df_sensor = df_sensor.reindex(full_index).ffill()
+        df_sensor.index.name = "time"
+        self.logger.debug(
+            f"Successfully retrieved {len(df_sensor)} data points for '{sensor}' from metric '{metric_name}'"
+        )
+        return df_sensor
+
+    def _is_influx_expression(self, variable: str) -> bool:
+        """Check if a var_list entry uses the arithmetic expression syntax: ``{{ ... }}``."""
+        stripped = variable.strip() if isinstance(variable, str) else ""
+        return stripped.startswith("{{") and stripped.endswith("}}")
+
+    def _extract_influx_expression_entities(
+        self, expression: str
+    ) -> tuple[str, list[str], dict[str, str]]:
+        """Replace quoted entity IDs in an expression with safe variable tokens.
+
+        Example::
+
+            "{{'sensor.a' - 'sensor.b' * 1000}}"
+            -> ("_v0 - _v1 * 1000", ["sensor.a", "sensor.b"], {"_v0": "sensor.a", "_v1": "sensor.b"})
+
+        A repeated entity reuses its token (so it is only queried once).
+        """
+        expression_body = expression.strip()[2:-2].strip()
+        quoted_entity = r"'([^']+)'|\"([^\"]+)\""
+        if not re.search(quoted_entity, expression_body):
+            raise ValueError("Expression does not contain quoted entity IDs.")
+
+        entities: list[str] = []
+        token_to_entity: dict[str, str] = {}
+        entity_to_token: dict[str, str] = {}
+
+        def replace_entity(match: re.Match[str]) -> str:
+            entity = match.group(1) or match.group(2)
+            if entity not in entity_to_token:
+                token = f"_v{len(entity_to_token)}"
+                entity_to_token[entity] = token
+                token_to_entity[token] = entity
+                entities.append(entity)
+            return entity_to_token[entity]
+
+        parsed_expression = re.sub(quoted_entity, replace_entity, expression_body)
+        return parsed_expression, entities, token_to_entity
+
+    def _build_influx_expression_df(
+        self,
+        client,
+        expression: str,
+        start_time: pd.Timestamp,
+        end_time: pd.Timestamp,
+        entity_cache: dict[str, pd.DataFrame | None],
+        fetch_fn=None,
+    ) -> pd.DataFrame | None:
+        """Fetch the referenced entities and evaluate an arithmetic var_list expression.
+
+        Returns a single-column DataFrame named after the ``expression`` string, or None if
+        the expression is invalid or any referenced entity returned no data. Each entity is
+        queried over a window padded by ``INFLUX_EXPRESSION_LOOKBACK`` and sliced back to
+        ``[start_time, end_time)`` so the leading buckets are forward-filled from the most
+        recent prior value, keeping series that update at different phases aligned.
+
+        ``fetch_fn(client, entity, start, end)`` defaults to the InfluxDB fetcher; the
+        VictoriaMetrics path passes its own so the same expression syntax works there.
+        """
+        if fetch_fn is None:
+            fetch_fn = self._fetch_sensor_data
+        try:
+            parsed_expression, entities, token_to_entity = self._extract_influx_expression_entities(
+                expression
+            )
+        except ValueError:
+            self.logger.exception(f"Invalid InfluxDB expression '{expression}'")
+            return None
+
+        padded_start = start_time - INFLUX_EXPRESSION_LOOKBACK
+        start_aware = (
+            start_time.tz_localize("UTC")
+            if start_time.tzinfo is None
+            else start_time.tz_convert("UTC")
+        )
+
+        series_mapping: dict[str, pd.Series] = {}
+        for token, entity in token_to_entity.items():
+            if entity not in entity_cache:
+                df_entity = fetch_fn(client, entity, padded_start, end_time)
+                if df_entity is not None:
+                    df_entity = df_entity.loc[df_entity.index >= start_aware]
+                entity_cache[entity] = df_entity
+            df_entity = entity_cache[entity]
+            if df_entity is None or df_entity.empty:
+                self.logger.error(
+                    f"InfluxDB expression '{expression}' references entity '{entity}' "
+                    "which returned no data"
+                )
+                return None
+            series_mapping[token] = df_entity[entity]
+
+        try:
+            expression_result = self._evaluate_influx_expression(parsed_expression, series_mapping)
+        except (TypeError, ValueError, SyntaxError, ArithmeticError, RecursionError, MemoryError):
+            # A malformed or pathological entry (deep nesting, integer overflow, a dtype mismatch
+            # raising TypeError, division by zero, ...) must fail the retrieval cleanly rather than
+            # propagate out and abort the whole optimization.
+            self.logger.exception(f"Failed to evaluate InfluxDB expression '{expression}'")
+            return None
+
+        self.logger.debug(f"Evaluated InfluxDB expression '{expression}' with entities: {entities}")
+        return pd.DataFrame({expression: expression_result})
+
+    def _evaluate_influx_expression(
+        self, parsed_expression: str, series_mapping: dict[str, pd.Series]
+    ) -> pd.Series:
+        """Safely evaluate an arithmetic expression over pandas Series and numeric constants.
+
+        Only the arithmetic operators ``+ - * / ** %``, unary ``+``/``-`` and int/float
+        constants are allowed; entity tokens resolve to their fetched Series. Any other AST
+        node (attribute access, calls, subscripts, comparisons, bare names, booleans, ...)
+        raises ValueError, so a crafted var_list entry cannot reach arbitrary code.
+        """
+        tree = ast.parse(parsed_expression, mode="eval")
+
+        binary_operators = {
+            ast.Add: operator.add,
+            ast.Sub: operator.sub,
+            ast.Mult: operator.mul,
+            ast.Div: operator.truediv,
+            ast.Pow: operator.pow,
+            ast.Mod: operator.mod,
+        }
+        unary_operators = {
+            ast.UAdd: operator.pos,
+            ast.USub: operator.neg,
+        }
+
+        def eval_node(node):
+            if isinstance(node, ast.Expression):
+                return eval_node(node.body)
+            if isinstance(node, ast.BinOp):
+                op_type = type(node.op)
+                if op_type not in binary_operators:
+                    raise ValueError(f"Unsupported binary operator: {op_type.__name__}")
+                left = eval_node(node.left)
+                right = eval_node(node.right)
+                # Guard against a huge integer power exhausting CPU/memory. Cap BOTH operands:
+                # a large exponent (``_v0 ** 1e6``) and a large base built by a chained power
+                # (``(10 ** 1000) ** 100``) are both rejected before the expensive computation.
+                if op_type is ast.Pow:
+                    for operand in (left, right):
+                        if (
+                            isinstance(operand, (int, float))
+                            and not isinstance(operand, bool)
+                            and abs(operand) > INFLUX_EXPRESSION_MAX_POW_EXPONENT
+                        ):
+                            raise ValueError(
+                                "Power operand magnitude too large in InfluxDB expression"
+                            )
+                return binary_operators[op_type](left, right)
+            if isinstance(node, ast.UnaryOp):
+                op_type = type(node.op)
+                if op_type not in unary_operators:
+                    raise ValueError(f"Unsupported unary operator: {op_type.__name__}")
+                return unary_operators[op_type](eval_node(node.operand))
+            if isinstance(node, ast.Name):
+                if node.id not in series_mapping:
+                    raise ValueError(f"Unknown entity token in expression: {node.id}")
+                return series_mapping[node.id]
+            if isinstance(node, ast.Constant):
+                value = node.value
+                # bool is a subclass of int; reject it so True/False can't silently mean 1/0
+                if isinstance(value, bool) or not isinstance(value, (int, float)):
+                    raise ValueError(f"Unsupported constant type: {type(value).__name__}")
+                return value
+            raise ValueError(f"Unsupported expression element: {type(node).__name__}")
+
+        result = eval_node(tree)
+        if not isinstance(result, pd.Series):
+            raise ValueError("Expression must produce a pandas Series result.")
+        return result
+
+    def _init_influx_client(self):
+        """Initialize InfluxDB client connection."""
+        try:
+            from influxdb import InfluxDBClient
+        except ImportError:
+            self.logger.error("InfluxDB client not installed. Install with: pip install influxdb")
+            return None
+
+        try:
+            client = InfluxDBClient(
+                host=self.influxdb_host,
+                port=self.influxdb_port,
+                username=self.influxdb_username or None,
+                password=self.influxdb_password or None,
+                database=self.influxdb_database,
+                ssl=self.influxdb_use_ssl,
+                verify_ssl=self.influxdb_verify_ssl,
+            )
+            # Test connection
+            client.ping()
+            self.logger.debug(
+                f"Successfully connected to InfluxDB at {self.influxdb_host}:{self.influxdb_port}"
+            )
+
+            # Initialize measurement cache
+            if not hasattr(self, "_measurement_cache"):
+                self._measurement_cache = {}
+
+            return client
+        except Exception as e:
+            self.logger.error(f"Failed to connect to InfluxDB: {e}")
+            return None
+
+    def _discover_entity_measurement(self, client, entity_id: str) -> str:
+        """Auto-discover which measurement contains the given entity."""
+        # Check cache first
+        if entity_id in self._measurement_cache:
+            return self._measurement_cache[entity_id]
+
+        try:
+            # Get all available measurements
+            measurements_query = "SHOW MEASUREMENTS"
+            measurements_result = client.query(measurements_query)
+            measurements = [m["name"] for m in measurements_result.get_points()]
+
+            # Priority order: check common sensor types first
+            priority_measurements = ["EUR/kWh", "€/kWh", "W", "EUR", "€", "%", "A", "V"]
+            all_measurements = priority_measurements + [
+                m for m in measurements if m not in priority_measurements
+            ]
+
+            self.logger.debug(
+                f"Searching for entity '{entity_id}' across {len(measurements)} measurements"
+            )
+
+            # Search for entity in each measurement
+            for measurement in all_measurements:
+                if measurement not in measurements:
+                    continue  # Skip if measurement doesn't exist
+
+                try:
+                    # Use SHOW TAG VALUES to get all entity_ids in this measurement
+                    tag_query = f'SHOW TAG VALUES FROM "{measurement}" WITH KEY = "entity_id"'
+                    self.logger.debug(
+                        f"Checking measurement '{measurement}' with tag query: {tag_query}"
+                    )
+                    result = client.query(tag_query)
+                    points = list(result.get_points())
+
+                    # Check if our target entity_id is in the tag values
+                    for point in points:
+                        if point.get("value") == entity_id:
+                            self.logger.debug(
+                                f"Found entity '{entity_id}' in measurement '{measurement}'"
+                            )
+                            # Cache the result
+                            self._measurement_cache[entity_id] = measurement
+                            return measurement
+
+                except Exception as query_error:
+                    self.logger.debug(
+                        f"Tag query failed for measurement '{measurement}': {query_error}"
+                    )
+                    continue
+
+        except Exception as e:
+            self.logger.error(f"Error discovering measurement for entity {entity_id}: {e}")
+
+        # Fallback to default measurement if not found
+        self.logger.warning(
+            f"Entity '{entity_id}' not found in any measurement, using default: {self.influxdb_measurement}"
+        )
+        return self.influxdb_measurement
+
+    def _build_influx_query_for_measurement(
+        self, entity_id: str, measurement: str, start_time, end_time
+    ) -> str:
+        """Build InfluxQL query for specific measurement and entity."""
+        # Convert frequency to InfluxDB interval
+        freq_minutes = int(self.freq.total_seconds() / 60)
+        interval = f"{freq_minutes}m"
+
+        # Format times properly for InfluxDB
+        start_time_str = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_time_str = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        # Use FILL(previous) instead of FILL(linear) for compatibility with open-source InfluxDB
+        query = f"""
+        SELECT mean("value") AS "mean_value"
+        FROM "{self.influxdb_database}"."{self.influxdb_retention_policy}"."{measurement}"
+        WHERE time >= '{start_time_str}'
+        AND time < '{end_time_str}'
+        AND "entity_id"='{entity_id}'
+        GROUP BY time({interval}) FILL(previous)
+        """
+        return query
+
+    def _build_influx_query(self, sensor: str, start_time, end_time) -> str:
+        """Build InfluxQL query for sensor data retrieval (legacy method)."""
+        # Convert sensor name: sensor.sec_pac_solar -> sec_pac_solar
+        entity_id = (
+            sensor.replace(sensor_prefix, "") if sensor.startswith(sensor_prefix) else sensor
+        )
+
+        # Use default measurement (for backward compatibility)
+        return self._build_influx_query_for_measurement(
+            entity_id, self.influxdb_measurement, start_time, end_time
+        )
+
+    def _fetch_sensor_data(self, client, sensor: str, start_time, end_time):
+        """Fetch and process data for a single sensor with auto-discovery."""
+        self.logger.debug(f"Retrieving sensor: {sensor}")
+
+        # Clean sensor name (remove sensor. prefix if present)
+        entity_id = (
+            sensor.replace(sensor_prefix, "") if sensor.startswith(sensor_prefix) else sensor
+        )
+
+        # Auto-discover which measurement contains this entity
+        measurement = self._discover_entity_measurement(client, entity_id)
+        if not measurement:
+            self.logger.warning(f"Entity '{entity_id}' not found in any InfluxDB measurement")
+            return None
+
+        try:
+            query = self._build_influx_query_for_measurement(
+                entity_id, measurement, start_time, end_time
+            )
+            self.logger.debug(f"InfluxDB query: {query}")
+
+            # Execute query
+            result = client.query(query)
+            points = list(result.get_points())
+
+            if not points:
+                self.logger.warning(
+                    f"No data found for entity: {entity_id} in measurement: {measurement}"
+                )
+                return None
+
+            self.logger.info(f"Retrieved {len(points)} data points for {sensor}")
+
+            # Create DataFrame from points
+            df_sensor = pd.DataFrame(points)
+
+            # Convert time column and set as index with timezone awareness
+            df_sensor["time"] = pd.to_datetime(df_sensor["time"], utc=True)
+            df_sensor.set_index("time", inplace=True)
+
+            # Rename value column to original sensor name
+            if "mean_value" in df_sensor.columns:
+                df_sensor = df_sensor[["mean_value"]].rename(columns={"mean_value": sensor})
+            else:
+                self.logger.error(
+                    f"Expected 'mean_value' column not found for {sensor} in measurement {measurement}"
+                )
+                return None
+
+            # Handle non-numeric data with NaN ratio warning
+            df_sensor[sensor] = pd.to_numeric(df_sensor[sensor], errors="coerce")
+
+            # Check proportion of NaNs and log warning if high
+            nan_count = df_sensor[sensor].isna().sum()
+            total_count = len(df_sensor[sensor])
+            if total_count > 0:
+                nan_ratio = nan_count / total_count
+                if nan_ratio > 0.2:
+                    self.logger.warning(
+                        f"Entity '{entity_id}' has {nan_count}/{total_count} ({nan_ratio:.1%}) non-numeric values coerced to NaN."
+                    )
+
+            self.logger.debug(
+                f"Successfully retrieved {len(df_sensor)} data points for '{entity_id}' from measurement '{measurement}'"
+            )
+            return df_sensor
+
+        except Exception as e:
+            self.logger.error(
+                f"Failed to query entity {entity_id} from measurement {measurement}: {e}"
+            )
+            return None
+
+    def _validate_sensor_list(self, target_list: list, list_name: str) -> list:
+        """Helper to validate that config lists only contain known sensors."""
+        if not isinstance(target_list, list):
+            return []
+        valid_items = [item for item in target_list if item in self.var_list]
+        removed = set(target_list) - set(valid_items)
+        for item in removed:
+            self.logger.warning(
+                f"Sensor '{item}' in {list_name} not found in self.var_list and has been removed."
+            )
+        return valid_items
+
+    def _process_load_column_renaming(
+        self, var_load: str, load_negative: bool, skip_renaming: bool
+    ) -> bool:
+        """Helper to handle the sign flip and renaming of the main load column."""
+        if skip_renaming:
+            return True
+        try:
+            # Apply the correct sign to load power
+            if load_negative:
+                self.df_final[var_load + "_positive"] = -self.df_final[var_load]
+            else:
+                self.df_final[var_load + "_positive"] = self.df_final[var_load]
+            self.df_final.drop([var_load], inplace=True, axis=1)
+            # Update var_list to reflect the renamed column
+            self.var_list = [var.replace(var_load, var_load + "_positive") for var in self.var_list]
+            self.logger.debug(f"prepare_data var_list updated after rename: {self.var_list}")
+            return True
+        except KeyError as e:
+            self.logger.error(
+                f"Variable '{var_load}' was not found in DataFrame columns: {list(self.df_final.columns)}. "
+                f"This is typically because no data could be retrieved from Home Assistant or InfluxDB. Error: {e}"
+            )
+            return False
+        except ValueError:
+            self.logger.error(
+                "sensor.power_photovoltaics and sensor.power_load_no_var_loads should not be the same"
+            )
+            return False
+
+    def _map_variable_names(
+        self, target_list: list, var_load: str, skip_renaming: bool, param_name: str
+    ) -> list | None:
+        """Helper to map old variable names to new ones (if renaming occurred)."""
+        if not target_list:
+            # Dynamic Warning Message
+            # Don't hardcode "sensor_power_photovoltaics". Use the actual parameter name.
+            self.logger.warning(f"The list of sensors for parameter '{param_name}' is empty.")
+            self.logger.warning(
+                f"Please verify that the sensors defined in '{param_name}' match "
+                "the sensors connected to EMHASS."
+            )
+            return None
+        new_list = []
+        for string in target_list:
+            if not skip_renaming:
+                # Exact Match Logic
+                # Prevent dangerous substring replacements (e.g. 'sensor.power' inside 'sensor.power_meter')
+                if string == var_load:
+                    new_list.append(var_load + "_positive")
+                else:
+                    new_list.append(string)
+            else:
+                new_list.append(string)
+        return new_list
+
+    def prepare_data(
+        self,
+        var_load: str,
+        load_negative: bool,
+        set_zero_min: bool,
+        var_replace_zero: list[str],
+        var_interp: list[str],
+        skip_renaming: bool = False,
+        protected_columns: list[str] | None = None,
+    ) -> bool:
+        r"""
+        Apply some data treatment in preparation for the optimization task.
+
+        :param var_load: The name of the variable for the household load consumption.
+        :type var_load: str
+        :param load_negative: Set to True if the retrived load variable is \
+            negative by convention, defaults to False
+        :type load_negative: bool, optional
+        :param set_zero_min: A special treatment for a minimum value saturation \
+            to zero. Values below zero are replaced by nans, defaults to True
+        :type set_zero_min: bool, optional
+        :param var_replace_zero: A list of retrived variables that we would want \
+            to replace nans with zeros, defaults to None
+        :type var_replace_zero: list, optional
+        :param var_interp: A list of retrived variables that we would want to \
+            interpolate nan values using linear interpolation, defaults to None
+        :type var_interp: list, optional
+        :param protected_columns: Columns excluded from the ``set_zero_min`` \
+            clip and zero-to-nan replacement, for signed data that must keep \
+            both directions (e.g. battery power) or legitimate zero readings \
+            (e.g. a measured 0% state of charge). All other treatment \
+            (timezone conversion, duplicate-index cleanup) still applies to \
+            them, defaults to None
+        :type protected_columns: list, optional
+        :return: The DataFrame populated with the retrieved data from hass and \
+            after the data treatment
+        :rtype: pandas.DataFrame
+
+        """
+        self.logger.debug("prepare_data self.var_list=%s", self.var_list)
+        self.logger.debug("prepare_data var_load=%s", var_load)
+        # Filter Missing Sensors
+        # Entries not present in the fetched data are dropped from the repair
+        # lists (debug-logged only). What got dropped is recorded so the end of
+        # this method can warn if the drop left unrepaired NaNs behind (#1084).
+        dropped_replace_zero = []
+        if var_replace_zero:
+            # Optional: Log if we are dropping items to help debugging
+            dropped_replace_zero = [x for x in var_replace_zero if x not in self.var_list]
+            if dropped_replace_zero:
+                self.logger.debug(
+                    f"Sensors in 'sensor_replace_zero' not found in data: {dropped_replace_zero}"
+                )
+            var_replace_zero = [x for x in var_replace_zero if x in self.var_list]
+        dropped_interp = []
+        if var_interp:
+            dropped_interp = [x for x in var_interp if x not in self.var_list]
+            if dropped_interp:
+                self.logger.debug(
+                    f"Sensors in 'sensor_linear_interp' not found in data: {dropped_interp}"
+                )
+            var_interp = [x for x in var_interp if x in self.var_list]
+        # Rename Load Columns (Handle sign change)
+        if not self._process_load_column_renaming(var_load, load_negative, skip_renaming):
+            return False
+        # Apply Zero Saturation (Min value clipping)
+        if set_zero_min:
+            protected = [c for c in (protected_columns or []) if c in self.df_final.columns]
+            if not protected:
+                self.df_final.clip(lower=0.0, inplace=True, axis=1)
+                self.df_final.replace(to_replace=0.0, value=np.nan, inplace=True)
+            else:
+                unprotected = [c for c in self.df_final.columns if c not in protected]
+                self.df_final[unprotected] = self.df_final[unprotected].clip(lower=0.0)
+                self.df_final[unprotected] = self.df_final[unprotected].replace(
+                    to_replace=0.0, value=np.nan
+                )
+        # Map Variable Names (Update lists to match new column names)
+        # Only call mapping if the list is not empty to avoid spurious warnings
+        new_var_replace_zero = None
+        if var_replace_zero:
+            new_var_replace_zero = self._map_variable_names(
+                var_replace_zero, var_load, skip_renaming, "sensor_replace_zero"
+            )
+        new_var_interp = None
+        if var_interp:
+            new_var_interp = self._map_variable_names(
+                var_interp, var_load, skip_renaming, "sensor_linear_interp"
+            )
+        # Apply Data Cleaning (FillNA / Interpolate)
+        if new_var_replace_zero:
+            cols_to_fix = [c for c in new_var_replace_zero if c in self.df_final.columns]
+            if cols_to_fix:
+                self.df_final[cols_to_fix] = self.df_final[cols_to_fix].fillna(0.0)
+        if new_var_interp:
+            cols_to_fix = [c for c in new_var_interp if c in self.df_final.columns]
+            if cols_to_fix:
+                self.df_final[cols_to_fix] = self.df_final[cols_to_fix].interpolate(
+                    method="linear", axis=0, limit=None
+                )
+                self.df_final[cols_to_fix] = self.df_final[cols_to_fix].fillna(0.0)
+        # Finalize Index (Timezone and Duplicates)
+        if self.time_zone is not None:
+            self.df_final.index = self.df_final.index.tz_convert(self.time_zone)
+        self.df_final = self.df_final[~self.df_final.index.duplicated(keep="first")]
+        # Issue #1084: a sensor name dropped from 'sensor_replace_zero' or
+        # 'sensor_linear_interp' silently loses its repair. That is harmless
+        # when nothing needed repairing, but if NaNs are still present after
+        # cleaning it is a strong signal that a configured sensor name does
+        # not match what was actually retrieved from HA. Warn once, naming
+        # both the dropped entries and the still-affected columns.
+        # Two deliberate exclusions keep this quiet on healthy setups:
+        # - skip_renaming=True marks the single-sensor ML paths (model fit /
+        #   tune / predict, forecast calibration), which retrieve only their
+        #   target sensor while forwarding the full configured lists, so
+        #   dropped entries are structural there, not a misconfiguration;
+        # - protected_columns are exempt from the set_zero_min repair by
+        #   design (e.g. signed battery power), so residual NaN in them is
+        #   expected and handled downstream, not a missing repair.
+        if not skip_renaming:
+            dropped_entries = {}
+            if dropped_replace_zero:
+                dropped_entries["sensor_replace_zero"] = dropped_replace_zero
+            if dropped_interp:
+                dropped_entries["sensor_linear_interp"] = dropped_interp
+            if dropped_entries:
+                # protected_columns holds configured sensor names, but the load
+                # column was renamed to var_load + "_positive" above, so a
+                # protected load would no longer match. Track it under both names.
+                protected_names = set(protected_columns or [])
+                if var_load in protected_names:
+                    protected_names.add(var_load + "_positive")
+                columns_to_check = [c for c in self.df_final.columns if c not in protected_names]
+                nan_cols = [c for c in columns_to_check if self.df_final[c].isna().any()]
+                # Report the load column under its configured name, not the
+                # internal var_load + "_positive" rename applied above.
+                nan_cols = [var_load if c == var_load + "_positive" else c for c in nan_cols]
+                if nan_cols:
+                    self.logger.warning(
+                        "prepare_data: the following configured sensor names were not "
+                        f"found in the retrieved data and were dropped: {dropped_entries}; "
+                        f"these columns still contain NaN values after cleaning: {nan_cols}. "
+                        "Please verify that these sensor names match the sensors connected "
+                        "to EMHASS."
+                    )
+        return True
+
+    @staticmethod
+    def get_attr_data_dict(
+        data_df: pd.DataFrame,
+        idx: int,
+        entity_id: str,
+        device_class: str,
+        unit_of_measurement: str,
+        friendly_name: str,
+        list_name: str,
+        state: float,
+        decimals: int = 2,
+        include_horizon: bool = True,
+    ) -> dict:
+        attributes = {
+            "device_class": device_class,
+            "unit_of_measurement": unit_of_measurement,
+            "friendly_name": friendly_name,
+        }
+        # Full-horizon list attribute (#1077). When horizon publication is
+        # disabled we skip building it entirely rather than constructing the
+        # list and discarding it.
+        if include_horizon:
+            list_df = copy.deepcopy(data_df).loc[data_df.index[idx] :].reset_index()
+            list_df.columns = ["timestamps", entity_id]
+            ts_list = [i.isoformat() for i in list_df["timestamps"].tolist()]
+            vals_list = [str(np.round(i, decimals)) for i in list_df[entity_id].tolist()]
+            forecast_list = []
+            for i, ts in enumerate(ts_list):
+                datum = {}
+                datum["date"] = ts
+                datum[entity_id.split(sensor_prefix)[1]] = vals_list[i]
+                forecast_list.append(datum)
+            attributes[list_name] = forecast_list
+
+        # Add state_class to ensure HA tracks long-term statistics
+        if device_class in [
+            "power",
+            "temperature",
+            "voltage",
+            "current",
+            "battery",
+            "monetary",
+            "power_factor",
+        ]:
+            attributes["state_class"] = "measurement"
+        elif device_class == "energy":
+            attributes["state_class"] = "total"
+
+        data = {
+            "state": f"{state:.{decimals}f}",
+            "attributes": attributes,
+        }
+        return data
+
+    async def post_data(
+        self,
+        data_df: pd.DataFrame,
+        idx: int,
+        entity_id: str,
+        device_class: str,
+        unit_of_measurement: str,
+        friendly_name: str,
+        type_var: str,
+        publish_prefix: str | None = "",
+        save_entities: bool | None = False,
+        logger_levels: str | None = "info",
+        dont_post: bool | None = False,
+    ) -> None:
+        r"""
+        Post passed data to hass using REST API.
+
+        .. note:: This method ALWAYS uses the REST API for posting data to Home Assistant,
+                  regardless of the use_websocket setting. WebSocket is only used for
+                  data retrieval, not for publishing/posting data.
+
+        :param data_df: The DataFrame containing the data that will be posted \
+            to hass. This should be a one columns DF or a series.
+        :type data_df: pd.DataFrame
+        :param idx: The int index of the location of the data within the passed \
+            DataFrame. We will post just one value at a time.
+        :type idx: int
+        :param entity_id: The unique entity_id of the sensor in hass.
+        :type entity_id: str
+        :param device_class: The HASS device class for the sensor.
+        :type device_class: str
+        :param unit_of_measurement: The units of the sensor.
+        :type unit_of_measurement: str
+        :param friendly_name: The friendly name that will be used in the hass frontend.
+        :type friendly_name: str
+        :param type_var: A variable to indicate the type of variable: power, SOC, etc.
+        :type type_var: str
+        :param publish_prefix: A common prefix for all published data entity_id.
+        :type publish_prefix: str, optional
+        :param save_entities: if entity data should be saved in data_path/entities
+        :type save_entities: bool, optional
+        :param logger_levels: set logger level, info or debug, to output
+        :type logger_levels: str, optional
+        :param dont_post: dont post to HA
+        :type dont_post: bool, optional
+
+        """
+        # Add a possible prefix to the entity ID
+        entity_id = entity_id.replace(sensor_prefix, sensor_prefix + publish_prefix)
+        # Set the URL
+        if self.hass_url == hass_url:  # If we are using the supervisor API
+            url = self.hass_url + "/states/" + entity_id
+        else:  # Otherwise the Home Assistant Core API it is
+            url = self.hass_url + "api/states/" + entity_id
+        headers = {
+            "Authorization": header_auth + " " + self.long_lived_token,
+            "content-type": header_accept,
+        }
+        # Preparing the data dict to be published
+        if type_var == "cost_fun":
+            if isinstance(data_df.iloc[0], pd.Series):  # if Series extract
+                data_df = data_df.iloc[:, 0]
+            state = np.round(data_df.sum(), 2)
+        elif type_var == "unit_load_cost" or type_var == "unit_prod_price":
+            state = np.round(data_df.loc[data_df.index[idx]], 4)
+        elif type_var == "optim_status":
+            state = data_df.loc[data_df.index[idx]]
+        elif type_var == "mlregressor":
+            state = float(data_df[idx])
+        elif type_var == "categorical":
+            # String/label state (e.g. a deferrable load 'on'/'off'/'variable'
+            # command); the full horizon of labels rides along as an attribute.
+            state = data_df.loc[data_df.index[idx]]
+        else:
+            state = np.round(data_df.loc[data_df.index[idx]], 2)
+        if type_var == "power":
+            data = RetrieveHass.get_attr_data_dict(
+                data_df,
+                idx,
+                entity_id,
+                device_class,
+                unit_of_measurement,
+                friendly_name,
+                "forecasts",
+                state,
+                include_horizon=self.publish_horizon_attributes,
+            )
+        elif type_var == "deferrable":
+            data = RetrieveHass.get_attr_data_dict(
+                data_df,
+                idx,
+                entity_id,
+                device_class,
+                unit_of_measurement,
+                friendly_name,
+                "deferrables_schedule",
+                state,
+                include_horizon=self.publish_horizon_attributes,
+            )
+        elif type_var == "temperature":
+            data = RetrieveHass.get_attr_data_dict(
+                data_df,
+                idx,
+                entity_id,
+                device_class,
+                unit_of_measurement,
+                friendly_name,
+                "predicted_temperatures",
+                state,
+                include_horizon=self.publish_horizon_attributes,
+            )
+        elif type_var == "batt":
+            data = RetrieveHass.get_attr_data_dict(
+                data_df,
+                idx,
+                entity_id,
+                device_class,
+                unit_of_measurement,
+                friendly_name,
+                "battery_scheduled_power",
+                state,
+                include_horizon=self.publish_horizon_attributes,
+            )
+        elif type_var == "SOC":
+            data = RetrieveHass.get_attr_data_dict(
+                data_df,
+                idx,
+                entity_id,
+                device_class,
+                unit_of_measurement,
+                friendly_name,
+                "battery_scheduled_soc",
+                state,
+                include_horizon=self.publish_horizon_attributes,
+            )
+        elif type_var == "unit_load_cost":
+            data = RetrieveHass.get_attr_data_dict(
+                data_df,
+                idx,
+                entity_id,
+                device_class,
+                unit_of_measurement,
+                friendly_name,
+                "unit_load_cost_forecasts",
+                state,
+                decimals=4,
+                include_horizon=self.publish_horizon_attributes,
+            )
+        elif type_var == "unit_prod_price":
+            data = RetrieveHass.get_attr_data_dict(
+                data_df,
+                idx,
+                entity_id,
+                device_class,
+                unit_of_measurement,
+                friendly_name,
+                "unit_prod_price_forecasts",
+                state,
+                decimals=4,
+                include_horizon=self.publish_horizon_attributes,
+            )
+        elif type_var == "mlforecaster":
+            data = RetrieveHass.get_attr_data_dict(
+                data_df,
+                idx,
+                entity_id,
+                device_class,
+                unit_of_measurement,
+                friendly_name,
+                "scheduled_forecast",
+                state,
+                include_horizon=self.publish_horizon_attributes,
+            )
+        elif type_var == "categorical":
+            # A string/label state for interpretable per-load command sensors
+            # (e.g. 'on'/'off'/'variable'); no numeric rounding. The full
+            # horizon of labels rides along as a 'schedule' attribute unless
+            # horizon publication is disabled (#1077), in which case only the
+            # existing scalar state + friendly_name are published.
+            attributes = {"friendly_name": friendly_name}
+            if self.publish_horizon_attributes:
+                list_df = copy.deepcopy(data_df).loc[data_df.index[idx] :].reset_index()
+                list_df.columns = ["timestamps", entity_id]
+                attributes["schedule"] = [
+                    {"date": ts.isoformat(), "value": str(val)}
+                    for ts, val in zip(list_df["timestamps"].tolist(), list_df[entity_id].tolist())
+                ]
+            data = {
+                "state": str(state),
+                "attributes": attributes,
+            }
+        elif type_var == "energy":
+            data = RetrieveHass.get_attr_data_dict(
+                data_df,
+                idx,
+                entity_id,
+                device_class,
+                unit_of_measurement,
+                friendly_name,
+                "heating_demand_forecast",
+                state,
+                include_horizon=self.publish_horizon_attributes,
+            )
+        elif type_var == "optim_status":
+            data = {
+                "state": state,
+                "attributes": {
+                    "friendly_name": friendly_name,
+                },
+            }
+        elif type_var == "mlregressor":
+            attributes = {
+                "device_class": device_class,
+                "unit_of_measurement": unit_of_measurement,
+                "friendly_name": friendly_name,
+            }
+            if device_class in [
+                "power",
+                "temperature",
+                "voltage",
+                "current",
+                "battery",
+                "monetary",
+                "power_factor",
+            ]:
+                attributes["state_class"] = "measurement"
+            elif device_class == "energy":
+                attributes["state_class"] = "total"
+            data = {
+                "state": state,
+                "attributes": attributes,
+            }
+        else:
+            attributes = {
+                "device_class": device_class,
+                "unit_of_measurement": unit_of_measurement,
+                "friendly_name": friendly_name,
+            }
+            if device_class in [
+                "power",
+                "temperature",
+                "voltage",
+                "current",
+                "battery",
+                "monetary",
+                "power_factor",
+            ]:
+                attributes["state_class"] = "measurement"
+            elif device_class == "energy":
+                attributes["state_class"] = "total"
+            data = {
+                "state": f"{state:.2f}",
+                "attributes": attributes,
+            }
+        # Actually post the data
+        if self.get_data_from_file or dont_post:
+            # Create mock response for file mode or dont_post mode
+            self.logger.debug(
+                f"Skipping actual POST (get_data_from_file={self.get_data_from_file}, dont_post={dont_post})"
+            )
+            response_ok = True
+            response_status_code = 200
+        else:
+            # Always use REST API for posting data, regardless of use_websocket setting
+            # Use persistent session for connection reuse (avoids TLS handshake per request)
+            self.logger.debug(f"Posting data to URL: {url}")
+            try:
+                session = await self._get_session()
+                async with session.post(
+                    url,
+                    headers=headers,
+                    data=orjson.dumps(data).decode("utf-8"),
+                    ssl=self.ssl_verify,
+                ) as response:
+                    # Read response body to explicitly release connection immediately
+                    await response.read()
+
+                    # Store response data since we need to access it after the context manager
+                    response_ok = response.ok
+                    response_status_code = response.status
+                    self.logger.debug(
+                        f"HTTP POST response: ok={response_ok}, status={response_status_code}"
+                    )
+            except Exception as e:
+                self.logger.error(f"Failed to post data to {entity_id}: {e}")
+                response_ok = False
+                response_status_code = 500
+
+        # Treating the response status and posting them on the logger
+        if response_ok:
+            if logger_levels == "DEBUG" or dont_post:
+                self.logger.debug("Successfully posted to " + entity_id + " = " + str(state))
+            else:
+                self.logger.info("Successfully posted to " + entity_id + " = " + str(state))
+
+            # If save entities is set, save entity data to /data_path/entities
+            if save_entities:
+                entities_path = self.emhass_conf["data_path"] / "entities"
+
+                # Clarify folder exists
+                pathlib.Path(entities_path).mkdir(parents=True, exist_ok=True)
+
+                # Save entity data to json file
+                result = data_df.to_json(
+                    index="timestamp", orient="index", date_unit="s", date_format="iso"
+                )
+                parsed = orjson.loads(result)
+                # Atomic commit: write to a unique temp file then os.replace, so
+                # a concurrent reader (the continual_publish background task)
+                # always sees a complete document, never the zero-byte window an
+                # in-place truncating write would expose. The uuid suffix keeps
+                # the temp name unique even if the same entity is published
+                # concurrently (this write is not under _metadata_lock).
+                entity_file = entities_path / (entity_id + ".json")
+                tmp_entity_path = entity_file.with_name(
+                    f"{entity_id}.json.{os.getpid()}.{uuid.uuid4().hex}.tmp"
+                )
+                async with aiofiles.open(tmp_entity_path, "w") as file:
+                    await file.write(orjson.dumps(parsed, option=orjson.OPT_INDENT_2).decode())
+                os.replace(tmp_entity_path, entity_file)
+
+                # Save the required metadata to json file. The whole
+                # read-modify-write is serialized with a process-wide lock and
+                # committed via an atomic os.replace, so concurrent publishes
+                # sharing this file can neither interleave nor observe a
+                # truncated/half-written document.
+                metadata_path = entities_path / "metadata.json"
+                async with _metadata_lock:
+                    if os.path.isfile(metadata_path):
+                        async with aiofiles.open(metadata_path) as file:
+                            content = await file.read()
+                        try:
+                            metadata = orjson.loads(content)
+                        except orjson.JSONDecodeError:
+                            self.logger.error(
+                                f"Corrupted metadata file found at {metadata_path}. Creating a new one."
+                            )
+                            metadata = {}
+                            # Quarantine the corrupted file; tolerate it already
+                            # having been moved by a concurrent process.
+                            corrupt_path = entities_path / "metadata_corrupt.json"
+                            try:
+                                os.replace(metadata_path, corrupt_path)
+                            except FileNotFoundError:
+                                pass
+                    else:
+                        metadata = {}
+
+                    # Save entity metadata, key = entity_id
+                    metadata[entity_id] = {
+                        "name": data_df.name,
+                        "device_class": device_class,
+                        "unit_of_measurement": unit_of_measurement,
+                        "friendly_name": friendly_name,
+                        "type_var": type_var,
+                        "optimization_time_step": int(self.freq.seconds / 60),
+                    }
+
+                    # Find lowest frequency to set for continual loop freq
+                    if metadata.get("lowest_time_step") is None or metadata[
+                        "lowest_time_step"
+                    ] > int(self.freq.seconds / 60):
+                        metadata["lowest_time_step"] = int(self.freq.seconds / 60)
+
+                    # Atomic commit: write to a per-process temp file then
+                    # os.replace, so a concurrent reader always sees a complete
+                    # document (old or new, never a partial write).
+                    tmp_path = metadata_path.with_name(f"metadata.json.{os.getpid()}.tmp")
+                    async with aiofiles.open(tmp_path, "w") as file:
+                        await file.write(
+                            orjson.dumps(metadata, option=orjson.OPT_INDENT_2).decode()
+                        )
+                    os.replace(tmp_path, metadata_path)
+
+                    self.logger.debug("Saved " + entity_id + " to json file")
+
+        else:
+            self.logger.warning(
+                f"Failed to post data to {entity_id}. Status code: {response_status_code}"
+            )
+
+        # Create a response object to maintain compatibility
+        class MockResponse:
+            def __init__(self, ok, status_code):
+                self.ok = ok
+                self.status_code = status_code
+
+        mock_response = MockResponse(response_ok, response_status_code)
+        self.logger.debug(f"Completed post_data for {entity_id}")
+        return mock_response, data
+
+    async def post_scalar_sensor(
+        self,
+        entity_id: str,
+        state: float | str,
+        attributes: dict,
+    ) -> bool:
+        """
+        Publish a single read-only scalar sensor with arbitrary attributes.
+
+        A lightweight sibling of :meth:`post_data` for advisory values that are
+        a single number plus a small metadata dict (confidence interval, sample
+        count, last-fit time), rather than a forecast horizon. Reuses the same
+        URL, auth headers, and persistent session, and honours ``get_data_from_file``
+        so tests and file-mode runs never hit the network.
+
+        :param entity_id: Full sensor entity_id (e.g. ``sensor.battery_identified_capacity``).
+        :param state: The scalar state value to publish.
+        :param attributes: Attribute dict to attach (friendly_name, unit, CI, ...).
+        :return: True if the post succeeded (or was skipped in file mode), else False.
+        """
+        if self.hass_url == hass_url:  # supervisor API
+            url = self.hass_url + "/states/" + entity_id
+        else:  # Home Assistant Core API
+            url = self.hass_url + "api/states/" + entity_id
+        headers = {
+            "Authorization": header_auth + " " + self.long_lived_token,
+            "content-type": header_accept,
+        }
+        data = {"state": state, "attributes": attributes}
+        if self.get_data_from_file:
+            self.logger.debug(f"Skipping scalar POST for {entity_id} (get_data_from_file)")
+            return True
+        try:
+            session = await self._get_session()
+            async with session.post(
+                url,
+                headers=headers,
+                data=orjson.dumps(data, option=orjson.OPT_SERIALIZE_NUMPY).decode("utf-8"),
+                ssl=self.ssl_verify,
+            ) as response:
+                await response.read()
+                if response.ok:
+                    self.logger.info(f"Successfully posted to {entity_id} = {state}")
+                    return True
+                self.logger.warning(f"Failed to post {entity_id}. Status code: {response.status}")
+                return False
+        except Exception as e:
+            self.logger.error(f"Failed to post data to {entity_id}: {e}")
+            return False
+
+    def _convert_statistics_to_dataframe(
+        self, stats_data: dict[str, Any], var_list: list[str]
+    ) -> pd.DataFrame:
+        """Convert WebSocket statistics data to DataFrame."""
+        import pandas as pd
+
+        # Initialize empty DataFrame
+        df_final = pd.DataFrame()
+
+        # The websocket manager already extracts the 'result' portion
+        # so stats_data should be directly the entity data dictionary
+
+        for entity_id in var_list:
+            if entity_id not in stats_data:
+                self.logger.warning(f"No statistics data for {entity_id}")
+                continue
+
+            entity_stats = stats_data[entity_id]
+
+            if not entity_stats:
+                continue
+
+            # Convert statistics to DataFrame
+            entity_data = []
+            for _i, stat in enumerate(entity_stats):
+                try:
+                    # Handle timestamp from start time (milliseconds or ISO string)
+                    if isinstance(stat["start"], int | float):
+                        # Convert from milliseconds to datetime with UTC timezone
+                        timestamp = pd.to_datetime(stat["start"], unit="ms", utc=True)
+                    else:
+                        # Assume ISO string
+                        timestamp = pd.to_datetime(stat["start"], utc=True)
+
+                    # Use mean, max, min or sum depending on what's available
+                    value = None
+                    if "mean" in stat and stat["mean"] is not None:
+                        value = stat["mean"]
+                    elif "sum" in stat and stat["sum"] is not None:
+                        value = stat["sum"]
+                    elif "max" in stat and stat["max"] is not None:
+                        value = stat["max"]
+                    elif "min" in stat and stat["min"] is not None:
+                        value = stat["min"]
+
+                    if value is not None:
+                        try:
+                            value = float(value)
+                            entity_data.append({"timestamp": timestamp, entity_id: value})
+                        except (ValueError, TypeError):
+                            self.logger.debug(f"Could not convert value to float: {value}")
+
+                except (KeyError, ValueError, TypeError) as e:
+                    self.logger.debug(f"Skipping invalid statistic for {entity_id}: {e}")
+                    continue
+
+            if entity_data:
+                entity_df = pd.DataFrame(entity_data)
+                entity_df.set_index("timestamp", inplace=True)
+
+                if df_final.empty:
+                    df_final = entity_df
+                else:
+                    df_final = df_final.join(entity_df, how="outer")
+
+        # Process the final DataFrame
+        if not df_final.empty:
+            # Ensure timezone awareness - timestamps should already be UTC from conversion above
+            if df_final.index.tz is None:
+                # If somehow still naive, localize as UTC first then convert
+                df_final.index = df_final.index.tz_localize("UTC").tz_convert(self.time_zone)
+            else:
+                # Convert from existing timezone to target timezone
+                df_final.index = df_final.index.tz_convert(self.time_zone)
+
+            # Sort by index
+            df_final = df_final.sort_index()
+
+            # Resample to frequency if needed
+            try:
+                df_final = df_final.resample(self.freq).mean()
+            except Exception as e:
+                self.logger.warning(f"Could not resample data to {self.freq}: {e}")
+
+            # Forward fill missing values
+            df_final = df_final.ffill()
+
+            # Set frequency for the DataFrame index
+            df_final = set_df_index_freq(df_final)
+
+        return df_final

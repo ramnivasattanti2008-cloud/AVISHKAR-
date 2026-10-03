@@ -1,0 +1,134 @@
+[project]
+name = "emhass"
+dynamic = ["version"]
+description = "EMHASS base plus avishkar_ems: India-ready predictive energy management and P2P surplus dispatch"
+readme = "README.md"
+requires-python = ">=3.10, <3.13"
+authors = [{ name = "David HERNANDEZ TORRES", email = "davidusb@gmail.com" }]
+license = { text = "MIT" }
+keywords = ["energy", "management", "optimization", "hass"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy>=2.0.0, <2.3.0",
+    "scipy>=1.15.0",
+    "pandas>=2.2.0",
+    "pvlib>=0.11.0",
+    "protobuf>=5.29.3",
+    "pytz>=2024.2",
+    "h5py>=3.12.1",
+    "highspy>=1.10.0",
+    "cvxpy>=1.6.0, <1.8.0",
+    "pyyaml>=6.0.2",
+    "tables>=3.10.0",
+    "skforecast>=0.19.1,<0.23.0",
+    "waitress>=3.0.2",
+    "plotly>=6.0.0",
+    "gunicorn>=23.0.0",
+    "quart",
+    "aiofiles",
+    "jinja2",
+    "asyncio",
+    "aiohttp",
+    "orjson",
+    "websockets",
+    "uvicorn==0.30.6",
+    "influxdb>=5.3.1",
+]
+
+[project.optional-dependencies]
+app = ["streamlit>=1.40"]
+docs = ["sphinx", "pydata-sphinx-theme", "sphinx-design", "myst-parser", "sphinx-llms-txt"]
+test = [
+    "pytest",
+    "pytz",
+    "coverage",
+    "snakeviz",
+    "ruff",
+    "tabulate",
+    "hatchling",
+    "aioresponses",
+    # aioresponses 0.7.8 (latest) builds an aiohttp ClientResponse without the
+    # stream_writer argument that aiohttp>=3.13 made required, so the mock-based
+    # tests fail under aiohttp 3.13+. Cap aiohttp here (test extra only) until
+    # aioresponses ships 3.13 support; production installs stay unpinned.
+    "aiohttp<3.13",
+]
+dev = ["ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.workspace]
+members = ["emhass"]
+
+[tool.uv.sources]
+emhass = { workspace = true }
+
+[tool.uv]
+default-groups = "all"
+package = true
+override-dependencies = ["yarl<1.24"]
+
+[tool.hatch.version]
+path = "src/emhass/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/emhass", "src/avishkar_ems"]
+package-data = { "emhass" = [
+    "templates/*",
+    "static/*",
+    "img/*",
+    "data/cec_modules.pbz2",
+    "data/cec_inverters.pbz2",
+    "data/associations.csv",
+    "data/config_defaults.json",
+] }
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/emhass/*.py",
+    "src/avishkar_ems/*.py",
+    "src/emhass/templates/",
+    "src/emhass/static/",
+    "src/emhass/img/",
+    "src/emhass/data/cec_modules.pbz2",
+    "src/emhass/data/cec_inverters.pbz2",
+    "src/emhass/data/associations.csv",
+    "src/emhass/data/config_defaults.json",
+]
+
+[project.scripts]
+emhass = "emhass.command_line:main_sync"
+
+[project.urls]
+Homepage = "https://github.com/davidusb-geek/emhass"
+Source = "https://github.com/davidusb-geek/emhass"
+Issues = "https://github.com/davidusb-geek/emhass/issues"
+Documentation = "https://emhass.readthedocs.io/en/latest/"
+Community = "https://community.home-assistant.io/t/emhass-an-energy-management-for-home-assistant"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "C", "B", "Q", "UP", "YTT", "PYI"]
+ignore = ["E501", "B008", "B905", "C901"]
+
+[dependency-groups]
+dev = ["emhass"]
+
+[tool.ruff]
+target-version = "py311"
+src = ["src", "tests"]
+fix = true
+show-fixes = true
+
+line-length = 100

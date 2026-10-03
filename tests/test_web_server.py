@@ -1,0 +1,976 @@
+import logging
+import pathlib
+import pickle
+import tempfile
+import unittest
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import orjson
+import pandas as pd
+
+from emhass import web_server
+
+# Disable logging propagation to avoid spamming console during tests
+logging.getLogger("quart.app").setLevel(logging.CRITICAL)
+logging.getLogger("emhass").setLevel(logging.CRITICAL)
+
+
+class TestWebServer(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        # Create a test client
+        self.client = web_server.app.test_client()
+        # Mock the global emhass_conf in web_server module
+        self.mock_conf = {
+            "data_path": pathlib.Path("/tmp/emhass/data"),
+            "config_path": pathlib.Path("/tmp/emhass/config.json"),
+            "defaults_path": pathlib.Path("/tmp/emhass/defaults.json"),
+            "associations_path": pathlib.Path("/tmp/emhass/assoc.csv"),
+            "legacy_config_path": pathlib.Path("/tmp/emhass/legacy.yaml"),
+            "root_path": pathlib.Path("/tmp/emhass/root"),
+        }
+        # Save original config to prevent leaks
+        self.original_conf = web_server.emhass_conf.copy()
+        web_server.emhass_conf = self.mock_conf
+        # Mock params_secrets
+        web_server.params_secrets = {"hass_url": "http://localhost", "long_lived_token": "token"}
+        # Save original handlers to restore later
+        self.original_handlers = web_server.app.logger.handlers[:]
+
+    async def asyncTearDown(self):
+        # Restore original config
+        web_server.emhass_conf = self.original_conf
+        # Restore original log handlers to prevent 'MagicMock' level errors in subsequent tests
+        web_server.app.logger.handlers = self.original_handlers
+
+    def test_mark_safe(self):
+        self.assertEqual(web_server.mark_safe(None), "")
+        self.assertEqual(web_server.mark_safe("<b>test</b>"), "<b>test</b>")
+
+    @patch("emhass.web_server.aiofiles.open")
+    @patch("os.path.exists")
+    async def test_index(self, mock_exists, mock_file):
+        mock_exists.return_value = True
+        mock_data = pickle.dumps({"table1": "<html>table</html>"})
+        f = AsyncMock()
+        f.read.return_value = mock_data
+        mock_file.return_value.__aenter__.return_value = f
+        response = await self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        result = await response.get_data(as_text=True)
+        self.assertIn("EMHASS", result)
+
+    @patch("emhass.web_server.aiofiles.open")
+    @patch("os.path.exists")
+    async def test_configuration(self, mock_exists, mock_file):
+        mock_exists.return_value = True
+        mock_data = pickle.dumps((pathlib.Path("/config"), {"some": "param"}))
+        f = AsyncMock()
+        f.read.return_value = mock_data
+        mock_file.return_value.__aenter__.return_value = f
+        response = await self.client.get("/configuration")
+        self.assertEqual(response.status_code, 200)
+
+    @patch("emhass.web_server.aiofiles.open")
+    @patch("os.path.exists")
+    async def test_template_action(self, mock_exists, mock_file):
+        mock_exists.return_value = True
+        mock_data = pickle.dumps({"table1": "data"})
+        f = AsyncMock()
+        f.read.return_value = mock_data
+        mock_file.return_value.__aenter__.return_value = f
+        response = await self.client.get("/template")
+        self.assertEqual(response.status_code, 200)
+
+    @patch("emhass.web_server.build_config")
+    @patch("emhass.web_server.build_params")
+    @patch("emhass.web_server.param_to_config")
+    async def test_get_config(self, mock_p2c, mock_build_params, mock_build_config):
+        mock_build_config.return_value = {"some": "config"}
+        mock_build_params.return_value = {"some": "params"}
+        mock_p2c.return_value = {"final": "config"}
+        response = await self.client.get("/get-config")
+        self.assertEqual(response.status_code, 200)
+        data = await response.get_json()
+        self.assertEqual(data, {"final": "config"})
+
+    @patch("emhass.web_server.build_config")
+    @patch("emhass.web_server.build_params")
+    @patch("emhass.web_server.param_to_config")
+    async def test_config_get_defaults(self, mock_p2c, mock_build_params, mock_build_config):
+        mock_build_config.return_value = {"default": "config"}
+        mock_build_params.return_value = {"default": "params"}
+        mock_p2c.return_value = {"final": "default"}
+        response = await self.client.get("/get-config/defaults")
+        self.assertEqual(response.status_code, 200)
+        data = await response.get_json()
+        self.assertEqual(data, {"final": "default"})
+
+    @patch("emhass.web_server.build_legacy_config_params")
+    @patch("emhass.web_server.build_params")
+    @patch("emhass.web_server.param_to_config")
+    async def test_json_convert(self, mock_p2c, mock_build_params, mock_legacy):
+        mock_legacy.return_value = None
+        mock_build_params.return_value = {"converted": "params"}
+        mock_p2c.return_value = {"converted": "config"}
+        # Test successful conversion
+        yaml_data = b"foo: bar"
+        response = await self.client.post("/get-json", data=yaml_data)
+        self.assertEqual(response.status_code, 200)
+        data = await response.get_data()
+        self.assertEqual(orjson.loads(data), {"converted": "config"})
+        # Test invalid YAML
+        # Expect 500 because the app currently lets YAMLError propagate
+        response = await self.client.post("/get-json", data=b": - invalid")
+        self.assertEqual(response.status_code, 500)
+
+    @patch("emhass.web_server.aiofiles.open")
+    @patch("os.path.exists")
+    @patch("emhass.web_server.build_params")
+    @patch("emhass.web_server.param_to_config")
+    async def test_parameter_set(self, mock_p2c, mock_build_params, mock_exists, mock_file):
+        mock_exists.return_value = True
+        f_defaults = AsyncMock()
+        f_defaults.read.return_value = orjson.dumps({"default": 1})
+        f_write = AsyncMock()
+        mock_file.return_value.__aenter__.side_effect = [f_defaults, f_write, f_write]
+        mock_build_params.return_value = {"new": "params"}
+        mock_p2c.return_value = {"new": "config"}
+        response = await self.client.post("/set-config", json={"some": "data"})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(f_write.write.called)
+
+    @patch("emhass.web_server.set_input_data_dict")
+    @patch("emhass.web_server.perfect_forecast_optim")
+    @patch("emhass.web_server._save_injection_dict")
+    @patch("emhass.web_server.get_injection_dict")
+    @patch("emhass.web_server._load_params_and_runtime")
+    async def test_action_perfect_optim(
+        self, mock_load, mock_get_inject, mock_save, mock_optim, mock_set_input
+    ):
+        mock_load.return_value = ({"optim_conf": {}}, "profit", "{}")
+        mock_set_input.return_value = {"retrieve_hass_conf": {"continual_publish": False}}
+        mock_optim.return_value = pd.DataFrame()
+        mock_get_inject.return_value = {}
+        response = await self.client.post("/action/perfect-optim", json={})
+        self.assertEqual(response.status_code, 200)
+        mock_optim.assert_called_once()
+
+    @patch("emhass.web_server.export_influxdb_to_csv")
+    @patch("emhass.web_server._load_params_and_runtime")
+    async def test_action_export_csv(self, mock_load, mock_export):
+        mock_load.return_value = ({}, "profit", "{}")
+        mock_export.return_value = True
+        response = await self.client.post("/action/export-influxdb-to-csv", json={})
+        self.assertEqual(response.status_code, 200)
+
+    @patch("emhass.web_server.grab_log")
+    @patch("emhass.web_server.export_influxdb_to_csv")
+    @patch("emhass.web_server._load_params_and_runtime")
+    async def test_action_export_csv_failure(self, mock_load, mock_export, mock_grab_log):
+        mock_load.return_value = ({}, "profit", "{}")
+        mock_export.return_value = False
+        mock_grab_log.return_value = ["Error log"]
+        response = await self.client.post("/action/export-influxdb-to-csv", json={})
+        # App returns 400 for failures in this specific action
+        self.assertEqual(response.status_code, 400)
+
+    @patch("emhass.web_server.set_input_data_dict")
+    @patch("emhass.web_server.forecast_model_fit")
+    @patch("emhass.web_server.get_injection_dict_forecast_model_fit")
+    @patch("emhass.web_server._save_injection_dict")
+    @patch("emhass.web_server._load_params_and_runtime")
+    async def test_action_forecast_model_fit(
+        self, mock_load, mock_save, mock_get_inject, mock_fit, mock_set_input
+    ):
+        mock_load.return_value = ({}, "profit", "{}")
+        mock_set_input.return_value = {"retrieve_hass_conf": {"continual_publish": False}}
+        mock_fit.return_value = (pd.DataFrame(), None, MagicMock())
+        mock_get_inject.return_value = {}
+        response = await self.client.post("/action/forecast-model-fit", json={})
+        self.assertEqual(response.status_code, 200)
+        mock_fit.assert_called_once()
+
+    @patch("emhass.web_server.set_input_data_dict")
+    @patch("emhass.web_server.forecast_model_predict")
+    @patch("emhass.web_server._save_injection_dict")
+    @patch("emhass.web_server._load_params_and_runtime")
+    async def test_action_forecast_model_predict(
+        self, mock_load, mock_save, mock_predict, mock_set_input
+    ):
+        mock_load.return_value = ({}, "profit", "{}")
+        mock_set_input.return_value = {"retrieve_hass_conf": {"continual_publish": False}}
+        # Success
+        mock_predict.return_value = pd.DataFrame({"col": [1, 2]})
+        response = await self.client.post("/action/forecast-model-predict", json={})
+        self.assertEqual(response.status_code, 200)
+        # Fail
+        mock_predict.return_value = None
+        # Mock check_file_log to return False, simulating no error in log, but code returns 400
+        with patch("emhass.web_server.check_file_log", new=AsyncMock(return_value=False)):
+            response = await self.client.post("/action/forecast-model-predict", json={})
+            self.assertEqual(response.status_code, 400)
+
+    @patch("emhass.web_server.set_input_data_dict")
+    @patch("emhass.web_server.forecast_model_tune")
+    @patch("emhass.web_server.get_injection_dict_forecast_model_tune")
+    @patch("emhass.web_server._save_injection_dict")
+    @patch("emhass.web_server._load_params_and_runtime")
+    async def test_action_forecast_model_tune(
+        self, mock_load, mock_save, mock_get_inject, mock_tune, mock_set_input
+    ):
+        mock_load.return_value = ({}, "profit", "{}")
+        mock_set_input.return_value = {"retrieve_hass_conf": {"continual_publish": False}}
+        mock_get_inject.return_value = {}
+        # Success case
+        mock_tune.return_value = (pd.DataFrame(), MagicMock())
+        response = await self.client.post("/action/forecast-model-tune", json={})
+        self.assertEqual(response.status_code, 200)
+        # Fail case
+        mock_tune.return_value = (None, None)
+        with patch("emhass.web_server.check_file_log", new=AsyncMock(return_value=False)):
+            response = await self.client.post("/action/forecast-model-tune", json={})
+            self.assertEqual(response.status_code, 400)
+
+    @patch("emhass.web_server.set_input_data_dict")
+    @patch("emhass.web_server.regressor_model_fit")
+    @patch("emhass.web_server._load_params_and_runtime")
+    async def test_action_regressor_model_fit(self, mock_load, mock_fit, mock_set_input):
+        mock_load.return_value = ({}, "profit", "{}")
+        mock_set_input.return_value = {"retrieve_hass_conf": {"continual_publish": False}}
+        mock_fit.return_value = True
+        response = await self.client.post("/action/regressor-model-fit", json={})
+        self.assertEqual(response.status_code, 200)
+
+    @patch("emhass.web_server.set_input_data_dict")
+    @patch("emhass.web_server.regressor_model_predict")
+    @patch("emhass.web_server._load_params_and_runtime")
+    async def test_action_regressor_model_predict(self, mock_load, mock_predict, mock_set_input):
+        mock_load.return_value = ({}, "profit", "{}")
+        mock_set_input.return_value = {"retrieve_hass_conf": {"continual_publish": False}}
+        mock_predict.return_value = True
+        response = await self.client.post("/action/regressor-model-predict", json={})
+        self.assertEqual(response.status_code, 200)
+
+    @patch("emhass.web_server.aiofiles.open")
+    async def test_check_file_log(self, mock_file):
+        # Mock the path object in global config
+        mock_path = MagicMock()
+        web_server.emhass_conf["data_path"] = mock_path
+        # Configure file path behavior
+        mock_file_path = MagicMock()
+        mock_path.__truediv__.return_value = mock_file_path
+        # Case 1: File exists and has error
+        mock_file_path.exists.return_value = True
+        f = AsyncMock()
+        # FIX: The split logic in check_file_log splits on " ".
+        # "ERROR: problem" -> ["ERROR:", "problem"]. "ERROR:" != "ERROR"
+        # "ERROR - problem" -> ["ERROR", "-", "problem"]. "ERROR" == "ERROR"
+        f.read.return_value = "INFO: normal\nERROR - bad things\n"
+        mock_file.return_value.__aenter__.return_value = f
+        self.assertTrue(await web_server.check_file_log())
+        # Case 2: File exists, no error
+        f.read.return_value = "INFO: normal\n"
+        self.assertFalse(await web_server.check_file_log())
+        # Case 3: File missing
+        mock_file_path.exists.return_value = False
+        result = await web_server.check_file_log()
+        self.assertFalse(result)
+
+    @patch("emhass.web_server.aiofiles.open")
+    async def test_grab_log(self, mock_file):
+        mock_path = MagicMock()
+        web_server.emhass_conf["data_path"] = mock_path
+        mock_file_path = MagicMock()
+        mock_path.__truediv__.return_value = mock_file_path
+        mock_file_path.exists.return_value = True
+        f = AsyncMock()
+        f.read.return_value = "INFO: step 1\nINFO: step 2\n"
+        mock_file.return_value.__aenter__.return_value = f
+        lines = await web_server.grab_log("step 1")
+        self.assertIn("INFO: step 2", lines)
+
+    @patch("emhass.web_server.aiofiles.open")
+    async def test_clear_file_log(self, mock_file):
+        mock_path = MagicMock()
+        web_server.emhass_conf["data_path"] = mock_path
+        mock_file_path = MagicMock()
+        mock_path.__truediv__.return_value = mock_file_path
+        mock_file_path.exists.return_value = True
+        f = AsyncMock()
+        mock_file.return_value.__aenter__.return_value = f
+        await web_server.clear_file_log()
+        f.write.assert_called_with("")
+
+    @patch("emhass.web_server.initialize")
+    async def test_before_serving(self, mock_init):
+        # Happy path
+        await web_server.before_serving()
+        mock_init.assert_called_once()
+        # Error path
+        mock_init.side_effect = Exception("init failed")
+        # Should not raise
+        await web_server.before_serving()
+
+    @patch("emhass.web_server.is_connected")
+    @patch("emhass.web_server.close_global_connection")
+    async def test_after_serving(self, mock_close, mock_is_conn):
+        # Connected
+        mock_is_conn.return_value = True
+        await web_server.after_serving()
+        mock_close.assert_called_once()
+        # Not connected
+        mock_is_conn.return_value = False
+        mock_close.reset_mock()
+        await web_server.after_serving()
+        mock_close.assert_not_called()
+
+    @patch("pathlib.Path.exists")
+    @patch("emhass.web_server.aiofiles.open")
+    @patch("emhass.web_server.set_input_data_dict", new_callable=AsyncMock)
+    @patch("emhass.web_server.dayahead_forecast_optim", new_callable=AsyncMock)
+    @patch("emhass.web_server.get_injection_dict")
+    @patch("emhass.web_server.app.logger")
+    async def test_action_malformed_json(
+        self,
+        mock_logger,
+        mock_get_inject,
+        mock_optim,
+        mock_set_input,
+        mock_file,
+        mock_path_exists,
+    ):
+        """
+        Test that sending malformed JSON (e.g. Python syntax 'False' instead of 'false')
+        triggers a logged error and proceeds with empty runtime parameters.
+        """
+        mock_path_exists.return_value = True
+
+        # Mock .read() for everything
+        def aiofiles_side_effect(file, mode="r", *args, **kwargs):
+            context_mock = AsyncMock()
+            file_handle = AsyncMock()
+            context_mock.__aenter__.return_value = file_handle
+            filename = str(file)
+            if "params.pkl" in filename:
+                content = pickle.dumps((pathlib.Path("/config"), {"optim_conf": {}}))
+                file_handle.read.return_value = content
+            else:
+                log_content = (
+                    "2024-01-01 12:00:00,000 INFO >> Obtaining params\n"
+                    "2024-01-01 12:00:01,000 INFO >> Setting input data dict\n"
+                    "2024-01-01 12:00:02,000 INFO >> Performing optimization..."
+                )
+                file_handle.read.return_value = log_content
+            return context_mock
+
+        mock_file.side_effect = aiofiles_side_effect
+        mock_set_input.return_value = {
+            "params": {},
+            "retrieve_hass_conf": {"continual_publish": False},
+        }
+        mock_optim.return_value = MagicMock()
+        mock_get_inject.return_value = {
+            "optim_status": "Optimal",
+            "table1": "<div>Table</div>",
+            "div1": "<div>Plot1</div>",
+            "div2": "<div>Plot2</div>",
+        }
+        # Execute Test
+        response = await self.client.post(
+            "/action/dayahead-optim",
+            data='{"perform_backtest": False}',
+            headers={"Content-Type": "application/json"},
+        )
+        # Assertions
+        self.assertEqual(response.status_code, 200)
+        log_found = False
+        for call in mock_logger.error.call_args_list:
+            args, _ = call
+            if args and "Error parsing runtime params JSON" in str(args[0]):
+                log_found = True
+                break
+        self.assertTrue(log_found, "Expected error log message not found")
+        # Verify downstream call received empty string/dict for runtime params
+        call_args = mock_set_input.call_args
+        # runtimeparams is the 4th argument (index 3)
+        self.assertEqual(call_args[0][3], "{}")
+
+    @patch("pathlib.Path.exists")
+    @patch("emhass.web_server.aiofiles.open")
+    @patch("emhass.web_server.set_input_data_dict", new_callable=AsyncMock)
+    @patch("emhass.web_server.dayahead_forecast_optim", new_callable=AsyncMock)
+    @patch("emhass.web_server.get_injection_dict")
+    @patch("emhass.web_server.app.logger")
+    async def test_action_valid_json(
+        self,
+        mock_logger,
+        mock_get_inject,
+        mock_optim,
+        mock_set_input,
+        mock_file,
+        mock_path_exists,
+    ):
+        """Test that sending valid JSON works correctly."""
+        mock_path_exists.return_value = True
+
+        # Reuse side effect
+        def aiofiles_side_effect(file, mode="r", *args, **kwargs):
+            context_mock = AsyncMock()
+            file_handle = AsyncMock()
+            context_mock.__aenter__.return_value = file_handle
+            if "params.pkl" in str(file):
+                content = pickle.dumps((pathlib.Path("/config"), {"optim_conf": {}}))
+                file_handle.read.return_value = content
+            else:
+                file_handle.read.return_value = "INFO >> Success"
+            return context_mock
+
+        mock_file.side_effect = aiofiles_side_effect
+        mock_set_input.return_value = {
+            "params": {},
+            "retrieve_hass_conf": {"continual_publish": False},
+        }
+        mock_optim.return_value = MagicMock()
+        mock_get_inject.return_value = {"optim_status": "Optimal"}
+        # Execute Test with valid JSON
+        valid_json_str = '{"perform_backtest": false}'
+        response = await self.client.post(
+            "/action/dayahead-optim",
+            data=valid_json_str,
+            headers={"Content-Type": "application/json"},
+        )
+        self.assertEqual(response.status_code, 200)
+        # Verify no error was logged
+        self.assertFalse(mock_logger.error.called)
+        # Verify runtime params were passed correctly
+        call_args = mock_set_input.call_args
+        actual_arg = call_args[0][3]
+        # Compare as dictionaries to ignore whitespace differences (e.g. " : " vs ":")
+        self.assertEqual(orjson.loads(actual_arg), orjson.loads(valid_json_str))
+
+    @patch("os.getenv")
+    async def test_setup_paths(self, mock_getenv):
+        # Configure env vars
+        env_vars = {
+            "DATA_PATH": "/env/data",
+            "CONFIG_PATH": "/env/config.json",
+            "OPTIONS_PATH": "/env/options.json",
+            "ROOT_PATH": "/env/root",
+            "DEFAULTS_PATH": "/env/defaults.json",
+            "ASSOCIATIONS_PATH": "/env/assoc.csv",
+            "LEGACY_CONFIG_PATH": "/env/legacy.yaml",
+        }
+        mock_getenv.side_effect = lambda key, default=None: env_vars.get(key, default)
+        # Run the helper
+        paths = await web_server._setup_paths()
+        # Unpack results
+        (config_path, options_path, defaults_path, assoc_path, legacy_path, root_path) = paths
+        # Assertions: Compare against pathlib objects to handle OS separators automatically
+        self.assertEqual(config_path, pathlib.Path("/env/config.json"))
+        self.assertEqual(web_server.emhass_conf["data_path"], pathlib.Path("/env/data"))
+        self.assertEqual(web_server.emhass_conf["root_path"], pathlib.Path("/env/root"))
+
+    @patch("pathlib.Path.mkdir")
+    @patch("os.path.isdir")
+    def test_validate_data_path(self, mock_isdir, mock_mkdir):
+        root = pathlib.Path("/root")
+        # Case 1: Path exists
+        web_server.emhass_conf["data_path"] = pathlib.Path("/existing/data")
+        mock_isdir.return_value = True
+        web_server._validate_data_path(root)
+        self.assertEqual(web_server.emhass_conf["data_path"], pathlib.Path("/existing/data"))
+        # Case 2: Path missing, fallback to /data/ exists
+        web_server.emhass_conf["data_path"] = pathlib.Path("/missing/data")
+        # isdir side effect: First call (check emhass_conf) -> False, Second call (check /data/) -> True
+        mock_isdir.side_effect = [False, True]
+        web_server._validate_data_path(root)
+        self.assertEqual(web_server.emhass_conf["data_path"], pathlib.Path("/data"))
+        # Case 3: Path missing, fallback missing -> create root/data
+        web_server.emhass_conf["data_path"] = pathlib.Path("/missing/data")
+        mock_isdir.side_effect = [False, False]
+        web_server._validate_data_path(root)
+        self.assertEqual(web_server.emhass_conf["data_path"], root / "data/")
+        mock_mkdir.assert_called()
+
+    @patch("emhass.web_server.get_websocket_client")
+    async def test_initialize_connections(self, mock_ws_client):
+        # Re-enable logging for this test so assertLogs can capture output
+        logger = logging.getLogger("emhass")
+        original_level = logger.level
+        logger.setLevel(logging.INFO)
+        try:
+            # Case 1: Websocket Enabled - Success
+            params = {"retrieve_hass_conf": {"use_websocket": True}}
+            await web_server._initialize_connections(params)
+            mock_ws_client.assert_called()
+            # Case 2: Websocket Enabled - Failure
+            mock_ws_client.side_effect = ConnectionError("Connection fail")
+            with self.assertRaises(ConnectionError):
+                await web_server._initialize_connections(params)
+            # Case 3: InfluxDB Enabled
+            mock_ws_client.reset_mock()
+            params = {"retrieve_hass_conf": {"use_websocket": False, "use_influxdb": True}}
+            with self.assertLogs("emhass", level="INFO") as cm:
+                await web_server._initialize_connections(params)
+            self.assertTrue(any("InfluxDB mode enabled" in log for log in cm.output))
+            mock_ws_client.assert_not_called()
+            # Case 4: Neither (REST API)
+            params = {"retrieve_hass_conf": {"use_websocket": False, "use_influxdb": False}}
+            with self.assertLogs("emhass", level="INFO") as cm:
+                await web_server._initialize_connections(params)
+            self.assertTrue(any("using REST API" in log for log in cm.output))
+        finally:
+            # Restore original logging level
+            logger.setLevel(original_level)
+
+    @patch("emhass.web_server.build_config", new_callable=AsyncMock)
+    @patch("os.getenv")
+    async def test_build_configuration(self, mock_getenv, mock_build_config):
+        # Setup paths
+        c_path = pathlib.Path("config.json")
+        l_path = pathlib.Path("legacy.yaml")
+        d_path = pathlib.Path("defaults.json")
+        # Test 1: Success Path
+        mock_build_config.return_value = {"costfun": "profit", "logging_level": "WARNING"}
+        # Mock getenv to return 'DEBUG' for LOGGING_LEVEL to trigger the debug branch
+        mock_getenv.side_effect = lambda key, default=None: (
+            "DEBUG" if key == "LOGGING_LEVEL" else default
+        )
+        config, costfun, log_level = await web_server._build_configuration(c_path, l_path, d_path)
+        self.assertEqual(config["costfun"], "profit")
+        self.assertEqual(log_level, "DEBUG")  # Overridden by env
+        self.assertEqual(web_server.app.logger.level, logging.DEBUG)
+        # Test 2: Failure Path (build_config returns False)
+        mock_build_config.return_value = False
+        with self.assertRaises(Exception) as context:
+            await web_server._build_configuration(c_path, l_path, d_path)
+        self.assertTrue("Failed to find default config" in str(context.exception))
+
+    @patch("emhass.web_server.build_secrets", new_callable=AsyncMock)
+    @patch("os.getenv")
+    async def test_setup_secrets(self, mock_getenv, mock_build_secrets):
+        mock_getenv.return_value = "/mock/secrets.yaml"
+        # Return a mock emhass_conf and mock secrets dict
+        mock_build_secrets.return_value = (
+            web_server.emhass_conf,
+            {"server_ip": "192.168.1.100", "test_key": "123"},
+        )
+        args = {"url": "http://ha", "key": "abc", "no_response": True}
+        options_path = pathlib.Path("/mock/options.json")
+        server_ip = await web_server._setup_secrets(args, options_path)
+        self.assertEqual(server_ip, "192.168.1.100")
+        self.assertEqual(web_server.params_secrets["test_key"], "123")
+        # Ensure the global emhass_conf was updated with the secrets path
+        self.assertEqual(web_server.emhass_conf["secrets_path"], pathlib.Path("/mock/secrets.yaml"))
+
+    @patch("pathlib.Path.exists")
+    @patch("emhass.web_server.aiofiles.open")
+    async def test_load_injection_dict(self, mock_aio_open, mock_exists):
+        # Test 1: File doesn't exist
+        mock_exists.return_value = False
+        result = await web_server._load_injection_dict()
+        self.assertIsNone(result)
+        # Test 2: File exists
+        mock_exists.return_value = True
+        mock_file = AsyncMock()
+        mock_data = {"test_injection": "data"}
+        mock_file.read.return_value = pickle.dumps(mock_data)
+        mock_aio_open.return_value.__aenter__.return_value = mock_file
+        result = await web_server._load_injection_dict()
+        self.assertEqual(result, mock_data)
+
+    @patch("os.path.exists")
+    @patch("emhass.web_server.aiofiles.open")
+    @patch("emhass.web_server.build_params", new_callable=AsyncMock)
+    async def test_build_and_save_params(self, mock_build_params, mock_aio_open, mock_os_exists):
+        config = {"some": "config"}
+        c_path = pathlib.Path("/config.json")
+        # Test 1: Success Path
+        mock_build_params.return_value = {"optim_conf": {}}
+        mock_os_exists.return_value = True
+        mock_file = AsyncMock()
+        mock_aio_open.return_value.__aenter__.return_value = mock_file
+        params = await web_server._build_and_save_params(config, "cost", "INFO", c_path)
+        self.assertEqual(params["optim_conf"]["costfun"], "cost")
+        self.assertEqual(params["optim_conf"]["logging_level"], "INFO")
+        mock_file.write.assert_called_once()
+        # Test 2: build_params fails
+        mock_build_params.return_value = False
+        with self.assertRaises(Exception) as context:
+            await web_server._build_and_save_params(config, "cost", "INFO", c_path)
+        self.assertTrue("error has occurred while building params" in str(context.exception))
+        # Test 3: data_path missing
+        mock_build_params.return_value = {"optim_conf": {}}
+        mock_os_exists.return_value = False
+        with self.assertRaises(Exception) as context:
+            await web_server._build_and_save_params(config, "cost", "INFO", c_path)
+        self.assertTrue("missing" in str(context.exception))
+
+    @patch("emhass.web_server.clear_file_log", new_callable=AsyncMock)
+    @patch("logging.FileHandler")
+    @patch("emhass.web_server.app.logger")
+    async def test_configure_logging(self, mock_logger, mock_file_handler, mock_clear_log):
+        # We test a few logging levels to ensure the if/elif block is fully covered
+        levels_to_test = {
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+            "UNKNOWN": logging.DEBUG,  # The else block defaults to DEBUG
+        }
+        for level_str, expected_level in levels_to_test.items():
+            await web_server._configure_logging(level_str)
+            # Verify the patched logger received the correct setLevel call
+            mock_logger.setLevel.assert_called_with(expected_level)
+        # Ensure clear_file_log was called during setup
+        self.assertEqual(mock_clear_log.call_count, len(levels_to_test))
+        # Ensure file handler was attached
+        self.assertTrue(mock_file_handler.called)
+        # Ensure propagate was set to False on the mock, sparing our real logger!
+        self.assertFalse(mock_logger.propagate)
+
+    @patch("os.path.exists")
+    @patch("os.listdir")
+    @patch("os.remove")
+    def test_cleanup_entities(self, mock_remove, mock_listdir, mock_exists):
+        # Notice this is a normal `def`, not `async def`, because _cleanup_entities is synchronous
+        # Test 1: Directory doesn't exist
+        mock_exists.return_value = False
+        ent_path = web_server._cleanup_entities()
+        self.assertEqual(ent_path, web_server.emhass_conf["data_path"] / "entities")
+        mock_listdir.assert_not_called()
+        # Test 2: Directory exists, has files
+        mock_exists.return_value = True
+        mock_listdir.return_value = ["sensor1.json", "sensor2.json"]
+        web_server._cleanup_entities()
+        # Should have called remove twice (once for each file)
+        self.assertEqual(mock_remove.call_count, 2)
+
+
+class TestAPIV1LastRun(unittest.IsolatedAsyncioTestCase):
+    """Integration tests for GET /api/v1/last-run (AC-3)."""
+
+    async def asyncSetUp(self):
+        self.client = web_server.app.test_client()
+        self.original_conf = web_server.emhass_conf.copy()
+        self.tmp_path = pathlib.Path(tempfile.mkdtemp())
+        web_server.emhass_conf = {
+            "data_path": self.tmp_path,
+        }
+        from emhass import last_run
+
+        last_run._cache = None
+
+    async def asyncTearDown(self):
+        web_server.emhass_conf = self.original_conf
+        from emhass import last_run
+
+        last_run._cache = None
+
+    async def test_api_v1_last_run_no_run(self):
+        """GET before any optim returns 200 with status='no-run' and nullable fields."""
+        import json
+
+        from emhass import last_run
+
+        last_run._cache = None
+
+        resp = await self.client.get("/api/v1/last-run")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.headers.get("Cache-Control"), "no-store")
+        body = json.loads(await resp.get_data())
+        self.assertEqual(body["status"], "no-run")
+        self.assertIsNone(body["timestamp"])
+        self.assertIsNone(body["action"])
+        self.assertIsNone(body["stage_times"])
+        self.assertIsNone(body["duration_total_seconds"])
+        self.assertIsNone(body["infeasible"])
+        self.assertIsNone(body["error_message"])
+        self.assertIn("emhass_version", body)
+        self.assertIn("schema_version", body)
+
+    async def test_api_v1_last_run_after_record(self):
+        """After last_run.record() runs, GET returns the snapshot with status='ok'."""
+        import json
+
+        from emhass import last_run
+
+        last_run._cache = None
+        last_run.record(
+            self.tmp_path,
+            action="naive-mpc-optim",
+            stage_times={"pv_forecast": 1.2, "load_forecast": 0.5},
+            optim_status="Optimal",
+            infeasible=False,
+            duration_total_seconds=3.7,
+            schema_version="1.0",
+        )
+
+        resp = await self.client.get("/api/v1/last-run")
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(await resp.get_data())
+        self.assertEqual(body["status"], "ok")
+        self.assertEqual(body["action"], "naive-mpc-optim")
+        self.assertEqual(body["stage_times"], {"pv_forecast": 1.2, "load_forecast": 0.5})
+        self.assertEqual(body["duration_total_seconds"], 3.7)
+        self.assertFalse(body["infeasible"])
+
+    async def test_api_v1_last_run_infeasible(self):
+        """Infeasible solver result is surfaced as status='infeasible' with infeasible flag."""
+        import json
+
+        from emhass import last_run
+
+        last_run._cache = None
+        last_run.record(
+            self.tmp_path,
+            action="dayahead-optim",
+            stage_times={"optim_solve": 2.1},
+            optim_status="Infeasible",
+            infeasible=True,
+            duration_total_seconds=2.5,
+            schema_version="1.0",
+        )
+
+        resp = await self.client.get("/api/v1/last-run")
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(await resp.get_data())
+        self.assertEqual(body["status"], "infeasible")
+        self.assertEqual(body["action"], "dayahead-optim")
+        self.assertIs(body["infeasible"], True)
+        self.assertIsNone(body["error_message"])
+
+    async def test_api_v1_last_run_error(self):
+        """Unknown / non-Optimal-non-Infeasible status is surfaced as status='error'."""
+        import json
+
+        from emhass import last_run
+
+        last_run._cache = None
+        last_run.record(
+            self.tmp_path,
+            action="perfect-optim",
+            stage_times={},
+            optim_status="Unknown",
+            infeasible=False,
+            duration_total_seconds=0.5,
+            schema_version="1.0",
+            error_message="Solver failed to converge",
+        )
+
+        resp = await self.client.get("/api/v1/last-run")
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(await resp.get_data())
+        self.assertEqual(body["status"], "error")
+        self.assertEqual(body["error_message"], "Solver failed to converge")
+
+
+class TestAPIV1Plan(unittest.IsolatedAsyncioTestCase):
+    """Integration tests for GET /api/v1/plan (AC-6)."""
+
+    async def asyncSetUp(self):
+        self.client = web_server.app.test_client()
+        self.original_conf = web_server.emhass_conf.copy()
+        self.tmp_path = pathlib.Path(tempfile.mkdtemp())
+        web_server.emhass_conf = {
+            "data_path": self.tmp_path,
+        }
+        from emhass import plan_store
+
+        plan_store._cache = None
+
+    async def asyncTearDown(self):
+        web_server.emhass_conf = self.original_conf
+        from emhass import plan_store
+
+        plan_store._cache = None
+
+    async def test_api_v1_plan_no_run(self):
+        """GET before any optim returns 200 with status='no-run' and null plan."""
+        import json
+
+        resp = await self.client.get("/api/v1/plan")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.headers.get("Cache-Control"), "no-store")
+        body = json.loads(await resp.get_data())
+        self.assertEqual(body["status"], "no-run")
+        self.assertIsNone(body["generated_at"])
+        self.assertIsNone(body["plan"])
+        self.assertIn("emhass_schema_version", body)
+
+    async def test_api_v1_plan_after_record(self):
+        """After plan_store.record() runs, GET returns the plan with status='ok'."""
+        import json
+
+        from emhass import plan_store
+
+        plan_store.record(
+            self.tmp_path,
+            plan=[{"timestamp": "2026-06-17T00:00:00Z", "P_Load": 100.0}],
+            generated_at="2026-06-17T00:00:05Z",
+            schema_version="1.0",
+        )
+
+        resp = await self.client.get("/api/v1/plan")
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(await resp.get_data())
+        self.assertEqual(body["status"], "ok")
+        self.assertEqual(body["generated_at"], "2026-06-17T00:00:05Z")
+        self.assertEqual(body["emhass_schema_version"], "1.0")
+        self.assertEqual(body["plan"][0]["P_Load"], 100.0)
+
+
+class TestHealthVerdict(unittest.TestCase):
+    """Unit tests for the pure _health_verdict helper (AC-4). Recency-only."""
+
+    def test_no_run_is_degraded_503(self):
+        self.assertEqual(web_server._health_verdict(has_run=False, stale=False), ("degraded", 503))
+
+    def test_stale_run_is_degraded_503(self):
+        self.assertEqual(web_server._health_verdict(has_run=True, stale=True), ("degraded", 503))
+
+    def test_fresh_run_is_ok_200(self):
+        self.assertEqual(web_server._health_verdict(has_run=True, stale=False), ("ok", 200))
+
+
+class TestHealthz(unittest.IsolatedAsyncioTestCase):
+    """Integration tests for GET /healthz (AC-4)."""
+
+    async def asyncSetUp(self):
+        self.client = web_server.app.test_client()
+        self.original_conf = web_server.emhass_conf.copy()
+        web_server.emhass_conf = {"data_path": pathlib.Path(tempfile.mkdtemp())}
+        # before_serving may not run under test_client(); set boot_ts explicitly
+        web_server.app.config["boot_ts"] = "2026-05-29T08:00:00Z"
+
+    async def asyncTearDown(self):
+        web_server.emhass_conf = self.original_conf
+
+    def _snap(self, status="ok", ts="2026-05-29T09:55:00Z"):
+        return {
+            "status": status,
+            "timestamp": ts,
+            "action": "dayahead-optim",
+            "stage_times": {},
+            "duration_total_seconds": 1.0,
+            "emhass_version": "0.17.5",
+            "schema_version": "1.0",
+            "infeasible": status == "infeasible",
+            "error_message": None,
+        }
+
+    @patch("emhass.web_server.last_run.emhass_version", return_value="0.17.5")
+    @patch("emhass.web_server.last_run.read")
+    async def test_ok_when_run_exists(self, mock_read, _mock_ver):
+        mock_read.return_value = self._snap()
+        resp = await self.client.get("/healthz")
+        self.assertEqual(resp.status_code, 200)
+        body = await resp.get_json()
+        self.assertEqual(body["status"], "ok")
+        self.assertEqual(body["last_run_ts"], "2026-05-29T09:55:00Z")
+        self.assertEqual(body["last_run_status"], "ok")
+        self.assertEqual(body["boot_ts"], "2026-05-29T08:00:00Z")
+
+    @patch("emhass.web_server.last_run.emhass_version", return_value="0.17.5")
+    @patch("emhass.web_server.last_run.read", return_value=None)
+    async def test_no_run_is_degraded_503(self, _mock_read, _mock_ver):
+        resp = await self.client.get("/healthz")
+        self.assertEqual(resp.status_code, 503)
+        body = await resp.get_json()
+        self.assertEqual(body["status"], "degraded")
+        self.assertIsNone(body["last_run_ts"])
+        self.assertIsNone(body["last_run_status"])
+
+    @patch("emhass.web_server.last_run.emhass_version", return_value="0.17.5")
+    @patch("emhass.web_server.last_run.is_recent", return_value=False)
+    @patch("emhass.web_server.last_run.read")
+    async def test_stale_with_threshold_is_503(self, mock_read, _mock_recent, _mock_ver):
+        mock_read.return_value = self._snap(ts="2020-01-01T00:00:00Z")
+        resp = await self.client.get("/healthz?max_age_seconds=60")
+        self.assertEqual(resp.status_code, 503)
+        body = await resp.get_json()
+        self.assertEqual(body["status"], "degraded")
+
+    @patch("emhass.web_server.last_run.emhass_version", return_value="0.17.5")
+    @patch("emhass.web_server.last_run.is_recent", return_value=True)
+    @patch("emhass.web_server.last_run.read")
+    async def test_fresh_with_threshold_is_200(self, mock_read, _mock_recent, _mock_ver):
+        mock_read.return_value = self._snap()
+        resp = await self.client.get("/healthz?max_age_seconds=999999")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual((await resp.get_json())["status"], "ok")
+
+    @patch("emhass.web_server.last_run.emhass_version", return_value="0.17.5")
+    @patch("emhass.web_server.last_run.read")
+    async def test_infeasible_last_run_is_still_healthy(self, mock_read, _mock_ver):
+        # correctness != health: an infeasible solve must NOT flip to 503
+        mock_read.return_value = self._snap(status="infeasible")
+        resp = await self.client.get("/healthz")
+        self.assertEqual(resp.status_code, 200)
+        body = await resp.get_json()
+        self.assertEqual(body["status"], "ok")
+        self.assertEqual(body["last_run_status"], "infeasible")
+
+    @patch("emhass.web_server.last_run.emhass_version", return_value="0.17.5")
+    @patch("emhass.web_server.last_run.read")
+    async def test_invalid_threshold_is_ignored(self, mock_read, _mock_ver):
+        mock_read.return_value = self._snap()
+        resp = await self.client.get("/healthz?max_age_seconds=abc")
+        self.assertEqual(resp.status_code, 200)  # graceful-ignore, falls back to existence check
+        self.assertEqual((await resp.get_json())["status"], "ok")
+
+    @patch("emhass.web_server.last_run.emhass_version", return_value="0.17.5")
+    @patch("emhass.web_server.last_run.read")
+    async def test_versions_block_and_headers(self, mock_read, _mock_ver):
+        mock_read.return_value = self._snap()
+        resp = await self.client.get("/healthz")
+        body = await resp.get_json()
+        self.assertEqual(set(body["versions"].keys()), {"emhass", "python", "schema_version"})
+        self.assertEqual(body["versions"]["emhass"], "0.17.5")
+        self.assertEqual(resp.headers["Cache-Control"], "no-store")
+        self.assertEqual(resp.headers["Content-Type"], "application/json")
+
+
+class TestBootTs(unittest.IsolatedAsyncioTestCase):
+    """Proves before_serving captures an ISO-8601 Z boot_ts even if init fails (AC-4).
+
+    Calls before_serving() directly with a failing initialize() rather than running
+    the real lifespan: this tests Decision #3 (boot_ts is set before the try block, so
+    it survives an init failure) without invoking the real logging setup, which would
+    mutate global "emhass" logger state and leak into other tests.
+    """
+
+    @patch("emhass.web_server.initialize", new_callable=AsyncMock)
+    async def test_before_serving_sets_boot_ts_even_if_initialize_fails(self, mock_init):
+        mock_init.side_effect = RuntimeError("init boom")
+        web_server.app.config.pop("boot_ts", None)
+        await web_server.before_serving()  # before_serving catches the init error and continues
+        boot_ts = web_server.app.config.get("boot_ts")
+        self.assertIsNotNone(boot_ts)
+        self.assertRegex(boot_ts, r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+
+
+class TestHealthzSchema(unittest.TestCase):
+    """The /healthz response JSON Schema doc exists and is well-formed (AC-4)."""
+
+    def test_schema_file_is_valid_json_with_required_props(self):
+        import json
+        from pathlib import Path
+
+        schema_path = Path(__file__).resolve().parents[1] / "docs" / "api" / "healthz.schema.json"
+        self.assertTrue(schema_path.exists(), f"missing {schema_path}")
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        self.assertIn("$schema", schema)
+        top_level = {"status", "boot_ts", "last_run_ts", "last_run_status", "versions"}
+        version_keys = {"emhass", "python", "schema_version"}
+        props = schema["properties"]
+        for key in top_level:
+            self.assertIn(key, props)
+        self.assertEqual(set(props["versions"]["properties"].keys()), version_keys)
+        # required must list the contract keys, else a property is silently optional
+        self.assertTrue(top_level.issubset(schema["required"]))
+        self.assertTrue(version_keys.issubset(props["versions"]["required"]))
+
+
+if __name__ == "__main__":
+    unittest.main()
