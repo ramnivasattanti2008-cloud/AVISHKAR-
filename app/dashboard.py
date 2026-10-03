@@ -12,7 +12,14 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from avishkar_ems.demo import day_view, forecast_quality, prepare, run_payback
-from avishkar_ems.ies import catalog_publish, validate_publish
+from avishkar_ems.flex import summarise
+from avishkar_ems.ies import (
+    catalog_publish,
+    confirm_flow,
+    settled_status,
+    validate_flow,
+    validate_publish,
+)
 from avishkar_ems.monitor import daily_summary, deviation_flags
 from avishkar_ems.realdata import real_sites
 from avishkar_ems.summary import plain_summary
@@ -49,8 +56,8 @@ day = st.sidebar.date_input("Day to plan", value=(p.test_start + pd.Timedelta(da
 soc0 = st.sidebar.slider("Battery charge at midnight", 0.2, 1.0, 0.5, 0.05)
 
 lang = st.sidebar.radio("Language / भाषा", ["en", "hi"], format_func=lambda x: {"en": "English", "hi": "हिन्दी"}[x])
-tab_plan, tab_offers, tab_payback, tab_monitor = st.tabs(
-    ["Plan for the day", "Offers and settlement", "Payback", "Monitoring"])
+tab_plan, tab_offers, tab_payback, tab_monitor, tab_flex = st.tabs(
+    ["Plan for the day", "Offers and settlement", "Payback", "Monitoring", "Shiftable loads"])
 
 dv = day_view(p, str(day), soc_init=soc0)
 s, ex = dv.plan.steps, dv.ems.steps
@@ -117,6 +124,11 @@ with tab_offers:
         st.caption("India Energy Stack (Beckn DEG v2.0) catalog/publish message for today's offers. "
                    + ("Passes the spec's structural checks." if not validate_publish(msg) else "FAILS spec checks."))
         st.json(msg, expanded=1)
+        conf, onc = confirm_flow(msg, dv.offers, dv.trades, now=dv.day - pd.Timedelta(hours=5))
+        stat = settled_status(msg, dv.offers, dv.trades, now=dv.day + pd.Timedelta(days=1))
+        with st.expander("Confirm, on_confirm and settled messages (buyer side is simulated)"):
+            st.caption("Lifecycle DRAFT, ACTIVE, COMPLETE. " + ("Checks pass." if not validate_flow(conf, onc, stat) else "Checks FAIL."))
+            st.json({"confirm": conf[0], "on_confirm": onc[0], "on_status_settled": stat[0]}, expanded=False)
 
 with tab_payback:
     every = st.select_slider("Replay detail (days between sampled days)", options=[28, 14, 7], value=28)
@@ -156,3 +168,9 @@ with tab_monitor:
     f2.update_layout(height=380, margin=dict(l=10, r=10, t=10, b=10), yaxis_title="kW")
     st.plotly_chart(f2, use_container_width=True)
     st.dataframe(summ.round(1), use_container_width=True)
+
+with tab_flex:
+    st.caption("Bursts of use above the base load, grouped by time of day. The saving is an upper bound: it assumes the "
+               "load moves into 10:00-16:00 and uses surplus that would otherwise be exported.")
+    flex = summarise(p.df["load_kw"], p.df["import_rate"], site.tariff.export_rate)
+    st.dataframe(flex, use_container_width=True) if len(flex) else st.info("No clear bursts found in this load series.")

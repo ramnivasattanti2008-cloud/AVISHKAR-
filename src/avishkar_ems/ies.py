@@ -127,3 +127,96 @@ def validate_publish(msg: dict) -> list[str]:
                     "buyerPlatform", "sellerPlatform", "buyerDiscom", "sellerDiscom"}:
                 bad.append(f"{off.get('id')}: contract roles incomplete")
     return bad
+
+
+# ---- confirm and settle steps (buyer side is simulated: no live network was available) ----------------------
+
+def _ctx(pub: dict, action: str, buyer: str, now: pd.Timestamp) -> dict:
+    c = dict(pub["context"], action=action, bapId=buyer, bapUri=f"http://{buyer}/bap/receiver",
+             messageId=str(uuid.uuid4()), timestamp=_z(now))
+    return c
+
+
+def _contract(pub: dict, offer: dict, buyer: str, requested: list[float], status: str, commit: str) -> dict:
+    ca = offer["offerAttributes"]["commitmentAttributes"]
+    ivs = [{"id": iv["id"], "payloads": iv["payloads"] + [{"type": "REQUESTED_QTY", "values": [round(q, 3)]}]}
+           for iv, q in zip(ca["intervals"], requested)]
+    desc = ca["payloadDescriptors"] + [{"objectType": "EVENT_PAYLOAD_DESCRIPTOR", "payloadType": "REQUESTED_QTY",
+                                        "units": "KWH", "insertedBy": "buyerPlatform"}]
+    cat = pub["message"]["catalogs"][0]
+    res = dict(cat["resources"][0])
+    roles = [dict(r, participantId=buyer) if r["role"] == "buyerPlatform" else r
+             for r in offer["offerAttributes"]["contractAttributes"]["roles"]]
+    return {
+        "id": f"contract-{offer['id']}", "status": {"code": status},
+        "commitments": [{"id": f"commitment-{offer['id']}", "status": {"descriptor": {"code": commit}},
+                         "resources": [{"id": res["id"], "descriptor": res["descriptor"],
+                                        "quantity": {"@type": "Quantity", "unitCode": "KWH",
+                                                     "unitQuantity": round(sum(requested), 3)},
+                                        "resourceAttributes": res["resourceAttributes"]}],
+                         "offer": {"id": offer["id"], "resourceIds": offer["resourceIds"]},
+                         "commitmentAttributes": dict(ca, payloadDescriptors=desc, intervals=ivs)}],
+        "contractAttributes": dict(offer["offerAttributes"]["contractAttributes"], roles=roles)}
+
+
+def _requests(pub: dict, offers: list[Offer], trades: list) -> list[tuple[dict, list[float]]]:
+    """Per catalog offer, the quantity the (simulated) buyer asks for in each interval: the committed quantity
+    where the clearing price met the floor, zero where it did not."""
+    matched = {t.offer_id: t.matched for t in trades}
+    cat_offers = pub["message"]["catalogs"][0]["offers"]
+    return [(co, [o.quantity_kwh if matched.get(o.offer_id, True) else 0.0 for o in run])
+            for co, run in zip(cat_offers, _runs(offers))]
+
+
+def confirm_flow(pub: dict, offers: list[Offer], trades: list, buyer: str = "buyerapp.example.com",
+                 now: pd.Timestamp | None = None) -> tuple[list[dict], list[dict]]:
+    """Buyer confirms (DRAFT contract), seller platform answers on_confirm (ACTIVE). One pair per catalog offer."""
+    now = now or pd.Timestamp.now(tz="UTC")
+    reqs = _requests(pub, offers, trades)
+    conf = [{"context": _ctx(pub, "confirm", buyer, now),
+             "message": {"contract": _contract(pub, o, buyer, q, "DRAFT", "DRAFT")}} for o, q in reqs]
+    onc = [{"context": _ctx(pub, "on_confirm", buyer, now + pd.Timedelta(seconds=2)),
+            "message": {"contract": _contract(pub, o, buyer, q, "ACTIVE", "ACTIVE")}} for o, q in reqs]
+    return conf, onc
+
+
+def settled_status(pub: dict, offers: list[Offer], trades: list, buyer: str = "buyerapp.example.com",
+                   now: pd.Timestamp | None = None) -> list[dict]:
+    """on_status after delivery: contract COMPLETE, with the money that moved (from `settle.TradeResult`)."""
+    now = now or pd.Timestamp.now(tz="UTC")
+    by_id = {t.offer_id: t for t in trades}
+    out = []
+    for co, run in zip(pub["message"]["catalogs"][0]["offers"], _runs(offers)):
+        ts = [by_id[o.offer_id] for o in run if o.offer_id in by_id]
+        c = _contract(pub, co, buyer, [by_id[o.offer_id].delivered_kwh if o.offer_id in by_id else 0.0 for o in run],
+                      "COMPLETE", "CLOSED")
+        net = sum(t.revenue_inr - t.penalty_inr for t in ts)
+        c["consideration"] = [{"id": "auto-settlement-flows", "considerationAttributes": {
+            "@type": "RevenueFlow", "revenueFlows": [{
+                "role": "sellerPlatform", "value": round(net, 2), "currency": "INR",
+                "description": f"{sum(t.delivered_kwh for t in ts):.2f} kWh delivered, net of charges and penalty"}]}}]
+        c["settlements"] = [{"id": f"settlement-{co['id']}", "considerationId": "auto-settlement-flows",
+                             "status": "COMPLETE", "settlementAttributes": {
+                                 "@type": "SettlementTerm", "paymentTrigger": "ON_FULFILLMENT",
+                                 "settlementStatus": "COMPLETE"}}]
+        out.append({"context": _ctx(pub, "on_status", buyer, now), "message": {"contract": c}})
+    return out
+
+
+def validate_flow(confirm: list[dict], on_confirm: list[dict], settled: list[dict]) -> list[str]:
+    """Check the lifecycle: DRAFT -> ACTIVE -> COMPLETE, same contract throughout, buyer filled in, money booked."""
+    bad: list[str] = []
+    for c, a, s in zip(confirm, on_confirm, settled):
+        k = [m["message"]["contract"] for m in (c, a, s)]
+        if [x["status"]["code"] for x in k] != ["DRAFT", "ACTIVE", "COMPLETE"]:
+            bad.append("contract status must go DRAFT, ACTIVE, COMPLETE")
+        if len({x["id"] for x in k}) != 1:
+            bad.append("contract id changed between messages")
+        if any(r["role"] == "buyerPlatform" and r["participantId"] is None for r in k[0]["contractAttributes"]["roles"]):
+            bad.append("buyerPlatform must be set at confirm")
+        if not k[2].get("consideration") or k[2]["settlements"][0]["status"] != "COMPLETE":
+            bad.append("settled message needs consideration and a COMPLETE settlement")
+        qty = k[2]["commitments"][0]["commitmentAttributes"]["intervals"]
+        if any(p["type"] == "REQUESTED_QTY" and v < 0 for iv in qty for p in iv["payloads"] for v in p["values"]):
+            bad.append("negative quantity")
+    return bad

@@ -151,7 +151,7 @@ def evaluate(
         plan, offers = plan_and_offer(site, pv_b, ld_b, actual["import_rate"].to_numpy(),
                                       actual["export_rate"].to_numpy(), actual["p2p_price_fcst"].to_numpy(),
                                       soc_e, rsv)
-        r_e = execute_day(site, actual, soc_e, rsv.floor_soc, "plan", plan.steps["batt_kw"].to_numpy(),
+        r_e = execute_day(site, actual, soc_e, rsv.floor_soc, "guided", plan.steps["batt_kw"].to_numpy(),
                           export_ok=offer_mask(actual.index, offers))
         trades = settle(site, offers, r_e.steps)
         _account(ems, site, r_e.steps, trades, r_e.end_soc - soc_e)
@@ -170,7 +170,7 @@ def evaluate(
             plan_h, offers_h = plan_and_offer(site, exact, exact_l, actual["import_rate"].to_numpy(),
                                               actual["export_rate"].to_numpy(),
                                               actual["p2p_price_fcst"].to_numpy(), soc_h, rsv)
-            r_h = execute_day(site, actual, soc_h, rsv.floor_soc, "plan", plan_h.steps["batt_kw"].to_numpy(),
+            r_h = execute_day(site, actual, soc_h, rsv.floor_soc, "guided", plan_h.steps["batt_kw"].to_numpy(),
                               export_ok=offer_mask(actual.index, offers_h))
             _account(hind, site, r_h.steps, settle(site, offers_h, r_h.steps), r_h.end_soc - soc_h)
             soc_h = r_h.end_soc

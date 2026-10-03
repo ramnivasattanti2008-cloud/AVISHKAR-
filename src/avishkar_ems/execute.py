@@ -33,7 +33,8 @@ def execute_day(
     export_ok: np.ndarray | None = None,
     guard: bool = True,
 ) -> DayResult:
-    """policy: 'plan' follows plan_batt_kw, 'greedy' is the fixed rule (charge from surplus,
+    """policy: 'plan' follows plan_batt_kw, 'guided' follows the plan's price signal but reacts to real load and sun,
+    'greedy' is the fixed rule (charge from surplus,
     discharge to load), 'idle' leaves the battery alone except to ride through outages.
 
     With guard=True the plan is tracked against reality: the battery is never discharged into the
@@ -50,6 +51,10 @@ def execute_day(
     daylight = actual["pv_kw"].to_numpy() > 0.02 * site.dc_kwp
     if export_ok is None:
         export_ok = np.zeros(n, dtype=bool)
+    theta = np.inf  # guided policy: discharge to the load only when the grid price is at least this
+    if policy == "guided":
+        hi = np.asarray(plan_batt_kw) > 0.05
+        theta = float(actual["import_rate"].to_numpy()[hi].min()) if hi.any() else np.inf
     out = {k: np.zeros(n) for k in ("batt_kw", "grid_kw", "soc", "unserved_kwh", "unserved_critical_kwh")}
     for t in range(n):
         if outage[t]:
@@ -63,6 +68,15 @@ def execute_day(
                     want = min(want, max(load[t] - pv[t], 0.0))  # serve own load only
                 if guard and want < 0 and daylight[t]:
                     want = -min(-want, max(pv[t] - load[t], 0.0))  # charge from surplus sun only
+            elif policy == "guided":
+                if export_ok[t]:
+                    want = float(plan_batt_kw[t])  # a committed P2P window: do what was promised
+                elif actual["import_rate"].iat[t] >= theta:
+                    want = load[t] - pv[t]  # price is high enough to be worth using stored energy
+                else:
+                    want = min(load[t] - pv[t], 0.0)  # cheap hours: soak up real surplus...
+                    if not daylight[t] and plan_batt_kw[t] < want:
+                        want = float(plan_batt_kw[t])  # ...and charge from the grid at night when the plan says so
             elif policy == "greedy":
                 want = load[t] - pv[t]
             else:

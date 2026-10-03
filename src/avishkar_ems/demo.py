@@ -90,7 +90,7 @@ def day_view(p: Prepared, day: str | pd.Timestamp, soc_init: float = 0.5) -> Day
     p2p_fcst = actual["p2p_price_fcst"].to_numpy()
     plan, offers = plan_and_offer(p.site, pv_b, ld_b, actual["import_rate"].to_numpy(),
                                   actual["export_rate"].to_numpy(), p2p_fcst, soc_init, rsv)
-    ems = execute_day(p.site, actual, soc_init, rsv.floor_soc, "plan", plan.steps["batt_kw"].to_numpy(),
+    ems = execute_day(p.site, actual, soc_init, rsv.floor_soc, "guided", plan.steps["batt_kw"].to_numpy(),
                       export_ok=offer_mask(actual.index, offers))
     trades = settle(p.site, offers, ems.steps)
     base_floor = reserve_floor(p.site, risk=0.0).floor_soc

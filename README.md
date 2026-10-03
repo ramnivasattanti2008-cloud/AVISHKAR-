@@ -24,28 +24,35 @@ lives in `src/avishkar_ems/` and calls EMHASS; nothing inside EMHASS was edited.
 | Outages at the shop and clinic | generated | assumption |
 | Day-ahead forecast inputs | persistence of yesterday's clearness | simple, no archived NWP |
 
-Mathura trains on Jun 2019 to Jun 2020 and tests on Jul 2020 to Feb 2021 (33 sampled days, which misses Mar to Jun, so
-its annualised figure is seasonally biased). Pune and Jaipur train on 2021-22 and test on 2023 (52 sampled days).
+Mathura trains on Jun 2019 to Jun 2020 and tests on Jul 2020 to Feb 2021 (33 sampled days, so Mar to Jun is missing and
+its yearly figure leans one way). Pune and Jaipur train on 2021-22 and test on 2023 (52 sampled days).
 
-| Site | EMS | EMS + noon re-plan | Battery idle | Fixed-rule battery | Perfect foresight |
-|---|---|---|---|---|---|
-| 3 kWp home, Mathura | 19.2 yr | 19.3 yr | 20.8 yr | **18.3 yr** | 18.0 yr |
-| 15 kWp shop, Pune | **8.58 yr** | 8.60 yr | 8.86 yr | 8.68 yr | 8.43 yr |
-| 30 kWp clinic, Jaipur | 9.13 yr | 9.12 yr | 9.26 yr | **9.11 yr** | 9.00 yr |
+Payback in years, lower is better:
 
-- The EMS earns 8.6%, 3.3% and 1.5% more per year than a battery left idle. It beats a fixed-rule battery only at the shop.
-  With these flat tariffs a simple rule captures almost all the arbitrage, and even perfect foresight adds under 7%.
-- The noon re-plan changes annual benefit by under 0.5% either way. It removed the shop's remaining 0.53 kWh of unserved
-  critical load, but it is not a financial gain.
-- Resilience is the clear gain: critical load unserved in outages is 0.08 / 0.53 / 0.00 kWh for the EMS versus
-  0.07 / 6.72 / 8.66 kWh with an idle battery.
-- Forecast bands (80% target): generation covered 86% / 86% / 84%; load covered 76% (Mathura, measured) and 89% / 91%
-  (the near-periodic factory profile, so those bands are conservative) ([results/forecast_quality.csv](results/forecast_quality.csv)).
-- Sensitivity ([results/sensitivity.csv](results/sensitivity.csv), `python examples/run_sensitivity.py`): the battery (versus none) adds
-  about 2.5% to annual benefit at the clinic, 5% at the shop and 10% at the Mathura home, and a higher export rate
-  shrinks its value. A 5 kWh battery adds only about Rs 1,400 a year at the Mathura home, so it pays for itself through
-  backup, not through bill savings.
-- P2P volume is tiny (2 to 8 kWh committed over the sampled days) because real load absorbs most surplus.
+| Site | EMS | Battery idle | Fixed-rule battery | Perfect foresight |
+|---|---|---|---|---|
+| 3 kWp home, Mathura | 18.25 | 20.82 | 18.26 | 17.84 |
+| 15 kWp shop, Pune | **8.52** | 8.86 | 8.68 | 8.44 |
+| 30 kWp clinic, Jaipur | **9.09** | 9.26 | 9.11 | 9.01 |
+
+- Against a battery left idle the EMS earns 14%, 4.0% and 1.9% more a year. Against a fixed-rule battery it ties at
+  Mathura (the flat tariff leaves nothing to optimise), and wins by 1.9% at Pune and 0.3% at Jaipur.
+- Backup is where it clearly wins. Critical load left without power during cuts was 0.08 / 0.00 / 0.00 kWh with the
+  EMS, against 0.07 / 6.72 / 8.66 with an idle battery and 0.15 / 2.18 / 0.00 with the fixed rule.
+- Execution matters. The EMS used to follow the plan's 15-minute battery setpoints and lost to the simple rule at
+  Mathura, because a single home's load is too noisy to plan that finely. The executor now follows the plan's price
+  signal (when to hold energy, when to charge from the grid at night, what was promised to buyers) but reacts to the real
+  load and sun. That change alone moved Mathura from about 4% behind the rule to level with it.
+- The noon re-plan (`intraday.py`) did not help once execution was reactive: it changed yearly benefit by -0.3% to -0.6%.
+  It is kept as an option and is off in the headline numbers.
+- Forecast bands (80% target): generation covered 86% / 86% / 84%. Load covered 76% at Mathura (measured), and 89% / 91%
+  at the shop and clinic, where the near-repeating factory profile makes the bands too wide
+  ([results/forecast_quality.csv](results/forecast_quality.csv)).
+- Sensitivity ([results/sensitivity.csv](results/sensitivity.csv)): a battery sized like ours adds 14.5% at Mathura, 5.4% at
+  Pune and 2.9% at Jaipur compared with having none. If the export (net-metering) rate is raised to near retail, the
+  battery's value shrinks, and at Mathura it turns slightly negative (-1.4%). So at that home the battery is a backup
+  purchase, not a savings one.
+- P2P volume is small (a few kWh across the sampled days), because real load absorbs most of the surplus.
 
 Full tables: [results/payback.csv](results/payback.csv). Offer message: [results/example_offers.json](results/example_offers.json).
 
@@ -61,7 +68,11 @@ Full tables: [results/payback.csv](results/payback.csv). Offer message: [results
 | Indian tariffs and net metering | no | `tariffs.py` (illustrative presets, replace with real DISCOM rates) |
 | Surplus dispatch as P2P/UEI offers | no | `dispatch.py` sizes offers on P10 generation minus P90 load; `ies.py` emits the India Energy Stack `catalog/publish` message and checks it |
 | Real data | none | `realdata.py` (PVGIS/ERA5 weather via pvlib), `ceew.py` (measured Indian household load and outages) |
-| Intraday re-planning | no | `intraday.py`: noon re-plan from the morning's observed error |
+| Intraday re-planning | no | `intraday.py`: noon re-plan from the morning's observed error (measured: no gain) |
+| Executing a plan under forecast error | n/a | `execute.py` `guided` policy: plan's price signal, real load and sun |
+| P2P confirm and settle | no | `ies.py`: confirm, on_confirm and settled messages (DRAFT, ACTIVE, COMPLETE), buyer simulated |
+| Many sites | no | `fleet.py`: pooled offers and pro-rata money split |
+| Shiftable loads | no | `flex.py`: bursts above base load, with an upper-bound saving if moved into the sun hours |
 | Plain-language output | no | `summary.py`: English and Hindi daily summary in the dashboard |
 | Settlement (delivered vs committed) | no | `settle.py`: revenue, shortfall penalty, unmatched offers |
 | Payback per site, EMS vs no-EMS | no | `payback.py`: two baselines and a perfect-foresight reference |
@@ -81,7 +92,8 @@ python -m venv venv && source venv/bin/activate      # Python 3.10 to 3.12
 pip install -e ".[app]"
 python examples/run_demo.py            # about 2 minutes, writes ./results
 streamlit run app/dashboard.py         # plan, offers, payback and monitoring
-pytest tests/avishkar_ems              # about 30 seconds (first run downloads PVGIS weather)
+pytest tests/avishkar_ems              # about a minute
+python examples/run_sensitivity.py     # battery size and export rate, about 6 minutes
 ```
 
 ## Using the organisers' dataset
@@ -116,14 +128,16 @@ quantity, floor price), never the load profile. Real deployments should add cons
 - Not real: generation (modelled from real irradiance), tariffs, P2P prices, outage history at the shop and clinic, and
   day-ahead forecast inputs (persistence, because no archived forecast was reachable). The shop and clinic load is a
   German factory. The Mathura home is the most real site: measured load, measured outages, real weather.
-- The Mathura outage log has no notices, so planned-outage warning is never set there. The measured load is not metered
-  during outages and is filled with the meter's typical load for that time of day.
+- The Mathura outage log has no notices, so planned-outage warning is never set there. Load is not metered during a cut
+  and is filled with the meter's typical load for that time of day.
 - Tariffs are illustrative until you add `data/tariffs/<site>.json`. Official tariff pages could not be fetched here.
-- The Mathura holdout covers Jul to Feb only. Costs (Rs 305,000 for the home system) are assumptions.
-- The offer message follows the public beckn/DEG P2P devkit and passes the structural checks in `ies.py` (it accepts
-  the official example when `DEG_PUBLISH_EXAMPLE` points to it). It was not run against a live network, and there is no
-  confirm/settle exchange.
-- No fleet aggregation or flexible-load detection. Payback is from sampled days, annualised.
+- The Mathura holdout covers Jul to Feb only. System costs (Rs 305,000 for the home) are assumptions.
+- Offers, confirm and settled messages follow the public beckn/DEG P2P devkit and pass the checks in `ies.py` (the
+  publish checker also accepts the official example when `DEG_PUBLISH_EXAMPLE` points to it). The buyer is simulated and
+  nothing was sent to a live network.
+- `fleet.py` and `flex.py` are tested on constructed cases and (for `flex.py`) run on real meter data, but the sites in
+  the demo are in different cities and years, so there is no real multi-site pooling example.
+- The flexible-load saving is an upper bound. It assumes surplus sun is there when the load is moved.
 - The plan can undershoot the reserve floor by under 1% of capacity (solver tolerance). The executor does not.
 - The package keeps the name "emhass" because the vendored optimiser reads its own version from package metadata.
 - The vendored EMHASS optimiser tests pass in this environment (212 passed); the rest of the upstream suite was not run.

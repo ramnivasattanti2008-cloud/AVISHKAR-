@@ -20,7 +20,7 @@ def execute_with_replan(site: SiteSpec, actual: pd.DataFrame, pv_b: pd.DataFrame
                         plan: DayPlan, offers: list[Offer], p2p_fcst: np.ndarray, soc0: float,
                         rsv: ReserveDecision, at: int = 48, lookback: int = 8) -> DayResult:
     mask = offer_mask(actual.index, offers)
-    first = execute_day(site, actual.iloc[:at], soc0, rsv.floor_soc, "plan",
+    first = execute_day(site, actual.iloc[:at], soc0, rsv.floor_soc, "guided",
                         plan.steps["batt_kw"].to_numpy()[:at], export_ok=mask[:at])
     n = len(actual) - at
     w = slice(at - lookback, at)
@@ -32,6 +32,6 @@ def execute_with_replan(site: SiteSpec, actual: pd.DataFrame, pv_b: pd.DataFrame
     ld2 = (ld_b.iloc[at:].add(d_load * fade, axis=0)).clip(lower=0.0)
     plan2 = plan_day(site, pv2, ld2, actual["import_rate"].to_numpy()[at:], actual["export_rate"].to_numpy()[at:],
                      p2p_fcst[at:], first.end_soc, rsv, p2p_mask=mask[at:])
-    second = execute_day(site, actual.iloc[at:], first.end_soc, rsv.floor_soc, "plan",
+    second = execute_day(site, actual.iloc[at:], first.end_soc, rsv.floor_soc, "guided",
                          plan2.steps["batt_kw"].to_numpy(), export_ok=mask[at:])
     return DayResult(pd.concat([first.steps, second.steps]), second.end_soc)

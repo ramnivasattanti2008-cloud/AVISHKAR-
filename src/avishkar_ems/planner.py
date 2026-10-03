@@ -93,6 +93,7 @@ def plan_day(
     reserve: ReserveDecision,
     p2p_share: float = 0.0,
     p2p_mask: np.ndarray | None = None,
+    soc_final: float | None = None,
 ) -> DayPlan:
     """Plan one day (96 steps) using P50 forecasts and the hard reserve floor."""
     from emhass.optimization import Optimization
@@ -143,7 +144,8 @@ def plan_day(
          "unit_prod_price": prod}, index=index)
     opt = Optimization(rh, optim_conf, plant_conf, "unit_load_cost", "unit_prod_price", "profit",
                        _EMHASS_CONF, logger)
-    soc_final = float(max(reserve.floor_soc, min(soc_init, 0.6)))
+    if soc_final is None:
+        soc_final = float(max(reserve.floor_soc, min(soc_init, 0.6)))
     res = opt.perform_optimization(df, pv_w, load_w, import_rate, prod,
                                    soc_init=float(soc_init), soc_final=soc_final)
     steps = pd.DataFrame(index=index)

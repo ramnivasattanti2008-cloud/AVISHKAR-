@@ -68,3 +68,44 @@ def test_plain_summary_both_languages():
     dv = day_view(p, p.test_start + pd.Timedelta(days=20))
     en, hi = plain_summary(dv, p.site.backup_hours, "en"), plain_summary(dv, p.site.backup_hours, "hi")
     assert "battery" in en and "बैटरी" in hi
+
+
+def test_confirm_and_settle_flow_is_consistent():
+    import logging
+    logging.disable(logging.WARNING)
+    from avishkar_ems.demo import day_view, prepare
+    from avishkar_ems.ies import catalog_publish, confirm_flow, settled_status, validate_flow
+    p = prepare("shop-pune")
+    for d in pd.date_range(p.test_start, p.test_end, freq="3D"):
+        dv = day_view(p, d)
+        if dv.offers:
+            break
+    assert dv.offers
+    pub = catalog_publish(p.site, dv.offers, now=dv.day - pd.Timedelta(hours=6))
+    conf, onc = confirm_flow(pub, dv.offers, dv.trades, now=dv.day - pd.Timedelta(hours=5))
+    done = settled_status(pub, dv.offers, dv.trades, now=dv.day + pd.Timedelta(days=1))
+    assert validate_flow(conf, onc, done) == []
+    paid = sum(f["value"] for m in done for f in m["message"]["contract"]["consideration"][0]["considerationAttributes"]["revenueFlows"])
+    assert paid == pytest.approx(sum(t.revenue_inr - t.penalty_inr for t in dv.trades), abs=0.05 * len(done))
+
+
+def test_pooling_and_pro_rata_split():
+    from avishkar_ems.dispatch import Offer
+    from avishkar_ems.fleet import pool, split_money
+    t0 = pd.Timestamp("2024-03-01 11:00", tz="Asia/Kolkata")
+    mk = lambda sid, q, f: Offer(f"{sid}-1", sid, t0, t0 + pd.Timedelta(hours=1), q, q, f, 1.0)  # noqa: E731
+    pooled = pool({"a": [mk("a", 2.0, 4.0)], "b": [mk("b", 3.0, 4.5)]})
+    assert len(pooled) == 1 and pooled[0].quantity_kwh == 5.0 and pooled[0].floor_price == 4.5
+    split = split_money(pooled[0], {"a": 2.0, "b": 3.0}, 50.0)
+    assert split["a"] == pytest.approx(20.0) and split["b"] == pytest.approx(30.0)
+
+
+def test_flex_finds_a_planted_appliance():
+    import numpy as np
+
+    from avishkar_ems.flex import find_bursts
+    idx = pd.date_range("2024-01-01", periods=96 * 10, freq="15min", tz="Asia/Kolkata")
+    load = pd.Series(0.3, index=idx)
+    load[(idx.hour == 6) & (idx.minute < 45)] += 2.0  # a daily 45-minute heater at 06:00
+    b = find_bursts(load)
+    assert len(b) == 10 and np.isclose(b["kw"].median(), 2.0, atol=0.1) and (b["start"].dt.hour == 6).all()
