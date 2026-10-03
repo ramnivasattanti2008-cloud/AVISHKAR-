@@ -29,6 +29,25 @@ def _load_shape(hour: np.ndarray, kind: str, weekend: np.ndarray) -> np.ndarray:
     return shape
 
 
+def simulate_outages(index: pd.DatetimeIndex, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
+    """Grid outages (more in the monsoon), some announced the day before. ASSUMPTION, not measured data:
+    no public per-site Indian outage log was available. Replace with the DISCOM's outage record."""
+    days = len(index) // STEPS_PER_DAY
+    n = len(index)
+    outage = np.zeros(n, dtype=bool)
+    planned = np.zeros(n, dtype=bool)
+    for d in range(days):
+        m = index[d * STEPS_PER_DAY].month - 1
+        rate = 0.04 + (0.10 if 5 <= m <= 8 else 0.0)
+        if rng.random() < rate:
+            start_step = d * STEPS_PER_DAY + int(rng.uniform(8, 22) * 4)
+            length = int(rng.uniform(1, 4) * 4)
+            outage[start_step : start_step + length] = True
+            if rng.random() < 0.5:
+                planned[d * STEPS_PER_DAY : (d + 1) * STEPS_PER_DAY] = True
+    return outage, planned
+
+
 def simulate_site(
     site: SiteSpec,
     start: str = "2025-01-01",
@@ -90,18 +109,7 @@ def simulate_site(
     load_kw = np.clip(avg_load_kw * shape / shape.mean() * cooling * (1.0 + ar), 0.15 * avg_load_kw, None)
     load_kw = np.maximum(load_kw, site.critical_kw)
 
-    # ---- grid outages (more in the monsoon), some announced the day before
-    outage = np.zeros(n, dtype=bool)
-    planned = np.zeros(n, dtype=bool)
-    for d in range(days):
-        m = index[d * STEPS_PER_DAY].month - 1
-        rate = 0.04 + (0.10 if 5 <= m <= 8 else 0.0)
-        if rng.random() < rate:
-            start_step = d * STEPS_PER_DAY + int(rng.uniform(8, 22) * 4)
-            length = int(rng.uniform(1, 4) * 4)
-            outage[start_step : start_step + length] = True
-            if rng.random() < 0.5:
-                planned[d * STEPS_PER_DAY : (d + 1) * STEPS_PER_DAY] = True
+    outage, planned = simulate_outages(index, rng)
 
     # ---- economics
     import_rate = site.tariff.import_rates(index)

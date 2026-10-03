@@ -1,218 +1,215 @@
-[
-  {
-    "context": {
-      "domain": "energy-trading:p2p",
-      "action": "publish",
-      "protocol": "beckn-style (illustrative, not schema-validated)",
-      "country": "IND",
-      "version": "0.1"
-    },
-    "message": {
-      "catalog": {
-        "provider": {
-          "id": "shop-pune"
-        },
-        "offers": [
-          {
-            "id": "shop-pune-20260222T1100-fd6590",
-            "quantity": {
-              "unit": "kWh",
-              "value": 3.372
-            },
-            "window": {
-              "start": "2026-02-22T11:00:00+05:30",
-              "end": "2026-02-22T12:00:00+05:30"
-            },
-            "price": {
-              "floor": 4.51,
-              "currency": "INR",
-              "unit": "kWh"
-            },
-            "commit_ratio_of_planned_export": 0.62,
-            "sizing": "P10 generation minus P90 load, capped by planned export"
-          }
-        ]
-      }
-    }
+{
+  "context": {
+    "networkId": "indiaenergystack.in/test-ies-p2p-trading-network",
+    "version": "2.0.0",
+    "action": "catalog/publish",
+    "bppId": "sellerapp.example.com",
+    "bppUri": "http://sellerapp.example.com/bpp/receiver",
+    "transactionId": "4f5e33c8-04ad-42b2-9df3-fe1f2b19168f",
+    "messageId": "de23c446-5966-487a-b25c-083f74d2b70c",
+    "timestamp": "2023-01-14T12:30:00Z",
+    "schemaContext": [
+      "https://schema.nfh.global/EnergyTradeOffer/v2.0/context.jsonld",
+      "https://schema.nfh.global/EnergyResource/v2.0/context.jsonld",
+      "https://schema.nfh.global/EnergyCustomer/v2.0/context.jsonld",
+      "https://schema.nfh.global/DEGContract/v2.0/context.jsonld",
+      "https://schema.nfh.global/BecknTimeSeries/v1.0/context.jsonld"
+    ]
   },
-  {
-    "context": {
-      "domain": "energy-trading:p2p",
-      "action": "publish",
-      "protocol": "beckn-style (illustrative, not schema-validated)",
-      "country": "IND",
-      "version": "0.1"
-    },
-    "message": {
-      "catalog": {
-        "provider": {
-          "id": "shop-pune"
+  "message": {
+    "publishDirectives": [
+      {
+        "catalogId": "catalog-p2p-shop-pune-20230115",
+        "catalogType": "REGULAR",
+        "updateMode": "MERGE",
+        "visibleTo": [
+          "indiaenergystack.in/test-ies-p2p-trading-network"
+        ]
+      }
+    ],
+    "catalogs": [
+      {
+        "id": "catalog-p2p-shop-pune-20230115",
+        "descriptor": {
+          "name": "Rooftop solar surplus",
+          "shortDesc": "shop-pune"
         },
+        "bppId": "sellerapp.example.com",
+        "bppUri": "http://sellerapp.example.com/bpp/receiver",
+        "provider": {
+          "id": "sellerapp.example.com",
+          "descriptor": {
+            "name": "shop-pune"
+          }
+        },
+        "resources": [
+          {
+            "id": "energy-resource-shop-pune",
+            "descriptor": {
+              "name": "Solar + storage at shop-pune"
+            },
+            "resourceAttributes": {
+              "@context": "https://schema.nfh.global/EnergyResource/v2.0/context.jsonld",
+              "@type": "EnergyResource",
+              "type": "SOLAR",
+              "id": "METER_shop-pune"
+            }
+          }
+        ],
         "offers": [
           {
-            "id": "shop-pune-20260222T1200-917e98",
-            "quantity": {
-              "unit": "kWh",
-              "value": 4.241
+            "id": "offer-shop-pune-20230115T1200-0",
+            "descriptor": {
+              "name": "Solar surplus 12:00-17:00 IST",
+              "shortDesc": "15.8 kWh from 15 kWp + battery"
             },
-            "window": {
-              "start": "2026-02-22T12:00:00+05:30",
-              "end": "2026-02-22T13:00:00+05:30"
-            },
-            "price": {
-              "floor": 4.51,
-              "currency": "INR",
-              "unit": "kWh"
-            },
-            "commit_ratio_of_planned_export": 0.58,
-            "sizing": "P10 generation minus P90 load, capped by planned export"
+            "resourceIds": [
+              "energy-resource-shop-pune"
+            ],
+            "availableTo": [],
+            "offerAttributes": {
+              "@context": "https://schema.nfh.global/EnergyTradeOffer/v2.0/context.jsonld",
+              "@type": "EnergyTradeOffer",
+              "validityWindow": {
+                "@type": "beckn:TimePeriod",
+                "schema:startTime": "2023-01-14T12:30:00Z",
+                "schema:endTime": "2023-01-15T06:30:00Z"
+              },
+              "contractAttributes": {
+                "@context": "https://schema.nfh.global/DEGContract/v2.0/context.jsonld",
+                "@type": "DEGContract",
+                "roles": [
+                  {
+                    "role": "buyerPlatform",
+                    "participantId": null
+                  },
+                  {
+                    "role": "sellerPlatform",
+                    "participantId": "sellerapp.example.com"
+                  },
+                  {
+                    "role": "buyerDiscom",
+                    "participantId": null
+                  },
+                  {
+                    "role": "sellerDiscom",
+                    "participantId": "SELLER_DISCOM"
+                  }
+                ]
+              },
+              "commitmentAttributes": {
+                "@context": "https://schema.nfh.global/BecknTimeSeries/v1.0/context.jsonld",
+                "@type": "TimeSeries",
+                "intervalPeriod": {
+                  "start": "2023-01-15T06:30:00Z",
+                  "duration": "PT60M"
+                },
+                "payloadDescriptors": [
+                  {
+                    "objectType": "EVENT_PAYLOAD_DESCRIPTOR",
+                    "payloadType": "PRICE_PER_KWH",
+                    "currency": "INR",
+                    "insertedBy": "sellerPlatform"
+                  },
+                  {
+                    "objectType": "EVENT_PAYLOAD_DESCRIPTOR",
+                    "payloadType": "AVAILABLE_QTY",
+                    "units": "KWH",
+                    "insertedBy": "sellerPlatform"
+                  }
+                ],
+                "intervals": [
+                  {
+                    "id": 0,
+                    "payloads": [
+                      {
+                        "type": "PRICE_PER_KWH",
+                        "values": [
+                          4.51
+                        ]
+                      },
+                      {
+                        "type": "AVAILABLE_QTY",
+                        "values": [
+                          5.006
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": 1,
+                    "payloads": [
+                      {
+                        "type": "PRICE_PER_KWH",
+                        "values": [
+                          4.51
+                        ]
+                      },
+                      {
+                        "type": "AVAILABLE_QTY",
+                        "values": [
+                          4.559
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": 2,
+                    "payloads": [
+                      {
+                        "type": "PRICE_PER_KWH",
+                        "values": [
+                          4.51
+                        ]
+                      },
+                      {
+                        "type": "AVAILABLE_QTY",
+                        "values": [
+                          3.553
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": 3,
+                    "payloads": [
+                      {
+                        "type": "PRICE_PER_KWH",
+                        "values": [
+                          4.51
+                        ]
+                      },
+                      {
+                        "type": "AVAILABLE_QTY",
+                        "values": [
+                          2.152
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": 4,
+                    "payloads": [
+                      {
+                        "type": "PRICE_PER_KWH",
+                        "values": [
+                          4.65
+                        ]
+                      },
+                      {
+                        "type": "AVAILABLE_QTY",
+                        "values": [
+                          0.515
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
           }
         ]
       }
-    }
-  },
-  {
-    "context": {
-      "domain": "energy-trading:p2p",
-      "action": "publish",
-      "protocol": "beckn-style (illustrative, not schema-validated)",
-      "country": "IND",
-      "version": "0.1"
-    },
-    "message": {
-      "catalog": {
-        "provider": {
-          "id": "shop-pune"
-        },
-        "offers": [
-          {
-            "id": "shop-pune-20260222T1300-e874a6",
-            "quantity": {
-              "unit": "kWh",
-              "value": 4.746
-            },
-            "window": {
-              "start": "2026-02-22T13:00:00+05:30",
-              "end": "2026-02-22T14:00:00+05:30"
-            },
-            "price": {
-              "floor": 4.51,
-              "currency": "INR",
-              "unit": "kWh"
-            },
-            "commit_ratio_of_planned_export": 0.65,
-            "sizing": "P10 generation minus P90 load, capped by planned export"
-          }
-        ]
-      }
-    }
-  },
-  {
-    "context": {
-      "domain": "energy-trading:p2p",
-      "action": "publish",
-      "protocol": "beckn-style (illustrative, not schema-validated)",
-      "country": "IND",
-      "version": "0.1"
-    },
-    "message": {
-      "catalog": {
-        "provider": {
-          "id": "shop-pune"
-        },
-        "offers": [
-          {
-            "id": "shop-pune-20260222T1400-a95d4b",
-            "quantity": {
-              "unit": "kWh",
-              "value": 3.797
-            },
-            "window": {
-              "start": "2026-02-22T14:00:00+05:30",
-              "end": "2026-02-22T15:00:00+05:30"
-            },
-            "price": {
-              "floor": 4.51,
-              "currency": "INR",
-              "unit": "kWh"
-            },
-            "commit_ratio_of_planned_export": 0.57,
-            "sizing": "P10 generation minus P90 load, capped by planned export"
-          }
-        ]
-      }
-    }
-  },
-  {
-    "context": {
-      "domain": "energy-trading:p2p",
-      "action": "publish",
-      "protocol": "beckn-style (illustrative, not schema-validated)",
-      "country": "IND",
-      "version": "0.1"
-    },
-    "message": {
-      "catalog": {
-        "provider": {
-          "id": "shop-pune"
-        },
-        "offers": [
-          {
-            "id": "shop-pune-20260222T1500-c79512",
-            "quantity": {
-              "unit": "kWh",
-              "value": 2.268
-            },
-            "window": {
-              "start": "2026-02-22T15:00:00+05:30",
-              "end": "2026-02-22T16:00:00+05:30"
-            },
-            "price": {
-              "floor": 4.51,
-              "currency": "INR",
-              "unit": "kWh"
-            },
-            "commit_ratio_of_planned_export": 0.46,
-            "sizing": "P10 generation minus P90 load, capped by planned export"
-          }
-        ]
-      }
-    }
-  },
-  {
-    "context": {
-      "domain": "energy-trading:p2p",
-      "action": "publish",
-      "protocol": "beckn-style (illustrative, not schema-validated)",
-      "country": "IND",
-      "version": "0.1"
-    },
-    "message": {
-      "catalog": {
-        "provider": {
-          "id": "shop-pune"
-        },
-        "offers": [
-          {
-            "id": "shop-pune-20260222T1600-f2016e",
-            "quantity": {
-              "unit": "kWh",
-              "value": 1.122
-            },
-            "window": {
-              "start": "2026-02-22T16:00:00+05:30",
-              "end": "2026-02-22T17:00:00+05:30"
-            },
-            "price": {
-              "floor": 4.65,
-              "currency": "INR",
-              "unit": "kWh"
-            },
-            "commit_ratio_of_planned_export": 0.36,
-            "sizing": "P10 generation minus P90 load, capped by planned export"
-          }
-        ]
-      }
-    }
+    ]
   }
-]
+}

@@ -12,6 +12,7 @@ import pathlib
 import pandas as pd
 
 from avishkar_ems.demo import day_view, forecast_quality, prepare, run_payback
+from avishkar_ems.ies import catalog_publish
 from avishkar_ems.sim import demo_sites
 
 logging.disable(logging.WARNING)
@@ -43,8 +44,11 @@ def main() -> None:
     pd.concat(fq_rows).to_csv(OUT / "forecast_quality.csv", index=False)
     # One example offer message from a clear Sunday at the shop.
     p = prepare("shop-pune")
-    dv = day_view(p, "2026-02-22")
-    (OUT / "example_offers.json").write_text(json.dumps([o.to_json() for o in dv.offers], indent=2))
+    for d in pd.date_range(p.test_start, p.test_end, freq="3D"):  # first day with a reliable surplus
+        dv = day_view(p, d)
+        if dv.offers:
+            break
+    (OUT / "example_offers.json").write_text(json.dumps(catalog_publish(p.site, dv.offers, now=dv.day - pd.Timedelta(hours=6)), indent=2))
     print(f"\nWrote {OUT}/payback.csv, forecast_quality.csv, example_offers.json")
 
 

@@ -1,8 +1,8 @@
 """Surplus dispatch: turn the day plan into P2P/UEI-style offers, sized so they can be kept.
 
 An offer is sized on a conservative (P10 generation, P90 load) surplus, never on the P50 value, so
-the site rarely commits more than it can deliver. The JSON is Beckn-style and meant to show the
-shape of a publish step. It is not validated against the official UEI/Beckn schema.
+the site rarely commits more than it can deliver. `ies.catalog_publish` turns offers into the India
+Energy Stack (Beckn DEG v2.0) catalog/publish message.
 """
 
 from __future__ import annotations
@@ -28,21 +28,6 @@ class Offer:
     floor_price: float  # INR/kWh, below this the energy goes to the grid instead
     commit_ratio: float  # committed / planned export; below 1 means a safety margin was kept
     meta: dict = field(default_factory=dict)
-
-    def to_json(self) -> dict:
-        return {
-            "context": {"domain": "energy-trading:p2p", "action": "publish",
-                        "protocol": "beckn-style (illustrative, not schema-validated)",
-                        "country": "IND", "version": "0.1"},
-            "message": {"catalog": {"provider": {"id": self.site_id}, "offers": [{
-                "id": self.offer_id,
-                "quantity": {"unit": "kWh", "value": round(self.quantity_kwh, 3)},
-                "window": {"start": self.start.isoformat(), "end": self.end.isoformat()},
-                "price": {"floor": round(self.floor_price, 2), "currency": "INR", "unit": "kWh"},
-                "commit_ratio_of_planned_export": round(self.commit_ratio, 2),
-                "sizing": "P10 generation minus P90 load, capped by planned export",
-            }]}},
-        }
 
 
 def build_offers(site: SiteSpec, plan: DayPlan, p2p_fcst: np.ndarray, window_hours: float = 1.0,

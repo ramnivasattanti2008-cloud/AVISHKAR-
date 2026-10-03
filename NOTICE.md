@@ -14,3 +14,8 @@ Reviewed as references (READMEs and public descriptions only; no code was copied
 - beckn/DEG (Digital Energy Grid specs): UEI/Beckn message structure
 - Repositories without a licence (for example Gokul123-git/Battery-Storage-Dispatch-and-Price-Arbitrage-Agent,
   namanraii/SolarSponge, Sanjay-dev22/p2p-trading-demo-app) were looked at for ideas only.
+
+## Data and formats added in the real-data pass
+- Weather: PVGIS (EU JRC, ERA5 reanalysis) via `pvlib.iotools.get_pvgis_hourly`; cached CSVs in `data/real/`.
+- Load: Tjaden, T., "Electrical load profile from a tool manufacturer", Zenodo 4683455, CC-BY 4.0 (`data/real/load_tool.csv`).
+- Offer format: beckn/DEG `p2p-trading-ies-wave2` devkit (CC BY-NC-SA 4.0). Only the message structure is followed; no files are copied.

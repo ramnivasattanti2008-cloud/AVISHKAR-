@@ -16,12 +16,14 @@ from avishkar_ems.engine import plan_and_offer
 from avishkar_ems.execute import DayResult, execute_day
 from avishkar_ems.payback import Evaluation, evaluate, train_models
 from avishkar_ems.planner import DayPlan
+from avishkar_ems.realdata import real_site_frame
 from avishkar_ems.reserve import ReserveDecision, outage_rate_90d, outage_risk, reserve_floor
 from avishkar_ems.settle import TradeResult, settle
 from avishkar_ems.sim import STEPS_PER_DAY, demo_sites, simulate_site
 from avishkar_ems.site import SiteSpec
 
 TRAIN_END = "2026-01-01"
+REAL_TRAIN_END = "2023-01-01"
 
 
 @dataclass
@@ -31,6 +33,16 @@ class Prepared:
     df: pd.DataFrame
     pv_model: QuantileBands
     load_model: QuantileBands
+    train_end: str = TRAIN_END
+    source: str = "simulated"
+
+    @property
+    def test_start(self) -> pd.Timestamp:
+        return pd.Timestamp(self.train_end) + pd.Timedelta(days=2)
+
+    @property
+    def test_end(self) -> pd.Timestamp:
+        return pd.Timestamp(self.df.index[-1]).tz_localize(None).normalize() - pd.Timedelta(days=3)
 
 
 @dataclass
@@ -46,11 +58,16 @@ class DayView:
     actual: pd.DataFrame
 
 
-def prepare(site_key: str, seed: int = 7, days: int = 730) -> Prepared:
+def prepare(site_key: str, seed: int = 7, days: int = 730, source: str = "real") -> Prepared:
+    """source='real': PVGIS/ERA5 weather and a measured load profile, train 2021-22, test 2023.
+    source='sim': fully simulated (used by the unit tests)."""
     site, kind = demo_sites()[site_key]
-    df = simulate_site(site, "2025-01-01", days, seed=seed, load_kind=kind)
-    pv_model, load_model = train_models(site, df[df.index < TRAIN_END])
-    return Prepared(site, kind, df, pv_model, load_model)
+    if source == "real":
+        df, train_end = real_site_frame(site, seed=seed), REAL_TRAIN_END
+    else:
+        df, train_end = simulate_site(site, "2025-01-01", days, seed=seed, load_kind=kind), TRAIN_END
+    pv_model, load_model = train_models(site, df[df.index < train_end])
+    return Prepared(site, kind, df, pv_model, load_model, train_end, source)
 
 
 def day_view(p: Prepared, day: str | pd.Timestamp, soc_init: float = 0.5) -> DayView:
@@ -80,13 +97,13 @@ def day_view(p: Prepared, day: str | pd.Timestamp, soc_init: float = 0.5) -> Day
 
 
 def run_payback(p: Prepared, every_days: int = 7) -> Evaluation:
-    days = list(pd.date_range("2026-01-03", "2026-12-28", freq=f"{every_days}D"))
+    days = list(pd.date_range(p.test_start, p.test_end, freq=f"{every_days}D"))
     return evaluate(p.site, p.df, p.pv_model, p.load_model, days)
 
 
 def forecast_quality(p: Prepared) -> pd.DataFrame:
     """Held-out accuracy of the P50 and calibration of the 80% band, on the year after training."""
-    te = p.df[p.df.index >= TRAIN_END]
+    te = p.df[p.df.index >= p.train_end]
     day = (te["pv_clear_kw"] > 0).to_numpy()
     b = p.pv_model.predict(pv_features(te), scale=te["pv_clear_kw"])
     lf = load_features(p.df).loc[te.index]

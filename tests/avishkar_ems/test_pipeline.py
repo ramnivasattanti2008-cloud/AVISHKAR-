@@ -6,6 +6,7 @@ from avishkar_ems.bands import load_features, pv_features
 from avishkar_ems.dispatch import Offer, build_offers, offer_mask
 from avishkar_ems.engine import plan_and_offer
 from avishkar_ems.execute import DT, execute_day
+from avishkar_ems.ies import catalog_publish, validate_publish
 from avishkar_ems.monitor import daily_summary, deviation_flags
 from avishkar_ems.payback import evaluate, train_models
 from avishkar_ems.planner import plan_day
@@ -74,8 +75,10 @@ def test_offers_are_sized_conservatively(shop, shop_year, models):
     assert sum(o.quantity_kwh for o in offers) <= planned_export_kwh + 1e-6
     for o in offers:
         assert o.floor_price > site.tariff.export_rate  # only worth it if it beats grid export
-        j = o.to_json()["message"]["catalog"]["offers"][0]
-        assert j["quantity"]["unit"] == "kWh" and j["price"]["currency"] == "INR"
+    msg = catalog_publish(site, offers, now=a.index[0] - pd.Timedelta(hours=6))
+    assert validate_publish(msg) == []
+    iv = msg["message"]["catalogs"][0]["offers"][0]["offerAttributes"]["commitmentAttributes"]["intervals"]
+    assert iv and {p["type"] for p in iv[0]["payloads"]} == {"PRICE_PER_KWH", "AVAILABLE_QTY"}
 
 
 def test_settlement_books_shortfall_and_unmatched(shop):

@@ -1,13 +1,13 @@
 scenario,site,annual_benefit_inr,payback_years,unserved_critical_kwh
-EMS,home-bengaluru,36235.90212573825,12.418622791244553,0.18095654303593603
-Baseline: self-consume + export (battery idle),home-bengaluru,32431.584619840032,13.87536271430636,1.446850962892281
-Baseline: fixed-rule battery,home-bengaluru,35456.538075189485,12.691594397787103,0.4
-Reference: EMS with perfect foresight,home-bengaluru,37888.03814157584,11.877099529896208,0.0
-EMS,shop-pune,120486.12305126867,9.544667642020961,0.0
-Baseline: self-consume + export (battery idle),shop-pune,108569.02528754117,10.592339729994501,1.9599279322237941
-Baseline: fixed-rule battery,shop-pune,119310.56348467091,9.638710659075485,1.1269420702468007
-Reference: EMS with perfect foresight,shop-pune,125046.49994374973,9.196578876796313,0.0
-EMS,clinic-jaipur,225684.35070861934,10.191225013069364,0.0
-Baseline: self-consume + export (battery idle),clinic-jaipur,211438.53000656498,10.877866015851449,5.554373041593089
-Baseline: fixed-rule battery,clinic-jaipur,224516.7360421958,10.244225176905017,0.0
-Reference: EMS with perfect foresight,clinic-jaipur,234990.3334498045,9.787636649706254,0.0
+EMS,home-bengaluru,47893.69689951739,9.395808407609781,0.0
+Baseline: self-consume + export (battery idle),home-bengaluru,47225.88156962034,9.528673368153235,1.9691793375360613
+Baseline: fixed-rule battery,home-bengaluru,48549.95316669294,9.26880399770842,0.0
+Reference: EMS with perfect foresight,home-bengaluru,48700.8266934839,9.240089553966635,0.0
+EMS,shop-pune,133979.83115351113,8.583381469426957,0.5255478948936051
+Baseline: self-consume + export (battery idle),shop-pune,129769.66416840287,8.86185540641947,6.722016132051256
+Baseline: fixed-rule battery,shop-pune,132522.16722910598,8.677793489536477,2.183118851274638
+Reference: EMS with perfect foresight,shop-pune,136449.19147744012,8.428045542432809,0.0
+EMS,clinic-jaipur,252045.376254827,9.125340976993828,0.0
+Baseline: self-consume + export (battery idle),clinic-jaipur,248364.64678616417,9.260577259130779,8.657003473589775
+Baseline: fixed-rule battery,clinic-jaipur,252361.44125977784,9.113912127456935,0.0
+Reference: EMS with perfect foresight,clinic-jaipur,255546.85056775002,9.000306577404793,0.0

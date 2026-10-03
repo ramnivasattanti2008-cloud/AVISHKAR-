@@ -12,6 +12,7 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from avishkar_ems.demo import day_view, forecast_quality, prepare, run_payback
+from avishkar_ems.ies import catalog_publish, validate_publish
 from avishkar_ems.monitor import daily_summary, deviation_flags
 from avishkar_ems.sim import demo_sites
 
@@ -31,8 +32,8 @@ def get_payback(key: str, every_days: int):
 
 
 st.title("AVISHKAR EMS: predictive energy management for Indian solar sites")
-st.caption("Built on EMHASS. Demo data is simulated for Indian conditions until the organisers' dataset is loaded. "
-           "Tariffs are illustrative.")
+st.caption("Built on EMHASS. Weather is real (PVGIS/ERA5, 2021-2023) and load is a measured profile; outages, P2P prices "
+           "and tariffs are assumptions until the organisers' dataset is loaded.")
 
 key = st.sidebar.selectbox("Site", list(demo_sites()), index=1)
 p = get_site(key)
@@ -41,8 +42,8 @@ st.sidebar.markdown(
     f"**{site.dc_kwp:.0f} kWp**, {site.battery_kwh:.0f} kWh battery  \n"
     f"Critical load {site.critical_kw:.1f} kW for {site.backup_hours:.0f} h  \n"
     f"System cost Rs {site.system_cost_inr:,.0f}  \nTariff: {site.tariff.name}")
-test_days = pd.date_range("2026-01-03", "2026-12-28")
-day = st.sidebar.date_input("Day to plan", value=pd.Timestamp("2026-02-22").date(),
+test_days = pd.date_range(p.test_start, p.test_end)
+day = st.sidebar.date_input("Day to plan", value=(p.test_start + pd.Timedelta(days=50)).date(),
                             min_value=test_days[0].date(), max_value=test_days[-1].date())
 soc0 = st.sidebar.slider("Battery charge at midnight", 0.2, 1.0, 0.5, 0.05)
 
@@ -106,8 +107,10 @@ with tab_offers:
                          "delivered kWh": round(t.delivered_kwh, 2), "shortfall kWh": round(t.shortfall_kwh, 2),
                          "net gain vs grid Rs": round(t.uplift_vs_export_inr, 2)})
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-        st.caption("Beckn-style publish message for the first offer (illustrative, not validated against the official UEI schema):")
-        st.json(dv.offers[0].to_json())
+        msg = catalog_publish(site, dv.offers, now=dv.day - pd.Timedelta(hours=6))
+        st.caption("India Energy Stack (Beckn DEG v2.0) catalog/publish message for today's offers. "
+                   + ("Passes the spec's structural checks." if not validate_publish(msg) else "FAILS spec checks."))
+        st.json(msg, expanded=1)
 
 with tab_payback:
     every = st.select_slider("Replay detail (days between sampled days)", options=[28, 14, 7], value=28)
