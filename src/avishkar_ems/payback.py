@@ -77,6 +77,7 @@ class Evaluation:
             rows[name] = {
                 "annual_benefit_inr": t.annual_benefit(),
                 "payback_years": t.payback_years(self.site.system_cost_inr),
+                "payback_years_after_subsidy": t.payback_years(self.site.system_cost_inr - self.site.subsidy_inr),
                 "unserved_critical_kwh": t.unserved_critical_kwh,
             }
         return pd.DataFrame(rows).T

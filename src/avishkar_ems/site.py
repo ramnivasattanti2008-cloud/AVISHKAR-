@@ -29,6 +29,7 @@ class SiteSpec:
     tz: str = "Asia/Kolkata"
     altitude: float = 0.0
     tariff: Tariff = field(default=COMMERCIAL_TOD)
+    subsidy_inr: float = 0.0  # one-off grant on the system cost, for example from `subsidy.pm_surya_ghar`
 
     @property
     def one_way_eff(self) -> float:

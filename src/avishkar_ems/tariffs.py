@@ -63,6 +63,22 @@ DOMESTIC_FLAT = Tariff(
     name="domestic_flat_illustrative",
 )
 
+def tod_from_base(base_rate: float, commercial: bool, solar: tuple[float, float] = (9.0, 17.0),
+                  peak: tuple[float, float] = (18.0, 22.0), export_rate: float = 3.0, p2p_charges: float = 0.7,
+                  shortfall_penalty: float = 5.0) -> Tariff:
+    """Time-of-Day tariff built from a normal rate using the national minimums in the Electricity (Rights of Consumers)
+    Amendment Rules 2023 (PIB release 1945236): solar hours at least 20% below normal, peak hours at least 1.2x normal
+    for commercial and industrial users and 1.1x for others. The solar and peak hours are set by each state regulator;
+    the defaults here are placeholders to replace with your state's hours. The rule gives minimums, so real tariffs may
+    differ."""
+    (s0, s1), (p0, p1) = solar, peak
+    blocks = ((0.0, s0, base_rate), (s0, s1, base_rate * 0.8), (s1, p0, base_rate),
+              (p0, p1, base_rate * (1.2 if commercial else 1.1)), (p1, 24.0, base_rate))
+    blocks = tuple(b for b in blocks if b[1] > b[0])
+    return Tariff(blocks, export_rate, p2p_charges, shortfall_penalty,
+                  f"tod_rule_{'commercial' if commercial else 'domestic'}_base{base_rate:g}")
+
+
 def load_tariff(path: str | Path) -> Tariff:
     """Read a tariff from JSON (see data/tariffs/template.json)."""
     d = json.loads(Path(path).read_text())

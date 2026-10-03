@@ -20,3 +20,8 @@ Reviewed as references (READMEs and public descriptions only; no code was copied
 - Load: Tjaden, T., "Electrical load profile from a tool manufacturer", Zenodo 4683455, CC-BY 4.0 (`data/real/load_tool.csv`).
 - Offer format: beckn/DEG `p2p-trading-ies-wave2` devkit (CC BY-NC-SA 4.0). Only the message structure is followed; no files are copied.
 - Household load and outages: Agrawal, Mani, Jain, Ganesan (CEEW), "High frequency smart meter data from two districts in India (Mathura and Bareilly)", Harvard Dataverse, doi:10.7910/DVN/GOCHJH, CC0 1.0. Processed 15-minute CSVs for meters MH43 and MH21 are in `data/real/`.
+
+## Rules and sources used for the everyday-user features
+- Time-of-Day tariff minimums: PIB (Ministry of Power) release 1945236.
+- Subsidy slabs: PM Surya Ghar: Muft Bijli Yojana (pmsuryaghar.gov.in). Applied as a simple formula in `subsidy.py`; eligibility is the user's to confirm.
+- Competitor review (EMHASS, Predbat, vendor apps): public descriptions only, summarised in `docs/RESEARCH.md`. No code copied.

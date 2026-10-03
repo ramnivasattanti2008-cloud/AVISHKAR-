@@ -11,7 +11,9 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots
 
+from avishkar_ems.advisor import advise_text, battery_advice
 from avishkar_ems.demo import day_view, forecast_quality, prepare, run_payback
+from avishkar_ems.explain import explain_day
 from avishkar_ems.flex import summarise
 from avishkar_ems.ies import (
     catalog_publish,
@@ -20,6 +22,7 @@ from avishkar_ems.ies import (
     validate_flow,
     validate_publish,
 )
+from avishkar_ems.loads import best_start
 from avishkar_ems.monitor import daily_summary, deviation_flags
 from avishkar_ems.realdata import real_sites
 from avishkar_ems.summary import plain_summary
@@ -39,6 +42,13 @@ def get_payback(key: str, every_days: int):
     return ev.payback_table(), ev.ems, ev.trades
 
 
+@st.cache_data(show_spinner="Trying different battery sizes on the held-out days...")
+def get_advice(key: str):
+    q = get_site(key)
+    days = pd.date_range(q.test_start, q.test_end)[::14]
+    return battery_advice(q.site, q.df, q.pv_model, q.load_model, days)
+
+
 st.title("AVISHKAR EMS: predictive energy management for Indian solar sites")
 st.caption("Built on EMHASS. Weather is real (PVGIS/ERA5, 2021-2023) and load is a measured profile; outages, P2P prices "
            "and tariffs are assumptions until the organisers' dataset is loaded.")
@@ -56,8 +66,8 @@ day = st.sidebar.date_input("Day to plan", value=(p.test_start + pd.Timedelta(da
 soc0 = st.sidebar.slider("Battery charge at midnight", 0.2, 1.0, 0.5, 0.05)
 
 lang = st.sidebar.radio("Language / भाषा", ["en", "hi"], format_func=lambda x: {"en": "English", "hi": "हिन्दी"}[x])
-tab_plan, tab_offers, tab_payback, tab_monitor, tab_flex = st.tabs(
-    ["Plan for the day", "Offers and settlement", "Payback", "Monitoring", "Shiftable loads"])
+tab_plan, tab_offers, tab_payback, tab_advice, tab_monitor, tab_flex = st.tabs(
+    ["Plan for the day", "Offers and settlement", "Payback", "Advice", "Monitoring", "Shiftable loads"])
 
 dv = day_view(p, str(day), soc_init=soc0)
 s, ex = dv.plan.steps, dv.ems.steps
@@ -136,6 +146,11 @@ with tab_payback:
     show = table.copy()
     show["annual_benefit_inr"] = show["annual_benefit_inr"].round(0)
     show["payback_years"] = show["payback_years"].round(2)
+    if "payback_years_after_subsidy" in show:
+        show["payback_years_after_subsidy"] = show["payback_years_after_subsidy"].round(2)
+        if site.subsidy_inr:
+            st.caption(f"Subsidy counted in the last column: Rs {site.subsidy_inr:,.0f} (PM Surya Ghar, residential). "
+                       "Check you qualify and that your DISCOM has approved the application.")
     st.dataframe(show, use_container_width=True)
     st.bar_chart(show["annual_benefit_inr"])
     ems_b = table.loc["EMS", "annual_benefit_inr"]
@@ -146,6 +161,31 @@ with tab_payback:
                 "minus battery wear, plus the value of any change in stored energy.")
     st.dataframe(forecast_quality(p).round(3), use_container_width=True)
     st.caption("Forecast quality on the held-out year. band80_coverage should sit near 0.80.")
+
+with tab_advice:
+    st.subheader("Why the plan does what it does")
+    for line in explain_day(s, dv.reserve, dv.offers, lang):
+        st.markdown(f"- {line}")
+    st.subheader("When should I run a big appliance?")
+    st.caption("Uses today's forecast and tariff. A guide, not a guarantee.")
+    a1, a2, a3 = st.columns(3)
+    appl = a1.selectbox("Appliance", ["Geyser (2 kW, 1 h)", "Washing machine (0.5 kW, 1.5 h)", "Water pump (1.5 kW, 2 h)",
+                                      "EV charger (3.3 kW, 4 h)"])
+    kw_, hrs_ = {"Geyser (2 kW, 1 h)": (2.0, 1.0), "Washing machine (0.5 kW, 1.5 h)": (0.5, 1.5),
+                 "Water pump (1.5 kW, 2 h)": (1.5, 2.0), "EV charger (3.3 kW, 4 h)": (3.3, 4.0)}[appl]
+    lo_h = a2.slider("Earliest start hour", 0, 23, 6)
+    hi_h = a3.slider("Must finish by hour", 1, 24, 22)
+    bs = best_start(s, kw_, hrs_, float(lo_h), float(hi_h))
+    if bs.empty:
+        st.warning("That window is too short for this appliance.")
+    else:
+        st.dataframe(bs, use_container_width=True, hide_index=True)
+    st.subheader("How big should my battery be?")
+    st.caption("The battery price is an assumption (Rs 25,000 per kWh). Replace it with a real quote.")
+    want = st.slider("Hours of backup I want", 1, 12, int(site.backup_hours))
+    adv = get_advice(key)
+    st.dataframe(adv, use_container_width=True)
+    st.info(advise_text(adv, want, lang))
 
 with tab_monitor:
     inject = st.checkbox("Inject a string fault today (output drops to 60%)", value=True)

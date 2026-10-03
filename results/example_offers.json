@@ -5,8 +5,8 @@
     "action": "catalog/publish",
     "bppId": "sellerapp.example.com",
     "bppUri": "http://sellerapp.example.com/bpp/receiver",
-    "transactionId": "da0ccd32-5c60-441a-9f8e-08873eb65170",
-    "messageId": "e7aa5107-b843-453c-8325-806664a20446",
+    "transactionId": "6f8ada57-3c59-497e-8b3b-c25fe028fb1b",
+    "messageId": "04eef223-5ce6-4e57-b62c-da5acdbdd5f2",
     "timestamp": "2023-01-14T12:30:00Z",
     "schemaContext": [
       "https://schema.nfh.global/EnergyTradeOffer/v2.0/context.jsonld",
@@ -131,7 +131,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          4.426
+                          4.447
                         ]
                       }
                     ]
@@ -148,7 +148,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          3.988
+                          3.982
                         ]
                       }
                     ]
@@ -165,7 +165,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          3.035
+                          3.05
                         ]
                       }
                     ]
@@ -182,7 +182,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          1.726
+                          1.744
                         ]
                       }
                     ]

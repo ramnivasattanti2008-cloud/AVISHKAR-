@@ -35,6 +35,8 @@ Payback in years, lower is better:
 | 15 kWp shop, Pune | **8.52** | 8.86 | 8.68 | 8.44 |
 | 30 kWp clinic, Jaipur | **9.09** | 9.26 | 9.11 | 9.01 |
 
+With the PM Surya Ghar subsidy (Rs 78,000 for a 3 kW home, if you qualify) the Mathura EMS payback drops from 18.25 to 13.58 years. The shop and clinic are commercial, so no subsidy is applied.
+
 - Against a battery left idle the EMS earns 14%, 4.0% and 1.9% more a year. Against a fixed-rule battery it ties at
   Mathura (the flat tariff leaves nothing to optimise), and wins by 1.9% at Pune and 0.3% at Jaipur.
 - Backup is where it clearly wins. Critical load left without power during cuts was 0.08 / 0.00 / 0.00 kWh with the
@@ -78,12 +80,24 @@ Full tables: [results/payback.csv](results/payback.csv). Offer message: [results
 | Payback per site, EMS vs no-EMS | no | `payback.py`: two baselines and a perfect-foresight reference |
 | Planning that does not oversell | n/a | `engine.py`: two-pass plan, P2P price applies only inside committed windows |
 
-Status against the statement's scope: **must-haves** (live monitoring, generation and load forecast with bands,
-utilisation plan, emergency reserve, JSON offers, settlement, payback view) are all implemented.
-**Stretch** done: dynamic reserve driven by outage risk and weather. **Partly done:** the P2P flow covers
-publish, match (clearing price against the floor), deliver and settle in simulation, with no confirm step and no
-network. **Not done:** intraday re-planning, fleet aggregation, flexible-load detection, link to the O&M engine,
-tariff and battery-size sensitivity.
+Status against the statement's scope: every must-have (live monitoring, generation and load forecast with bands,
+utilisation plan, emergency reserve, JSON offers, settlement, payback view) is implemented, and so are the stretch items
+(dynamic reserve from outage risk and weather, intraday re-planning, fleet pooling, flexible-load detection, tariff and
+battery-size sensitivity). The P2P flow covers publish, match, confirm, deliver and settle in simulation, with no live
+network. Not done: the link to the O&M engine.
+
+## Extra features for everyday users
+
+| Feature | What it gives you |
+|---|---|
+| Analyse your own meter file | `python examples/analyze_my_site.py --load my.csv --lat .. --lon .. --kwp 3 --cost 180000 --tod --base-rate 7 --subsidy pm-surya-ghar` writes a short report with your payback and battery advice. Works with kW, W, kWh or Wh files. |
+| Subsidy-aware payback | PM Surya Ghar (up to Rs 78,000 for homes) shown as a separate payback figure. |
+| Time-of-Day tariff builder | Builds a tariff from your base rate using the national rule minimums. Enter your real rates when you have them. |
+| Battery size advisor | Tries several sizes, reports bill benefit and backup hours, and says plainly when a battery will not repay itself from bills. |
+| Appliance scheduler | Tells you the cheapest start time for a geyser, washing machine, pump or EV charger. |
+| Plain reasons | Explains each day's plan in English or Hindi. |
+
+How this compares with similar tools is in [docs/RESEARCH.md](docs/RESEARCH.md).
 
 ## Quick start
 
@@ -93,6 +107,7 @@ pip install -e ".[app]"
 python examples/run_demo.py            # about 2 minutes, writes ./results
 streamlit run app/dashboard.py         # plan, offers, payback and monitoring
 pytest tests/avishkar_ems              # about a minute
+python examples/analyze_my_site.py --help   # use your own meter CSV
 python examples/run_sensitivity.py     # battery size and export rate, about 6 minutes
 ```
 
@@ -130,7 +145,7 @@ quantity, floor price), never the load profile. Real deployments should add cons
   German factory. The Mathura home is the most real site: measured load, measured outages, real weather.
 - The Mathura outage log has no notices, so planned-outage warning is never set there. Load is not metered during a cut
   and is filled with the meter's typical load for that time of day.
-- Tariffs are illustrative until you add `data/tariffs/<site>.json`. Official tariff pages could not be fetched here.
+- The battery price in the advisor (Rs 25,000 per kWh) is an assumption. Tariffs are illustrative until you add `data/tariffs/<site>.json`. Official tariff pages could not be fetched here.
 - The Mathura holdout covers Jul to Feb only. System costs (Rs 305,000 for the home) are assumptions.
 - Offers, confirm and settled messages follow the public beckn/DEG P2P devkit and pass the checks in `ies.py` (the
   publish checker also accepts the official example when `DEG_PUBLISH_EXAMPLE` points to it). The buyer is simulated and
