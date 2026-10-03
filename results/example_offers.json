@@ -5,8 +5,8 @@
     "action": "catalog/publish",
     "bppId": "sellerapp.example.com",
     "bppUri": "http://sellerapp.example.com/bpp/receiver",
-    "transactionId": "aed86e9d-be84-4f8a-8f0a-e31c14f08d34",
-    "messageId": "c73111d0-5552-45af-baf0-97d5fe1ad59a",
+    "transactionId": "6fd72a9b-680e-4e4d-a8b4-a8550ac2cb6e",
+    "messageId": "0034d4da-607f-4a75-a2ab-b54a5264b306",
     "timestamp": "2023-01-14T12:30:00Z",
     "schemaContext": [
       "https://schema.nfh.global/EnergyTradeOffer/v2.0/context.jsonld",
@@ -58,10 +58,10 @@
         ],
         "offers": [
           {
-            "id": "offer-shop-pune-20230115T1200-0",
+            "id": "offer-shop-pune-20230115T1100-0",
             "descriptor": {
-              "name": "Solar surplus 12:00-16:00 IST",
-              "shortDesc": "13.2 kWh from 15 kWp + battery"
+              "name": "Solar surplus 11:00-16:00 IST",
+              "shortDesc": "14.6 kWh from 15 kWp + battery"
             },
             "resourceIds": [
               "energy-resource-shop-pune"
@@ -73,7 +73,7 @@
               "validityWindow": {
                 "@type": "beckn:TimePeriod",
                 "schema:startTime": "2023-01-14T12:30:00Z",
-                "schema:endTime": "2023-01-15T06:30:00Z"
+                "schema:endTime": "2023-01-15T05:30:00Z"
               },
               "contractAttributes": {
                 "@context": "https://schema.nfh.global/DEGContract/v2.0/context.jsonld",
@@ -101,7 +101,7 @@
                 "@context": "https://schema.nfh.global/BecknTimeSeries/v1.0/context.jsonld",
                 "@type": "TimeSeries",
                 "intervalPeriod": {
-                  "start": "2023-01-15T06:30:00Z",
+                  "start": "2023-01-15T05:30:00Z",
                   "duration": "PT60M"
                 },
                 "payloadDescriptors": [
@@ -125,13 +125,13 @@
                       {
                         "type": "PRICE_PER_KWH",
                         "values": [
-                          4.51
+                          4.52
                         ]
                       },
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          4.447
+                          2.431
                         ]
                       }
                     ]
@@ -142,7 +142,24 @@
                       {
                         "type": "PRICE_PER_KWH",
                         "values": [
-                          4.51
+                          4.52
+                        ]
+                      },
+                      {
+                        "type": "AVAILABLE_QTY",
+                        "values": [
+                          3.346
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": 2,
+                    "payloads": [
+                      {
+                        "type": "PRICE_PER_KWH",
+                        "values": [
+                          4.52
                         ]
                       },
                       {
@@ -154,12 +171,12 @@
                     ]
                   },
                   {
-                    "id": 2,
+                    "id": 3,
                     "payloads": [
                       {
                         "type": "PRICE_PER_KWH",
                         "values": [
-                          4.51
+                          4.52
                         ]
                       },
                       {
@@ -171,12 +188,12 @@
                     ]
                   },
                   {
-                    "id": 3,
+                    "id": 4,
                     "payloads": [
                       {
                         "type": "PRICE_PER_KWH",
                         "values": [
-                          4.51
+                          4.52
                         ]
                       },
                       {

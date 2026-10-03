@@ -65,7 +65,8 @@ def reserve_floor(
     required_kwh = site.critical_kw * site.backup_hours * (1.0 + risk_uplift * risk)
     stored_needed = required_kwh / site.one_way_eff  # battery must hold a bit more than it delivers
     min_by_dod = 1.0 - site.dod
-    raw_floor = max(min_by_dod, stored_needed / site.battery_kwh) if site.battery_kwh > 0 else 1.0
+    # the energy to ride through an outage sits ABOVE the depth-of-discharge limit, so it is added to it
+    raw_floor = min_by_dod + stored_needed / site.battery_kwh if site.battery_kwh > 0 else 1.0
     feasible = raw_floor <= max_floor
     floor = min(raw_floor, max_floor)
     reason = (

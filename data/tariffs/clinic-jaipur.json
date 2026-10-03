@@ -1,0 +1,43 @@
+{
+  "name": "Rajasthan NDS/LT-2 above 5 kW, RERC 'Tariff for Supply of Electricity-2025' (effective 1.10.2025, text from the Jodhpur discom's publication of the state schedule): marginal 8.50 Rs/kWh above 100 units; ToD for load above 10 kW: 12-16 -10%, 06-08 +5%, 18-22 +10%; fixed charges not modelled; export rate NOT from the order",
+  "tou_blocks": [
+    [
+      0,
+      6,
+      8.5
+    ],
+    [
+      6,
+      8,
+      8.925
+    ],
+    [
+      8,
+      12,
+      8.5
+    ],
+    [
+      12,
+      16,
+      7.65
+    ],
+    [
+      16,
+      18,
+      8.5
+    ],
+    [
+      18,
+      22,
+      9.35
+    ],
+    [
+      22,
+      24,
+      8.5
+    ]
+  ],
+  "export_rate": 3.5,
+  "p2p_charges": 0.8,
+  "shortfall_penalty": 6.0
+}

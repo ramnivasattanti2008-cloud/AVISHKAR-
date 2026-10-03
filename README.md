@@ -20,8 +20,8 @@ lives in `src/avishkar_ems/` and calls EMHASS; nothing inside EMHASS was edited.
 | Mathura home: load **and grid outages** | CEEW smart meter MH43, 3-minute data, CC0 (Harvard Dataverse) | real, measured |
 | Shop and clinic load | measured German factory profile (Zenodo 4683455, CC-BY) | real but not Indian |
 | Generation | pvlib model driven by the real irradiance | modelled (no inverter logs) |
-| Mathura home import rate | UPPCL LMV-1 urban domestic, FY2025-26, from the UPERC tariff order (Rs 6.50/kWh, top slab) | real |
-| Other tariffs, export rate, P2P prices | illustrative; replace through `data/tariffs/<site>.json` | assumption |
+| Import rates and Time-of-Day bands at all three sites | UPERC (Mathura), MERC with its June 2025 review order (Pune), RERC 2025 tariff (Jaipur); see `data/tariffs/` and `docs/RESEARCH.md` | real, from the orders |
+| Export rates, P2P prices, fixed charges | not taken from the orders (fixed charges are not modelled) | assumption |
 | Outages at the shop and clinic | generated | assumption |
 | Day-ahead forecast inputs | persistence of yesterday's clearness | simple, no archived NWP |
 
@@ -32,28 +32,33 @@ Payback in years, lower is better:
 
 | Site | EMS | Battery idle | Fixed-rule battery | Perfect foresight |
 |---|---|---|---|---|
-| 3 kWp home, Mathura | 19.77 | 21.84 | 19.80 | 19.37 |
-| 15 kWp shop, Pune | **8.52** | 8.86 | 8.68 | 8.44 |
-| 30 kWp clinic, Jaipur | **9.09** | 9.26 | 9.11 | 9.01 |
+| 3 kWp home, Mathura | 19.93 | 21.83 | 19.94 | 19.40 |
+| 15 kWp shop, Pune | **8.61** | 8.91 | 8.68 | 8.57 |
+| 30 kWp clinic, Jaipur | 7.73 | 7.83 | **7.71** | 7.66 |
 
-With the PM Surya Ghar subsidy (Rs 78,000 for a 3 kW home, if you qualify) the Mathura EMS payback drops from 19.77 to 14.72 years. The shop and clinic are commercial, so no subsidy is applied.
+With the PM Surya Ghar subsidy (Rs 78,000 for a 3 kW home, if you qualify) the Mathura EMS payback drops from 19.93 to 14.83 years. The shop and clinic are commercial, so no subsidy is applied.
 
-- Against a battery left idle the EMS earns 10%, 4.0% and 1.9% more a year. Against a fixed-rule battery it ties at
-  Mathura (the flat tariff leaves nothing to optimise), and wins by 1.9% at Pune and 0.3% at Jaipur.
-- Backup is where it clearly wins. Critical load left without power during cuts was 0.08 / 0.00 / 0.00 kWh with the
-  EMS, against 0.07 / 6.72 / 8.66 with an idle battery and 0.15 / 2.18 / 0.00 with the fixed rule.
+- Against a battery left idle the EMS earns 9.5%, 3.5% and 1.3% more a year. Against a fixed-rule battery it ties at
+  Mathura (0.1%), wins by 0.9% at Pune, and loses by 0.3% at Jaipur. So the honest summary is: the optimiser's edge over
+  a sensible simple rule is small on these tariffs. Its clearer value is the reserve, the offers and the settlement.
+- Backup: critical load left without power during cuts was 0.08 / 0.00 / 0.00 kWh with the EMS, against 0.07 / 0.00 / 3.13
+  with an idle battery and 0.08 / 0.00 / 0.00 with the fixed rule. The Mathura figure is the same for all three because
+  the meter is not recording during a cut and the home has a small battery.
+- The reserve floor now includes the 10% of the battery that cannot be used. An earlier version left it out, so a "4 hour"
+  backup reserve covered about 3 hours. The executor also now backs up only the critical load during a cut and sheds the
+  rest, as a critical-load panel does. Both fixes came out of testing against real tariffs.
 - Execution matters. The EMS used to follow the plan's 15-minute battery setpoints and lost to the simple rule at
   Mathura, because a single home's load is too noisy to plan that finely. The executor now follows the plan's price
   signal (when to hold energy, when to charge from the grid at night, what was promised to buyers) but reacts to the real
-  load and sun. That change alone moved Mathura from about 4% behind the rule to level with it.
-- The noon re-plan (`intraday.py`) did not help once execution was reactive: it changed yearly benefit by -0.3% to -0.6%.
+  load and sun.
+- The noon re-plan (`intraday.py`) did not help once execution was reactive: it changed yearly benefit by -0.4% to +0.1%.
   It is kept as an option and is off in the headline numbers.
-- Forecast bands (80% target): generation covered 86% / 86% / 84%. Load covered 76% at Mathura (measured), and 89% / 91%
+- Forecast bands (80% target): generation covered 85% / 87% / 83%. Load covered 79% at Mathura (measured), and 89% / 91%
   at the shop and clinic, where the near-repeating factory profile makes the bands too wide
   ([results/forecast_quality.csv](results/forecast_quality.csv)).
-- Sensitivity ([results/sensitivity.csv](results/sensitivity.csv)): a battery sized like ours adds 11.0% at Mathura, 5.5% at
-  Pune and 3.0% at Jaipur compared with having none. If the export (net-metering) rate is raised to near retail, the
-  battery's value shrinks, and at Mathura it turns negative (-4.1% at an export rate of Rs 5). So at that home the battery is a backup
+- Sensitivity ([results/sensitivity.csv](results/sensitivity.csv)): a battery sized like ours adds 10.1% at Mathura, 3.9% at
+  Pune and 1.5% at Jaipur compared with having none. If the export (net-metering) rate is raised to near retail, the
+  battery's value shrinks, and at Mathura it turns negative (-3.9% at an export rate of Rs 5). So at that home the battery is a backup
   purchase, not a savings one.
 - P2P volume is small (a few kWh across the sampled days), because real load absorbs most of the surplus.
 
@@ -146,7 +151,7 @@ quantity, floor price), never the load profile. Real deployments should add cons
   German factory. The Mathura home is the most real site: measured load, measured outages, real weather.
 - The Mathura outage log has no notices, so planned-outage warning is never set there. Load is not metered during a cut
   and is filled with the meter's typical load for that time of day.
-- The battery price in the advisor (Rs 25,000 per kWh) is an assumption. Only the Mathura import rate is from an official order; the other tariffs and every export rate are illustrative until you add `data/tariffs/<site>.json`. Official tariff pages could not be fetched here.
+- The battery price in the advisor (Rs 25,000 per kWh) is an assumption. Import rates come from the official orders, but every export rate is an assumption, and the sites use one rate class each (check yours). Replace them by editing `data/tariffs/<site>.json`.
 - The Mathura holdout covers Jul to Feb only. System costs (Rs 305,000 for the home) are assumptions.
 - Offers, confirm and settled messages follow the public beckn/DEG P2P devkit and pass the checks in `ies.py` (the
   publish checker also accepts the official example when `DEG_PUBLISH_EXAMPLE` points to it). The buyer is simulated and

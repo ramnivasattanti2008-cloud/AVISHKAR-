@@ -41,7 +41,7 @@ def test_plan_never_dips_below_reserve_floor(shop, shop_year, models):
         pv_b, ld_b = _bands(shop_year, models, sl)
         rsv = reserve_floor(site, risk=0.6)
         plan = plan_day(site, pv_b, ld_b, a["import_rate"].to_numpy(), a["export_rate"].to_numpy(),
-                        a["p2p_price_fcst"].to_numpy(), 0.5, rsv)
+                        a["p2p_price_fcst"].to_numpy(), 0.6, rsv)  # start above the floor
         assert plan.status.startswith("Optimal")
         # the LP respects the floor up to solver tolerance (under 1% of capacity); the executor is strict
         assert plan.steps["soc"].min() >= rsv.floor_soc - 0.01, text
@@ -151,3 +151,16 @@ def test_plan_balances_energy_every_step(shop, shop_year, models):
         s = plan.steps
         residual = s["load_p50"] - s["pv_p50"] - s["batt_kw"] - s["grid_kw"]
         assert residual.abs().max() < 1e-3, f"{text}: max imbalance {residual.abs().max():.3f} kW"
+
+
+def test_outage_backs_up_critical_load_only_so_the_reserve_floor_holds(shop, shop_year):
+    site, _ = shop
+    a = shop_year.loc[_day(shop_year, "2025-07-10")].copy()
+    a["pv_kw"] = 0.0
+    a["load_kw"] = site.critical_kw * 3  # big non-critical load while the grid is down
+    a["outage"] = False
+    a.iloc[56 : 56 + int(site.backup_hours * 4), a.columns.get_loc("outage")] = True  # evening outage of the design length, no sun
+    floor = reserve_floor(site, risk=0.0)
+    res = execute_day(site, a, floor.floor_soc + 0.001, 0.0, "idle").steps
+    assert res.loc[res["outage"], "unserved_critical_kwh"].sum() == pytest.approx(0.0, abs=1e-6)
+    assert res.loc[res["outage"], "unserved_kwh"].sum() > 0  # the non-critical part was shed

@@ -69,3 +69,26 @@ month. The Mathura home uses about 490 units a month, so the model uses Rs 6.50 
   adds less than the figures here show (see the sensitivity table).
 
 A third-party bill calculator I checked first listed different, wrong rates, so only the order itself is used.
+
+## Pune and Jaipur tariffs
+
+- **Pune (MSEDCL, LT II non-residential, 0 to 20 kW).** From the MERC multi-year tariff order of March 2025 and its June
+  2025 review order (Case 75 of 2025). Energy charge Rs 6.60 plus wheeling Rs 1.24 per kWh. The review order sets
+  Time-of-Day on the energy charge: solar hours (9 to 17) 20% cheaper on average (15% in April to September, 25% in
+  October to March), and 17 to 24 hours 25% dearer for commercial users. The model uses the 20% average all year. The
+  fixed charge (Rs 520 per connection a month) is not modelled. The review order also removed the night rebate that the
+  first order had.
+- **Jaipur (RERC "Tariff for Supply of Electricity-2025", from 1 October 2025).** I read the text as published by the
+  Jodhpur discom; the three Rajasthan discoms follow the same commission order, but check the JVVNL copy. Non-domestic
+  above 5 kW: Rs 7.00 for the first 100 units and Rs 8.50 above, so the model uses Rs 8.50. For loads above 10 kW with a
+  ToD meter: 12 to 16 hours 10% rebate, 6 to 8 hours 5% extra, 18 to 22 hours 10% extra. Fixed charges not modelled.
+- Neither order gave an export rate I could use, so export stays at the earlier assumption.
+
+## Two bugs found while testing against these tariffs
+
+- The reserve floor ignored the unusable bottom 10% of the battery, so a reserve meant for 4 hours covered about 3.
+- During a cut the simulator fed the whole load from the battery instead of only the critical load, so a long cut could
+  drain the battery below what the critical load needed.
+
+Both are fixed, with a regression test for the second. The fixes changed every site's numbers, and the README shows the
+new ones. The effect is that the fixed-rule battery now slightly beats the optimiser at Jaipur.

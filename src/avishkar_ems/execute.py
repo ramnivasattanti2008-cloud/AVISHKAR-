@@ -58,7 +58,10 @@ def execute_day(
     out = {k: np.zeros(n) for k in ("batt_kw", "grid_kw", "soc", "unserved_kwh", "unserved_critical_kwh")}
     for t in range(n):
         if outage[t]:
-            want = load[t] - pv[t]  # + battery must supply, - surplus to charge
+            if pv[t] >= load[t]:
+                want = load[t] - pv[t]  # surplus sun charges the battery
+            else:  # islanded: sun first, the battery only backs up the critical load (the rest is shed, as a critical-load panel does)
+                want = max(0.0, min(load[t], site.critical_kw) - pv[t])
             lo_soc = abs_min
         else:
             lo_soc = floor_soc

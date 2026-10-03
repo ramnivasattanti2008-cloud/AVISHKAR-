@@ -1,0 +1,23 @@
+{
+  "name": "MSEDCL LT II (0-20 kW) FY2025-26, MERC MYT order (Case 217/2024) as revised by review order Case 75/2025: EC 6.60 + wheeling 1.24; ToD on EC, solar hours -20% (annual average of -15% Apr-Sep and -25% Oct-Mar), peak 17-24 +25%; fixed charge Rs 520/connection/month not modelled; export rate NOT from the order",
+  "tou_blocks": [
+    [
+      0,
+      9,
+      7.84
+    ],
+    [
+      9,
+      17,
+      6.52
+    ],
+    [
+      17,
+      24,
+      9.49
+    ]
+  ],
+  "export_rate": 3.5,
+  "p2p_charges": 0.8,
+  "shortfall_penalty": 6.0
+}
