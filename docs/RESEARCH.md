@@ -55,3 +55,17 @@ READMEs and product pages, not from running them.
 - Beckn DEG: https://github.com/beckn/DEG
 - PVGIS: https://re.jrc.ec.europa.eu/pvg_tools/en/
 - CEEW smart meter data: doi:10.7910/DVN/GOCHJH
+
+## First real tariff: UPPCL (Mathura home)
+
+Read from the UPERC tariff order for FY2025-26 (Annexure I, rate schedules). Urban domestic (LMV-1) energy charge is
+Rs 5.50/kWh up to 150 units a month, Rs 6.00 for 151 to 300, and Rs 6.50 above 300, with a fixed charge of Rs 110/kW a
+month. The Mathura home uses about 490 units a month, so the model uses Rs 6.50 as its marginal rate. Two things to know:
+
+- LMV-1 has no Time-of-Day rate. The order's ToD table exists for industrial (LMV-6) and similar categories, and there
+  the winter midday rate is the base rate (0%), not cheaper, which differs from the central guidance above.
+- The order says net metering allows 100% banking and withdrawal of banked power. The model still uses an export rate of
+  Rs 3 because I did not find the year-end settlement rate. If banking gives you retail value for exports, the battery
+  adds less than the figures here show (see the sensitivity table).
+
+A third-party bill calculator I checked first listed different, wrong rates, so only the order itself is used.
