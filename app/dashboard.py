@@ -213,4 +213,7 @@ with tab_flex:
     st.caption("Bursts of use above the base load, grouped by time of day. The saving is an upper bound: it assumes the "
                "load moves into 10:00-16:00 and uses surplus that would otherwise be exported.")
     flex = summarise(p.df["load_kw"], p.df["import_rate"], site.tariff.export_rate)
-    st.dataframe(flex, use_container_width=True) if len(flex) else st.info("No clear bursts found in this load series.")
+    if len(flex):
+        st.dataframe(flex, use_container_width=True)
+    else:
+        st.info("No clear bursts found in this load series.")
