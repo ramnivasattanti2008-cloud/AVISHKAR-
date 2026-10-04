@@ -1,6 +1,13 @@
 {
-  "name": "UPPCL LMV-1 urban domestic, FY2025-26 (UPERC order, Annexure I): 6.50 Rs/kWh above 300 kWh/month; fixed charge Rs 110/kW/month not modelled; export rate NOT from the order",
-  "tou_blocks": [[0, 24, 6.5]],
+  "name": "UPPCL LMV-1 urban domestic FY2025-26",
+  "source": "UPPCL LMV-1 urban domestic, FY2025-26 (UPERC order, Annexure I): 6.50 Rs/kWh above 300 kWh/month; fixed charge Rs 110/kW/month not modelled; export rate NOT from the order",
+  "tou_blocks": [
+    [
+      0,
+      24,
+      6.5
+    ]
+  ],
   "export_rate": 3.0,
   "p2p_charges": 0.6,
   "shortfall_penalty": 5.0
