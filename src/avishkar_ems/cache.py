@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import json
 import os
 import pickle
 import platform
@@ -38,6 +39,8 @@ _LIBS = ("numpy", "pandas", "scikit-learn", "pvlib", "highspy", "cvxpy", "skfore
 # Modules that turn results into text or extra views and never feed numbers back into a cached or published result.
 # Anything not listed here is assumed to compute results, so editing it marks the cache and results/ stale.
 _PRESENTATION_ONLY = frozenset({"report.py", "mysite.py", "lifetime.py", "explain.py", "summary.py"})
+# Keys of a policy rule that describe it to a reader without being a number the EMS uses (see `_as_the_ems_reads_it`).
+_POLICY_WORDING = frozenset({"description", "statedAs", "conditions", "notes"})
 
 
 def cache_dir() -> Path:
@@ -165,18 +168,41 @@ def provenance(**extra) -> dict:
             "libraries": library_versions(), "fingerprint": fingerprint(), **extra}
 
 
+def _as_the_ems_reads_it(f: Path) -> bytes:
+    """The bytes of an input file that can change a result.
+
+    Tariff JSON carries a `meta` block (state, DISCOM, validity, notes) that only the platform reads, and policy JSON carries
+    sources, check dates and wording next to the numbers. Editing those cannot move a result, so they are left out: re-reading
+    a rule at its source and finding it unchanged must not force a rebuild. Anything else, and any file that is not valid JSON,
+    is hashed as it is. Line endings are normalised (same file, different checkout)."""
+    raw = f.read_bytes().replace(b"\r\n", b"\n")
+    if f.suffix != ".json":
+        return raw
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return raw
+    if f.parent.name == "tariffs" and isinstance(data, dict):
+        data.pop("meta", None)
+    elif f.parent.name == "policy" and isinstance(data, dict):
+        data = {"program": data.get("program"), "region": data.get("region"),
+                "rules": [{k: v for k, v in r.items() if k not in _POLICY_WORDING} for r in data.get("rules", [])]}
+    return json.dumps(data, sort_keys=True).encode()
+
+
 def fingerprint(root: Path = ROOT) -> str:
-    """Hash of everything the cached results depend on: our code, tariffs, bundled data and key library versions."""
+    """Hash of everything the cached results depend on: our code, tariffs, policy numbers, bundled data and key library
+    versions."""
     h = hashlib.sha256()
     for lib, version in library_versions().items():
         h.update(f"{lib}=={version}\n".encode())
     files = [*(root / "src" / "avishkar_ems").glob("*.py"), *(root / "data" / "tariffs").glob("*.json"),
-             *(root / "data" / "real").glob("*.csv")]
+             *(root / "data" / "policy").glob("*.json"), *(root / "data" / "real").glob("*.csv")]
     for f in sorted(files):
         if f.name.startswith("uploaded_") or f.name in _PRESENTATION_ONLY:
             continue  # scratch uploads, and modules that format results but cannot change them
         h.update(f.name.encode())
-        h.update(f.read_bytes().replace(b"\r\n", b"\n"))  # same code, different checkout line endings
+        h.update(_as_the_ems_reads_it(f) if f.suffix == ".json" else f.read_bytes().replace(b"\r\n", b"\n"))
     return h.hexdigest()[:16]
 
 

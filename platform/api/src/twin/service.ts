@@ -6,6 +6,8 @@ import { type PropertyDto, type PropertyPolicy, getProperty } from "../propertie
 import type { Footprint } from "../providers/footprint.js";
 import type { Providers } from "../providers/index.js";
 import type { SatelliteScene } from "../providers/satellite.js";
+import { type AssetSnapshot, profilesFromSnapshot, summariseAssets } from "../assets/service.js";
+import { latestDna } from "../energy/service.js";
 import type { TwinTariffSchema } from "../schemas-twin.js";
 import { type TariffPlanDto, getTariffRow, toTariffDto } from "../tariff/service.js";
 import type { z } from "zod";
@@ -59,6 +61,8 @@ export interface TwinDto {
   };
   satellite: Measured<SatelliteScene | null>;
   consumption: { estimatedDailyLoadKwh: Measured<number> };
+  /** What the owner has entered: battery, solar system, electric vehicle, appliances (spec section 8). */
+  profiles: ReturnType<typeof profilesFromSnapshot>;
   tariff: Measured<TwinTariff>;
   energyAutonomyScore: Measured<number>;
   warnings: string[];
@@ -202,7 +206,17 @@ export async function analyzeProperty(deps: TwinDeps, userId: string, propertyId
     gaps.push({ what: "Satellite scene", reason });
   }
 
-  gaps.push({ what: "Electricity consumption", reason: "No meter data or appliances have been added yet; AVISHKAR does not guess a household's load." });
+  // --- the owner's own meter data (as the Energy DNA built from it) and what they have entered about the property
+  const [dna, assets] = await Promise.all([latestDna(db, propertyId), summariseAssets(db, propertyId, now)]);
+  const snapshot: AssetSnapshot = {
+    ...assets,
+    load: dna ? { dnaId: dna.id, meanDailyKwh: dna.meanDailyKwh, completeDays: dna.completeDays, from: dna.fromTs.toISOString(), to: dna.toTs.toISOString() } : null,
+  };
+  if (dna) rec("avishkar-energy-dna", "mean_daily_load", "ESTIMATED", true, `${dna.meanDailyKwh} kWh a day over ${dna.completeDays} complete days of your meter readings.`);
+  else gaps.push({ what: "Electricity consumption", reason: "No meter data has been imported for this property; AVISHKAR does not guess a household's load. Import a meter file on the Meter data tab." });
+  const kinds = [assets.battery && "battery", assets.solar && "solar system", assets.ev && "electric vehicle", assets.appliances && "appliances"].filter(Boolean);
+  if (kinds.length) rec("user", "assets", "REFERENCE", true, `Entered by the owner: ${kinds.join(", ")}.`);
+
   // --- the tariff the owner chose, copied into this version so later edits to the plan do not rewrite history
   let tariff: TariffPlanDto | null = null;
   if (prop.tariffPlanId) {
@@ -224,7 +238,7 @@ export async function analyzeProperty(deps: TwinDeps, userId: string, propertyId
     weather: weather.ok,
     geometry: geo !== null,
     satellite: sceneId !== null,
-    loadProfile: false,
+    loadProfile: dna !== null,
     tariff: tariff !== null,
   });
 
@@ -253,6 +267,9 @@ export async function analyzeProperty(deps: TwinDeps, userId: string, propertyId
     satelliteObservationId: sceneId,
     tariffPlanId: tariff?.id ?? null,
     tariffSnapshot: tariff ? (tariff as unknown as Prisma.InputJsonValue) : undefined,
+    meanDailyLoadKwh: dna?.meanDailyKwh ?? null,
+    energyDnaId: dna?.id ?? null,
+    assetsSnapshot: snapshot as unknown as Prisma.InputJsonValue,
     sources: sources as never,
     assumptions: used as never,
     unavailable: gaps as never,
@@ -299,6 +316,19 @@ function sceneFromRow(s: SatelliteObservation): SatelliteScene {
   };
 }
 
+/** Daily consumption from the owner's meter readings, or UNAVAILABLE with the reason when none had been imported. */
+function loadOf(row: EnergyTwin, snap: AssetSnapshot | null, base: (provider: string, source: string, dataType: string) => Parameters<typeof unavailable>[1]): Measured<number> {
+  const load = snap?.load;
+  if (row.meanDailyLoadKwh === null || !load) {
+    return unavailable<number>("No meter data had been imported when this twin was built; AVISHKAR does not guess a household's load. Import a meter file to get one.", { ...base(TWIN, "AVISHKAR Energy Twin", "daily_load"), unit: "kWh/day" });
+  }
+  return estimated(row.meanDailyLoadKwh, {
+    ...base("avishkar-energy-dna", "Your imported meter readings", "daily_load"),
+    unit: "kWh/day",
+    basis: `the mean of ${load.completeDays} complete days of your meter readings, ${load.from.slice(0, 10)} to ${load.to.slice(0, 10)}`,
+  });
+}
+
 /** The tariff a twin was built with, read back from its snapshot; UNAVAILABLE (with the usual reason) when none was chosen. */
 function tariffOf(snap: TariffPlanDto | null, planId: string | null, fallback: Parameters<typeof unavailable>[1]): Measured<TwinTariff> {
   if (!snap) return unavailable<TwinTariff>("Tariff data unavailable: choose your state, distribution company and consumer category, or enter your rates.", fallback);
@@ -341,6 +371,7 @@ export function toTwinDto(row: EnergyTwin, scene: SatelliteObservation | null, w
   const roofProvider = row.geometryKind === "BUILDING_FOOTPRINT" ? ["overpass", "OpenStreetMap building outline"] : ["user", "Outline drawn by the property owner"];
   const fcReason = "The weather forecast was not available or did not cover 24 hours when this twin was built.";
   const validFor = new Date(t.getTime() + 24 * 3_600_000);
+  const snap = (row.assetsSnapshot as unknown as AssetSnapshot | null) ?? null;
 
   return {
     id: row.id,
@@ -371,7 +402,8 @@ export function toTwinDto(row: EnergyTwin, scene: SatelliteObservation | null, w
     satellite: scene
       ? reference<SatelliteScene | null>(sceneFromRow(scene), { ...base("earth-search", scene.source, "latest_satellite_scene"), notes: ["A scene is the latest image, not a view of the present."] })
       : unavailable<SatelliteScene | null>("No satellite scene was available when this twin was built.", base("earth-search", "Earth Search STAC", "latest_satellite_scene")),
-    consumption: { estimatedDailyLoadKwh: unavailable<number>("No meter data or appliances have been added yet; AVISHKAR does not guess a household's load.", { ...base(TWIN, "AVISHKAR Energy Twin", "daily_load"), unit: "kWh/day" }) },
+    consumption: { estimatedDailyLoadKwh: loadOf(row, snap, base) },
+    profiles: profilesFromSnapshot(snap, t),
     tariff: tariffOf(row.tariffSnapshot as unknown as TariffPlanDto | null, row.tariffPlanId, base(TWIN, "AVISHKAR Energy Twin", "tariff")),
     energyAutonomyScore: unavailable<number>("The autonomy score needs a consumption profile and a battery or solar system definition.", base(TWIN, "AVISHKAR Energy Twin", "autonomy_score")),
     warnings,

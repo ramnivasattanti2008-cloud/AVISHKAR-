@@ -223,6 +223,52 @@ engines that depend on it.
   `getBoundingClientRect` against `clientWidth` instead of eyeballing a scaled screenshot; component classes written as plain
   CSS silently outrank Tailwind utilities under Tailwind 4 unless layered.
 
+- CI confirmation: run 37618906764 on commit cde44c9 finished with jobs `python`, `platform` and `web` all success.
+
 Next (in order): (3) tariff and policy tables (`tariffs`, `policy_rules`) from the sourced JSON in the repo plus manual entry
 and the asset tables (battery, solar system, EV, appliances, load import); (4) Python engine service with forecasts and the
 optimiser; (5) the engines that depend on them, Copilot tools, community/VPP; (6) admin, jobs, deployment files, docs.
+
+## Entry 8: 2026-10-07: tariffs, policy rules and eligibility (milestone 3a)
+
+- DONE: database. Migration `tariffs_and_policy`: tables `tariff_plans` and `policy_rules`, a tariff link on `properties`, a
+  tariff snapshot on `energy_twins`, and hand-written CHECK constraints (a plan is either curated or owned, blocks and slabs
+  are arrays, a fixed charge has an amount and a basis together, an export rate has a basis, effective dates are ordered).
+  Drift check against the schema is empty.
+- DONE: tariff engine (`api/src/tariff/engine.ts`): pure arithmetic. Time-of-day blocks (may wrap midnight, half-hour starts
+  are time-weighted inside an hour), telescopic slabs, per-connection and per-kW fixed charges, validity periods
+  (WITHIN / EXPIRED / NOT_YET_EFFECTIVE / OPEN_ENDED / UNKNOWN), monthly bills. `validateShape` names the exact times that have
+  no rate or overlap. 22 unit tests with every figure worked out by hand.
+- DONE: sourced reference data. `data/tariffs/*.json` gained a `meta` block (state, DISCOM, category, consumer type, fixed
+  charge, validity, export-rate basis); the Python loader ignores it. `data/policy/pm_surya_ghar.json` holds the PM Surya
+  Ghar schedule: **read from the Benefits section of pmsuryaghar.gov.in on 2026-10-07 in the built-in browser** (Rs 30,000 per
+  kW up to 2 kW, Rs 18,000 per kW up to 3 kW, Rs 78,000 total above 3 kW; Rs 18,000 per kW for housing societies). The Python
+  `subsidy.py` now reads this file instead of hard-coding the slabs (fixes the spec section 24 violation); 9 new Python tests.
+  `pnpm -C platform/api db:seed` loads both into the tables idempotently and refuses a file that does not validate.
+- DONE: API. `GET /api/tariffs` (public; filters), `GET /api/tariffs/:id`, `POST/DELETE /api/tariffs` (own private plans),
+  `POST /api/tariffs/:id/bill`, `PUT/DELETE /api/properties/:id/tariff`, `GET /api/policy-rules`, `POST /api/eligibility`.
+  Plans owned by someone else are 404, never 403. The Energy Twin records the chosen tariff as a snapshot, so editing or
+  deleting a plan later does not rewrite an old version; completeness rises by the tariff's 0.10 weight.
+- DONE (evidence): API `typecheck`, `lint`, `test` clean, 258 tests (was 179), including 45 integration tests on real PostGIS
+  for seeding, visibility, bills, own plans, property selection, the twin and eligibility. Web `typecheck`, `lint`, 108 tests
+  (was 57), including a whole-tab test against a faked API. OpenAPI regenerated (206 KB) and web types regenerated.
+- DONE (evidence, manual, real browser against the running API): the Tariff tab listed the three real catalogue plans; choosing
+  MSEDCL and estimating 300 kWh gave Rs 2,884.38 (my hand calculation: 300 x 7.88125 + 520), with the "this order's period
+  ended 2026-03-31" warning attached to the figure; 3 kWp gave Rs 78,000 as 60,000 + 18,000, ESTIMATED, with the
+  not-yet-read amendment disclosed; net metering answered UNAVAILABLE with the reason; "Analyze again" produced twin v2
+  with the tariff and completeness 80%; a broken own tariff (gap 10:00 to 12:00) was refused with the hours named, the fixed
+  one was saved and selected and then deleted; no horizontal overflow at 375 px.
+- FOUND AND FIXED on the way: the eligibility test caught a wrong assumption of mine (at 5 kWp the schedule itself stops at
+  3 kW, so the cap never applies; the message now says kW above 3 earn nothing extra); a hint inside a `<label>` polluted the
+  field's accessible name (now `aria-describedby`); a note written for data maintainers ("update this file") was reaching
+  users (reworded).
+- NOT DONE (be exact): net-metering rules (nothing sourced was read, so none is loaded); the 2nd amendment of the CFA
+  guidelines, the "special states" uplift and the capacity-by-consumption table on the portal were not read; the catalogue
+  is 3 plans (two expired) with no other states or DISCOMs, no UP slabs below 300 kWh, no taxes or duty; no admin screen to
+  maintain tariffs and rules; the section 24 calculator's installed cost, payback and lifetime economics wait for the
+  economics engine; the property's state is not detected, so a Karnataka property can be given a Maharashtra plan (the
+  card shows its state and the person chooses).
+
+Next (in order): (3b) assets: battery, solar system, EV, appliance tables and load import; (4) Python engine service with
+forecasts and the optimiser; (5) the engines that depend on them, Copilot tools, community/VPP; (6) admin, jobs, deployment
+files, docs.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { api, describeError } from "@/lib/api";
 import { formatDateTime, formatInr } from "@/lib/format";
 import { STATES } from "@/lib/states";
@@ -30,6 +30,7 @@ const OUTCOME_TEXT: Record<ProgramResult["outcome"], string> = {
  * was last checked, and it never says that anyone is eligible: that is for the distribution company and the national portal.
  */
 export function EligibilityPanel({ suggestedKwp }: { suggestedKwp?: number | null }) {
+  const hintId = useId();
   const [consumer, setConsumer] = useState<Consumer>("RESIDENTIAL");
   const [kwp, setKwp] = useState(suggestedKwp ? String(Math.round(suggestedKwp * 10) / 10) : "");
   const [state, setState] = useState("");
@@ -70,11 +71,25 @@ export function EligibilityPanel({ suggestedKwp }: { suggestedKwp?: number | nul
             ))}
           </select>
         </label>
-        <label className="text-sm">
-          <span className="text-muted">System size (kWp)</span>
-          <input className="field mt-1" inputMode="decimal" value={kwp} onChange={(e) => setKwp(e.target.value)} placeholder={suggestedKwp ? undefined : "for example 3"} />
-          {suggestedKwp ? <span className="mt-0.5 block text-xs text-muted">Filled in from the roof-area estimate of this property; change it to the size you are quoted.</span> : null}
-        </label>
+        <div className="text-sm">
+          <label htmlFor={`${hintId}-kwp`} className="text-muted">
+            System size (kWp)
+          </label>
+          <input
+            id={`${hintId}-kwp`}
+            className="field mt-1"
+            inputMode="decimal"
+            value={kwp}
+            onChange={(e) => setKwp(e.target.value)}
+            placeholder={suggestedKwp ? undefined : "for example 3"}
+            aria-describedby={suggestedKwp ? hintId : undefined}
+          />
+          {suggestedKwp ? (
+            <p id={hintId} className="mt-0.5 text-xs text-muted">
+              Filled in from the roof-area estimate of this property; change it to the size you are quoted.
+            </p>
+          ) : null}
+        </div>
         <label className="text-sm">
           <span className="text-muted">State (optional)</span>
           <select className="field mt-1" value={state} onChange={(e) => setState(e.target.value)}>

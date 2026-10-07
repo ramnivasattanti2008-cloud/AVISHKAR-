@@ -81,6 +81,14 @@ describe("completeness", () => {
     expect(completeness({ location: true, solarResource: true, weather: true, geometry: true, satellite: true, loadProfile: true, tariff: true })).toMatchObject({ confidence: 1, quality: "FULL" });
   });
 
+  it("needs both consumption and a tariff for FULL; only the satellite scene may be missing", () => {
+    const all = { location: true, solarResource: true, weather: true, geometry: true, satellite: true, loadProfile: true, tariff: true };
+    expect(completeness({ ...all, tariff: false })).toMatchObject({ confidence: 0.9, quality: "PARTIAL" });
+    expect(completeness({ ...all, loadProfile: false })).toMatchObject({ confidence: 0.8, quality: "PARTIAL" });
+    expect(completeness({ ...all, satellite: false })).toMatchObject({ confidence: 0.95, quality: "FULL" });
+    expect(completeness({ ...all, geometry: false })).toMatchObject({ confidence: 0.8, quality: "PARTIAL" });
+  });
+
   it("weights sum to one", () => {
     expect(completeness({ location: true, solarResource: true, weather: true, geometry: true, satellite: true, loadProfile: true, tariff: true }).basis.reduce((s, b) => s + b.weight, 0)).toBeCloseTo(1, 9);
   });

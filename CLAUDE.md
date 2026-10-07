@@ -93,8 +93,8 @@ off EMHASS's default deferrable loads: this EMS plans PV, battery and grid only.
 
 Status per spec section: `platform/STATUS.md`. Decisions: `platform/ARCHITECTURE.md`. Backend phases 1 and 2 are done and
 verified (auth, properties, PostGIS, geocoding, weather, solar resource, building outline, satellite metadata, Energy Twin),
-and `platform/web` shows them (map, property page, forecast charts, system health); tariffs, assets, forecasts, optimiser
-and everything after are not built.
+and `platform/web` shows them (map, property page, forecast charts, system health). Tariffs, policy rules and the eligibility
+calculator are built (milestone 3a, WORKLOG entry 8); assets, forecasts, optimiser and everything after are not.
 
 ```bash
 pnpm -C platform install                      # also generates the Prisma client
@@ -102,6 +102,7 @@ pnpm -C platform/api typecheck && pnpm -C platform/api lint && pnpm -C platform/
 pnpm -C platform/api test                     # unit + integration on a REAL PostGIS (DATABASE_URL_TEST in platform/api/.env)
 pnpm -C platform/api test:live                # calls the real public providers; on demand, never in CI
 pnpm -C platform/api db:migrate               # apply prisma/migrations to DATABASE_URL
+pnpm -C platform/api db:seed                  # load data/tariffs/*.json and data/policy/*.json into tariff_plans / policy_rules (idempotent)
 pnpm -C platform/api dev                      # API on :8080, OpenAPI at /api/openapi.json
 pnpm -C platform/api openapi                  # regenerate api/openapi.json after changing any route schema (a test fails if stale)
 pnpm -C platform/web gen:api                  # regenerate web/src/lib/api-types.ts from api/openapi.json (CI checks it is current)
@@ -129,6 +130,11 @@ pnpm -C platform/web dev                      # web on :3000, proxies /api to AP
   or stale-marked values, never invented data; estimates are `ESTIMATED` with their assumptions; unknowns are `UNAVAILABLE`
   with a reason; browser location is never labelled NavIC.
 - The public Overpass server answers HTTP 504 about one request in three from here: mirrors and retries are required.
+- **Tariffs and policy are data, with sources.** `data/tariffs/<site>.json` (EMS inputs plus a `meta` block the Python loader
+  ignores) and `data/policy/pm_surya_ghar.json` are the single source for both the Python EMS (`subsidy.py` reads the policy
+  file) and the platform (the seeder loads them). Add a rule or order by editing the file with its source and check date, then
+  `db:seed`. Never state a policy as fact without a source: with no sourced rule the API answers `NO_SOURCED_RULE` and no number
+  (net metering is in exactly that state). Tariff validity is judged against today's date, so an expired order is flagged, not hidden.
 
 ## Data and caches
 

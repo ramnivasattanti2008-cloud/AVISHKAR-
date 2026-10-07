@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AssetProfilesSchema } from "./assets/schemas.js";
 import { GeoPoint, measured } from "./schemas.js";
 
 export const SatelliteSceneSchema = z.object({
@@ -63,6 +64,7 @@ export const TwinSchema = z.object({
   }),
   satellite: measured(SatelliteSceneSchema),
   consumption: z.object({ estimatedDailyLoadKwh: measured(z.number()) }),
+  profiles: AssetProfilesSchema.describe("What the owner entered: battery, solar system, electric vehicle, appliances."),
   tariff: measured(TwinTariffSchema),
   energyAutonomyScore: measured(z.number()),
   warnings: z.array(z.string()),

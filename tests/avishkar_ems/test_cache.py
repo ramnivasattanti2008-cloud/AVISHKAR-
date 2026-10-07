@@ -28,9 +28,13 @@ def test_disk_cached_recomputes_when_file_is_corrupt(tmp_path, monkeypatch):
 def _tree(tmp_path):
     (tmp_path / "src" / "avishkar_ems").mkdir(parents=True)
     (tmp_path / "data" / "tariffs").mkdir(parents=True)
+    (tmp_path / "data" / "policy").mkdir(parents=True)
     (tmp_path / "data" / "real").mkdir(parents=True)
     (tmp_path / "src" / "avishkar_ems" / "a.py").write_text("x = 1\n")
-    (tmp_path / "data" / "tariffs" / "s.json").write_text("{}")
+    (tmp_path / "data" / "tariffs" / "s.json").write_text('{"tou_blocks": [[0, 24, 7.0]], "meta": {"state": "MH", "notes": []}}')
+    (tmp_path / "data" / "policy" / "p.json").write_text(
+        '{"program": "P", "region": "IN", "source": "a page", "verifiedAt": "2026-10-07", '
+        '"rules": [{"ruleKey": "r", "tiers": [{"upToKw": 2, "inrPerKw": 30000}], "capInr": 78000, "statedAs": "words", "notes": []}]}')
     (tmp_path / "data" / "real" / "m.csv").write_text("a,b\n")
     return tmp_path
 
@@ -39,12 +43,44 @@ def test_fingerprint_tracks_code_tariffs_and_data(tmp_path):
     root = _tree(tmp_path)
     base = cache.fingerprint(root)
     assert cache.fingerprint(root) == base
-    for rel in ("src/avishkar_ems/a.py", "data/tariffs/s.json", "data/real/m.csv"):
+    for rel in ("src/avishkar_ems/a.py", "data/real/m.csv"):
         f = root / rel
         old = f.read_text()
         f.write_text(old + "changed")
         assert cache.fingerprint(root) != base, rel
         f.write_text(old)
+    assert cache.fingerprint(root) == base
+
+
+def _edit(path, old, new):
+    text = path.read_text()
+    assert old in text
+    path.write_text(text.replace(old, new))
+
+
+def test_fingerprint_tracks_the_numbers_in_tariffs_and_policy(tmp_path):
+    root = _tree(tmp_path)
+    base = cache.fingerprint(root)
+    _edit(root / "data" / "tariffs" / "s.json", "7.0", "7.5")  # a rate the EMS reads
+    assert cache.fingerprint(root) != base
+    _edit(root / "data" / "tariffs" / "s.json", "7.5", "7.0")
+    assert cache.fingerprint(root) == base
+    for old, new in (("30000", "35000"), ("78000", "80000")):  # a subsidy tier and the cap
+        _edit(root / "data" / "policy" / "p.json", old, new)
+        assert cache.fingerprint(root) != base, old
+        _edit(root / "data" / "policy" / "p.json", new, old)
+    assert cache.fingerprint(root) == base
+    (root / "data" / "tariffs" / "s.json").write_text("{not json")  # unparseable files are still tracked, as raw bytes
+    assert cache.fingerprint(root) != base
+
+
+def test_fingerprint_ignores_what_only_the_platform_or_a_reader_uses(tmp_path):
+    root = _tree(tmp_path)
+    base = cache.fingerprint(root)
+    _edit(root / "data" / "tariffs" / "s.json", '"state": "MH"', '"state": "KA"')  # tariff meta is for the platform
+    _edit(root / "data" / "policy" / "p.json", "2026-10-07", "2027-01-01")  # re-reading a rule at its source
+    _edit(root / "data" / "policy" / "p.json", '"statedAs": "words"', '"statedAs": "other words"')
+    _edit(root / "data" / "policy" / "p.json", "a page", "another page")
     assert cache.fingerprint(root) == base
 
 

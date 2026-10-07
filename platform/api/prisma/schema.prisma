@@ -140,6 +140,13 @@ model Property {
   tariffPlan TariffPlan?        @relation(fields: [tariffPlanId], references: [id], onDelete: SetNull)
   geometries PropertyGeometry[]
   twins      EnergyTwin[]
+  batteries  Battery[]
+  solarSystems SolarSystem[]
+  evs        Ev[]
+  appliances Appliance[]
+  energyImports      EnergyImport[]
+  energyObservations EnergyObservation[]
+  energyDna  EnergyDna[]
 
   @@index([ownerId])
   @@index([tariffPlanId])
@@ -327,6 +334,12 @@ model EnergyTwin {
   tariffPlanId   String? @map("tariff_plan_id") @db.Uuid
   tariffSnapshot Json?   @map("tariff_snapshot")
 
+  /// Mean daily consumption from the owner's imported meter data when this version was built, and the Energy DNA it came from.
+  meanDailyLoadKwh Float?   @map("mean_daily_load_kwh")
+  energyDnaId      String?  @map("energy_dna_id") @db.Uuid
+  /// What the owner had entered when this version was built: batteries, solar systems, EVs, appliances (a copy, like the tariff).
+  assetsSnapshot   Json?    @map("assets_snapshot")
+
   property   Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   tariffPlan TariffPlan? @relation(fields: [tariffPlanId], references: [id], onDelete: SetNull)
 
@@ -414,4 +427,231 @@ model PolicyRule {
 
   @@index([program, region])
   @@map("policy_rules")
+}
+
+enum AssetStatus {
+  /// Installed and in use.
+  EXISTING
+  /// Being considered: used in what-if runs, never in the plan for today.
+  PLANNED
+}
+
+/// The class of an appliance for backup and scheduling (spec section 27): the optimiser must preserve CRITICAL loads.
+enum AppliancePriority {
+  CRITICAL
+  IMPORTANT
+  FLEXIBLE
+  DISCRETIONARY
+}
+
+enum ApplianceEventSource {
+  USER_LOGGED
+  NILM_ESTIMATE
+  METER_DERIVED
+}
+
+/// A home or business battery (spec section 25). Only what the owner states is stored; blank efficiency and SOC limits are
+/// filled with labelled defaults when read, never written here, so what the person entered stays distinguishable.
+model Battery {
+  id         String      @id @default(uuid()) @db.Uuid
+  propertyId String      @map("property_id") @db.Uuid
+  name       String
+  status     AssetStatus @default(EXISTING)
+  capacityKwh      Float @map("capacity_kwh")
+  maxChargeKw      Float @map("max_charge_kw")
+  maxDischargeKw   Float @map("max_discharge_kw")
+  /// 0..1, one way. Null means not stated: the documented default applies and is labelled an assumption.
+  chargeEfficiency    Float? @map("charge_efficiency")
+  dischargeEfficiency Float? @map("discharge_efficiency")
+  /// State-of-charge limits as fractions of nominal capacity: below min is unusable, above max is not used, reserve is kept for backup.
+  minSoc     Float? @map("min_soc")
+  maxSoc     Float? @map("max_soc")
+  reserveSoc Float? @map("reserve_soc")
+  maxCyclesPerDay Float? @map("max_cycles_per_day")
+  /// Cycle life to the end of warranty life, from the datasheet, for the degradation estimate.
+  ratedCycles     Int?   @map("rated_cycles")
+  wearInrPerKwh   Float? @map("wear_inr_per_kwh")
+  currentSoc      Float? @map("current_soc")
+  currentSocAt    DateTime? @map("current_soc_at") @db.Timestamptz(3)
+  installedOn     DateTime? @map("installed_on") @db.Date
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("batteries")
+}
+
+/// A solar PV system, installed or planned. Azimuth is degrees clockwise from north (180 is south), as in the Python EMS.
+model SolarSystem {
+  id         String      @id @default(uuid()) @db.Uuid
+  propertyId String      @map("property_id") @db.Uuid
+  name       String
+  status     AssetStatus @default(EXISTING)
+  capacityKwp Float @map("capacity_kwp")
+  tiltDeg     Float @map("tilt_deg")
+  azimuthDeg  Float @map("azimuth_deg")
+  inverterKw  Float? @map("inverter_kw")
+  /// Fixed system losses (wiring, mismatch, soiling) as a fraction; null means not stated.
+  lossFraction Float? @map("loss_fraction")
+  installedOn DateTime? @map("installed_on") @db.Date
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("solar_systems")
+}
+
+/// An electric vehicle and how it is charged (spec section 31).
+model Ev {
+  id         String @id @default(uuid()) @db.Uuid
+  propertyId String @map("property_id") @db.Uuid
+  name       String
+  batteryKwh Float  @map("battery_kwh")
+  chargerKw  Float  @map("charger_kw")
+  chargerEfficiency Float? @map("charger_efficiency")
+  /// The state of charge the owner wants by departure, 0..1.
+  targetSoc  Float  @map("target_soc")
+  currentSoc Float? @map("current_soc")
+  currentSocAt DateTime? @map("current_soc_at") @db.Timestamptz(3)
+  /// Local time of day, HH:MM, and the weekdays it applies to (0 = Monday ... 6 = Sunday).
+  departureTime String @map("departure_time")
+  departureDays Int[]  @map("departure_days")
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("evs")
+}
+
+/// An appliance or load (spec sections 27 to 30). Flexible appliances carry the window the optimiser may move them within.
+model Appliance {
+  id         String @id @default(uuid()) @db.Uuid
+  propertyId String @map("property_id") @db.Uuid
+  name       String
+  /// What it is, in the owner's words or a common kind: refrigerator, air conditioner, washing machine, geyser, pump, lights.
+  kind       String
+  priority   AppliancePriority
+  ratedPowerW Float @map("rated_power_w")
+  quantity   Int    @default(1)
+  /// Typical running time per day in minutes, if the owner knows it.
+  runtimeMinPerDay Int? @map("runtime_min_per_day")
+  /// [{ days: number[], from: "HH:MM", to: "HH:MM" }]: when it usually runs.
+  schedule   Json?
+  /// The window a flexible appliance may be moved within, and how long it needs. Local time HH:MM.
+  earliestStart String? @map("earliest_start")
+  latestFinish  String? @map("latest_finish")
+  durationMin   Int?    @map("duration_min")
+  interruptible Boolean @default(false)
+  comfortNote   String? @map("comfort_note")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  property Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  events   ApplianceEvent[]
+
+  @@index([propertyId])
+  @@map("appliances")
+}
+
+/// One run of an appliance: logged by the owner, estimated by a NILM engine (with its uncertainty), or derived from a meter.
+model ApplianceEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  applianceId String   @map("appliance_id") @db.Uuid
+  startedAt   DateTime @map("started_at") @db.Timestamptz(3)
+  endedAt     DateTime? @map("ended_at") @db.Timestamptz(3)
+  energyKwh   Float?   @map("energy_kwh")
+  source      ApplianceEventSource
+  /// 0..1 and the uncertainty of the energy figure in kWh: required for NILM estimates (spec section 29).
+  confidence     Float?
+  uncertaintyKwh Float? @map("uncertainty_kwh")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  appliance Appliance @relation(fields: [applianceId], references: [id], onDelete: Cascade)
+
+  @@index([applianceId, startedAt])
+  @@map("appliance_events")
+}
+
+/// A meter file the owner uploaded, with what was kept and what was refused, and why (spec sections 10 and 40).
+model EnergyImport {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  filename   String?
+  /// SHA-256 of the file text: the same file is refused a second time.
+  sha256     String
+  uploadedAt DateTime @default(now()) @map("uploaded_at") @db.Timestamptz(3)
+  rows       Int
+  accepted   Int
+  rejected   Int
+  /// Rows whose timestamp already existed for this property: left as they were.
+  duplicates Int
+  intervalMinutes Int @map("interval_minutes")
+  /// Which column of the file held the usage, and the unit it was in (kWh, Wh, kW or W).
+  usageColumn String @map("usage_column")
+  unit       String
+  fromTs     DateTime? @map("from_ts") @db.Timestamptz(3)
+  toTs       DateTime? @map("to_ts") @db.Timestamptz(3)
+  /// { rejectedByReason, gaps, spikes, ... }
+  quality    Json
+  notes      Json     @default("[]")
+
+  property     Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  observations EnergyObservation[]
+
+  @@unique([propertyId, sha256])
+  @@index([propertyId, uploadedAt])
+  @@map("energy_imports")
+}
+
+/// One meter reading: energy used in the interval that STARTS at ts, in kWh. Raw readings only: gaps stay gaps.
+model EnergyObservation {
+  id         BigInt   @id @default(autoincrement())
+  propertyId String   @map("property_id") @db.Uuid
+  importId   String?  @map("import_id") @db.Uuid
+  ts         DateTime @db.Timestamptz(3)
+  intervalMinutes Int @map("interval_minutes")
+  importKwh  Float    @map("import_kwh")
+
+  property Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  import   EnergyImport? @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, ts])
+  @@index([importId])
+  @@map("energy_observations")
+}
+
+/// The Energy DNA of a property (spec section 9): a normalised fingerprint of how it uses energy, computed only from its own
+/// imported readings. Versioned; the patterns are arrays because they are the product, the scalars are columns.
+model EnergyDna {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  version    Int
+  computedAt DateTime @default(now()) @map("computed_at") @db.Timestamptz(3)
+  fromTs     DateTime @map("from_ts") @db.Timestamptz(3)
+  toTs       DateTime @map("to_ts") @db.Timestamptz(3)
+  completeDays Int    @map("complete_days")
+  meanDailyKwh   Float @map("mean_daily_kwh")
+  weekdayDailyKwh Float? @map("weekday_daily_kwh")
+  weekendDailyKwh Float? @map("weekend_daily_kwh")
+  peakKw     Float    @map("peak_kw")
+  peakHour   Int      @map("peak_hour")
+  baseloadKw Float    @map("baseload_kw")
+  /// { hourly: number[24], weekdayHourly, weekendHourly, monthlyDailyKwh: {YYYY-MM: kWh} } in kW and kWh.
+  patterns   Json
+  /// What this fingerprint cannot say yet and why (flexible load, weather sensitivity, ...).
+  unavailable Json
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, version])
+  @@map("energy_dna")
 }

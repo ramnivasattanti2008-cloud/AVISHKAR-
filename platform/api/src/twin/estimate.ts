@@ -97,10 +97,11 @@ const WEIGHTS: [keyof CompletenessInput, string, number][] = [
 
 /**
  * Share of the inputs a complete twin needs that are actually available (a data-completeness measure, not a probability).
- * MINIMAL below 0.4, FULL from 0.9: without consumption and tariff a twin can never be FULL.
+ * MINIMAL below 0.4, FULL from 0.95: a twin without consumption (0.2) or without a tariff (0.1) can never be FULL; only the
+ * minor satellite scene (0.05) may be missing.
  */
 export function completeness(flags: CompletenessInput): Completeness {
   const basis = WEIGHTS.map(([k, item, weight]) => ({ item, weight, available: flags[k] }));
   const confidence = Math.round(basis.reduce((s, b) => s + (b.available ? b.weight : 0), 0) * 100) / 100;
-  return { confidence, quality: confidence >= 0.9 ? "FULL" : confidence >= 0.4 ? "PARTIAL" : "MINIMAL", basis };
+  return { confidence, quality: confidence >= 0.95 ? "FULL" : confidence >= 0.4 ? "PARTIAL" : "MINIMAL", basis };
 }

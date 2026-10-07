@@ -1362,6 +1362,1090 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/appliance-estimates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Estimated energy per appliance (NILM)
+         * @description Estimates carry their uncertainty and confidence, never an exact figure. Today no estimation engine is installed, so the answer is UNAVAILABLE with the reason.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            provenance: components["schemas"]["Provenance"];
+                            unit?: string;
+                            value: {
+                                /** Format: uuid */
+                                applianceId: string;
+                                confidence: number;
+                                energyKwh: number;
+                                plusMinusKwh: number;
+                            }[] | null;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/appliances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Appliances of a property */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            appliances: components["schemas"]["Appliance"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Add an appliance
+         * @description Mark critical loads CRITICAL: the optimiser preserves them. A FLEXIBLE appliance must give the window it may run in and for how long.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        comfortNote?: string | null;
+                        durationMin?: number | null;
+                        earliestStart?: string | null;
+                        /** @default false */
+                        interruptible?: boolean;
+                        /** @description What it is: refrigerator, air conditioner, washing machine, geyser, pump, lights... */
+                        kind: string;
+                        latestFinish?: string | null;
+                        name: string;
+                        /** @enum {string} */
+                        priority: "CRITICAL" | "IMPORTANT" | "FLEXIBLE" | "DISCRETIONARY";
+                        /** @default 1 */
+                        quantity?: number;
+                        ratedPowerW: number;
+                        runtimeMinPerDay?: number | null;
+                        /** @description When it usually runs. */
+                        schedule?: {
+                            days: number[];
+                            from: string;
+                            to: string;
+                        }[] | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Appliance"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/appliances/{assetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an appliance and its logged runs */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Change an appliance */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        comfortNote?: string | null;
+                        durationMin?: number | null;
+                        earliestStart?: string | null;
+                        interruptible?: boolean;
+                        /** @description What it is: refrigerator, air conditioner, washing machine, geyser, pump, lights... */
+                        kind?: string;
+                        latestFinish?: string | null;
+                        name?: string;
+                        /** @enum {string} */
+                        priority?: "CRITICAL" | "IMPORTANT" | "FLEXIBLE" | "DISCRETIONARY";
+                        quantity?: number;
+                        ratedPowerW?: number;
+                        runtimeMinPerDay?: number | null;
+                        /** @description When it usually runs. */
+                        schedule?: {
+                            days: number[];
+                            from: string;
+                            to: string;
+                        }[] | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Appliance"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/properties/{id}/appliances/{assetId}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Logged runs of an appliance */
+        get: {
+            parameters: {
+                query?: {
+                    since?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            events: components["schemas"]["ApplianceEvent"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Log a run of an appliance
+         * @description Recorded as USER_LOGGED. Estimated and meter-derived runs are written only by engines.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        endedAt?: string | null;
+                        energyKwh?: number | null;
+                        /** Format: date-time */
+                        startedAt: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApplianceEvent"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/appliances/{assetId}/events/{eventId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a logged run */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A summary of everything entered for a property
+         * @description The profiles the Energy Twin records: battery, solar, EV and appliances. A kind with nothing entered is UNAVAILABLE with what to do about it.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            appliances: {
+                                provenance: components["schemas"]["Provenance"];
+                                unit?: string;
+                                value: {
+                                    byPriority: {
+                                        [key: string]: number;
+                                    };
+                                    count: number;
+                                    criticalKw: number;
+                                    flexibleKw: number;
+                                    totalRatedKw: number;
+                                } | null;
+                            };
+                            battery: {
+                                provenance: components["schemas"]["Provenance"];
+                                unit?: string;
+                                value: {
+                                    count: number;
+                                    existingCount: number;
+                                    maxChargeKw: number;
+                                    maxDischargeKw: number;
+                                    plannedCount: number;
+                                    totalCapacityKwh: number;
+                                    totalUsableKwh: number;
+                                } | null;
+                            };
+                            ev: {
+                                provenance: components["schemas"]["Provenance"];
+                                unit?: string;
+                                value: {
+                                    count: number;
+                                    maxChargerKw: number;
+                                    totalBatteryKwh: number;
+                                } | null;
+                            };
+                            solar: {
+                                provenance: components["schemas"]["Provenance"];
+                                unit?: string;
+                                value: {
+                                    count: number;
+                                    existingKwp: number;
+                                    plannedKwp: number;
+                                } | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/batteries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Batteries of a property */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            batteries: components["schemas"]["Battery"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Add a battery
+         * @description Blank efficiency and charge limits are not stored: the response shows the labelled default a plan would use next to what you entered.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Nominal capacity in kWh. */
+                        capacityKwh: number;
+                        /** @description One way, 0.5 to 1. Leave out to use the labelled default. */
+                        chargeEfficiency?: number | null;
+                        /** @description State of charge now, if you know it. */
+                        currentSoc?: number | null;
+                        dischargeEfficiency?: number | null;
+                        installedOn?: string | null;
+                        maxChargeKw: number;
+                        maxCyclesPerDay?: number | null;
+                        maxDischargeKw: number;
+                        maxSoc?: number | null;
+                        /** @description Fraction of capacity that is never used. */
+                        minSoc?: number | null;
+                        name: string;
+                        notes?: string | null;
+                        /** @description Cycle life from the datasheet. */
+                        ratedCycles?: number | null;
+                        /** @description Fraction kept back for backup. Leave out and the planner works it out from your critical loads. */
+                        reserveSoc?: number | null;
+                        /**
+                         * @default EXISTING
+                         * @enum {string}
+                         */
+                        status?: "EXISTING" | "PLANNED";
+                        wearInrPerKwh?: number | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Battery"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/batteries/{assetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a battery */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Change a battery
+         * @description Only the fields you send change. Send null to clear an optional field.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Nominal capacity in kWh. */
+                        capacityKwh?: number;
+                        /** @description One way, 0.5 to 1. Leave out to use the labelled default. */
+                        chargeEfficiency?: number | null;
+                        /** @description State of charge now, if you know it. */
+                        currentSoc?: number | null;
+                        dischargeEfficiency?: number | null;
+                        installedOn?: string | null;
+                        maxChargeKw?: number;
+                        maxCyclesPerDay?: number | null;
+                        maxDischargeKw?: number;
+                        maxSoc?: number | null;
+                        /** @description Fraction of capacity that is never used. */
+                        minSoc?: number | null;
+                        name?: string;
+                        notes?: string | null;
+                        /** @description Cycle life from the datasheet. */
+                        ratedCycles?: number | null;
+                        /** @description Fraction kept back for backup. Leave out and the planner works it out from your critical loads. */
+                        reserveSoc?: number | null;
+                        /** @enum {string} */
+                        status?: "EXISTING" | "PLANNED";
+                        wearInrPerKwh?: number | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Battery"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/properties/{id}/cloud-nowcast": {
         parameters: {
             query?: never;
@@ -1458,6 +2542,719 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/energy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What meter data a property has
+         * @description Coverage, local-day totals (partial days are marked), the imports, and the Energy DNA when there is enough data.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            coverage: {
+                                days: number;
+                                from: string;
+                                intervalMinutes: number;
+                                observations: number;
+                                to: string;
+                            } | null;
+                            /** @description Local-day totals of what was read: a day that is not complete is a partial total, not a day's consumption. */
+                            dailyKwh: {
+                                complete: boolean;
+                                date: string;
+                                expectedReadings: number;
+                                kwh: number;
+                                readings: number;
+                            }[];
+                            dna: components["schemas"]["EnergyDna"] | null;
+                            dnaUnavailableReason: string | null;
+                            imports: components["schemas"]["EnergyImport"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/energy-dna": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The Energy DNA of a property
+         * @description A fingerprint of how it uses electricity, from its own readings only. 404 with the reason when there is not yet enough data.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EnergyDna"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/energy/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meter files imported for a property */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            imports: components["schemas"]["EnergyImport"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Import a meter file (CSV)
+         * @description Needs a timestamp column and one usage column. The unit is read from the header (kWh, Wh, kW, W); when the header does not say, you must state it, because a wrong guess is wrong by a factor of four. Nothing is repaired or filled: rows that fail a check are counted under a reason, and gaps stay gaps. Timestamps are the start of each interval; without an offset they are India Standard Time. The same file cannot be imported twice. Afterwards the Energy DNA is rebuilt.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description The text of the CSV file: a header line, a timestamp column and one usage column. */
+                        csv: string;
+                        filename?: string;
+                        /**
+                         * @description Needed only when the usage column's header does not say kWh, Wh, kW or W. AVISHKAR will not guess.
+                         * @enum {string}
+                         */
+                        unit?: "kWh" | "Wh" | "kW" | "W";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            dna: components["schemas"]["EnergyDna"] | null;
+                            /** @description Why no Energy DNA was built from the readings, when none was. */
+                            dnaUnavailableReason: string | null;
+                            import: components["schemas"]["EnergyImport"];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/energy/imports/{importId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete an import and its readings
+         * @description Removes every reading the file brought and rebuilds the Energy DNA from what remains.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    importId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/evs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Electric vehicles of a property */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            evs: components["schemas"]["Ev"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Add an electric vehicle */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        batteryKwh: number;
+                        chargerEfficiency?: number | null;
+                        chargerKw: number;
+                        currentSoc?: number | null;
+                        /** @description 0 is Monday, 6 is Sunday. */
+                        departureDays: number[];
+                        /** @description Local time, 24-hour. */
+                        departureTime: string;
+                        name: string;
+                        notes?: string | null;
+                        /** @description The charge you want by departure. */
+                        targetSoc: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Ev"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/evs/{assetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an electric vehicle */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Change an electric vehicle */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        batteryKwh?: number;
+                        chargerEfficiency?: number | null;
+                        chargerKw?: number;
+                        currentSoc?: number | null;
+                        /** @description 0 is Monday, 6 is Sunday. */
+                        departureDays?: number[];
+                        /** @description Local time, 24-hour. */
+                        departureTime?: string;
+                        name?: string;
+                        notes?: string | null;
+                        /** @description The charge you want by departure. */
+                        targetSoc?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Ev"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/properties/{id}/geometry": {
         parameters: {
             query?: never;
@@ -1540,6 +3337,315 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/solar-systems": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Solar systems of a property */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            solarSystems: components["schemas"]["SolarSystem"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Add a solar system (installed or planned) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Degrees clockwise from north: 180 faces south. */
+                        azimuthDeg: number;
+                        /** @description DC capacity in kWp. */
+                        capacityKwp: number;
+                        installedOn?: string | null;
+                        /** @description AC limit of the inverter. */
+                        inverterKw?: number | null;
+                        /** @description Fixed system losses as a fraction. Leave out to use the labelled default. */
+                        lossFraction?: number | null;
+                        name: string;
+                        notes?: string | null;
+                        /**
+                         * @default EXISTING
+                         * @enum {string}
+                         */
+                        status?: "EXISTING" | "PLANNED";
+                        /** @description Degrees from horizontal. */
+                        tiltDeg: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SolarSystem"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/solar-systems/{assetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a solar system */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Change a solar system */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Degrees clockwise from north: 180 faces south. */
+                        azimuthDeg?: number;
+                        /** @description DC capacity in kWp. */
+                        capacityKwp?: number;
+                        installedOn?: string | null;
+                        /** @description AC limit of the inverter. */
+                        inverterKw?: number | null;
+                        /** @description Fixed system losses as a fraction. Leave out to use the labelled default. */
+                        lossFraction?: number | null;
+                        name?: string;
+                        notes?: string | null;
+                        /** @enum {string} */
+                        status?: "EXISTING" | "PLANNED";
+                        /** @description Degrees from horizontal. */
+                        tiltDeg?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SolarSystem"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/api/properties/{id}/tariff": {
@@ -2472,6 +4578,406 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Appliance: {
+            comfortNote: string | null;
+            createdAt: string;
+            flexibility: {
+                durationMin: number | null;
+                earliestStart: string | null;
+                interruptible: boolean;
+                latestFinish: string | null;
+                windowMinutes: number | null;
+            };
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            name: string;
+            /** @enum {string} */
+            priority: "CRITICAL" | "IMPORTANT" | "FLEXIBLE" | "DISCRETIONARY";
+            /** Format: uuid */
+            propertyId: string;
+            quantity: number;
+            ratedPowerW: number;
+            runtimeMinPerDay: number | null;
+            schedule: {
+                days: number[];
+                from: string;
+                to: string;
+            }[] | null;
+            /** @constant */
+            source: "USER_ENTERED";
+            /** @description Rated power times quantity, in kW. A rating is a ceiling, not what it draws. */
+            totalRatedKw: number;
+            updatedAt: string;
+        };
+        ApplianceEvent: {
+            /** Format: uuid */
+            applianceId: string;
+            confidence: number | null;
+            endedAt: string | null;
+            energyKwh: number | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            source: "USER_LOGGED" | "NILM_ESTIMATE" | "METER_DERIVED";
+            startedAt: string;
+            uncertaintyKwh: number | null;
+        };
+        ApplianceEventInput: {
+            /** Format: uuid */
+            applianceId: string;
+            confidence: number | null;
+            endedAt: string | null;
+            energyKwh: number | null;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            source: "USER_LOGGED" | "NILM_ESTIMATE" | "METER_DERIVED";
+            startedAt: string;
+            uncertaintyKwh: number | null;
+        };
+        ApplianceInput: {
+            comfortNote: string | null;
+            createdAt: string;
+            flexibility: {
+                durationMin: number | null;
+                earliestStart: string | null;
+                interruptible: boolean;
+                latestFinish: string | null;
+                windowMinutes: number | null;
+            };
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            name: string;
+            /** @enum {string} */
+            priority: "CRITICAL" | "IMPORTANT" | "FLEXIBLE" | "DISCRETIONARY";
+            /** Format: uuid */
+            propertyId: string;
+            quantity: number;
+            ratedPowerW: number;
+            runtimeMinPerDay: number | null;
+            schedule: {
+                days: number[];
+                from: string;
+                to: string;
+            }[] | null;
+            /** @constant */
+            source: "USER_ENTERED";
+            /** @description Rated power times quantity, in kW. A rating is a ceiling, not what it draws. */
+            totalRatedKw: number;
+            updatedAt: string;
+        };
+        Battery: {
+            capacityKwh: number;
+            createdAt: string;
+            currentSocAt: string | null;
+            /** @description What a plan will use: your value, or a labelled default. */
+            effective: {
+                chargeEfficiency: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+                dischargeEfficiency: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+                maxSoc: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+                minSoc: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+                reserveSoc: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+                wearInrPerKwh: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+            };
+            entered: {
+                chargeEfficiency: number | null;
+                currentSoc: number | null;
+                dischargeEfficiency: number | null;
+                maxCyclesPerDay: number | null;
+                maxSoc: number | null;
+                minSoc: number | null;
+                ratedCycles: number | null;
+                reserveSoc: number | null;
+                wearInrPerKwh: number | null;
+            };
+            /** Format: uuid */
+            id: string;
+            installedOn: string | null;
+            maxChargeKw: number;
+            maxDischargeKw: number;
+            name: string;
+            notes: string | null;
+            /** Format: uuid */
+            propertyId: string;
+            /** @constant */
+            source: "USER_ENTERED";
+            /** @enum {string} */
+            status: "EXISTING" | "PLANNED";
+            updatedAt: string;
+            /** @description Capacity between the minimum and maximum charge. */
+            usableKwh: number;
+        };
+        BatteryInput: {
+            capacityKwh: number;
+            createdAt: string;
+            currentSocAt: string | null;
+            /** @description What a plan will use: your value, or a labelled default. */
+            effective: {
+                chargeEfficiency: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+                dischargeEfficiency: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+                maxSoc: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+                minSoc: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+                reserveSoc: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+                wearInrPerKwh: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+            };
+            entered: {
+                chargeEfficiency: number | null;
+                currentSoc: number | null;
+                dischargeEfficiency: number | null;
+                maxCyclesPerDay: number | null;
+                maxSoc: number | null;
+                minSoc: number | null;
+                ratedCycles: number | null;
+                reserveSoc: number | null;
+                wearInrPerKwh: number | null;
+            };
+            /** Format: uuid */
+            id: string;
+            installedOn: string | null;
+            maxChargeKw: number;
+            maxDischargeKw: number;
+            name: string;
+            notes: string | null;
+            /** Format: uuid */
+            propertyId: string;
+            /** @constant */
+            source: "USER_ENTERED";
+            /** @enum {string} */
+            status: "EXISTING" | "PLANNED";
+            updatedAt: string;
+            /** @description Capacity between the minimum and maximum charge. */
+            usableKwh: number;
+        };
+        EnergyDna: {
+            baseline: {
+                baseloadKw: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: number | null;
+                };
+                meanDailyKwh: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: number | null;
+                };
+                peakHour: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: number | null;
+                };
+                peakKw: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: number | null;
+                };
+                weekdayDailyKwh: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: number | null;
+                };
+                weekendDailyKwh: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: number | null;
+                };
+            };
+            computedAt: string;
+            /** Format: uuid */
+            id: string;
+            patterns: {
+                hourlyKw: number[];
+                monthlyDailyKwh: {
+                    [key: string]: number;
+                };
+                weekdayHourlyKw: number[] | null;
+                weekendHourlyKw: number[] | null;
+            };
+            period: {
+                completeDays: number;
+                from: string;
+                intervalMinutes: number;
+                to: string;
+                totalDays: number;
+            };
+            unavailable: {
+                reason: string;
+                what: string;
+            }[];
+            version: number;
+        };
+        EnergyDnaInput: {
+            baseline: {
+                baseloadKw: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: number | null;
+                };
+                meanDailyKwh: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: number | null;
+                };
+                peakHour: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: number | null;
+                };
+                peakKw: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: number | null;
+                };
+                weekdayDailyKwh: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: number | null;
+                };
+                weekendDailyKwh: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: number | null;
+                };
+            };
+            computedAt: string;
+            /** Format: uuid */
+            id: string;
+            patterns: {
+                hourlyKw: number[];
+                monthlyDailyKwh: {
+                    [key: string]: number;
+                };
+                weekdayHourlyKw: number[] | null;
+                weekendHourlyKw: number[] | null;
+            };
+            period: {
+                completeDays: number;
+                from: string;
+                intervalMinutes: number;
+                to: string;
+                totalDays: number;
+            };
+            unavailable: {
+                reason: string;
+                what: string;
+            }[];
+            version: number;
+        };
+        EnergyImport: {
+            /** @description Readings stored. */
+            accepted: number;
+            /** @description Readings whose time already existed for this property; the existing ones were kept. */
+            duplicates: number;
+            filename: string | null;
+            from: string | null;
+            gaps: {
+                longestGapMinutes: number;
+                missingIntervals: number;
+            };
+            /** Format: uuid */
+            id: string;
+            intervalMinutes: number;
+            notes: string[];
+            /** @description Rows refused, each counted under a reason. */
+            rejected: number;
+            rejectedByReason: {
+                [key: string]: number;
+            };
+            /** @description Data rows in the file. */
+            rows: number;
+            to: string | null;
+            unit: string;
+            uploadedAt: string;
+            usageColumn: string;
+        };
+        EnergyImportInput: {
+            /** @description Readings stored. */
+            accepted: number;
+            /** @description Readings whose time already existed for this property; the existing ones were kept. */
+            duplicates: number;
+            filename: string | null;
+            from: string | null;
+            gaps: {
+                longestGapMinutes: number;
+                missingIntervals: number;
+            };
+            /** Format: uuid */
+            id: string;
+            intervalMinutes: number;
+            notes: string[];
+            /** @description Rows refused, each counted under a reason. */
+            rejected: number;
+            rejectedByReason: {
+                [key: string]: number;
+            };
+            /** @description Data rows in the file. */
+            rows: number;
+            to: string | null;
+            unit: string;
+            uploadedAt: string;
+            usageColumn: string;
+        };
         EnergyTwin: {
             assumptions: {
                 key: string;
@@ -2516,6 +5022,53 @@ export interface components {
                 elevationM: number | null;
                 latitude: number;
                 longitude: number;
+            };
+            /** @description What the owner entered: battery, solar system, electric vehicle, appliances. */
+            profiles: {
+                appliances: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: {
+                        byPriority: {
+                            [key: string]: number;
+                        };
+                        count: number;
+                        criticalKw: number;
+                        flexibleKw: number;
+                        totalRatedKw: number;
+                    } | null;
+                };
+                battery: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: {
+                        count: number;
+                        existingCount: number;
+                        maxChargeKw: number;
+                        maxDischargeKw: number;
+                        plannedCount: number;
+                        totalCapacityKwh: number;
+                        totalUsableKwh: number;
+                    } | null;
+                };
+                ev: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: {
+                        count: number;
+                        maxChargerKw: number;
+                        totalBatteryKwh: number;
+                    } | null;
+                };
+                solar: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: {
+                        count: number;
+                        existingKwp: number;
+                        plannedKwp: number;
+                    } | null;
+                };
             };
             /** Format: uuid */
             propertyId: string;
@@ -2667,6 +5220,53 @@ export interface components {
                 latitude: number;
                 longitude: number;
             };
+            /** @description What the owner entered: battery, solar system, electric vehicle, appliances. */
+            profiles: {
+                appliances: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: {
+                        byPriority: {
+                            [key: string]: number;
+                        };
+                        count: number;
+                        criticalKw: number;
+                        flexibleKw: number;
+                        totalRatedKw: number;
+                    } | null;
+                };
+                battery: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: {
+                        count: number;
+                        existingCount: number;
+                        maxChargeKw: number;
+                        maxDischargeKw: number;
+                        plannedCount: number;
+                        totalCapacityKwh: number;
+                        totalUsableKwh: number;
+                    } | null;
+                };
+                ev: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: {
+                        count: number;
+                        maxChargerKw: number;
+                        totalBatteryKwh: number;
+                    } | null;
+                };
+                solar: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: {
+                        count: number;
+                        existingKwp: number;
+                        plannedKwp: number;
+                    } | null;
+                };
+            };
             /** Format: uuid */
             propertyId: string;
             reason: string;
@@ -2791,6 +5391,66 @@ export interface components {
                 message: string;
                 requestId?: string;
             };
+        };
+        Ev: {
+            batteryKwh: number;
+            chargerKw: number;
+            createdAt: string;
+            currentSoc: number | null;
+            currentSocAt: string | null;
+            departureDays: number[];
+            departureTime: string;
+            effective: {
+                chargerEfficiency: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+            };
+            entered: {
+                chargerEfficiency: number | null;
+            };
+            /** Format: uuid */
+            id: string;
+            name: string;
+            notes: string | null;
+            /** Format: uuid */
+            propertyId: string;
+            /** @constant */
+            source: "USER_ENTERED";
+            targetSoc: number;
+            updatedAt: string;
+        };
+        EvInput: {
+            batteryKwh: number;
+            chargerKw: number;
+            createdAt: string;
+            currentSoc: number | null;
+            currentSocAt: string | null;
+            departureDays: number[];
+            departureTime: string;
+            effective: {
+                chargerEfficiency: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+            };
+            entered: {
+                chargerEfficiency: number | null;
+            };
+            /** Format: uuid */
+            id: string;
+            name: string;
+            notes: string | null;
+            /** Format: uuid */
+            propertyId: string;
+            /** @constant */
+            source: "USER_ENTERED";
+            targetSoc: number;
+            updatedAt: string;
         };
         GeoPoint: {
             latitude: number;
@@ -3015,6 +5675,66 @@ export interface components {
             sensor: string;
             source: string;
             thumbnailUrl: string | null;
+        };
+        SolarSystem: {
+            azimuthDeg: number;
+            capacityKwp: number;
+            createdAt: string;
+            effective: {
+                lossFraction: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+            };
+            entered: {
+                lossFraction: number | null;
+            };
+            /** Format: uuid */
+            id: string;
+            installedOn: string | null;
+            inverterKw: number | null;
+            name: string;
+            notes: string | null;
+            /** Format: uuid */
+            propertyId: string;
+            /** @constant */
+            source: "USER_ENTERED";
+            /** @enum {string} */
+            status: "EXISTING" | "PLANNED";
+            tiltDeg: number;
+            updatedAt: string;
+        };
+        SolarSystemInput: {
+            azimuthDeg: number;
+            capacityKwp: number;
+            createdAt: string;
+            effective: {
+                lossFraction: {
+                    /** @enum {string} */
+                    basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER";
+                    note: string;
+                    value: number | null;
+                };
+            };
+            entered: {
+                lossFraction: number | null;
+            };
+            /** Format: uuid */
+            id: string;
+            installedOn: string | null;
+            inverterKw: number | null;
+            name: string;
+            notes: string | null;
+            /** Format: uuid */
+            propertyId: string;
+            /** @constant */
+            source: "USER_ENTERED";
+            /** @enum {string} */
+            status: "EXISTING" | "PLANNED";
+            tiltDeg: number;
+            updatedAt: string;
         };
         TariffPlan: {
             category: string | null;

@@ -47,7 +47,7 @@ With the PM Surya Ghar subsidy (Rs 78,000 for a 3 kW home, if you qualify) the M
 - Sensitivity ([results/sensitivity.csv](results/sensitivity.csv)): a battery sized like ours adds 10.2% at Mathura, 4.2% at Pune and 2.0% at Jaipur compared with having none. With the export (net-metering) rate raised by Rs 2 the battery's gain becomes -4.3% at Mathura, +1.7% at Pune and +0.4% at Jaipur, so at Mathura the battery is a backup purchase, not a savings one.
 - P2P volume across the sampled days, delivered of committed: 8.7 of 8.7 kWh at Mathura, 12.4 of 13.5 kWh at Pune and 3.2 of 3.2 kWh at Jaipur (small, because real load absorbs most of the surplus).
 
-_Generated 2026-10-07 09:04 UTC by `examples/run_demo.py` and `examples/run_sensitivity.py`: one in every 7 held-out days, annualised (Mathura 33, Pune 52, Jaipur 52 sampled days). Python 3.12.10, numpy 2.2.6, pandas 2.3.3, pvlib 0.16.1; the full set is in `requirements-lock.txt`. This block is generated: run `python scripts/update_readme.py`._
+_Generated 2026-10-07 15:02 UTC by `examples/run_demo.py` and `examples/run_sensitivity.py`: one in every 7 held-out days, annualised (Mathura 33, Pune 52, Jaipur 52 sampled days). Python 3.12.10, numpy 2.2.6, pandas 2.3.3, pvlib 0.16.1; the full set is in `requirements-lock.txt`. This block is generated: run `python scripts/update_readme.py`._
 <!-- results:end -->
 
 How the numbers were improved along the way (history, not results):
