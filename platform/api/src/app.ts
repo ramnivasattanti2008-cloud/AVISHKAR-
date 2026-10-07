@@ -103,7 +103,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       return reply.code(400).send({
         error: {
           code: "VALIDATION_FAILED",
-          message: "The request is not valid: " + err.validation.map((v) => `${v.instancePath || "(root)"} ${v.message}`).join("; "),
+          // A rule we wrote ourselves (a custom refinement) already says everything in words; a plain type error needs its field.
+          message: "The request is not valid: " + err.validation.map((v) => (v.keyword === "custom" ? v.message : `${v.instancePath || "(root)"} ${v.message}`)).join("; "),
           requestId,
           details: err.validation.map((v) => ({ path: v.instancePath, message: v.message })),
         },

@@ -269,6 +269,61 @@ optimiser; (5) the engines that depend on them, Copilot tools, community/VPP; (6
   economics engine; the property's state is not detected, so a Karnataka property can be given a Maharashtra plan (the
   card shows its state and the person chooses).
 
-Next (in order): (3b) assets: battery, solar system, EV, appliance tables and load import; (4) Python engine service with
-forecasts and the optimiser; (5) the engines that depend on them, Copilot tools, community/VPP; (6) admin, jobs, deployment
+- Added after the first write-up, same day: the Tariff tab got web component tests (108 web tests in all); the Python cache
+  fingerprint now ignores a tariff file's `meta` block and policy wording but tracks policy numbers (`data/policy` feeds the EMS
+  subsidy, so it must make a result stale; re-reading a rule at its source and finding it unchanged must not); the whole Python
+  pipeline was rebuilt with the refactored `subsidy.py` and **every results CSV is byte-identical** (only `provenance.json`
+  timestamps and fingerprint, the offers' random uuids and one README timestamp changed), which proves the refactor moved
+  no number. Python tests 19 (cache, subsidy) plus the earlier suite; ruff clean.
+
+## Entry 9: 2026-10-07: assets, meter-data import and Energy DNA (milestone 3b)
+
+- DONE: database. Migration `assets_and_meter_data`: `batteries`, `solar_systems`, `evs`, `appliances`, `appliance_events`,
+  `energy_imports`, `energy_observations`, `energy_dna`, plus tariff/asset/load columns on `energy_twins`. Hand-written CHECKs
+  on every table: physical plausibility ranges, SOC ordering, a flexible appliance must have a window, an EV departure rule is
+  well-formed, **a NILM estimate must carry energy, confidence and uncertainty**, an import's counts must add up to its rows.
+  The checks caught two of my own mistakes during the work (below).
+- DONE: assets API (`/api/properties/:id/{batteries,solar-systems,evs,appliances}` with POST, GET, PATCH, DELETE; appliance
+  runs; `/assets` summary; `/appliance-estimates`). A parameter the owner left blank is stored blank; the response shows the
+  labelled default next to it (`entered` against `effective` with a `basis`: USER_ENTERED, ASSUMPTION or PLANNER). Defaults are the
+  Python EMS's tested values (round-trip efficiency 0.90 split evenly, 90% usable depth, 14% losses, 2 INR/kWh wear). The EV
+  charger efficiency default (0.90) has no source in this repository and is labelled so. Another account's assets are 404.
+- DONE: meter import (`src/energy/{csv,parse,dna,service}.ts`): a strict CSV reader (quotes, BOM, four delimiters), ISO and
+  day-first timestamps (12-hour too; a month-first guess is never made; IST unless the file carries an offset), kWh/Wh/kW/W with
+  the unit read from the header or stated by the caller (**never guessed**: kW and kWh differ four-fold at 15 minutes),
+  every row accounted for as accepted, refused (seven named reasons) or duplicate, gaps measured and left as gaps, the same
+  file refused twice (409 CONFLICT, a new error code), overlapping files keep the existing readings. Upload limit 25 MB, rate
+  limit 10 a minute.
+- DONE: Energy DNA from the owner's own complete days only (95% of readings present, scaled by the missing share, at most 5%):
+  mean, weekday and weekend day, base load (10th percentile), peak power and hour, hourly patterns, monthly means; it refuses
+  below 7 complete days and for readings coarser than hourly, and says what it cannot know (flexible load, weather
+  sensitivity, seasons). Deleting an import deletes the fingerprint and rebuilds it from what remains.
+- DONE: the Energy Twin records consumption (ESTIMATED, with the days it came from), a profile per asset kind, and the meter
+  basis; **FULL now needs 0.95** (consumption and a tariff are both required; only the satellite scene may be missing). Before
+  this change meter data alone would have reached 0.9 and FULL without a tariff, contradicting the documented rule.
+- DONE: web. Tabs Meter data (upload with a unit choice, accounting of every row, daily chart with partial days faded and
+  named, Energy DNA with patterns) and Assets (four forms with percent inputs, cards that mark each parameter ENTERED, DEFAULT
+  or PLANNER, edit and delete), `useApi` hook, equipment and electricity-use sections on the twin page.
+- DONE (evidence): API `typecheck`, `lint`, `test`: **397 tests** (was 258) incl. `meter-parse` 46, `energy-dna` 17, `energy`
+  20 and `assets` 55 on real PostGIS; web `typecheck`, `lint`, `test`: **164 tests** (was 108).
+- DONE (evidence, manual, real browser against the running API): a 21-day 15-minute file whose header gave no unit was refused
+  with the explanation and prompt; with kW chosen, 2,011 rows became 2,008 stored plus 3 refused (bad time, negative, not a
+  number) and the 2-hour gap was reported and left; the DNA matched the by-construction answer (weekday 18.4 and weekend 24.4
+  kWh a day, busiest hour 19:00, the day with the gap excluded as incomplete); battery, solar system, EV, fridge (critical) and
+  washer (flexible window) were added through the forms; a geyser needing 120 minutes in a 60-minute window was refused with
+  those numbers; Analyze again produced twin v3 with consumption 20.2 kWh/day, the equipment summary, completeness 90%.
+- FOUND AND FIXED on the way: (1) a Zod 4 `.default()` inside a `.partial()` PATCH schema silently resets fields the caller did
+  not send (status, quantity, interruptible): the field sets carry no defaults now, with regression tests; (2) `Prisma.JsonNull`
+  stores a JSON null, not SQL NULL, and the new CHECK refused it with a 500: `Prisma.DbNull`; (3) my number reader joined
+  `"1 2"` into 12: a space is a thousands separator only in its exact shape; (4) my test helper treated `undefined` as "use the
+  default session", so an "unauthenticated" check ran signed in (now `null`); (5) the FULL threshold above; (6) validation
+  messages for our own rules no longer carry a technical field path; (7) the tool shell turns `﻿` and apostrophes inside
+  heredocs into trouble: files with those are written with the file tools.
+- NOT DONE (be exact): no NILM engine (and none is claimed); no utility-portal connectors or live smart-meter feed; only CSV;
+  consumption from monthly bills alone is not accepted; no export or generation columns; a fingerprint needs hourly or finer
+  readings; no weather sensitivity or flexible-load parts of the DNA; no battery degradation, no EV or appliance scheduling (the
+  optimiser does not exist); Energy DNA is not yet used by any forecast; no browser end-to-end suite.
+
+Next (in order): (4) Python engine service (`platform/engine`, FastAPI) with solar and load forecasts benchmarked against
+actuals, then the optimiser; (5) the engines that depend on them, Copilot tools, community/VPP; (6) admin, jobs, deployment
 files, docs.

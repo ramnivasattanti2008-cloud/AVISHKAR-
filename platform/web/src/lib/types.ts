@@ -19,6 +19,13 @@ export type TariffPlan = components["schemas"]["TariffPlan"];
 export type PolicyRule = components["schemas"]["PolicyRule"];
 export type ProgramResult = components["schemas"]["ProgramResult"];
 
+export type Battery = components["schemas"]["Battery"];
+export type SolarSystem = components["schemas"]["SolarSystem"];
+export type Ev = components["schemas"]["Ev"];
+export type Appliance = components["schemas"]["Appliance"];
+export type EnergyImport = components["schemas"]["EnergyImport"];
+export type EnergyDna = components["schemas"]["EnergyDna"];
+
 export type DataStatus = Provenance["status"];
 
 /** A value with where it came from and how far to trust it. */
@@ -37,3 +44,6 @@ export type CloudNowcast = Resp<"/api/cloud-nowcast", "get", 200>;
 export type TariffList = Resp<"/api/tariffs", "get", 200>;
 export type Bill = Resp<"/api/tariffs/{id}/bill", "post", 200>;
 export type Eligibility = Resp<"/api/eligibility", "post", 200>;
+export type EnergySummary = Resp<"/api/properties/{id}/energy", "get", 200>;
+export type ImportResult = Resp<"/api/properties/{id}/energy/imports", "post", 201>;
+export type AssetProfiles = Resp<"/api/properties/{id}/assets", "get", 200>;

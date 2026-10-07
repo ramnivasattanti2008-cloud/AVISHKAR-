@@ -189,6 +189,34 @@ function TariffSummary({ tariff, provenance, propertyId }: { tariff: NonNullable
   );
 }
 
+/** What the owner entered, as it was when this version was built. A kind with nothing entered says what adding it would enable. */
+function EquipmentSection({ profiles, propertyId }: { profiles: Twin["profiles"]; propertyId: string }) {
+  const rows: { label: string; m: { value: unknown; provenance: Twin["tariff"]["provenance"] }; text: string }[] = [
+    { label: "Battery", m: profiles.battery, text: profiles.battery.value ? `${profiles.battery.value.count} (${formatNumber(profiles.battery.value.totalCapacityKwh)} kWh, ${formatNumber(profiles.battery.value.totalUsableKwh)} kWh usable; up to ${formatNumber(profiles.battery.value.maxChargeKw)} kW in, ${formatNumber(profiles.battery.value.maxDischargeKw)} kW out)` : "" },
+    { label: "Solar system", m: profiles.solar, text: profiles.solar.value ? `${formatNumber(profiles.solar.value.existingKwp)} kWp installed${profiles.solar.value.plannedKwp ? `, ${formatNumber(profiles.solar.value.plannedKwp)} kWp planned` : ""}` : "" },
+    { label: "Electric vehicle", m: profiles.ev, text: profiles.ev.value ? `${profiles.ev.value.count} vehicle${profiles.ev.value.count === 1 ? "" : "s"}, ${formatNumber(profiles.ev.value.totalBatteryKwh)} kWh, charging up to ${formatNumber(profiles.ev.value.maxChargerKw)} kW` : "" },
+    { label: "Appliances", m: profiles.appliances, text: profiles.appliances.value ? `${profiles.appliances.value.count} in all, ${formatNumber(profiles.appliances.value.totalRatedKw)} kW rated; ${formatNumber(profiles.appliances.value.criticalKw)} kW critical, ${formatNumber(profiles.appliances.value.flexibleKw)} kW flexible` : "" },
+  ];
+  return (
+    <Section title="Your equipment" hint="What you entered; AVISHKAR has not checked it against the equipment.">
+      {rows.map((r) => (
+        <div key={r.label} className="py-2 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-muted">{r.label}</span>
+            <StatusBadge status={r.m.provenance.status} />
+          </div>
+          <p className="mt-0.5">{r.m.value ? r.text : r.m.provenance.notes[0]}</p>
+        </div>
+      ))}
+      <p className="py-2 text-sm">
+        <Link className="font-semibold text-accent underline" href={`/property/${propertyId}/assets`}>
+          Add or change equipment
+        </Link>
+      </p>
+    </Section>
+  );
+}
+
 function TwinPanels({ twin }: { twin: Twin }) {
   const s = twin.solar;
   return (
@@ -205,9 +233,17 @@ function TwinPanels({ twin }: { twin: Twin }) {
         <Measure label="Solar energy arriving" m={s.forecastNext24hGhiKwhM2} digits={2} />
         <Measure label="Expected yield per kWp" m={s.forecastNext24hKwhPerKwp} digits={2} />
       </Section>
+      <Section title="Electricity use" hint="From your own meter readings only; AVISHKAR never guesses a household's load.">
+        <Measure label="Average daily consumption" m={twin.consumption.estimatedDailyLoadKwh} digits={1} />
+        <p className="py-2 text-sm">
+          <Link className="font-semibold text-accent underline" href={`/property/${twin.propertyId}/meter-data`}>
+            {twin.consumption.estimatedDailyLoadKwh.value === null ? "Import a meter file" : "See the readings and your Energy DNA"}
+          </Link>
+        </p>
+      </Section>
       {twin.tariff.value && <TariffSummary tariff={twin.tariff.value} provenance={twin.tariff.provenance} propertyId={twin.propertyId} />}
+      <EquipmentSection profiles={twin.profiles} propertyId={twin.propertyId} />
       <Section title="Not known yet" hint="AVISHKAR does not guess these.">
-        <Measure label="Daily consumption" m={twin.consumption.estimatedDailyLoadKwh} />
         {!twin.tariff.value && (
           <div className="py-2">
             <div className="flex items-center justify-between"><span className="text-sm text-muted">Electricity tariff</span><StatusBadge status={twin.tariff.provenance.status} /></div>

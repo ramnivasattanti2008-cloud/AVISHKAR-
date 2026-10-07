@@ -94,7 +94,8 @@ off EMHASS's default deferrable loads: this EMS plans PV, battery and grid only.
 Status per spec section: `platform/STATUS.md`. Decisions: `platform/ARCHITECTURE.md`. Backend phases 1 and 2 are done and
 verified (auth, properties, PostGIS, geocoding, weather, solar resource, building outline, satellite metadata, Energy Twin),
 and `platform/web` shows them (map, property page, forecast charts, system health). Tariffs, policy rules and the eligibility
-calculator are built (milestone 3a, WORKLOG entry 8); assets, forecasts, optimiser and everything after are not.
+calculator (milestone 3a, WORKLOG entry 8) and assets, meter-data import and Energy DNA (milestone 3b, entry 9) are built;
+forecasts, the optimiser and everything after are not.
 
 ```bash
 pnpm -C platform install                      # also generates the Prisma client
@@ -130,6 +131,12 @@ pnpm -C platform/web dev                      # web on :3000, proxies /api to AP
   or stale-marked values, never invented data; estimates are `ESTIMATED` with their assumptions; unknowns are `UNAVAILABLE`
   with a reason; browser location is never labelled NavIC.
 - The public Overpass server answers HTTP 504 about one request in three from here: mirrors and retries are required.
+- **Meter data is the owner's, and is never repaired.** `src/energy/parse.ts` refuses to guess a unit (kW against kWh differs
+  four-fold at 15 minutes), counts every row as accepted, refused with a named reason, or duplicate, and leaves gaps as gaps.
+  Energy DNA (`src/energy/dna.ts`) uses only complete days. A parameter the owner leaves blank on an asset is stored blank; the
+  API returns `entered` beside `effective` with its `basis` (`src/assets/defaults.ts`). In Zod 4 a `.default()` inside
+  `.partial()` still applies, so field sets used for PATCH carry no defaults (see `src/assets/schemas.ts`). Use `Prisma.DbNull`,
+  not `Prisma.JsonNull`, to clear a JSON column. The DB CHECKs in each migration are part of the contract: add one for every rule.
 - **Tariffs and policy are data, with sources.** `data/tariffs/<site>.json` (EMS inputs plus a `meta` block the Python loader
   ignores) and `data/policy/pm_surya_ghar.json` are the single source for both the Python EMS (`subsidy.py` reads the policy
   file) and the platform (the seeder loads them). Add a rule or order by editing the file with its source and check date, then

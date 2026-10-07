@@ -1,4 +1,4 @@
-import type { Bill, Property, Provenance, TariffPlan } from "@/lib/types";
+import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, Property, Provenance, SolarSystem, TariffPlan } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -97,4 +97,140 @@ export function fakeApi(routes: [method: string, path: RegExp | string, handler:
     return hit[2]({ url, method, body });
   };
   return { fetch: impl as typeof fetch, calls, called: (method: string, path: string) => calls.filter((c) => c.method === method && c.path === path) };
+}
+
+const param = (value: number | null, basis: "USER_ENTERED" | "ASSUMPTION" | "PLANNER", note = "") => ({ value, basis, note });
+const stamp = { propertyId: PROPERTY_ID, source: "USER_ENTERED" as const, createdAt: "2026-10-07T09:00:00.000Z", updatedAt: "2026-10-07T09:00:00.000Z" };
+
+export function battery(over: Partial<Battery> = {}): Battery {
+  return {
+    id: "b1000000-0000-4000-8000-000000000001",
+    ...stamp,
+    name: "Garage battery",
+    status: "EXISTING",
+    capacityKwh: 10,
+    maxChargeKw: 5,
+    maxDischargeKw: 5,
+    entered: { chargeEfficiency: null, dischargeEfficiency: null, minSoc: null, maxSoc: null, reserveSoc: null, maxCyclesPerDay: null, ratedCycles: null, wearInrPerKwh: null, currentSoc: null },
+    effective: {
+      chargeEfficiency: param(0.9487, "ASSUMPTION", "Round-trip 0.90 split evenly: the default of the AVISHKAR Python EMS."),
+      dischargeEfficiency: param(0.9487, "ASSUMPTION"),
+      minSoc: param(0.1, "ASSUMPTION"),
+      maxSoc: param(1, "ASSUMPTION"),
+      reserveSoc: param(null, "PLANNER", "Not set: the planner works the reserve out from your critical loads."),
+      wearInrPerKwh: param(2, "ASSUMPTION"),
+    },
+    usableKwh: 9,
+    currentSocAt: null,
+    installedOn: null,
+    notes: null,
+    ...over,
+  };
+}
+
+export function solarSystem(over: Partial<SolarSystem> = {}): SolarSystem {
+  return {
+    id: "50000000-0000-4000-8000-000000000001",
+    ...stamp,
+    name: "South roof",
+    status: "EXISTING",
+    capacityKwp: 3.3,
+    tiltDeg: 15,
+    azimuthDeg: 180,
+    inverterKw: null,
+    entered: { lossFraction: null },
+    effective: { lossFraction: param(0.14, "ASSUMPTION") },
+    installedOn: null,
+    notes: null,
+    ...over,
+  };
+}
+
+export function ev(over: Partial<Ev> = {}): Ev {
+  return {
+    id: "e0000000-0000-4000-8000-000000000001",
+    ...stamp,
+    name: "Family car",
+    batteryKwh: 40,
+    chargerKw: 7.4,
+    targetSoc: 0.8,
+    currentSoc: null,
+    currentSocAt: null,
+    departureTime: "07:30",
+    departureDays: [0, 1, 2, 3, 4],
+    entered: { chargerEfficiency: null },
+    effective: { chargerEfficiency: param(0.9, "ASSUMPTION", "A typical figure; no source recorded.") },
+    notes: null,
+    ...over,
+  };
+}
+
+export function appliance(over: Partial<Appliance> = {}): Appliance {
+  return {
+    id: "a0000000-0000-4000-8000-000000000001",
+    ...stamp,
+    name: "Kitchen fridge",
+    kind: "refrigerator",
+    priority: "CRITICAL",
+    ratedPowerW: 150,
+    quantity: 1,
+    totalRatedKw: 0.15,
+    runtimeMinPerDay: null,
+    schedule: null,
+    flexibility: { earliestStart: null, latestFinish: null, durationMin: null, interruptible: false, windowMinutes: null },
+    comfortNote: null,
+    ...over,
+  };
+}
+
+export function energyImport(over: Partial<EnergyImport> = {}): EnergyImport {
+  return {
+    id: "10000000-0000-4000-8000-000000000001",
+    filename: "meter.csv",
+    uploadedAt: "2026-10-07T09:00:00.000Z",
+    rows: 1344,
+    accepted: 1344,
+    rejected: 0,
+    duplicates: 0,
+    intervalMinutes: 15,
+    usageColumn: "Energy (kWh)",
+    unit: "kWh",
+    from: "2026-03-01T18:30:00.000Z",
+    to: "2026-03-15T18:15:00.000Z",
+    rejectedByReason: {},
+    gaps: { missingIntervals: 0, longestGapMinutes: 0 },
+    notes: ["Each timestamp is taken as the start of its reading interval."],
+    ...over,
+  };
+}
+
+const est = (value: number | null, unit: string) =>
+  value === null
+    ? { value: null, unit, provenance: provenance({ status: "UNAVAILABLE", provider: "avishkar-energy-dna", notes: ["Fewer than two complete weekend days: one day is not a pattern."] }) }
+    : { value, unit, provenance: provenance({ status: "ESTIMATED", provider: "avishkar-energy-dna", notes: ["Estimated: 14 complete days of your meter readings, 2026-03-01 to 2026-03-15"] }) };
+
+export function energyDna(over: Partial<EnergyDna> = {}): EnergyDna {
+  const hourly = Array.from({ length: 24 }, (_, h) => (h === 19 ? 2.5 : 1));
+  return {
+    id: "d0000000-0000-4000-8000-000000000001",
+    version: 1,
+    computedAt: "2026-10-07T09:00:00.000Z",
+    period: { from: "2026-03-01T18:30:00.000Z", to: "2026-03-15T18:15:00.000Z", completeDays: 14, totalDays: 14, intervalMinutes: 15 },
+    baseline: { meanDailyKwh: est(30.9, "kWh/day"), weekdayDailyKwh: est(24, "kWh/day"), weekendDailyKwh: est(48, "kWh/day"), baseloadKw: est(0.9, "kW"), peakKw: est(2.5, "kW"), peakHour: est(19, "hour of day") },
+    patterns: { hourlyKw: hourly, weekdayHourlyKw: hourly, weekendHourlyKw: hourly.map((v) => v * 2), monthlyDailyKwh: { "2026-03": 30.9 } },
+    unavailable: [{ what: "Weather sensitivity", reason: "needs a temperature history, which AVISHKAR does not ingest yet." }],
+    ...over,
+  };
+}
+
+export function energySummary(over: Partial<EnergySummary> = {}): EnergySummary {
+  const days = Array.from({ length: 14 }, (_, i) => ({ date: `2026-03-${String(i + 2).padStart(2, "0")}`, kwh: 24, readings: 96, expectedReadings: 96, complete: true }));
+  return {
+    imports: [energyImport()],
+    coverage: { observations: 1344, from: "2026-03-01T18:30:00.000Z", to: "2026-03-15T18:15:00.000Z", days: 14, intervalMinutes: 15 },
+    dailyKwh: days,
+    dna: energyDna(),
+    dnaUnavailableReason: null,
+    ...over,
+  };
 }
