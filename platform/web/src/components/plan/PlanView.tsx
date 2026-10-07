@@ -238,7 +238,7 @@ export function PlanView({ id }: { id: string }) {
             <div className="mt-2"><ProvenanceDetails p={plan.result.provenance} /></div>
           </section>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <section className="card p-4" aria-label="Where the power comes from">
               <h2 className="text-base font-semibold">Where the power comes from</h2>
               <SourcesChart plan={plan} />

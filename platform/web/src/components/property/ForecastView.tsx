@@ -49,7 +49,7 @@ export function ForecastView({ id }: { id: string }) {
     <div className="mx-auto w-full max-w-6xl px-4 py-6">
       <h1 className="text-2xl font-bold">Forecast</h1>
       <div className="mt-3"><PropertyTabs id={id} current="/forecast" /></div>
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
         <SolarForecastPanel id={id} />
         <LoadForecastPanel id={id} />
       </div>
@@ -66,7 +66,7 @@ export function ForecastView({ id }: { id: string }) {
           {report.quality.length > 0 && (
             <p className="mt-2 text-sm text-muted">Removed by quality checks: {report.quality.map((q) => `${q.rejected} ${q.variable.replaceAll("_", " ")} point(s) (${q.reasons[0]})`).join("; ")}.</p>
           )}
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             {CHARTS.map((c) => {
               const series = report.hourly[c.key];
               if (!series?.value) return null;
