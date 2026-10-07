@@ -12,13 +12,13 @@ The honest ledger. One row per requirement group in [SPEC.md](SPEC.md) (section 
 - Update the row in the same commit that changes the code. Append what you did to the WORKLOG as well.
 - "Python EMS" below means the pre-existing `src/avishkar_ems` package (see `CLAUDE.md`).
 
-Last updated: 2026-10-07 (platform work not yet begun beyond the specification, architecture and this ledger).
+Last updated: 2026-10-07, end of Phase 1 backend foundation. Evidence commands: `pnpm -C platform/api typecheck && pnpm -C platform/api lint && pnpm -C platform/api test && pnpm -C platform/api build` (106 tests: 59 unit, 47 integration against real PostgreSQL 16 + PostGIS 3.4).
 
 ## Summary
 
 | Phase (SPEC §84) | State |
 |---|---|
-| 1 Foundation: architecture, database, auth, map, property selection, geocoding | NOT STARTED (architecture written) |
+| 1 Foundation: architecture, database, auth, map, property selection, geocoding | **Backend DONE** (database, migrations, auth, properties, geocoding, provenance, providers, health, OpenAPI). **Map UI NOT STARTED.** |
 | 2 Real data: weather, solar resource, satellite metadata, Energy Twin | NOT STARTED |
 | 3 Energy data, solar forecast, load forecast | NOT STARTED (REUSE: Python EMS quantile forecasts for 3 sites) |
 | 4 Battery, EV, appliances, energy flow | NOT STARTED (REUSE: Python EMS battery model) |
@@ -32,10 +32,10 @@ Last updated: 2026-10-07 (platform work not yet begun beyond the specification, 
 
 | § | Requirement | Status | Where / evidence | Gap or note |
 |---|---|---|---|---|
-| 0-3 | Real data only; provenance on every value | NOT STARTED | D6, D7 define the envelope | Python EMS labels assumptions in `README` / `KNOWN_ISSUES` but has no per-value provenance |
-| 4 | `PositioningProvider`, no fake NavIC | NOT STARTED | D10 | |
-| 5-7 | Map-first UX, geocoding, property selection (search, click, GPS, coordinates, polygon) | NOT STARTED | | |
-| 6 | Provider abstractions (map, satellite, geocoding, footprint, weather, solar resource) | NOT STARTED | D8 | Nominatim, Open-Meteo, NASA POWER, Overpass, Earth Search probed reachable; PVGIS is not |
+| 0-3 | Real data only; provenance on every value | PARTIAL | `api/src/provenance` (envelope, freshness rules, 8 statuses), table `data_provenance` with a CHECK that refuses LIVE without an observation time (`test/api.test.ts` constraints) | Envelope used by geocoding only; weather/forecast values come in Phase 2/3 |
+| 4 | `PositioningProvider`, no fake NavIC | PARTIAL | `api/src/providers/positioning.ts`; API refuses `navic` unless `NAVIC_RECEIVER_ENABLED=true`; position source and accuracy stored and described (tests) | Browser geolocation client and UI not built; no NavIC hardware exists to test the enabled path against real data |
+| 5-7 | Map-first UX, geocoding, property selection (search, click, GPS, coordinates, polygon) | PARTIAL (API only) | `GET /api/geocode/search`, `/reverse` (live Nominatim verified), `POST/GET/PATCH/DELETE /api/properties`, `POST /api/properties/:id/geometry` (PostGIS-validated polygon) | No UI: map, search box, click, current location, drawing are not built. Building footprints (Overpass) not yet fetched; absence is reported as `BUILDING GEOMETRY UNAVAILABLE` |
+| 6 | Provider abstractions (map, satellite, geocoding, footprint, weather, solar resource) | PARTIAL | Geocoding provider (Nominatim) with HTTP client, retries, rate spacing, schema validation, DB cache, stale-if-error, failover helper, call telemetry (`api/src/providers`) | Weather, solar resource, footprint, satellite, map providers not built; Nominatim, Open-Meteo, NASA POWER, Overpass, Earth Search probed reachable, PVGIS is not |
 | 8-9 | Energy Twin (versioned) and Energy DNA | NOT STARTED | | |
 | 10 | Weather ingestion and storage | NOT STARTED | | Python EMS reads bundled PVGIS CSVs only |
 | 11-12 | Satellite metadata; cloud-movement nowcast | NOT STARTED | D9 | Nowcast will be `UNAVAILABLE` until a sub-hourly source exists |
@@ -57,21 +57,21 @@ Last updated: 2026-10-07 (platform work not yet begun beyond the specification, 
 | 34-36 | Autonomy, health, waste | NOT STARTED | | |
 | 37 | Counterfactual engine | PARTIAL (REUSE) | `payback.evaluate` replays EMS vs idle vs fixed-rule baselines | Not per-decision; not stored |
 | 38-39 | Model performance and learning | PARTIAL | `forecast_quality` coverage/MAE (static, held-out) | No prediction store, no online evaluation or recalibration |
-| 40-43 | Provenance, data quality, no-data and degraded modes | NOT STARTED | D6, D7 | |
+| 40-43 | Provenance, data quality, no-data and degraded modes | PARTIAL | `provenance/`, `quality.ts` (impossible values, spikes, duplicates, gaps, staleness, coordinates, 7 reality checks), stale cache served with a note, 503 `PROVIDER_UNAVAILABLE` with provider name (tests) | Quality engine not yet applied to weather data; no degraded-mode banner in a UI |
 | 44-45, 90-91 | Copilot, explanations, tool layer | NOT STARTED | D14 | `explain.py` gives text for the demo sites |
 | 46 | Human control modes, audit, rollback | NOT STARTED | | |
 | 47-49 | Community, VPP simulation, city map | PARTIAL (REUSE) | `fleet.py` | Two real sites in different cities; no 10 to 10,000 home simulator |
-| 50-51 | Privacy and security | NOT STARTED | | |
-| 52 | PostgreSQL + PostGIS schema and migrations | NOT STARTED | D4 | Needs Docker engine (see BLOCKERS) |
-| 53-54, 56 | TypeScript backend, Next.js frontend, pages | DEVIATION / NOT STARTED | D1, D2 | Python engine service is a documented deviation |
+| 50-51 | Privacy and security | PARTIAL | argon2id passwords, hashed opaque session tokens, HttpOnly SameSite cookies, CSRF header, rate limits, helmet, input validation (zod), ownership isolation, append-only audit log, account export and real deletion, no secrets in repo (`test/api.test.ts`) | No role-based admin routes yet; rate limiter is per instance (in memory); no encryption-at-rest configuration; no security review or dependency audit yet |
+| 52 | PostgreSQL + PostGIS schema and migrations | PARTIAL | Migrations `foundation`, `reference_status`: users, sessions, properties (+ trigger-maintained PostGIS point), property_geometry, data_provenance, audit_logs, provider_calls, cache_entries; drift check empty; applied to PostGIS 3.4 | Remaining ~20 tables arrive with their phases (energy_twins, observations, forecasts, batteries, appliances, tariffs, policy_rules, ...) |
+| 53-54, 56 | TypeScript backend, Next.js frontend, pages | PARTIAL (backend) / NOT STARTED (web) | Fastify + Prisma 7 + zod API builds and runs (smoke-tested live) | `web/` not started; Python engine service (D1) not started |
 | 55, 78 | UI design system, accessibility | NOT STARTED | | |
 | 57-61 | Property dashboard, energy flow, map interaction, comparison, installation planner | NOT STARTED | | Streamlit dashboard covers 3 demo sites only |
 | 62-63 | Economics (NPV, IRR) and carbon | PARTIAL | `lifetime.py` (discounted payback, NPV with assumptions) | No IRR, no carbon factor table |
 | 64, 67 | Deterministic simulation; conservation check | PARTIAL | executor conserves energy per step (tested) | No stored simulation config; no `SIMULATION INVALID` gate |
-| 65-66 | Testing; safety tests | PARTIAL | `tests/avishkar_ems` (Python EMS): SOC bounds, energy balance, critical-load, reserve floor | Nothing for the platform yet |
-| 68 | OpenAPI contracts | NOT STARTED | | |
-| 69-72 | Observability, caching, scheduling, provider failover | NOT STARTED | D5, D8 | |
-| 73 | Configuration via environment | NOT STARTED | | Python EMS uses `AVISHKAR_CACHE_DIR` only |
+| 65-66 | Testing; safety tests | PARTIAL | Python EMS: 68 tests. Platform API: 106 tests incl. failure tests (provider down, invalid coordinates, bad input, duplicates, unauthenticated, cross-user access) | No end-to-end browser test; no optimiser safety tests yet (no optimiser) |
+| 68 | OpenAPI contracts | PARTIAL | `GET /api/openapi.json` generated from the zod route schemas (OpenAPI 3.1), stable error codes (`api/src/errors.ts`) | No rendered docs page; `platform/API.md` not written |
+| 69-72 | Observability, caching, scheduling, provider failover | PARTIAL | Request ids, structured logs with cookie redaction, `provider_calls` telemetry, `GET /api/system/health` (database + PostGIS + per-provider state from real calls, `unknown` when no traffic), DB cache with TTL and stale-if-error, `withFailover` helper | No job queue or scheduler (pg-boss) yet; failover has only one geocoder; no metrics dashboard UI |
+| 73 | Configuration via environment | DONE | `api/src/config.ts` (zod-validated, refuses weak secrets), `api/.env.example`, tests in `test/config.test.ts` | New providers add variables as they are built |
 | 74, 93 | Demo data and seed data, Bengaluru/Pune/Jaipur + one more | PARTIAL | Pune, Jaipur, Mathura sites with bundled real weather/tariffs; Bengaluru simulated site | Not in a database; not labelled `DEMO` in an API |
 | 75 | Cloud-front demo scenario | NOT STARTED | | Needs the simulation engine |
 | 76 | Honest LIVE/UPDATED/FORECAST/... labels | NOT STARTED | D7 | |

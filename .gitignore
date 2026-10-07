@@ -31,3 +31,6 @@ dist/
 coverage/
 platform/**/.env
 platform/**/.env.local
+
+# Prisma client is generated (pnpm db:generate), never committed
+platform/api/src/generated/

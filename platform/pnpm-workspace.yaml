@@ -2,5 +2,10 @@ packages:
   - api
   - web
   - packages/*
+
+# pnpm 11 blocks dependency build scripts unless listed. Only these need them (native binaries / engine downloads).
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true
+  prisma: true
+  "@prisma/engines": true
+  "@prisma/client": true

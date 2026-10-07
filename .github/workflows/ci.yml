@@ -25,3 +25,48 @@ jobs:
         run: python -m pytest tests/avishkar_ems -q -p no:cacheprovider
       - name: README matches results/
         run: python scripts/update_readme.py --check
+
+  platform:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: avishkar
+          POSTGRES_PASSWORD: ci_only_not_a_secret
+          POSTGRES_DB: avishkar_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U avishkar"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://avishkar:ci_only_not_a_secret@localhost:5432/avishkar_test?schema=public
+      DATABASE_URL_TEST: postgresql://avishkar:ci_only_not_a_secret@localhost:5432/avishkar_test?schema=public
+      SESSION_SECRET: ci-session-secret-0123456789abcdef-0123456789
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: platform/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: platform/pnpm-lock.yaml
+      - name: Install
+        working-directory: platform
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        working-directory: platform
+        run: pnpm -C api typecheck
+      - name: Lint
+        working-directory: platform
+        run: pnpm -C api lint
+      - name: Tests (unit + integration against real PostGIS)
+        working-directory: platform
+        run: pnpm -C api test
+      - name: Build
+        working-directory: platform
+        run: pnpm -C api build

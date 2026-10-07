@@ -91,3 +91,38 @@ Next (in order, per spec §84): (1) config + provenance envelope + freshness rul
 real adapters (Nominatim, Open-Meteo, NASA POWER, Overpass, STAC) with caching, failover, latency recording and tests,
 including live integration tests that are clearly marked and skippable offline; (3) Prisma schema and migrations once Docker
 is up; (4) auth, audit log, property CRUD; (5) web app with MapLibre.
+
+## Entry 4: 2026-10-07: platform Phase 1 backend (database, auth, properties, geocoding, providers)
+
+Environment actions taken (on the owner's machine, reversible): launched Docker Desktop (its Linux engine never became
+available, probably a first-run dialog needing a human); installed **PostgreSQL 16.15 + PostGIS 3.4 inside WSL Ubuntu** with
+`apt-get` (undo: `wsl -d Ubuntu -u root -- apt-get remove --purge postgresql\*`); created role `avishkar` (SUPERUSER, local
+dev only) and databases `avishkar_dev`, `avishkar_test` (also an unused empty `avishkar`, left alone: Prisma refused to reset
+it without owner consent and that guard was respected). Credentials live only in the git-ignored `platform/api/.env`.
+WSL stops idle distros: Postgres only stays up while a session is attached; keep one running with
+`wsl -d Ubuntu -u root -- bash -lc "service postgresql start; exec sleep infinity"`.
+
+- DONE: `platform/api` (Fastify 5, zod 4, Prisma 7.10 + pg adapter, TypeScript 5.9; TS 7 was avoided because
+  typescript-eslint does not support it; Prisma CLI pinned to 7.10.0 because `latest` resolved to an 8.0 release candidate).
+- DONE: migrations `foundation` and `reference_status` (hand-written SQL appended to the generated one: PostGIS extension,
+  range CHECKs, geometry trigger, GiST indexes declared in the schema so Prisma sees no drift, append-only audit log
+  trigger, `LIVE` needs `observed_at` CHECK). Evidence: `prisma migrate diff` against the schema is empty.
+- DONE: config (zod), error codes, provenance envelope and freshness (`LIVE` is derived, never chosen), data-quality
+  engine, seven reality checks, provider layer (HTTP client with retries/spacing/validation/telemetry, DB cache with
+  stale-if-error, failover helper, Nominatim geocoder, positioning abstraction), auth (argon2id, hashed session tokens,
+  CSRF, rate limits), property CRUD with PostGIS-validated polygons and tenant isolation, account export and real
+  deletion, health with real provider telemetry, OpenAPI document.
+- DONE (evidence): `pnpm -C platform/api typecheck`, `lint`, `build` clean; `test` 106 passed (59 unit, 47 integration on
+  real PostGIS). Smoke test: built server started, registered, **live Nominatim** search for Koramangala returned results
+  labelled REFERENCE with OSM attribution, property saved with PostGIS point, honest "BUILDING GEOMETRY UNAVAILABLE".
+- DONE: platform CI job (PostGIS service container) in `.github/workflows/ci.yml` (YAML parsed; not yet run on GitHub).
+- NOT DONE: map UI and the whole `web/` app; weather, solar resource, footprint (Overpass), satellite providers; Energy Twin;
+  forecasts; optimiser; every engine after Phase 1; Python engine service; job queue; admin routes and role-based admin API;
+  OpenAPI rendered docs and `API.md`; Docker Compose; deployment descriptors. See `platform/STATUS.md`.
+- Known limitations recorded: rate limiter is in-memory (per instance); one geocoder only, so failover is untested against a
+  real second provider; `avishkar_dev`/`avishkar_test` role is SUPERUSER for local convenience only.
+
+Next (in order): (1) weather provider (Open-Meteo forecast + archive) with the quality engine applied, `weather_observations`
+and `solar_forecasts` tables, live test; (2) solar resource (NASA POWER) and building footprint (Overpass) providers;
+(3) satellite metadata (Earth Search STAC); (4) Energy Twin versioning and `POST /api/properties/:id/analyze`;
+(5) `web/`: Next.js, MapLibre map-first UI wired to these endpoints; (6) Python engine service and Phase 3 forecasts.

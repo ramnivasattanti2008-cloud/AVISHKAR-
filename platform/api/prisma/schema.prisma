@@ -1,0 +1,188 @@
+// AVISHKAR platform database. PostgreSQL + PostGIS.
+// Conventions: snake_case tables and columns (SQL and PostGIS queries stay readable), uuid primary keys,
+// timestamptz everywhere, geometry columns declared Unsupported(...) because Prisma has no spatial type; spatial
+// reads and writes go through $queryRaw (see src/properties/geo.ts). Triggers keep geometry in step with lat/lon.
+// Migrations are SQL files in prisma/migrations and may contain things Prisma cannot express (extension, triggers).
+// Tables are added phase by phase (platform/ARCHITECTURE.md section 4); this file is the contract.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+/// How a value should be read by a person. LIVE is only allowed when the provider timestamp is fresh (D7).
+enum DataStatus {
+  LIVE
+  UPDATED
+  FORECAST
+  ESTIMATED
+  SIMULATED
+  DEMO
+  /// Looked-up reference data that does not vary with time (geocoding, building footprints, policy tables).
+  REFERENCE
+  UNAVAILABLE
+}
+
+enum GeometryKind {
+  BUILDING_FOOTPRINT
+  USER_POLYGON
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(USER)
+  displayName  String?  @map("display_name")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Soft delete marker: set when the owner asks for deletion; a job erases the data (spec section 50).
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  sessions   Session[]
+  properties Property[]
+  auditLogs  AuditLog[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// SHA-256 of the opaque cookie token. The token itself is never stored.
+  tokenHash String    @unique @map("token_hash")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  userAgent String?   @map("user_agent")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Property {
+  id        String   @id @default(uuid()) @db.Uuid
+  ownerId   String   @map("owner_id") @db.Uuid
+  name      String
+  latitude  Float
+  longitude Float
+  /// Maintained from latitude/longitude by a trigger (see migration). Read with $queryRaw.
+  location  Unsupported("geometry(Point,4326)")?
+  address   String?
+  /// Where the coordinates came from: a PositioningProvider name (browser-geolocation, manual, geocoded, imported, map-click).
+  positionSource String  @map("position_source")
+  /// Horizontal accuracy in metres when the source reports one.
+  positionAccuracyM Float? @map("position_accuracy_m")
+  /// True for deterministic demo properties; they are never returned by live queries (spec sections 43, 74).
+  isDemo    Boolean  @default(false) @map("is_demo")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  owner      User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  geometries PropertyGeometry[]
+
+  @@index([ownerId])
+  @@index([location], type: Gist)
+  @@map("properties")
+}
+
+model PropertyGeometry {
+  id         String       @id @default(uuid()) @db.Uuid
+  propertyId String       @map("property_id") @db.Uuid
+  kind       GeometryKind
+  geom       Unsupported("geometry(Polygon,4326)")
+  areaM2     Float        @map("area_m2")
+  /// Provider that supplied it (for example overpass-osm) or "user".
+  source     String
+  sourceRef  String?      @map("source_ref")
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([geom], type: Gist)
+  @@map("property_geometry")
+}
+
+/// One row per observation, forecast or result that the platform stores or serves (spec section 40).
+model DataProvenance {
+  id                String     @id @default(uuid()) @db.Uuid
+  /// What this row describes, for example weather_observation, solar_forecast, tariff, simulation_run.
+  entityType        String     @map("entity_type")
+  entityId          String?    @map("entity_id")
+  dataType          String     @map("data_type")
+  status            DataStatus
+  provider          String
+  source            String
+  latitude          Float?
+  longitude         Float?
+  observedAt        DateTime?  @map("observed_at") @db.Timestamptz(3)
+  generatedAt       DateTime   @default(now()) @map("generated_at") @db.Timestamptz(3)
+  quality           Float?
+  confidence        Float?
+  processingVersion String     @map("processing_version")
+  modelVersion      String?    @map("model_version")
+  detail            Json?
+
+  @@index([entityType, entityId])
+  @@index([provider, generatedAt])
+  @@map("data_provenance")
+}
+
+/// Append-only (a trigger rejects UPDATE and DELETE). Admin changes and automated actions are recorded here.
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  userId     String?  @map("user_id") @db.Uuid
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  requestId  String?  @map("request_id")
+  ip         String?
+  detail     Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+/// Outcome and latency of every external provider call (spec sections 69 and 72).
+model ProviderCall {
+  id         BigInt   @id @default(autoincrement())
+  provider   String
+  operation  String
+  ok         Boolean
+  statusCode Int?      @map("status_code")
+  latencyMs  Int       @map("latency_ms")
+  error      String?
+  requestId  String?   @map("request_id")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([provider, createdAt])
+  @@map("provider_calls")
+}
+
+/// Shared TTL cache for expensive provider responses (spec section 70). Survives restarts and is shared with workers.
+model CacheEntry {
+  key       String   @id
+  provider  String
+  value     Json
+  storedAt  DateTime @default(now()) @map("stored_at") @db.Timestamptz(3)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("cache_entries")
+}
