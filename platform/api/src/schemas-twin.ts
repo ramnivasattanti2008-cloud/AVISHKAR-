@@ -14,7 +14,25 @@ export const SatelliteSceneSchema = z.object({
   thumbnailUrl: z.string().nullable(),
 }).meta({ id: "SatelliteScene" });
 
-const SourceRecordSchema = z.object({ provider: z.string(), dataType: z.string(), status: z.string(), ok: z.boolean(), at: z.string(), note: z.string() });
+/** What an Energy Twin keeps of a tariff: enough to read the rates it was built with, without the full plan. */
+export const TwinTariffSchema = z.object({
+  planId: z.uuid().nullable().describe("The plan chosen when the twin was built; null if it has since been deleted."),
+  name: z.string(),
+  state: z.string().nullable(),
+  discom: z.string().nullable(),
+  category: z.string().nullable(),
+  consumerType: z.enum(["RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL", "AGRICULTURAL", "OTHER"]),
+  rateRangeInrPerKwh: z.object({ min: z.number(), max: z.number() }),
+  timeOfDay: z.boolean().describe("True when the rate changes during the day."),
+  hasSlabs: z.boolean(),
+  fixedCharge: z.object({ amountInr: z.number(), basis: z.enum(["PER_CONNECTION_MONTH", "PER_KW_MONTH"]) }).nullable(),
+  exportRateInrPerKwh: z.number().nullable(),
+  exportRateBasis: z.enum(["REGULATOR_ORDER", "USER_ENTERED", "ASSUMPTION", "NONE"]),
+  validity: z.object({ status: z.enum(["WITHIN", "EXPIRED", "NOT_YET_EFFECTIVE", "OPEN_ENDED", "UNKNOWN"]), message: z.string() }),
+  source: z.string(),
+});
+
+const SourceRecordSchema =z.object({ provider: z.string(), dataType: z.string(), status: z.string(), ok: z.boolean(), at: z.string(), note: z.string() });
 const GapSchema = z.object({ what: z.string(), reason: z.string() });
 const AssumptionSchema = z.object({ key: z.string(), value: z.number(), unit: z.string(), rationale: z.string() });
 const QualitySchema = z.enum(["MINIMAL", "PARTIAL", "FULL"]);
@@ -45,7 +63,7 @@ export const TwinSchema = z.object({
   }),
   satellite: measured(SatelliteSceneSchema),
   consumption: z.object({ estimatedDailyLoadKwh: measured(z.number()) }),
-  tariff: measured(z.null()),
+  tariff: measured(TwinTariffSchema),
   energyAutonomyScore: measured(z.number()),
   warnings: z.array(z.string()),
   sources: z.array(SourceRecordSchema),

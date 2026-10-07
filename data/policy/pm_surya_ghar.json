@@ -1,0 +1,47 @@
+{
+  "program": "PM_SURYA_GHAR",
+  "name": "PM Surya Ghar: Muft Bijli Yojana, Central Financial Assistance (CFA)",
+  "region": "IN",
+  "source": "Benefits section of the home page of the National Portal for Rooftop Solar (Ministry of New and Renewable Energy), as read on 2026-10-07.",
+  "sourceUrl": "https://pmsuryaghar.gov.in",
+  "verifiedAt": "2026-10-07",
+  "effectiveFrom": null,
+  "effectiveTo": null,
+  "rules": [
+    {
+      "ruleKey": "residential_cfa",
+      "appliesTo": "RESIDENTIAL",
+      "description": "Subsidy for residential households.",
+      "tiers": [
+        { "upToKw": 2, "inrPerKw": 30000 },
+        { "upToKw": 3, "inrPerKw": 18000 }
+      ],
+      "capInr": 78000,
+      "statedAs": "Rs. 30,000 per kW up to 2 kW; Rs. 18,000 per kW for additional capacity up to 3 kW; Rs. 78,000 total subsidy for systems larger than 3 kW (capped at).",
+      "conditions": [
+        "Households only: the page states this as the subsidy for residential households.",
+        "Paid through the national portal after an approved installation by a registered vendor and DISCOM inspection; this tool does not check any of that."
+      ],
+      "notes": [
+        "The portal's notice list shows a '2nd amendment in the Guidelines of PM-Surya Ghar for the component CFA to Residential Consumers' dated 31 Aug. The text of that amendment was not read; if it changes these figures, update this file.",
+        "The page also says that for 'special states' an additional 10% subsidy per kW applies. It does not say which states, so that uplift is NOT applied.",
+        "Whether batteries are covered is not stated on the page read; this tool treats the subsidy as applying to the solar system only."
+      ]
+    },
+    {
+      "ruleKey": "ghs_rwa_cfa",
+      "appliesTo": "GHS_RWA",
+      "description": "Subsidy for Group Housing Societies and Resident Welfare Associations, for common facilities including EV charging.",
+      "inrPerKw": 18000,
+      "maxCommonFacilityKw": 500,
+      "perHouseKw": 3,
+      "statedAs": "Rs. 18,000 per kW for common facilities, including EV charging, up to 500 kW capacity (@3 kW per house) with the upper limit being inclusive of individual rooftop plants installed by individual residents in the GHS/RWA.",
+      "conditions": [],
+      "notes": []
+    }
+  ],
+  "notApplied": [
+    "Additional 10% subsidy per kW for 'special states' (the states are not listed on the page read).",
+    "Table of suitable rooftop capacity by monthly consumption (the heading was seen, the values were not read)."
+  ]
+}

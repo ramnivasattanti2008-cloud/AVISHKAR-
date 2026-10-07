@@ -15,6 +15,10 @@ export type Twin = components["schemas"]["EnergyTwin"];
 export type SatelliteScene = components["schemas"]["SatelliteScene"];
 export type ApiUser = components["schemas"]["User"];
 
+export type TariffPlan = components["schemas"]["TariffPlan"];
+export type PolicyRule = components["schemas"]["PolicyRule"];
+export type ProgramResult = components["schemas"]["ProgramResult"];
+
 export type DataStatus = Provenance["status"];
 
 /** A value with where it came from and how far to trust it. */
@@ -30,3 +34,6 @@ export type GeocodeSearch = Resp<"/api/geocode/search", "get", 200>;
 export type GeocodeResult = NonNullable<GeocodeSearch["value"]>[number];
 export type SystemHealth = Resp<"/api/system/health", "get", 200>;
 export type CloudNowcast = Resp<"/api/cloud-nowcast", "get", 200>;
+export type TariffList = Resp<"/api/tariffs", "get", 200>;
+export type Bill = Resp<"/api/tariffs/{id}/bill", "post", 200>;
+export type Eligibility = Resp<"/api/eligibility", "post", 200>;

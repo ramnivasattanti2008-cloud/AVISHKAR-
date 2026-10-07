@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { FastifyInstance } from "fastify";
 import { type AppDeps, buildApp } from "../src/app.js";
 import { type Config, loadConfig } from "../src/config.js";
@@ -31,7 +32,7 @@ export function db(): Db {
 
 export async function resetDb(): Promise<void> {
   await db().$executeRawUnsafe(
-    'TRUNCATE TABLE "users", "audit_logs", "provider_calls", "cache_entries", "data_provenance", "weather_observations" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "users", "tariff_plans", "policy_rules", "audit_logs", "provider_calls", "cache_entries", "data_provenance", "weather_observations" RESTART IDENTITY CASCADE',
   );
 }
 
@@ -62,6 +63,11 @@ export async function makeApp(over: Record<string, string> = {}): Promise<TestAp
   const deps: AppDeps = { config, db: db(), providers, now: () => clock.now };
   const app = await buildApp(deps);
   return { app, deps, fetched, setFetch: (h) => void (handler = h), clock };
+}
+
+/** The repository's data/ folder: the sourced tariff orders and policy files the seeder loads. */
+export function defaultTestDataDir(): string {
+  return fileURLToPath(new URL("../../../data", import.meta.url));
 }
 
 export const PASSWORD = "correct-horse-battery";

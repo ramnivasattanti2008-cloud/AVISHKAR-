@@ -13,6 +13,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
+    "db:seed": "tsx scripts/seed.ts",
     "postinstall": "prisma generate",
     "test:live": "vitest run --config vitest.live.config.ts",
     "openapi": "tsx scripts/export-openapi.ts"

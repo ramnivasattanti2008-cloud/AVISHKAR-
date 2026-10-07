@@ -427,6 +427,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/eligibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply the published subsidy and net-metering rules to a system size
+         * @description Never confirms eligibility (eligibilityConfirmed is always false): it applies a sourced rule to the numbers given and returns the rule, its source and its caveats. Where no sourced rule is on file it says so and returns no amount.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /**
+                         * Format: date
+                         * @description Evaluate the rules in force on this day (default today).
+                         */
+                        asOf?: string;
+                        /** @enum {string} */
+                        consumerType: "RESIDENTIAL" | "GROUP_HOUSING_OR_RWA" | "COMMERCIAL" | "INDUSTRIAL" | "AGRICULTURAL" | "OTHER";
+                        /**
+                         * @description Used to pick state rules; national rules apply without it.
+                         * @enum {string}
+                         */
+                        state?: "AN" | "AP" | "AR" | "AS" | "BR" | "CG" | "CH" | "DH" | "DL" | "GA" | "GJ" | "HP" | "HR" | "JH" | "JK" | "KA" | "KL" | "LA" | "LD" | "MH" | "ML" | "MN" | "MP" | "MZ" | "NL" | "OD" | "PB" | "PY" | "RJ" | "SK" | "TN" | "TR" | "TS" | "UK" | "UP" | "WB";
+                        /** @description Size of the solar system in kWp (DC). */
+                        systemKwp: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            asOf: string;
+                            /** @enum {string} */
+                            consumerType: "RESIDENTIAL" | "GROUP_HOUSING_OR_RWA" | "COMMERCIAL" | "INDUSTRIAL" | "AGRICULTURAL" | "OTHER";
+                            /**
+                             * @description Always false: this applies a published rule to the numbers given; it never confirms that anyone qualifies.
+                             * @enum {boolean}
+                             */
+                            eligibilityConfirmed: false;
+                            netMetering: components["schemas"]["ProgramResult"];
+                            notice: string;
+                            programs: components["schemas"]["ProgramResult"][];
+                            systemKwp: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/geocode/reverse": {
         parameters: {
             query?: never;
@@ -653,6 +733,59 @@ export interface paths {
                             status: "ok";
                             time: string;
                         };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/policy-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The policy rules on file, with their sources
+         * @description Every rule the eligibility calculator can apply, as configuration: where it was read, when it was last checked and from when to when it applies.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    program?: string;
+                    region?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            rules: components["schemas"]["PolicyRule"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
                     };
                 };
             };
@@ -1409,6 +1542,148 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/tariff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose the tariff for a property
+         * @description Run the property analysis again afterwards: the Energy Twin records the tariff that was chosen when it was built.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        tariffPlanId: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Property"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /** Clear the tariff of a property */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Property"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/twin": {
         parameters: {
             query?: never;
@@ -1716,6 +1991,377 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tariffs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tariff plans you can choose from
+         * @description Curated plans come from regulator orders recorded with their source text and validity period; a plan whose period has ended is flagged EXPIRED rather than hidden. Plans you entered yourself are included when you are signed in.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    state?: "AN" | "AP" | "AR" | "AS" | "BR" | "CG" | "CH" | "DH" | "DL" | "GA" | "GJ" | "HP" | "HR" | "JH" | "JK" | "KA" | "KL" | "LA" | "LD" | "MH" | "ML" | "MN" | "MP" | "MZ" | "NL" | "OD" | "PB" | "PY" | "RJ" | "SK" | "TN" | "TR" | "TS" | "UK" | "UP" | "WB";
+                    discom?: string;
+                    consumerType?: "RESIDENTIAL" | "COMMERCIAL" | "INDUSTRIAL" | "AGRICULTURAL" | "OTHER";
+                    /** @description curated: shared plans from regulator orders; mine: plans you entered; all: both (default). */
+                    scope?: "all" | "curated" | "mine";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            tariffs: components["schemas"]["TariffPlan"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Enter your own tariff
+         * @description For a tariff that is not in the catalogue, or to correct one against your bill. Only you can see it. Give time-of-day blocks (a flat tariff is one block from 0 to 24) or slabs.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        category?: string;
+                        /** @enum {string} */
+                        consumerType: "RESIDENTIAL" | "COMMERCIAL" | "INDUSTRIAL" | "AGRICULTURAL" | "OTHER";
+                        discom?: string;
+                        /** Format: date */
+                        effectiveFrom?: string;
+                        /** Format: date */
+                        effectiveTo?: string;
+                        /** @description Credit per exported kWh in INR, from your bill or net-metering agreement. */
+                        exportRate?: number;
+                        fixedCharge?: {
+                            amountInr: number;
+                            /** @enum {string} */
+                            basis: "PER_CONNECTION_MONTH" | "PER_KW_MONTH";
+                        };
+                        /** @enum {string} */
+                        meteringMode?: "NET_METERING" | "NET_BILLING" | "GROSS_METERING" | "NONE" | "UNKNOWN";
+                        name: string;
+                        notes?: string;
+                        slabs?: {
+                            /** @description INR per kWh inside this slab. */
+                            rate: number;
+                            /** @description Upper limit of the slab in kWh per month; null for the last, open-ended slab. */
+                            upToKwhPerMonth: number | null;
+                        }[];
+                        /** @description Where these numbers come from, for example 'my bill of March 2026'. */
+                        source?: string;
+                        /** @enum {string} */
+                        state?: "AN" | "AP" | "AR" | "AS" | "BR" | "CG" | "CH" | "DH" | "DL" | "GA" | "GJ" | "HP" | "HR" | "JH" | "JK" | "KA" | "KL" | "LA" | "LD" | "MH" | "ML" | "MN" | "MP" | "MZ" | "NL" | "OD" | "PB" | "PY" | "RJ" | "SK" | "TN" | "TR" | "TS" | "UK" | "UP" | "WB";
+                        /** @description Omit when you give slabs: a single flat block at the last slab's rate is stored for the optimiser. */
+                        touBlocks?: {
+                            /** @description Local hour the block ends, exclusive. A block may wrap midnight (start after end). */
+                            endHour: number;
+                            /** @description INR per kWh. */
+                            rate: number;
+                            /** @description Local hour the block starts, 0 to 24 (6.5 is 06:30). */
+                            startHour: number;
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TariffPlan"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tariffs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One tariff plan */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TariffPlan"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete a tariff you entered */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tariffs/{id}/bill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Estimate a monthly bill under a tariff
+         * @description ESTIMATED: the rates are the plan's, the consumption is what you give. Slabs are applied telescopically; time-of-day rates are weighted by the hourly shape you give (an even spread when you give none, and the response says so). Taxes and duties are not included.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description Share of consumption in each hour of the day (any scale). Omit for an even spread. */
+                        hourShare?: number[];
+                        /** @description Consumption in kWh for one month. */
+                        monthlyKwh: number;
+                        /** @description Needed to price a fixed charge billed per kW. */
+                        sanctionedLoadKw?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            assumptions: string[];
+                            effectiveRateInrPerKwh: number | null;
+                            energyCharge: {
+                                provenance: components["schemas"]["Provenance"];
+                                unit?: string;
+                                value: number | null;
+                            };
+                            fixedCharge: {
+                                provenance: components["schemas"]["Provenance"];
+                                unit?: string;
+                                value: number | null;
+                            };
+                            lines: {
+                                amountInr: number;
+                                kwh: number | null;
+                                label: string;
+                                rate: number | null;
+                            }[];
+                            /** Format: uuid */
+                            tariffId: string;
+                            total: {
+                                provenance: components["schemas"]["Provenance"];
+                                unit?: string;
+                                value: number | null;
+                            };
+                            validity: {
+                                message: string;
+                                /** @enum {string} */
+                                status: "WITHIN" | "EXPIRED" | "NOT_YET_EFFECTIVE" | "OPEN_ENDED" | "UNKNOWN";
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/weather": {
         parameters: {
             query?: never;
@@ -1937,7 +2583,37 @@ export interface components {
             tariff: {
                 provenance: components["schemas"]["Provenance"];
                 unit?: string;
-                value: null;
+                value: {
+                    category: string | null;
+                    /** @enum {string} */
+                    consumerType: "RESIDENTIAL" | "COMMERCIAL" | "INDUSTRIAL" | "AGRICULTURAL" | "OTHER";
+                    discom: string | null;
+                    /** @enum {string} */
+                    exportRateBasis: "REGULATOR_ORDER" | "USER_ENTERED" | "ASSUMPTION" | "NONE";
+                    exportRateInrPerKwh: number | null;
+                    fixedCharge: {
+                        amountInr: number;
+                        /** @enum {string} */
+                        basis: "PER_CONNECTION_MONTH" | "PER_KW_MONTH";
+                    } | null;
+                    hasSlabs: boolean;
+                    name: string;
+                    /** @description The plan chosen when the twin was built; null if it has since been deleted. */
+                    planId: string | null;
+                    rateRangeInrPerKwh: {
+                        max: number;
+                        min: number;
+                    };
+                    source: string;
+                    state: string | null;
+                    /** @description True when the rate changes during the day. */
+                    timeOfDay: boolean;
+                    validity: {
+                        message: string;
+                        /** @enum {string} */
+                        status: "WITHIN" | "EXPIRED" | "NOT_YET_EFFECTIVE" | "OPEN_ENDED" | "UNKNOWN";
+                    };
+                } | null;
             };
             unavailable: {
                 reason: string;
@@ -2057,7 +2733,37 @@ export interface components {
             tariff: {
                 provenance: components["schemas"]["ProvenanceInput"];
                 unit?: string;
-                value: null;
+                value: {
+                    category: string | null;
+                    /** @enum {string} */
+                    consumerType: "RESIDENTIAL" | "COMMERCIAL" | "INDUSTRIAL" | "AGRICULTURAL" | "OTHER";
+                    discom: string | null;
+                    /** @enum {string} */
+                    exportRateBasis: "REGULATOR_ORDER" | "USER_ENTERED" | "ASSUMPTION" | "NONE";
+                    exportRateInrPerKwh: number | null;
+                    fixedCharge: {
+                        amountInr: number;
+                        /** @enum {string} */
+                        basis: "PER_CONNECTION_MONTH" | "PER_KW_MONTH";
+                    } | null;
+                    hasSlabs: boolean;
+                    name: string;
+                    /** @description The plan chosen when the twin was built; null if it has since been deleted. */
+                    planId: string | null;
+                    rateRangeInrPerKwh: {
+                        max: number;
+                        min: number;
+                    };
+                    source: string;
+                    state: string | null;
+                    /** @description True when the rate changes during the day. */
+                    timeOfDay: boolean;
+                    validity: {
+                        message: string;
+                        /** @enum {string} */
+                        status: "WITHIN" | "EXPIRED" | "NOT_YET_EFFECTIVE" | "OPEN_ENDED" | "UNKNOWN";
+                    };
+                } | null;
             };
             unavailable: {
                 reason: string;
@@ -2094,6 +2800,84 @@ export interface components {
             latitude: number;
             longitude: number;
         };
+        PolicyRule: {
+            appliesTo: string;
+            conditions: string[];
+            effectiveFrom: string | null;
+            effectiveTo: string | null;
+            notes: string[];
+            program: string;
+            region: string;
+            ruleKey: string;
+            source: string;
+            sourceUrl: string | null;
+            /** @description The rule in the words of its source. */
+            statedAs: string | null;
+            /** @description When someone last read the rule at its source. */
+            verifiedAt: string | null;
+        };
+        PolicyRuleInput: {
+            appliesTo: string;
+            conditions: string[];
+            effectiveFrom: string | null;
+            effectiveTo: string | null;
+            notes: string[];
+            program: string;
+            region: string;
+            ruleKey: string;
+            source: string;
+            sourceUrl: string | null;
+            /** @description The rule in the words of its source. */
+            statedAs: string | null;
+            /** @description When someone last read the rule at its source. */
+            verifiedAt: string | null;
+        };
+        ProgramResult: {
+            breakdown: {
+                amountInr: number;
+                fromKw: number;
+                inrPerKw: number;
+                kw: number;
+                toKw: number;
+            }[];
+            caveats: string[];
+            name: string;
+            /**
+             * @description RULE_APPLIES: a sourced rule was applied to the size you gave. NOT_COVERED: the rule on file is for other consumers. NO_SOURCED_RULE: nothing sourced is loaded, so nothing is claimed. RULE_ON_FILE_NOT_EVALUATED: a rule is on file but cannot be turned into a number from what it states.
+             * @enum {string}
+             */
+            outcome: "RULE_APPLIES" | "NOT_COVERED" | "NO_SOURCED_RULE" | "RULE_ON_FILE_NOT_EVALUATED";
+            program: string;
+            rules: components["schemas"]["PolicyRule"][];
+            subsidy: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: number | null;
+            };
+        };
+        ProgramResultInput: {
+            breakdown: {
+                amountInr: number;
+                fromKw: number;
+                inrPerKw: number;
+                kw: number;
+                toKw: number;
+            }[];
+            caveats: string[];
+            name: string;
+            /**
+             * @description RULE_APPLIES: a sourced rule was applied to the size you gave. NOT_COVERED: the rule on file is for other consumers. NO_SOURCED_RULE: nothing sourced is loaded, so nothing is claimed. RULE_ON_FILE_NOT_EVALUATED: a rule is on file but cannot be turned into a number from what it states.
+             * @enum {string}
+             */
+            outcome: "RULE_APPLIES" | "NOT_COVERED" | "NO_SOURCED_RULE" | "RULE_ON_FILE_NOT_EVALUATED";
+            program: string;
+            rules: components["schemas"]["PolicyRuleInput"][];
+            subsidy: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: number | null;
+            };
+        };
         Property: {
             address: string | null;
             createdAt: string;
@@ -2123,6 +2907,8 @@ export interface components {
                 note: string;
                 source: string;
             };
+            /** @description The tariff chosen for this property, if any (see /api/tariffs). */
+            tariffPlanId: string | null;
             updatedAt: string;
             warnings: string[];
         };
@@ -2155,6 +2941,8 @@ export interface components {
                 note: string;
                 source: string;
             };
+            /** @description The tariff chosen for this property, if any (see /api/tariffs). */
+            tariffPlanId: string | null;
             updatedAt: string;
             warnings: string[];
         };
@@ -2227,6 +3015,124 @@ export interface components {
             sensor: string;
             source: string;
             thumbnailUrl: string | null;
+        };
+        TariffPlan: {
+            category: string | null;
+            /** @enum {string} */
+            consumerType: "RESIDENTIAL" | "COMMERCIAL" | "INDUSTRIAL" | "AGRICULTURAL" | "OTHER";
+            discom: string | null;
+            effectiveFrom: string | null;
+            effectiveTo: string | null;
+            export: {
+                /**
+                 * @description ASSUMPTION means the source order states no export rate and the value is an assumption.
+                 * @enum {string}
+                 */
+                basis: "REGULATOR_ORDER" | "USER_ENTERED" | "ASSUMPTION" | "NONE";
+                /** @enum {string} */
+                meteringMode: "NET_METERING" | "NET_BILLING" | "GROSS_METERING" | "NONE" | "UNKNOWN";
+                rate: number | null;
+            };
+            fixedCharge: {
+                amountInr: number;
+                /** @enum {string} */
+                basis: "PER_CONNECTION_MONTH" | "PER_KW_MONTH";
+            } | null;
+            /** @description INR per kWh for each hour of the local day (time-weighted inside an hour). */
+            hourlyRates: number[];
+            /** Format: uuid */
+            id: string;
+            name: string;
+            notes: string[];
+            /**
+             * @description CURATED plans come from a regulator order recorded with its source text; USER plans were entered by their owner.
+             * @enum {string}
+             */
+            origin: "CURATED" | "USER";
+            provenance: components["schemas"]["Provenance"];
+            slabs: {
+                /** @description INR per kWh inside this slab. */
+                rate: number;
+                /** @description Upper limit of the slab in kWh per month; null for the last, open-ended slab. */
+                upToKwhPerMonth: number | null;
+            }[] | null;
+            source: string;
+            sourceUrl: string | null;
+            state: string | null;
+            tariffYear: string | null;
+            touBlocks: {
+                /** @description Local hour the block ends, exclusive. A block may wrap midnight (start after end). */
+                endHour: number;
+                /** @description INR per kWh. */
+                rate: number;
+                /** @description Local hour the block starts, 0 to 24 (6.5 is 06:30). */
+                startHour: number;
+            }[];
+            validity: {
+                message: string;
+                /** @enum {string} */
+                status: "WITHIN" | "EXPIRED" | "NOT_YET_EFFECTIVE" | "OPEN_ENDED" | "UNKNOWN";
+            };
+            verifiedAt: string | null;
+        };
+        TariffPlanInput: {
+            category: string | null;
+            /** @enum {string} */
+            consumerType: "RESIDENTIAL" | "COMMERCIAL" | "INDUSTRIAL" | "AGRICULTURAL" | "OTHER";
+            discom: string | null;
+            effectiveFrom: string | null;
+            effectiveTo: string | null;
+            export: {
+                /**
+                 * @description ASSUMPTION means the source order states no export rate and the value is an assumption.
+                 * @enum {string}
+                 */
+                basis: "REGULATOR_ORDER" | "USER_ENTERED" | "ASSUMPTION" | "NONE";
+                /** @enum {string} */
+                meteringMode: "NET_METERING" | "NET_BILLING" | "GROSS_METERING" | "NONE" | "UNKNOWN";
+                rate: number | null;
+            };
+            fixedCharge: {
+                amountInr: number;
+                /** @enum {string} */
+                basis: "PER_CONNECTION_MONTH" | "PER_KW_MONTH";
+            } | null;
+            /** @description INR per kWh for each hour of the local day (time-weighted inside an hour). */
+            hourlyRates: number[];
+            /** Format: uuid */
+            id: string;
+            name: string;
+            notes: string[];
+            /**
+             * @description CURATED plans come from a regulator order recorded with its source text; USER plans were entered by their owner.
+             * @enum {string}
+             */
+            origin: "CURATED" | "USER";
+            provenance: components["schemas"]["ProvenanceInput"];
+            slabs: {
+                /** @description INR per kWh inside this slab. */
+                rate: number;
+                /** @description Upper limit of the slab in kWh per month; null for the last, open-ended slab. */
+                upToKwhPerMonth: number | null;
+            }[] | null;
+            source: string;
+            sourceUrl: string | null;
+            state: string | null;
+            tariffYear: string | null;
+            touBlocks: {
+                /** @description Local hour the block ends, exclusive. A block may wrap midnight (start after end). */
+                endHour: number;
+                /** @description INR per kWh. */
+                rate: number;
+                /** @description Local hour the block starts, 0 to 24 (6.5 is 06:30). */
+                startHour: number;
+            }[];
+            validity: {
+                message: string;
+                /** @enum {string} */
+                status: "WITHIN" | "EXPIRED" | "NOT_YET_EFFECTIVE" | "OPEN_ENDED" | "UNKNOWN";
+            };
+            verifiedAt: string | null;
         };
         User: {
             displayName: string | null;

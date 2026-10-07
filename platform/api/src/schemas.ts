@@ -70,6 +70,7 @@ export const PropertySchema = z.object({
     message: z.string().nullable(),
     items: z.array(GeometrySchema),
   }),
+  tariffPlanId: z.uuid().nullable().describe("The tariff chosen for this property, if any (see /api/tariffs)."),
   warnings: z.array(z.string()),
   createdAt: z.string(),
   updatedAt: z.string(),

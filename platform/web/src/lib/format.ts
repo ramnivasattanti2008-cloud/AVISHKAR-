@@ -35,6 +35,12 @@ export function formatNumber(v: number, unit?: string): string {
   return unit ? `${text} ${unit}` : text;
 }
 
+/** Rupees in the Indian grouping: "₹1,23,456" and "₹7.88" (paise only when they matter). */
+export function formatInr(v: number): string {
+  const whole = Number.isInteger(v);
+  return `₹${v.toLocaleString("en-IN", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2 })}`;
+}
+
 export function formatDateTime(iso: string, timeZone?: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;

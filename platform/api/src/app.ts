@@ -21,7 +21,9 @@ import { accountRoutes } from "./routes/account.js";
 import { authRoutes } from "./routes/auth.js";
 import { geocodeRoutes } from "./routes/geocode.js";
 import { healthRoutes } from "./routes/health.js";
+import { policyRoutes } from "./routes/policy.js";
 import { propertyRoutes } from "./routes/properties.js";
+import { tariffRoutes } from "./routes/tariffs.js";
 import { twinRoutes } from "./routes/twin.js";
 import { weatherRoutes } from "./routes/weather.js";
 
@@ -72,6 +74,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         { name: "geocoding", description: "Address and place search" },
         { name: "weather", description: "Weather and irradiance with provenance" },
         { name: "twin", description: "Energy Twin: versioned snapshot of a property" },
+        { name: "tariffs", description: "Electricity tariffs: catalogue from regulator orders, your own, and bill estimates" },
+        { name: "policy", description: "Subsidy and net-metering rules as sourced configuration, and the eligibility calculator" },
         { name: "system", description: "Health" },
       ],
     },
@@ -129,5 +133,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(propertyRoutes, { deps });
   await app.register(weatherRoutes, { deps });
   await app.register(twinRoutes, { deps });
+  await app.register(tariffRoutes, { deps });
+  await app.register(policyRoutes, { deps });
   return app;
 }

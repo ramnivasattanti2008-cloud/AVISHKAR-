@@ -25,6 +25,7 @@ export interface PropertyDto {
   address: string | null;
   position: { source: PositionSource; label: string; note: string; accuracyM: number | null; description: string };
   geometry: { status: "AVAILABLE" | "UNAVAILABLE"; message: string | null; items: GeometryDto[] };
+  tariffPlanId: string | null;
   warnings: string[];
   createdAt: string;
   updatedAt: string;
@@ -65,6 +66,7 @@ function toDto(p: Property, geometries: GeometryDto[], policy: PropertyPolicy): 
       description: chk.ok ? describePosition(src, p.positionAccuracyM) : `POSITION SOURCE: ${label}`,
     },
     geometry: geometries.length ? { status: "AVAILABLE", message: null, items: geometries } : { status: "UNAVAILABLE", message: GEOMETRY_UNAVAILABLE, items: [] },
+    tariffPlanId: p.tariffPlanId,
     warnings,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),

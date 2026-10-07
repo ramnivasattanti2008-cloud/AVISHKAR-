@@ -20,5 +20,21 @@
   ],
   "export_rate": 3.5,
   "p2p_charges": 0.8,
-  "shortfall_penalty": 6.0
+  "shortfall_penalty": 6.0,
+  "meta": {
+    "state": "MH",
+    "discom": "MSEDCL",
+    "category": "LT II (0-20 kW)",
+    "consumerType": "COMMERCIAL",
+    "tariffYear": "FY2025-26",
+    "effectiveFrom": null,
+    "effectiveTo": "2026-03-31",
+    "fixedCharge": { "amountInr": 520, "basis": "PER_CONNECTION_MONTH" },
+    "exportRateBasis": "ASSUMPTION",
+    "meteringMode": "UNKNOWN",
+    "notes": [
+      "The source names the tariff year FY2025-26; the exact effective date of the review order is not recorded here.",
+      "The export rate is an assumption, not a figure from the order."
+    ]
+  }
 }

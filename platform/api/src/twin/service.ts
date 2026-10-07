@@ -1,12 +1,17 @@
 import { AppError } from "../errors.js";
 import type { Db } from "../db.js";
-import type { DataQuality, EnergyTwin, GeometryKind, SatelliteObservation } from "../generated/prisma/client.js";
+import type { DataQuality, EnergyTwin, GeometryKind, Prisma, SatelliteObservation } from "../generated/prisma/client.js";
 import { type Measured, estimated, forecast, reference, unavailable } from "../provenance/index.js";
 import { type PropertyDto, type PropertyPolicy, getProperty } from "../properties/service.js";
 import type { Footprint } from "../providers/footprint.js";
 import type { Providers } from "../providers/index.js";
 import type { SatelliteScene } from "../providers/satellite.js";
+import type { TwinTariffSchema } from "../schemas-twin.js";
+import { type TariffPlanDto, getTariffRow, toTariffDto } from "../tariff/service.js";
+import type { z } from "zod";
 import { type Assumption, ASSUMPTIONS, completeness, estimatePv, nextDayIrradiation } from "./estimate.js";
+
+export type TwinTariff = z.infer<typeof TwinTariffSchema>;
 
 export interface TwinDeps {
   db: Db;
@@ -54,7 +59,7 @@ export interface TwinDto {
   };
   satellite: Measured<SatelliteScene | null>;
   consumption: { estimatedDailyLoadKwh: Measured<number> };
-  tariff: Measured<null>;
+  tariff: Measured<TwinTariff>;
   energyAutonomyScore: Measured<number>;
   warnings: string[];
   sources: SourceRecord[];
@@ -198,7 +203,17 @@ export async function analyzeProperty(deps: TwinDeps, userId: string, propertyId
   }
 
   gaps.push({ what: "Electricity consumption", reason: "No meter data or appliances have been added yet; AVISHKAR does not guess a household's load." });
-  gaps.push({ what: "Electricity tariff", reason: "Tariff data unavailable for this property: choose your state, distribution company and consumer category, or enter your rates." });
+  // --- the tariff the owner chose, copied into this version so later edits to the plan do not rewrite history
+  let tariff: TariffPlanDto | null = null;
+  if (prop.tariffPlanId) {
+    try {
+      tariff = toTariffDto(await getTariffRow(db, userId, prop.tariffPlanId), now);
+      rec("avishkar-tariffs", "tariff_plan", "REFERENCE", true, `${tariff.name}: ${tariff.validity.message}`);
+    } catch (e) {
+      rec("avishkar-tariffs", "tariff_plan", "UNAVAILABLE", false, why(e));
+    }
+  }
+  if (!tariff) gaps.push({ what: "Electricity tariff", reason: "Tariff data unavailable for this property: choose your state, distribution company and consumer category, or enter your rates." });
 
   // --- estimates
   const pv = estimatePv({ roofAreaM2: geo?.areaM2 ?? null, ghiKwhM2Day: ghi });
@@ -210,7 +225,7 @@ export async function analyzeProperty(deps: TwinDeps, userId: string, propertyId
     geometry: geo !== null,
     satellite: sceneId !== null,
     loadProfile: false,
-    tariff: false,
+    tariff: tariff !== null,
   });
 
   // --- persist a new version
@@ -236,6 +251,8 @@ export async function analyzeProperty(deps: TwinDeps, userId: string, propertyId
     forecastNext24hGhiKwhM2: nextDay?.kwhPerM2 ?? null,
     forecastNext24hKwhPerKwp: kwhPerKwp,
     satelliteObservationId: sceneId,
+    tariffPlanId: tariff?.id ?? null,
+    tariffSnapshot: tariff ? (tariff as unknown as Prisma.InputJsonValue) : undefined,
     sources: sources as never,
     assumptions: used as never,
     unavailable: gaps as never,
@@ -279,6 +296,32 @@ function sceneFromRow(s: SatelliteObservation): SatelliteScene {
     source: s.source,
     processingStatus: s.processingStatus,
     thumbnailUrl: s.thumbnailUrl,
+  };
+}
+
+/** The tariff a twin was built with, read back from its snapshot; UNAVAILABLE (with the usual reason) when none was chosen. */
+function tariffOf(snap: TariffPlanDto | null, planId: string | null, fallback: Parameters<typeof unavailable>[1]): Measured<TwinTariff> {
+  if (!snap) return unavailable<TwinTariff>("Tariff data unavailable: choose your state, distribution company and consumer category, or enter your rates.", fallback);
+  const rates = snap.slabs ? snap.slabs.map((s) => s.rate) : snap.hourlyRates;
+  return {
+    value: {
+      planId,
+      name: snap.name,
+      state: snap.state,
+      discom: snap.discom,
+      category: snap.category,
+      consumerType: snap.consumerType,
+      rateRangeInrPerKwh: { min: Math.min(...rates), max: Math.max(...rates) },
+      timeOfDay: new Set(snap.hourlyRates).size > 1,
+      hasSlabs: snap.slabs !== null,
+      fixedCharge: snap.fixedCharge,
+      exportRateInrPerKwh: snap.export.rate,
+      exportRateBasis: snap.export.basis,
+      validity: snap.validity,
+      source: snap.source,
+    },
+    unit: "INR/kWh",
+    provenance: snap.provenance,
   };
 }
 
@@ -329,7 +372,7 @@ export function toTwinDto(row: EnergyTwin, scene: SatelliteObservation | null, w
       ? reference<SatelliteScene | null>(sceneFromRow(scene), { ...base("earth-search", scene.source, "latest_satellite_scene"), notes: ["A scene is the latest image, not a view of the present."] })
       : unavailable<SatelliteScene | null>("No satellite scene was available when this twin was built.", base("earth-search", "Earth Search STAC", "latest_satellite_scene")),
     consumption: { estimatedDailyLoadKwh: unavailable<number>("No meter data or appliances have been added yet; AVISHKAR does not guess a household's load.", { ...base(TWIN, "AVISHKAR Energy Twin", "daily_load"), unit: "kWh/day" }) },
-    tariff: unavailable<null>("Tariff data unavailable: choose your state, distribution company and consumer category, or enter your rates.", base(TWIN, "AVISHKAR Energy Twin", "tariff")),
+    tariff: tariffOf(row.tariffSnapshot as unknown as TariffPlanDto | null, row.tariffPlanId, base(TWIN, "AVISHKAR Energy Twin", "tariff")),
     energyAutonomyScore: unavailable<number>("The autonomy score needs a consumption profile and a battery or solar system definition.", base(TWIN, "AVISHKAR Energy Twin", "autonomy_score")),
     warnings,
     sources: row.sources as unknown as SourceRecord[],

@@ -52,6 +52,35 @@ enum GeometryKind {
   USER_POLYGON
 }
 
+enum ConsumerType {
+  RESIDENTIAL
+  COMMERCIAL
+  INDUSTRIAL
+  AGRICULTURAL
+  OTHER
+}
+
+enum FixedChargeBasis {
+  PER_CONNECTION_MONTH
+  PER_KW_MONTH
+}
+
+/// Where a plan's export credit came from. ASSUMPTION means the source order did not state one and a value was assumed.
+enum ExportRateBasis {
+  REGULATOR_ORDER
+  USER_ENTERED
+  ASSUMPTION
+  NONE
+}
+
+enum MeteringMode {
+  NET_METERING
+  NET_BILLING
+  GROSS_METERING
+  NONE
+  UNKNOWN
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique
@@ -62,9 +91,10 @@ model User {
   /// Soft delete marker: set when the owner asks for deletion; a job erases the data (spec section 50).
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  sessions   Session[]
-  properties Property[]
-  auditLogs  AuditLog[]
+  sessions    Session[]
+  properties  Property[]
+  auditLogs   AuditLog[]
+  tariffPlans TariffPlan[]
 
   @@map("users")
 }
@@ -100,15 +130,19 @@ model Property {
   positionAccuracyM Float? @map("position_accuracy_m")
   /// True for deterministic demo properties; they are never returned by live queries (spec sections 43, 74).
   isDemo    Boolean  @default(false) @map("is_demo")
+  /// The tariff the owner chose for this property (a curated plan or one they entered). Cleared if the plan is deleted.
+  tariffPlanId String? @map("tariff_plan_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
 
   owner      User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tariffPlan TariffPlan?        @relation(fields: [tariffPlanId], references: [id], onDelete: SetNull)
   geometries PropertyGeometry[]
   twins      EnergyTwin[]
 
   @@index([ownerId])
+  @@index([tariffPlanId])
   @@index([location], type: Gist)
   @@map("properties")
 }
@@ -288,8 +322,96 @@ model EnergyTwin {
   /// [{ what, reason }]: things the twin cannot say yet and why.
   unavailable Json
 
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  /// The tariff in force when this version was built, and a copy of what was known about it then (a plan can be edited or
+  /// deleted later; the snapshot keeps the version honest).
+  tariffPlanId   String? @map("tariff_plan_id") @db.Uuid
+  tariffSnapshot Json?   @map("tariff_snapshot")
+
+  property   Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tariffPlan TariffPlan? @relation(fields: [tariffPlanId], references: [id], onDelete: SetNull)
 
   @@unique([propertyId, version])
   @@map("energy_twins")
+}
+
+/// An electricity tariff (spec section 22). Curated rows (owner_id null, seed_key set) come from regulator orders recorded in
+/// data/tariffs with their source text; a user can enter their own, which only they can see. Never one universal tariff.
+model TariffPlan {
+  id       String  @id @default(uuid()) @db.Uuid
+  /// Stable key of a curated row ("curated:shop-pune") so reseeding updates instead of duplicating. Null for user rows.
+  seedKey  String? @unique @map("seed_key")
+  /// Null for curated plans (visible to everyone); the owner for plans a user entered.
+  ownerId  String? @map("owner_id") @db.Uuid
+  name     String
+  /// ISO 3166-2:IN code without the country prefix (MH, UP, RJ, ...).
+  state    String?
+  discom   String?
+  category String?
+  consumerType ConsumerType @map("consumer_type")
+
+  /// [{ startHour, endHour, rate }] in INR/kWh, local time, end exclusive; together they cover all 24 hours (a block may wrap midnight).
+  touBlocks Json @map("tou_blocks")
+  /// [{ upToKwhPerMonth: number | null, rate }] telescopic slabs, last one open-ended; null when the plan has none. Not combined with ToD.
+  slabs     Json?
+
+  fixedChargeInr   Float?            @map("fixed_charge_inr")
+  fixedChargeBasis FixedChargeBasis? @map("fixed_charge_basis")
+  exportRate       Float?            @map("export_rate")
+  exportRateBasis  ExportRateBasis   @default(NONE) @map("export_rate_basis")
+  meteringMode     MeteringMode      @default(UNKNOWN) @map("metering_mode")
+
+  /// Citation of the order or bill the numbers came from, in plain words.
+  source        String
+  sourceUrl     String?   @map("source_url")
+  tariffYear    String?   @map("tariff_year")
+  effectiveFrom DateTime? @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+  verifiedAt    DateTime? @map("verified_at") @db.Timestamptz(3)
+  /// Plain-language caveats (string[]).
+  notes         Json      @default("[]")
+  /// Values other parts of the platform use that are not part of the bill: p2p charges, shortfall penalty.
+  extras        Json?
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  owner      User?        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  properties Property[]
+  twins      EnergyTwin[]
+
+  @@index([state, consumerType])
+  @@index([ownerId])
+  @@map("tariff_plans")
+}
+
+/// A policy or programme rule as configuration (spec sections 23 and 24): never a constant in code. Each row says where it was
+/// read, when it was checked, and from when to when it applies.
+model PolicyRule {
+  id        String  @id @default(uuid()) @db.Uuid
+  /// Stable key so reseeding updates instead of duplicating ("PM_SURYA_GHAR:residential_cfa:IN").
+  seedKey   String  @unique @map("seed_key")
+  program   String
+  ruleKey   String  @map("rule_key")
+  /// "IN" for national rules, otherwise a state code.
+  region    String
+  /// Who the rule applies to: RESIDENTIAL, GHS_RWA, ...
+  appliesTo String  @map("applies_to")
+  /// The rule itself (tiers, caps, limits), in the shape its engine reads.
+  rule      Json
+  /// The rule as the source states it, kept verbatim for display.
+  statedAs  String? @map("stated_as")
+  source    String
+  sourceUrl String? @map("source_url")
+  effectiveFrom DateTime? @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+  verifiedAt    DateTime? @map("verified_at") @db.Timestamptz(3)
+  /// Conditions and caveats (string[]).
+  notes     Json    @default("[]")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([program, region])
+  @@map("policy_rules")
 }

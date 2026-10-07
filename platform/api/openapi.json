@@ -493,7 +493,168 @@
                 "type": "string"
               },
               "value": {
-                "type": "null"
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "category": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "consumerType": {
+                        "enum": [
+                          "RESIDENTIAL",
+                          "COMMERCIAL",
+                          "INDUSTRIAL",
+                          "AGRICULTURAL",
+                          "OTHER"
+                        ],
+                        "type": "string"
+                      },
+                      "discom": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "exportRateBasis": {
+                        "enum": [
+                          "REGULATOR_ORDER",
+                          "USER_ENTERED",
+                          "ASSUMPTION",
+                          "NONE"
+                        ],
+                        "type": "string"
+                      },
+                      "exportRateInrPerKwh": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "fixedCharge": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "amountInr": {
+                                "type": "number"
+                              },
+                              "basis": {
+                                "enum": [
+                                  "PER_CONNECTION_MONTH",
+                                  "PER_KW_MONTH"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "amountInr",
+                              "basis"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "hasSlabs": {
+                        "type": "boolean"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "planId": {
+                        "anyOf": [
+                          {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The plan chosen when the twin was built; null if it has since been deleted."
+                      },
+                      "rateRangeInrPerKwh": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "max": {
+                            "type": "number"
+                          },
+                          "min": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "min",
+                          "max"
+                        ],
+                        "type": "object"
+                      },
+                      "source": {
+                        "type": "string"
+                      },
+                      "state": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "timeOfDay": {
+                        "description": "True when the rate changes during the day.",
+                        "type": "boolean"
+                      },
+                      "validity": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "message": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "WITHIN",
+                              "EXPIRED",
+                              "NOT_YET_EFFECTIVE",
+                              "OPEN_ENDED",
+                              "UNKNOWN"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "message"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "planId",
+                      "name",
+                      "state",
+                      "discom",
+                      "category",
+                      "consumerType",
+                      "rateRangeInrPerKwh",
+                      "timeOfDay",
+                      "hasSlabs",
+                      "fixedCharge",
+                      "exportRateInrPerKwh",
+                      "exportRateBasis",
+                      "validity",
+                      "source"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -1027,7 +1188,164 @@
                 "type": "string"
               },
               "value": {
-                "type": "null"
+                "anyOf": [
+                  {
+                    "properties": {
+                      "category": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "consumerType": {
+                        "enum": [
+                          "RESIDENTIAL",
+                          "COMMERCIAL",
+                          "INDUSTRIAL",
+                          "AGRICULTURAL",
+                          "OTHER"
+                        ],
+                        "type": "string"
+                      },
+                      "discom": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "exportRateBasis": {
+                        "enum": [
+                          "REGULATOR_ORDER",
+                          "USER_ENTERED",
+                          "ASSUMPTION",
+                          "NONE"
+                        ],
+                        "type": "string"
+                      },
+                      "exportRateInrPerKwh": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "fixedCharge": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "amountInr": {
+                                "type": "number"
+                              },
+                              "basis": {
+                                "enum": [
+                                  "PER_CONNECTION_MONTH",
+                                  "PER_KW_MONTH"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "amountInr",
+                              "basis"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "hasSlabs": {
+                        "type": "boolean"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "planId": {
+                        "anyOf": [
+                          {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The plan chosen when the twin was built; null if it has since been deleted."
+                      },
+                      "rateRangeInrPerKwh": {
+                        "properties": {
+                          "max": {
+                            "type": "number"
+                          },
+                          "min": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "min",
+                          "max"
+                        ],
+                        "type": "object"
+                      },
+                      "source": {
+                        "type": "string"
+                      },
+                      "state": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "timeOfDay": {
+                        "description": "True when the rate changes during the day.",
+                        "type": "boolean"
+                      },
+                      "validity": {
+                        "properties": {
+                          "message": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "WITHIN",
+                              "EXPIRED",
+                              "NOT_YET_EFFECTIVE",
+                              "OPEN_ENDED",
+                              "UNKNOWN"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "message"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "planId",
+                      "name",
+                      "state",
+                      "discom",
+                      "category",
+                      "consumerType",
+                      "rateRangeInrPerKwh",
+                      "timeOfDay",
+                      "hasSlabs",
+                      "fixedCharge",
+                      "exportRateInrPerKwh",
+                      "exportRateBasis",
+                      "validity",
+                      "source"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -1181,6 +1499,352 @@
         ],
         "type": "object"
       },
+      "PolicyRule": {
+        "additionalProperties": false,
+        "properties": {
+          "appliesTo": {
+            "type": "string"
+          },
+          "conditions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "effectiveFrom": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "program": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "ruleKey": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statedAs": {
+            "description": "The rule in the words of its source.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verifiedAt": {
+            "description": "When someone last read the rule at its source.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "program",
+          "ruleKey",
+          "region",
+          "appliesTo",
+          "statedAs",
+          "source",
+          "sourceUrl",
+          "verifiedAt",
+          "effectiveFrom",
+          "effectiveTo",
+          "conditions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "PolicyRuleInput": {
+        "properties": {
+          "appliesTo": {
+            "type": "string"
+          },
+          "conditions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "effectiveFrom": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "program": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "ruleKey": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statedAs": {
+            "description": "The rule in the words of its source.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verifiedAt": {
+            "description": "When someone last read the rule at its source.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "program",
+          "ruleKey",
+          "region",
+          "appliesTo",
+          "statedAs",
+          "source",
+          "sourceUrl",
+          "verifiedAt",
+          "effectiveFrom",
+          "effectiveTo",
+          "conditions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "ProgramResult": {
+        "additionalProperties": false,
+        "properties": {
+          "breakdown": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "amountInr": {
+                  "type": "number"
+                },
+                "fromKw": {
+                  "type": "number"
+                },
+                "inrPerKw": {
+                  "type": "number"
+                },
+                "kw": {
+                  "type": "number"
+                },
+                "toKw": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "fromKw",
+                "toKw",
+                "kw",
+                "inrPerKw",
+                "amountInr"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "caveats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "outcome": {
+            "description": "RULE_APPLIES: a sourced rule was applied to the size you gave. NOT_COVERED: the rule on file is for other consumers. NO_SOURCED_RULE: nothing sourced is loaded, so nothing is claimed. RULE_ON_FILE_NOT_EVALUATED: a rule is on file but cannot be turned into a number from what it states.",
+            "enum": [
+              "RULE_APPLIES",
+              "NOT_COVERED",
+              "NO_SOURCED_RULE",
+              "RULE_ON_FILE_NOT_EVALUATED"
+            ],
+            "type": "string"
+          },
+          "program": {
+            "type": "string"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyRule"
+            },
+            "type": "array"
+          },
+          "subsidy": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "program",
+          "name",
+          "outcome",
+          "subsidy",
+          "breakdown",
+          "rules",
+          "caveats"
+        ],
+        "type": "object"
+      },
+      "ProgramResultInput": {
+        "properties": {
+          "breakdown": {
+            "items": {
+              "properties": {
+                "amountInr": {
+                  "type": "number"
+                },
+                "fromKw": {
+                  "type": "number"
+                },
+                "inrPerKw": {
+                  "type": "number"
+                },
+                "kw": {
+                  "type": "number"
+                },
+                "toKw": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "fromKw",
+                "toKw",
+                "kw",
+                "inrPerKw",
+                "amountInr"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "caveats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "outcome": {
+            "description": "RULE_APPLIES: a sourced rule was applied to the size you gave. NOT_COVERED: the rule on file is for other consumers. NO_SOURCED_RULE: nothing sourced is loaded, so nothing is claimed. RULE_ON_FILE_NOT_EVALUATED: a rule is on file but cannot be turned into a number from what it states.",
+            "enum": [
+              "RULE_APPLIES",
+              "NOT_COVERED",
+              "NO_SOURCED_RULE",
+              "RULE_ON_FILE_NOT_EVALUATED"
+            ],
+            "type": "string"
+          },
+          "program": {
+            "type": "string"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyRuleInput"
+            },
+            "type": "array"
+          },
+          "subsidy": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "program",
+          "name",
+          "outcome",
+          "subsidy",
+          "breakdown",
+          "rules",
+          "caveats"
+        ],
+        "type": "object"
+      },
       "Property": {
         "additionalProperties": false,
         "properties": {
@@ -1297,6 +1961,19 @@
             ],
             "type": "object"
           },
+          "tariffPlanId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tariff chosen for this property, if any (see /api/tariffs)."
+          },
           "updatedAt": {
             "type": "string"
           },
@@ -1315,6 +1992,7 @@
           "address",
           "position",
           "geometry",
+          "tariffPlanId",
           "warnings",
           "createdAt",
           "updatedAt"
@@ -1433,6 +2111,19 @@
             ],
             "type": "object"
           },
+          "tariffPlanId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The tariff chosen for this property, if any (see /api/tariffs)."
+          },
           "updatedAt": {
             "type": "string"
           },
@@ -1451,6 +2142,7 @@
           "address",
           "position",
           "geometry",
+          "tariffPlanId",
           "warnings",
           "createdAt",
           "updatedAt"
@@ -1729,6 +2421,566 @@
           "source",
           "processingStatus",
           "thumbnailUrl"
+        ],
+        "type": "object"
+      },
+      "TariffPlan": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "consumerType": {
+            "enum": [
+              "RESIDENTIAL",
+              "COMMERCIAL",
+              "INDUSTRIAL",
+              "AGRICULTURAL",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "discom": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveFrom": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "export": {
+            "additionalProperties": false,
+            "properties": {
+              "basis": {
+                "description": "ASSUMPTION means the source order states no export rate and the value is an assumption.",
+                "enum": [
+                  "REGULATOR_ORDER",
+                  "USER_ENTERED",
+                  "ASSUMPTION",
+                  "NONE"
+                ],
+                "type": "string"
+              },
+              "meteringMode": {
+                "enum": [
+                  "NET_METERING",
+                  "NET_BILLING",
+                  "GROSS_METERING",
+                  "NONE",
+                  "UNKNOWN"
+                ],
+                "type": "string"
+              },
+              "rate": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "rate",
+              "basis",
+              "meteringMode"
+            ],
+            "type": "object"
+          },
+          "fixedCharge": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "amountInr": {
+                    "maximum": 1000000,
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "basis": {
+                    "enum": [
+                      "PER_CONNECTION_MONTH",
+                      "PER_KW_MONTH"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "amountInr",
+                  "basis"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hourlyRates": {
+            "description": "INR per kWh for each hour of the local day (time-weighted inside an hour).",
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 24,
+            "minItems": 24,
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "origin": {
+            "description": "CURATED plans come from a regulator order recorded with its source text; USER plans were entered by their owner.",
+            "enum": [
+              "CURATED",
+              "USER"
+            ],
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "slabs": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "rate": {
+                      "description": "INR per kWh inside this slab.",
+                      "maximum": 100,
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    "upToKwhPerMonth": {
+                      "anyOf": [
+                        {
+                          "exclusiveMinimum": 0,
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Upper limit of the slab in kWh per month; null for the last, open-ended slab."
+                    }
+                  },
+                  "required": [
+                    "upToKwhPerMonth",
+                    "rate"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tariffYear": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "touBlocks": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "endHour": {
+                  "description": "Local hour the block ends, exclusive. A block may wrap midnight (start after end).",
+                  "maximum": 24,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "rate": {
+                  "description": "INR per kWh.",
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "startHour": {
+                  "description": "Local hour the block starts, 0 to 24 (6.5 is 06:30).",
+                  "maximum": 24,
+                  "minimum": 0,
+                  "type": "number"
+                }
+              },
+              "required": [
+                "startHour",
+                "endHour",
+                "rate"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "validity": {
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "WITHIN",
+                  "EXPIRED",
+                  "NOT_YET_EFFECTIVE",
+                  "OPEN_ENDED",
+                  "UNKNOWN"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "status",
+              "message"
+            ],
+            "type": "object"
+          },
+          "verifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "origin",
+          "name",
+          "state",
+          "discom",
+          "category",
+          "consumerType",
+          "touBlocks",
+          "slabs",
+          "hourlyRates",
+          "fixedCharge",
+          "export",
+          "source",
+          "sourceUrl",
+          "tariffYear",
+          "effectiveFrom",
+          "effectiveTo",
+          "verifiedAt",
+          "validity",
+          "notes",
+          "provenance"
+        ],
+        "type": "object"
+      },
+      "TariffPlanInput": {
+        "properties": {
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "consumerType": {
+            "enum": [
+              "RESIDENTIAL",
+              "COMMERCIAL",
+              "INDUSTRIAL",
+              "AGRICULTURAL",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "discom": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveFrom": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "export": {
+            "properties": {
+              "basis": {
+                "description": "ASSUMPTION means the source order states no export rate and the value is an assumption.",
+                "enum": [
+                  "REGULATOR_ORDER",
+                  "USER_ENTERED",
+                  "ASSUMPTION",
+                  "NONE"
+                ],
+                "type": "string"
+              },
+              "meteringMode": {
+                "enum": [
+                  "NET_METERING",
+                  "NET_BILLING",
+                  "GROSS_METERING",
+                  "NONE",
+                  "UNKNOWN"
+                ],
+                "type": "string"
+              },
+              "rate": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "rate",
+              "basis",
+              "meteringMode"
+            ],
+            "type": "object"
+          },
+          "fixedCharge": {
+            "anyOf": [
+              {
+                "properties": {
+                  "amountInr": {
+                    "maximum": 1000000,
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "basis": {
+                    "enum": [
+                      "PER_CONNECTION_MONTH",
+                      "PER_KW_MONTH"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "amountInr",
+                  "basis"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hourlyRates": {
+            "description": "INR per kWh for each hour of the local day (time-weighted inside an hour).",
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 24,
+            "minItems": 24,
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "origin": {
+            "description": "CURATED plans come from a regulator order recorded with its source text; USER plans were entered by their owner.",
+            "enum": [
+              "CURATED",
+              "USER"
+            ],
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/ProvenanceInput"
+          },
+          "slabs": {
+            "anyOf": [
+              {
+                "items": {
+                  "properties": {
+                    "rate": {
+                      "description": "INR per kWh inside this slab.",
+                      "maximum": 100,
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    "upToKwhPerMonth": {
+                      "anyOf": [
+                        {
+                          "exclusiveMinimum": 0,
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Upper limit of the slab in kWh per month; null for the last, open-ended slab."
+                    }
+                  },
+                  "required": [
+                    "upToKwhPerMonth",
+                    "rate"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tariffYear": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "touBlocks": {
+            "items": {
+              "properties": {
+                "endHour": {
+                  "description": "Local hour the block ends, exclusive. A block may wrap midnight (start after end).",
+                  "maximum": 24,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "rate": {
+                  "description": "INR per kWh.",
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "startHour": {
+                  "description": "Local hour the block starts, 0 to 24 (6.5 is 06:30).",
+                  "maximum": 24,
+                  "minimum": 0,
+                  "type": "number"
+                }
+              },
+              "required": [
+                "startHour",
+                "endHour",
+                "rate"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "validity": {
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "WITHIN",
+                  "EXPIRED",
+                  "NOT_YET_EFFECTIVE",
+                  "OPEN_ENDED",
+                  "UNKNOWN"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "status",
+              "message"
+            ],
+            "type": "object"
+          },
+          "verifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "origin",
+          "name",
+          "state",
+          "discom",
+          "category",
+          "consumerType",
+          "touBlocks",
+          "slabs",
+          "hourlyRates",
+          "fixedCharge",
+          "export",
+          "source",
+          "sourceUrl",
+          "tariffYear",
+          "effectiveFrom",
+          "effectiveTo",
+          "verifiedAt",
+          "validity",
+          "notes",
+          "provenance"
         ],
         "type": "object"
       },
@@ -2308,6 +3560,166 @@
         ]
       }
     },
+    "/api/eligibility": {
+      "post": {
+        "description": "Never confirms eligibility (eligibilityConfirmed is always false): it applies a sourced rule to the numbers given and returns the rule, its source and its caveats. Where no sourced rule is on file it says so and returns no amount.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "asOf": {
+                    "description": "Evaluate the rules in force on this day (default today).",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                    "type": "string"
+                  },
+                  "consumerType": {
+                    "enum": [
+                      "RESIDENTIAL",
+                      "GROUP_HOUSING_OR_RWA",
+                      "COMMERCIAL",
+                      "INDUSTRIAL",
+                      "AGRICULTURAL",
+                      "OTHER"
+                    ],
+                    "type": "string"
+                  },
+                  "state": {
+                    "description": "Used to pick state rules; national rules apply without it.",
+                    "enum": [
+                      "AN",
+                      "AP",
+                      "AR",
+                      "AS",
+                      "BR",
+                      "CG",
+                      "CH",
+                      "DH",
+                      "DL",
+                      "GA",
+                      "GJ",
+                      "HP",
+                      "HR",
+                      "JH",
+                      "JK",
+                      "KA",
+                      "KL",
+                      "LA",
+                      "LD",
+                      "MH",
+                      "ML",
+                      "MN",
+                      "MP",
+                      "MZ",
+                      "NL",
+                      "OD",
+                      "PB",
+                      "PY",
+                      "RJ",
+                      "SK",
+                      "TN",
+                      "TR",
+                      "TS",
+                      "UK",
+                      "UP",
+                      "WB"
+                    ],
+                    "type": "string"
+                  },
+                  "systemKwp": {
+                    "description": "Size of the solar system in kWp (DC).",
+                    "exclusiveMinimum": 0,
+                    "maximum": 10000,
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "consumerType",
+                  "systemKwp"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "asOf": {
+                      "type": "string"
+                    },
+                    "consumerType": {
+                      "enum": [
+                        "RESIDENTIAL",
+                        "GROUP_HOUSING_OR_RWA",
+                        "COMMERCIAL",
+                        "INDUSTRIAL",
+                        "AGRICULTURAL",
+                        "OTHER"
+                      ],
+                      "type": "string"
+                    },
+                    "eligibilityConfirmed": {
+                      "description": "Always false: this applies a published rule to the numbers given; it never confirms that anyone qualifies.",
+                      "enum": [
+                        false
+                      ],
+                      "type": "boolean"
+                    },
+                    "netMetering": {
+                      "$ref": "#/components/schemas/ProgramResult"
+                    },
+                    "notice": {
+                      "type": "string"
+                    },
+                    "programs": {
+                      "items": {
+                        "$ref": "#/components/schemas/ProgramResult"
+                      },
+                      "type": "array"
+                    },
+                    "systemKwp": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "asOf",
+                    "consumerType",
+                    "systemKwp",
+                    "eligibilityConfirmed",
+                    "programs",
+                    "netMetering",
+                    "notice"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Apply the published subsidy and net-metering rules to a system size",
+        "tags": [
+          "policy"
+        ]
+      }
+    },
     "/api/geocode/reverse": {
       "get": {
         "parameters": [
@@ -2699,6 +4111,71 @@
         "summary": "Liveness: the process is up",
         "tags": [
           "system"
+        ]
+      }
+    },
+    "/api/policy-rules": {
+      "get": {
+        "description": "Every rule the eligibility calculator can apply, as configuration: where it was read, when it was last checked and from when to when it applies.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "program",
+            "required": false,
+            "schema": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "maxLength": 4,
+              "minLength": 2,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "rules": {
+                      "items": {
+                        "$ref": "#/components/schemas/PolicyRule"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "rules"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "The policy rules on file, with their sources",
+        "tags": [
+          "policy"
         ]
       }
     },
@@ -3744,6 +5221,171 @@
         ]
       }
     },
+    "/api/properties/{id}/tariff": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Property"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Clear the tariff of a property",
+        "tags": [
+          "tariffs",
+          "properties"
+        ]
+      },
+      "put": {
+        "description": "Run the property analysis again afterwards: the Energy Twin records the tariff that was chosen when it was built.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "tariffPlanId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tariffPlanId"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Property"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Choose the tariff for a property",
+        "tags": [
+          "tariffs",
+          "properties"
+        ]
+      }
+    },
     "/api/properties/{id}/twin": {
       "get": {
         "parameters": [
@@ -4291,6 +5933,754 @@
         ]
       }
     },
+    "/api/tariffs": {
+      "get": {
+        "description": "Curated plans come from regulator orders recorded with their source text and validity period; a plan whose period has ended is flagged EXPIRED rather than hidden. Plans you entered yourself are included when you are signed in.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "enum": [
+                "AN",
+                "AP",
+                "AR",
+                "AS",
+                "BR",
+                "CG",
+                "CH",
+                "DH",
+                "DL",
+                "GA",
+                "GJ",
+                "HP",
+                "HR",
+                "JH",
+                "JK",
+                "KA",
+                "KL",
+                "LA",
+                "LD",
+                "MH",
+                "ML",
+                "MN",
+                "MP",
+                "MZ",
+                "NL",
+                "OD",
+                "PB",
+                "PY",
+                "RJ",
+                "SK",
+                "TN",
+                "TR",
+                "TS",
+                "UK",
+                "UP",
+                "WB"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "discom",
+            "required": false,
+            "schema": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "consumerType",
+            "required": false,
+            "schema": {
+              "enum": [
+                "RESIDENTIAL",
+                "COMMERCIAL",
+                "INDUSTRIAL",
+                "AGRICULTURAL",
+                "OTHER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "curated: shared plans from regulator orders; mine: plans you entered; all: both (default).",
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "curated",
+                "mine"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "tariffs": {
+                      "items": {
+                        "$ref": "#/components/schemas/TariffPlan"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "tariffs"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Tariff plans you can choose from",
+        "tags": [
+          "tariffs"
+        ]
+      },
+      "post": {
+        "description": "For a tariff that is not in the catalogue, or to correct one against your bill. Only you can see it. Give time-of-day blocks (a flat tariff is one block from 0 to 24) or slabs.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "category": {
+                    "maxLength": 120,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "consumerType": {
+                    "enum": [
+                      "RESIDENTIAL",
+                      "COMMERCIAL",
+                      "INDUSTRIAL",
+                      "AGRICULTURAL",
+                      "OTHER"
+                    ],
+                    "type": "string"
+                  },
+                  "discom": {
+                    "maxLength": 120,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "effectiveFrom": {
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                    "type": "string"
+                  },
+                  "effectiveTo": {
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                    "type": "string"
+                  },
+                  "exportRate": {
+                    "description": "Credit per exported kWh in INR, from your bill or net-metering agreement.",
+                    "maximum": 100,
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "fixedCharge": {
+                    "properties": {
+                      "amountInr": {
+                        "maximum": 1000000,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      "basis": {
+                        "enum": [
+                          "PER_CONNECTION_MONTH",
+                          "PER_KW_MONTH"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "amountInr",
+                      "basis"
+                    ],
+                    "type": "object"
+                  },
+                  "meteringMode": {
+                    "enum": [
+                      "NET_METERING",
+                      "NET_BILLING",
+                      "GROSS_METERING",
+                      "NONE",
+                      "UNKNOWN"
+                    ],
+                    "type": "string"
+                  },
+                  "name": {
+                    "maxLength": 120,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "notes": {
+                    "maxLength": 500,
+                    "type": "string"
+                  },
+                  "slabs": {
+                    "items": {
+                      "properties": {
+                        "rate": {
+                          "description": "INR per kWh inside this slab.",
+                          "maximum": 100,
+                          "minimum": 0,
+                          "type": "number"
+                        },
+                        "upToKwhPerMonth": {
+                          "anyOf": [
+                            {
+                              "exclusiveMinimum": 0,
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Upper limit of the slab in kWh per month; null for the last, open-ended slab."
+                        }
+                      },
+                      "required": [
+                        "upToKwhPerMonth",
+                        "rate"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 20,
+                    "type": "array"
+                  },
+                  "source": {
+                    "description": "Where these numbers come from, for example 'my bill of March 2026'.",
+                    "maxLength": 300,
+                    "type": "string"
+                  },
+                  "state": {
+                    "enum": [
+                      "AN",
+                      "AP",
+                      "AR",
+                      "AS",
+                      "BR",
+                      "CG",
+                      "CH",
+                      "DH",
+                      "DL",
+                      "GA",
+                      "GJ",
+                      "HP",
+                      "HR",
+                      "JH",
+                      "JK",
+                      "KA",
+                      "KL",
+                      "LA",
+                      "LD",
+                      "MH",
+                      "ML",
+                      "MN",
+                      "MP",
+                      "MZ",
+                      "NL",
+                      "OD",
+                      "PB",
+                      "PY",
+                      "RJ",
+                      "SK",
+                      "TN",
+                      "TR",
+                      "TS",
+                      "UK",
+                      "UP",
+                      "WB"
+                    ],
+                    "type": "string"
+                  },
+                  "touBlocks": {
+                    "description": "Omit when you give slabs: a single flat block at the last slab's rate is stored for the optimiser.",
+                    "items": {
+                      "properties": {
+                        "endHour": {
+                          "description": "Local hour the block ends, exclusive. A block may wrap midnight (start after end).",
+                          "maximum": 24,
+                          "minimum": 0,
+                          "type": "number"
+                        },
+                        "rate": {
+                          "description": "INR per kWh.",
+                          "maximum": 100,
+                          "minimum": 0,
+                          "type": "number"
+                        },
+                        "startHour": {
+                          "description": "Local hour the block starts, 0 to 24 (6.5 is 06:30).",
+                          "maximum": 24,
+                          "minimum": 0,
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "startHour",
+                        "endHour",
+                        "rate"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 48,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "name",
+                  "consumerType"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TariffPlan"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Enter your own tariff",
+        "tags": [
+          "tariffs"
+        ]
+      }
+    },
+    "/api/tariffs/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Delete a tariff you entered",
+        "tags": [
+          "tariffs"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TariffPlan"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "One tariff plan",
+        "tags": [
+          "tariffs"
+        ]
+      }
+    },
+    "/api/tariffs/{id}/bill": {
+      "post": {
+        "description": "ESTIMATED: the rates are the plan's, the consumption is what you give. Slabs are applied telescopically; time-of-day rates are weighted by the hourly shape you give (an even spread when you give none, and the response says so). Taxes and duties are not included.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "hourShare": {
+                    "description": "Share of consumption in each hour of the day (any scale). Omit for an even spread.",
+                    "items": {
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    "maxItems": 24,
+                    "minItems": 24,
+                    "type": "array"
+                  },
+                  "monthlyKwh": {
+                    "description": "Consumption in kWh for one month.",
+                    "maximum": 1000000,
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "sanctionedLoadKw": {
+                    "description": "Needed to price a fixed charge billed per kW.",
+                    "exclusiveMinimum": 0,
+                    "maximum": 100000,
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "monthlyKwh"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "assumptions": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "effectiveRateInrPerKwh": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "energyCharge": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "provenance": {
+                          "$ref": "#/components/schemas/Provenance"
+                        },
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "provenance"
+                      ],
+                      "type": "object"
+                    },
+                    "fixedCharge": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "provenance": {
+                          "$ref": "#/components/schemas/Provenance"
+                        },
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "provenance"
+                      ],
+                      "type": "object"
+                    },
+                    "lines": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "amountInr": {
+                            "type": "number"
+                          },
+                          "kwh": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "rate": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "kwh",
+                          "rate",
+                          "amountInr"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "tariffId": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "total": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "provenance": {
+                          "$ref": "#/components/schemas/Provenance"
+                        },
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "provenance"
+                      ],
+                      "type": "object"
+                    },
+                    "validity": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "enum": [
+                            "WITHIN",
+                            "EXPIRED",
+                            "NOT_YET_EFFECTIVE",
+                            "OPEN_ENDED",
+                            "UNKNOWN"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "message"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tariffId",
+                    "total",
+                    "energyCharge",
+                    "fixedCharge",
+                    "effectiveRateInrPerKwh",
+                    "lines",
+                    "assumptions",
+                    "validity"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Estimate a monthly bill under a tariff",
+        "tags": [
+          "tariffs"
+        ]
+      }
+    },
     "/api/weather": {
       "get": {
         "parameters": [
@@ -4546,6 +6936,14 @@
     {
       "description": "Energy Twin: versioned snapshot of a property",
       "name": "twin"
+    },
+    {
+      "description": "Electricity tariffs: catalogue from regulator orders, your own, and bill estimates",
+      "name": "tariffs"
+    },
+    {
+      "description": "Subsidy and net-metering rules as sourced configuration, and the eligibility calculator",
+      "name": "policy"
     },
     {
       "description": "Health",

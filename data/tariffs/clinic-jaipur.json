@@ -40,5 +40,23 @@
   ],
   "export_rate": 3.5,
   "p2p_charges": 0.8,
-  "shortfall_penalty": 6.0
+  "shortfall_penalty": 6.0,
+  "meta": {
+    "state": "RJ",
+    "discom": null,
+    "category": "NDS / LT-2 above 5 kW",
+    "consumerType": "COMMERCIAL",
+    "tariffYear": "2025 state schedule",
+    "effectiveFrom": "2025-10-01",
+    "effectiveTo": null,
+    "fixedCharge": null,
+    "exportRateBasis": "ASSUMPTION",
+    "meteringMode": "UNKNOWN",
+    "notes": [
+      "A state schedule of the Rajasthan regulator, text taken from the Jodhpur discom's publication; it is not specific to one discom here.",
+      "Fixed charges are not loaded, so a bill from this plan is energy charges only.",
+      "The source states no end date; a newer order may have replaced it.",
+      "The export rate is an assumption, not a figure from the order."
+    ]
+  }
 }

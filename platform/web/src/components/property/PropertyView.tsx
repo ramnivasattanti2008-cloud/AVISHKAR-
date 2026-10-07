@@ -163,6 +163,32 @@ export function PropertyView({ id }: { id: string }) {
   );
 }
 
+/** The tariff this twin version was built with, as it was then (the plan may have changed since). */
+function TariffSummary({ tariff, provenance, propertyId }: { tariff: NonNullable<Twin["tariff"]["value"]>; provenance: Twin["tariff"]["provenance"]; propertyId: string }) {
+  const r = tariff.rateRangeInrPerKwh;
+  const warn = tariff.validity.status !== "WITHIN";
+  return (
+    <Section title="Electricity tariff" hint="The tariff chosen for this property when this version was built.">
+      <div className="py-2 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="font-medium">{tariff.name}</span>
+          <StatusBadge status={provenance.status} />
+        </div>
+        <p className="mt-1 text-muted">{[tariff.state, tariff.discom, tariff.category].filter(Boolean).join(" · ")}</p>
+        <p className="num mt-1">
+          ₹{formatNumber(r.min)}
+          {r.max !== r.min ? ` to ₹${formatNumber(r.max)}` : ""} per kWh{tariff.hasSlabs ? ", by monthly usage" : tariff.timeOfDay ? ", by time of day" : ""}
+        </p>
+        <p className={`mt-2 rounded-md p-2 ${warn ? "bg-[color:var(--tone-updated-bg)] text-[color:var(--tone-updated-fg)]" : "text-muted"}`}>{tariff.validity.message}</p>
+        {tariff.exportRateBasis === "ASSUMPTION" && <p className="mt-1 text-xs text-muted">The export credit of ₹{formatNumber(tariff.exportRateInrPerKwh ?? 0)} per kWh is an assumption: the source states none.</p>}
+        <p className="mt-2">
+          <Link className="font-semibold text-accent underline" href={`/property/${propertyId}/tariff`}>Change the tariff, estimate a bill, check subsidy rules</Link>
+        </p>
+      </div>
+    </Section>
+  );
+}
+
 function TwinPanels({ twin }: { twin: Twin }) {
   const s = twin.solar;
   return (
@@ -179,12 +205,18 @@ function TwinPanels({ twin }: { twin: Twin }) {
         <Measure label="Solar energy arriving" m={s.forecastNext24hGhiKwhM2} digits={2} />
         <Measure label="Expected yield per kWp" m={s.forecastNext24hKwhPerKwp} digits={2} />
       </Section>
+      {twin.tariff.value && <TariffSummary tariff={twin.tariff.value} provenance={twin.tariff.provenance} propertyId={twin.propertyId} />}
       <Section title="Not known yet" hint="AVISHKAR does not guess these.">
         <Measure label="Daily consumption" m={twin.consumption.estimatedDailyLoadKwh} />
-        <div className="py-2">
-          <div className="flex items-center justify-between"><span className="text-sm text-muted">Electricity tariff</span><StatusBadge status={twin.tariff.provenance.status} /></div>
-          <p className="mt-1 text-sm text-muted">{twin.tariff.provenance.notes[0]}</p>
-        </div>
+        {!twin.tariff.value && (
+          <div className="py-2">
+            <div className="flex items-center justify-between"><span className="text-sm text-muted">Electricity tariff</span><StatusBadge status={twin.tariff.provenance.status} /></div>
+            <p className="mt-1 text-sm text-muted">{twin.tariff.provenance.notes[0]}</p>
+            <p className="mt-1 text-sm">
+              <Link className="font-semibold text-accent underline" href={`/property/${twin.propertyId}/tariff`}>Choose or enter a tariff</Link>
+            </p>
+          </div>
+        )}
         <Measure label="Energy autonomy score" m={twin.energyAutonomyScore} />
       </Section>
       <Section title="Latest satellite scene">

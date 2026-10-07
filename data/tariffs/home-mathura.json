@@ -10,5 +10,21 @@
   ],
   "export_rate": 3.0,
   "p2p_charges": 0.6,
-  "shortfall_penalty": 5.0
+  "shortfall_penalty": 5.0,
+  "meta": {
+    "state": "UP",
+    "discom": "UPPCL",
+    "category": "LMV-1 urban domestic",
+    "consumerType": "RESIDENTIAL",
+    "tariffYear": "FY2025-26",
+    "effectiveFrom": null,
+    "effectiveTo": "2026-03-31",
+    "fixedCharge": { "amountInr": 110, "basis": "PER_KW_MONTH" },
+    "exportRateBasis": "ASSUMPTION",
+    "meteringMode": "UNKNOWN",
+    "notes": [
+      "The rate shown is the one the order lists above 300 kWh a month; lower slabs of the order are not loaded, so a small household's bill is overstated.",
+      "The export rate is an assumption, not a figure from the order."
+    ]
+  }
 }
