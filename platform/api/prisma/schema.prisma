@@ -148,6 +148,7 @@ model Property {
   energyObservations EnergyObservation[]
   energyDna  EnergyDna[]
   forecastRuns ForecastRun[]
+  optimizationRuns OptimizationRun[]
 
   @@index([ownerId])
   @@index([tariffPlanId])
@@ -690,4 +691,37 @@ model ForecastRun {
   @@unique([propertyId, kind, issuedHour])
   @@index([propertyId, kind, issuedAt])
   @@map("forecast_runs")
+}
+
+enum PlanMode {
+  SAVE_MONEY
+  INDEPENDENCE
+  RESILIENCE
+  GREEN
+  REVENUE
+  BALANCED
+}
+
+/// A plan the engine produced, the platform re-checked and showed (spec sections 17 to 21 and 64). A plan whose independent
+/// check failed is never stored as a plan. The numbers are SIMULATED outcomes of FORECAST inputs, never measurements.
+model OptimizationRun {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  createdAt  DateTime @map("created_at") @db.Timestamptz(3)
+  mode       PlanMode
+  /// Start of step 0 (a whole local hour), the step length in hours and the number of steps.
+  startsAt   DateTime @map("starts_at") @db.Timestamptz(3)
+  stepHours  Float    @map("step_hours")
+  steps      Int
+  netCostInr         Float @map("net_cost_inr")
+  baselineNetCostInr Float @map("baseline_net_cost_inr")
+  savingsInr         Float @map("savings_inr")
+  engineVersion String @map("engine_version")
+  /// The whole plan exactly as it was shown: schedule, decisions, inputs and the assumptions behind them.
+  plan       Json
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, createdAt])
+  @@map("optimization_runs")
 }

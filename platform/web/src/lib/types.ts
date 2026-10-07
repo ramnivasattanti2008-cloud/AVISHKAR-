@@ -50,3 +50,6 @@ export type AssetProfiles = Resp<"/api/properties/{id}/assets", "get", 200>;
 export type SolarForecast = Resp<"/api/properties/{id}/solar-forecast", "get", 200>;
 export type SolarPerformance = Resp<"/api/properties/{id}/solar-forecast/performance", "get", 200>;
 export type LoadForecast = Resp<"/api/properties/{id}/load-forecast", "get", 200>;
+export type Plan = components["schemas"]["Plan"];
+export type PlanSummary = components["schemas"]["PlanSummary"];
+export type PlanRequest = components["schemas"]["PlanRequestInput"];

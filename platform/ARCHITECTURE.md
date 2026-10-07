@@ -96,6 +96,31 @@ every number in its answer must be traceable to a tool result id. The tool layer
 without any LLM (a deterministic "explain" renderer). An LLM adapter (Anthropic API, key from env) is optional and added
 after the tool layer, with a post-check that rejects answers containing numbers absent from tool results.
 
+**D15. The engine is a stateless, keyed, internal service (§53, §68).** `platform/engine` takes the data in the request and
+returns the arithmetic and how it was done; it never touches the database or the network, so the API owns persistence, auth
+and provenance. It authenticates the API with a shared key (`x-engine-key`, constant-time compare, at least 16 characters) and
+refuses to start without one unless `ENGINE_INSECURE_DEV=1`. Its contract is `engine/openapi.json` (a test fails when it is
+stale); the TypeScript client (`api/src/engine`) validates every reply with zod and turns each failure into one of three
+honest errors: `ENGINE_UNAVAILABLE` (down, timed out, key refused), `ENGINE_REJECTED` (it refused our inputs, with its own
+words) and `ENGINE_BAD_RESPONSE` (a shape we do not understand, probably a different version). With no `ENGINE_URL` the
+routes that need it answer 503; nothing is ever computed in the API as a stand-in.
+
+**D16. A plan is shown only if it passes its own independent check (§64, §67).** The optimiser's schedule is recomputed from
+scratch by a separate function (every hour's energy balance, battery limits, EV and appliance windows). A plan that fails is
+refused as `PLAN_INVALID` ("SIMULATION INVALID") and never stored as a plan. What is shown is a snapshot kept as one JSON
+document in `optimization_runs`: the schedule, the decisions with their reasons, the inputs and every assumption, so a plan can
+be reproduced and explained later. Its savings are against the same day with no control and are always labelled SIMULATED;
+the saving shown is the difference of the two costs shown, so the figures always add up. Whatever a person has not entered is
+assumed in the open (the battery's starting charge, the export rate, outages: none) and listed with the plan.
+
+**D17. Forecast uncertainty is learned from the place's own past errors, never assumed (§13, §15, §38).** The solar band is
+the empirical error of the weather provider's own day-ahead forecasts at the property's location, by sky condition, from
+Open-Meteo's previous-runs API, with coverage reported on hours the band was not fitted to; with no such record there is no
+band, and the reason is shown. The load methods (weekly baselines and a conformalised quantile model) compete on a
+chronological holdout and the winner must beat the best baseline by 2%. A forecast is only called FORECAST when it is for
+the future: a load forecast made from meter data that ends days ago is labelled ESTIMATED and says so. Each forecast is
+stored as issued (`forecast_runs`) so a later job can score it against what really happened; that job is not built yet.
+
 ## 3. Target architecture
 
 ```

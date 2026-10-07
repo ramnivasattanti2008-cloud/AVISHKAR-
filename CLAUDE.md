@@ -94,8 +94,9 @@ off EMHASS's default deferrable loads: this EMS plans PV, battery and grid only.
 Status per spec section: `platform/STATUS.md`. Decisions: `platform/ARCHITECTURE.md`. Backend phases 1 and 2 are done and
 verified (auth, properties, PostGIS, geocoding, weather, solar resource, building outline, satellite metadata, Energy Twin),
 and `platform/web` shows them (map, property page, forecast charts, system health). Tariffs, policy rules and the eligibility
-calculator (milestone 3a, WORKLOG entry 8) and assets, meter-data import and Energy DNA (milestone 3b, entry 9) are built;
-forecasts, the optimiser and everything after are not.
+calculator (milestone 3a, WORKLOG entry 8), assets, meter-data import and Energy DNA (milestone 3b, entry 9), and the Python
+engine with solar and load forecasts and the planner (milestone 4, entry 10) are built; the engines after them (opportunities,
+what-if, economics, Copilot, community), the learning job, admin and deployment are not.
 
 ```bash
 pnpm -C platform install                      # also generates the Prisma client
@@ -109,7 +110,26 @@ pnpm -C platform/api openapi                  # regenerate api/openapi.json afte
 pnpm -C platform/web gen:api                  # regenerate web/src/lib/api-types.ts from api/openapi.json (CI checks it is current)
 pnpm -C platform/web typecheck && pnpm -C platform/web lint && pnpm -C platform/web test && pnpm -C platform/web build
 pnpm -C platform/web dev                      # web on :3000, proxies /api to API_URL (default http://127.0.0.1:8080)
+
+# the Python engine (platform/engine), same venv as the EMS; routes that need it answer 503 ENGINE_UNAVAILABLE without it
+cd platform/engine && python -m pytest tests -q -p no:cacheprovider        # ~1 minute; pytest.ini puts ../../src on the path
+python -m ruff check platform/engine --no-fix                              # from the repo root
+python platform/engine/scripts/export_openapi.py                           # regenerate engine/openapi.json (a test fails if stale)
+ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --factory --port 8090    # run it (from platform/engine)
+# api/.env then needs ENGINE_URL=http://127.0.0.1:8090 and the same ENGINE_API_KEY; the API integration tests start their own engine
+# process (test/engine-process.ts) and are skipped, not faked, without Python; CI sets REQUIRE_ENGINE=1 so they cannot skip
 ```
+
+- **Engine** (`platform/engine`, D1, D15): stateless FastAPI, camelCase on the wire, shared key `x-engine-key`, refuses to start
+  open unless `ENGINE_INSECURE_DEV=1`. `optimise.py` is the planner (scipy `milp`/HiGHS; `validate()` re-checks every plan and
+  an invalid one is never shown), `solar.py` (pvlib; the band is learned from the place's own past day-ahead errors) and
+  `load.py` (baselines against a quantile model on a chronological holdout). The TS side is `api/src/engine` (client, zod
+  schemas), `api/src/forecast` (solar and load routes, the Open-Meteo previous-runs provider), `api/src/plan` (builds the
+  optimiser input from tariff, forecasts and assets; `horizon.ts` is the local-clock arithmetic, steps are whole IST hours).
+  The solar provider's hours sit half an hour off IST: `plan/horizon.ts resample` averages the two it overlaps. Plans are stored
+  whole in `optimization_runs`; forecasts as issued in `forecast_runs`. Tests that depend on the hour of day pin the clock.
+- Tool-shell traps seen again: a heredoc containing `\b`, `\d` or a curly apostrophe is mangled (a Python `'''` string turned
+  `\b` into a literal backspace in a regex). Write scripts and files with the Write tool, then run them.
 
 - **Web** (`platform/web`): Next 16 App Router, React 19, Tailwind 4, MapLibre, recharts. It only talks to `/api` (same-origin
   proxy, so the HttpOnly session cookie is first-party and the CSRF token is echoed from the `avk_csrf` cookie). Show every

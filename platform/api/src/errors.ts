@@ -19,6 +19,10 @@ export const ERROR_CODES = {
   ENGINE_BAD_RESPONSE: 502,
   /** The planning engine refused the inputs we built; its message says why. */
   ENGINE_REJECTED: 502,
+  /** A plan needs something the property does not have yet (a tariff, meter readings): the details list each missing piece. */
+  PLAN_INPUTS_MISSING: 422,
+  /** The engine returned a plan its own independent check rejected. It is never shown as a plan. */
+  PLAN_INVALID: 502,
   INTERNAL: 500,
 } as const;
 

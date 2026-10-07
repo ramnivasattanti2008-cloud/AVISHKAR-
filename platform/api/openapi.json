@@ -4704,6 +4704,1301 @@
         ],
         "type": "object"
       },
+      "Plan": {
+        "additionalProperties": false,
+        "properties": {
+          "appliances": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "energyKwh": {
+                  "type": "number"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "runHours": {
+                  "type": "number"
+                },
+                "startTime": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "startTime",
+                "runHours",
+                "energyKwh"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "decisions": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "kwh": {
+                  "type": "number"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "time": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "time",
+                "kind",
+                "kwh",
+                "reason"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "horizon": {
+            "additionalProperties": false,
+            "properties": {
+              "start": {
+                "type": "string"
+              },
+              "stepHours": {
+                "type": "number"
+              },
+              "steps": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "start",
+              "stepHours",
+              "steps"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "inputs": {
+            "additionalProperties": false,
+            "properties": {
+              "battery": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "capacityKwh": {
+                        "type": "number"
+                      },
+                      "maxChargeKw": {
+                        "type": "number"
+                      },
+                      "maxDischargeKw": {
+                        "type": "number"
+                      },
+                      "reserveKwh": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "startSocBasis": {
+                        "enum": [
+                          "USER_ENTERED",
+                          "ASSUMPTION"
+                        ],
+                        "type": "string"
+                      },
+                      "startSocKwh": {
+                        "type": "number"
+                      },
+                      "usableKwh": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "capacityKwh",
+                      "usableKwh",
+                      "maxChargeKw",
+                      "maxDischargeKw",
+                      "startSocKwh",
+                      "startSocBasis",
+                      "reserveKwh"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "criticalKw": {
+                "type": "number"
+              },
+              "ev": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "departure": {
+                        "type": "string"
+                      },
+                      "energyNeededKwh": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "energyNeededKwh",
+                      "departure"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "load": {
+                "additionalProperties": false,
+                "properties": {
+                  "basis": {
+                    "enum": [
+                      "FORECAST",
+                      "TYPICAL_DAY"
+                    ],
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "basis",
+                  "note"
+                ],
+                "type": "object"
+              },
+              "solar": {
+                "additionalProperties": false,
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  },
+                  "systems": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "systems",
+                  "note"
+                ],
+                "type": "object"
+              },
+              "tariff": {
+                "additionalProperties": false,
+                "properties": {
+                  "exportBasis": {
+                    "type": "string"
+                  },
+                  "exportRate": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "id": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "validity": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "validity",
+                  "exportRate",
+                  "exportBasis"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tariff",
+              "load",
+              "solar",
+              "battery",
+              "ev",
+              "criticalKw"
+            ],
+            "type": "object"
+          },
+          "mode": {
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "type": "string"
+          },
+          "modeWeights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "result": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "baselineNetCostInr": {
+                        "description": "What the same day costs with no battery control, no appliance shifting and no EV scheduling.",
+                        "type": "number"
+                      },
+                      "batteryCycles": {
+                        "type": "number"
+                      },
+                      "curtailedKwh": {
+                        "type": "number"
+                      },
+                      "evShortfallKwh": {
+                        "type": "number"
+                      },
+                      "exportKwh": {
+                        "type": "number"
+                      },
+                      "importKwh": {
+                        "type": "number"
+                      },
+                      "loadKwh": {
+                        "type": "number"
+                      },
+                      "netCostInr": {
+                        "type": "number"
+                      },
+                      "pvKwh": {
+                        "type": "number"
+                      },
+                      "pvUsedKwh": {
+                        "type": "number"
+                      },
+                      "savingsInr": {
+                        "type": "number"
+                      },
+                      "selfConsumptionRatio": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "selfSufficiencyRatio": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "unservedKwh": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "netCostInr",
+                      "baselineNetCostInr",
+                      "savingsInr",
+                      "importKwh",
+                      "exportKwh",
+                      "loadKwh",
+                      "pvKwh",
+                      "pvUsedKwh",
+                      "curtailedKwh",
+                      "batteryCycles",
+                      "unservedKwh",
+                      "evShortfallKwh",
+                      "selfConsumptionRatio",
+                      "selfSufficiencyRatio"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "schedule": {
+            "additionalProperties": false,
+            "properties": {
+              "applianceKw": {
+                "additionalProperties": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                "propertyNames": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "batteryChargeKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "batteryDischargeKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "batterySocKwh": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "evChargeKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "exportPrice": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "gridExportKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "gridImportKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "importPrice": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "loadKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "pvCurtailedKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "pvForecastKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "pvUsedKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "times": {
+                "description": "Start of each local hour.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "times",
+              "loadKw",
+              "pvForecastKw",
+              "pvUsedKw",
+              "pvCurtailedKw",
+              "gridImportKw",
+              "gridExportKw",
+              "batteryChargeKw",
+              "batteryDischargeKw",
+              "batterySocKwh",
+              "evChargeKw",
+              "applianceKw",
+              "importPrice",
+              "exportPrice"
+            ],
+            "type": "object"
+          },
+          "solver": {
+            "additionalProperties": false,
+            "properties": {
+              "integerVariables": {
+                "type": "number"
+              },
+              "seconds": {
+                "type": "number"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "status",
+              "seconds",
+              "integerVariables"
+            ],
+            "type": "object"
+          },
+          "validation": {
+            "additionalProperties": false,
+            "properties": {
+              "maxBalanceErrorKw": {
+                "type": "number"
+              },
+              "problems": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "valid": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "valid",
+              "maxBalanceErrorKw",
+              "problems"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "propertyId",
+          "createdAt",
+          "mode",
+          "modeWeights",
+          "horizon",
+          "schedule",
+          "result",
+          "appliances",
+          "decisions",
+          "inputs",
+          "assumptions",
+          "solver",
+          "validation",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "PlanInput": {
+        "properties": {
+          "appliances": {
+            "items": {
+              "properties": {
+                "energyKwh": {
+                  "type": "number"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "runHours": {
+                  "type": "number"
+                },
+                "startTime": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "startTime",
+                "runHours",
+                "energyKwh"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "decisions": {
+            "items": {
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "kwh": {
+                  "type": "number"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "time": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "time",
+                "kind",
+                "kwh",
+                "reason"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "horizon": {
+            "properties": {
+              "start": {
+                "type": "string"
+              },
+              "stepHours": {
+                "type": "number"
+              },
+              "steps": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "start",
+              "stepHours",
+              "steps"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "inputs": {
+            "properties": {
+              "battery": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "capacityKwh": {
+                        "type": "number"
+                      },
+                      "maxChargeKw": {
+                        "type": "number"
+                      },
+                      "maxDischargeKw": {
+                        "type": "number"
+                      },
+                      "reserveKwh": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "startSocBasis": {
+                        "enum": [
+                          "USER_ENTERED",
+                          "ASSUMPTION"
+                        ],
+                        "type": "string"
+                      },
+                      "startSocKwh": {
+                        "type": "number"
+                      },
+                      "usableKwh": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "capacityKwh",
+                      "usableKwh",
+                      "maxChargeKw",
+                      "maxDischargeKw",
+                      "startSocKwh",
+                      "startSocBasis",
+                      "reserveKwh"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "criticalKw": {
+                "type": "number"
+              },
+              "ev": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "departure": {
+                        "type": "string"
+                      },
+                      "energyNeededKwh": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "energyNeededKwh",
+                      "departure"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "load": {
+                "properties": {
+                  "basis": {
+                    "enum": [
+                      "FORECAST",
+                      "TYPICAL_DAY"
+                    ],
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "basis",
+                  "note"
+                ],
+                "type": "object"
+              },
+              "solar": {
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  },
+                  "systems": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "systems",
+                  "note"
+                ],
+                "type": "object"
+              },
+              "tariff": {
+                "properties": {
+                  "exportBasis": {
+                    "type": "string"
+                  },
+                  "exportRate": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "id": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "validity": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "validity",
+                  "exportRate",
+                  "exportBasis"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tariff",
+              "load",
+              "solar",
+              "battery",
+              "ev",
+              "criticalKw"
+            ],
+            "type": "object"
+          },
+          "mode": {
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "type": "string"
+          },
+          "modeWeights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "result": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "baselineNetCostInr": {
+                        "description": "What the same day costs with no battery control, no appliance shifting and no EV scheduling.",
+                        "type": "number"
+                      },
+                      "batteryCycles": {
+                        "type": "number"
+                      },
+                      "curtailedKwh": {
+                        "type": "number"
+                      },
+                      "evShortfallKwh": {
+                        "type": "number"
+                      },
+                      "exportKwh": {
+                        "type": "number"
+                      },
+                      "importKwh": {
+                        "type": "number"
+                      },
+                      "loadKwh": {
+                        "type": "number"
+                      },
+                      "netCostInr": {
+                        "type": "number"
+                      },
+                      "pvKwh": {
+                        "type": "number"
+                      },
+                      "pvUsedKwh": {
+                        "type": "number"
+                      },
+                      "savingsInr": {
+                        "type": "number"
+                      },
+                      "selfConsumptionRatio": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "selfSufficiencyRatio": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "unservedKwh": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "netCostInr",
+                      "baselineNetCostInr",
+                      "savingsInr",
+                      "importKwh",
+                      "exportKwh",
+                      "loadKwh",
+                      "pvKwh",
+                      "pvUsedKwh",
+                      "curtailedKwh",
+                      "batteryCycles",
+                      "unservedKwh",
+                      "evShortfallKwh",
+                      "selfConsumptionRatio",
+                      "selfSufficiencyRatio"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "schedule": {
+            "properties": {
+              "applianceKw": {
+                "additionalProperties": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                "propertyNames": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "batteryChargeKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "batteryDischargeKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "batterySocKwh": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "evChargeKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "exportPrice": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "gridExportKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "gridImportKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "importPrice": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "loadKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "pvCurtailedKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "pvForecastKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "pvUsedKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "times": {
+                "description": "Start of each local hour.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "times",
+              "loadKw",
+              "pvForecastKw",
+              "pvUsedKw",
+              "pvCurtailedKw",
+              "gridImportKw",
+              "gridExportKw",
+              "batteryChargeKw",
+              "batteryDischargeKw",
+              "batterySocKwh",
+              "evChargeKw",
+              "applianceKw",
+              "importPrice",
+              "exportPrice"
+            ],
+            "type": "object"
+          },
+          "solver": {
+            "properties": {
+              "integerVariables": {
+                "type": "number"
+              },
+              "seconds": {
+                "type": "number"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "status",
+              "seconds",
+              "integerVariables"
+            ],
+            "type": "object"
+          },
+          "validation": {
+            "properties": {
+              "maxBalanceErrorKw": {
+                "type": "number"
+              },
+              "problems": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "valid": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "valid",
+              "maxBalanceErrorKw",
+              "problems"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "propertyId",
+          "createdAt",
+          "mode",
+          "modeWeights",
+          "horizon",
+          "schedule",
+          "result",
+          "appliances",
+          "decisions",
+          "inputs",
+          "assumptions",
+          "solver",
+          "validation",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "PlanRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "hours": {
+            "anyOf": [
+              {
+                "const": 24,
+                "type": "number"
+              },
+              {
+                "const": 48,
+                "type": "number"
+              }
+            ],
+            "default": 24,
+            "description": "How far ahead to plan."
+          },
+          "mode": {
+            "default": "BALANCED",
+            "description": "What to favour: money, independence from the grid, outage resilience, low carbon, export revenue, or a balance.",
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "type": "string"
+          },
+          "startSocPercent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The battery's charge now, if you know it. Otherwise the plan assumes it starts at its reserve (or minimum) level and says so."
+          }
+        },
+        "required": [
+          "mode",
+          "hours"
+        ],
+        "type": "object"
+      },
+      "PlanRequestInput": {
+        "properties": {
+          "hours": {
+            "anyOf": [
+              {
+                "const": 24,
+                "type": "number"
+              },
+              {
+                "const": 48,
+                "type": "number"
+              }
+            ],
+            "default": 24,
+            "description": "How far ahead to plan."
+          },
+          "mode": {
+            "default": "BALANCED",
+            "description": "What to favour: money, independence from the grid, outage resilience, low carbon, export revenue, or a balance.",
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "type": "string"
+          },
+          "startSocPercent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The battery's charge now, if you know it. Otherwise the plan assumes it starts at its reserve (or minimum) level and says so."
+          }
+        },
+        "type": "object"
+      },
+      "PlanSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "baselineNetCostInr": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "type": "string"
+          },
+          "netCostInr": {
+            "type": "number"
+          },
+          "savingsInr": {
+            "type": "number"
+          },
+          "startsAt": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "mode",
+          "startsAt",
+          "steps",
+          "netCostInr",
+          "baselineNetCostInr",
+          "savingsInr"
+        ],
+        "type": "object"
+      },
+      "PlanSummaryInput": {
+        "properties": {
+          "baselineNetCostInr": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "type": "string"
+          },
+          "netCostInr": {
+            "type": "number"
+          },
+          "savingsInr": {
+            "type": "number"
+          },
+          "startsAt": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "mode",
+          "startsAt",
+          "steps",
+          "netCostInr",
+          "baselineNetCostInr",
+          "savingsInr"
+        ],
+        "type": "object"
+      },
       "PolicyRule": {
         "additionalProperties": false,
         "properties": {
@@ -12827,6 +14122,315 @@
         ]
       }
     },
+    "/api/properties/{id}/plan": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "The latest plan",
+        "tags": [
+          "plan"
+        ]
+      },
+      "post": {
+        "description": "Chooses when to charge and discharge the battery, import and export, charge an EV and run flexible appliances, from the tariff's prices, the load and solar forecasts and the equipment entered. The plan is re-checked from scratch before it is returned; one that fails the check is refused (502 PLAN_INVALID), never shown. Savings are against the same day with no control (a simulated outcome of forecast inputs, not a measurement). Needs a chosen tariff and meter readings (422 PLAN_INPUTS_MISSING says which).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Plan the next day or two",
+        "tags": [
+          "plan"
+        ]
+      }
+    },
+    "/api/properties/{id}/plans": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "plans": {
+                      "items": {
+                        "$ref": "#/components/schemas/PlanSummary"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "plans"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Plans made for a property, newest first",
+        "tags": [
+          "plan"
+        ]
+      }
+    },
+    "/api/properties/{id}/plans/{planId}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "One plan as it was shown",
+        "tags": [
+          "plan"
+        ]
+      }
+    },
     "/api/properties/{id}/solar-forecast": {
       "get": {
         "description": "A physical PV model (pvlib) driven by the Open-Meteo irradiance forecast. The 10th to 90th percentile band comes only from how wrong that forecast was at this place in the last weeks, and is absent (with the reason) when that record is missing. Uses the installed systems, or the planned ones when none is installed.",
@@ -15288,6 +16892,10 @@
     {
       "description": "Forecasts of solar output and electricity use, with calibrated bands and how well each has done",
       "name": "forecast"
+    },
+    {
+      "description": "The plan: when to charge, discharge, import, export and run flexible loads, checked from scratch before it is shown",
+      "name": "plan"
     },
     {
       "description": "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs",

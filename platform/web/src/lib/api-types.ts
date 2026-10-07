@@ -3436,6 +3436,287 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The latest plan */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Plan"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Plan the next day or two
+         * @description Chooses when to charge and discharge the battery, import and export, charge an EV and run flexible appliances, from the tariff's prices, the load and solar forecasts and the equipment entered. The plan is re-checked from scratch before it is returned; one that fails the check is refused (502 PLAN_INVALID), never shown. Savings are against the same day with no control (a simulated outcome of forecast inputs, not a measurement). Needs a chosen tariff and meter readings (422 PLAN_INPUTS_MISSING says which).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PlanRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Plan"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Plans made for a property, newest first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            plans: components["schemas"]["PlanSummary"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/plans/{planId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One plan as it was shown */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    planId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Plan"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/solar-forecast": {
         parameters: {
             query?: never;
@@ -5895,6 +6176,292 @@ export interface components {
             peakProbability: number;
             /** @description Start of the hour, UTC. */
             time: string;
+        };
+        Plan: {
+            appliances: {
+                energyKwh: number;
+                id: string;
+                name: string;
+                runHours: number;
+                startTime: string | null;
+            }[];
+            assumptions: string[];
+            createdAt: string;
+            decisions: {
+                kind: string;
+                kwh: number;
+                reason: string;
+                time: string;
+            }[];
+            horizon: {
+                start: string;
+                stepHours: number;
+                steps: number;
+            };
+            /** Format: uuid */
+            id: string;
+            inputs: {
+                battery: {
+                    capacityKwh: number;
+                    maxChargeKw: number;
+                    maxDischargeKw: number;
+                    reserveKwh: number | null;
+                    /** @enum {string} */
+                    startSocBasis: "USER_ENTERED" | "ASSUMPTION";
+                    startSocKwh: number;
+                    usableKwh: number;
+                } | null;
+                criticalKw: number;
+                ev: {
+                    departure: string;
+                    energyNeededKwh: number;
+                } | null;
+                load: {
+                    /** @enum {string} */
+                    basis: "FORECAST" | "TYPICAL_DAY";
+                    note: string;
+                };
+                solar: {
+                    note: string;
+                    systems: number;
+                };
+                tariff: {
+                    exportBasis: string;
+                    exportRate: number | null;
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    validity: string;
+                };
+            };
+            /** @enum {string} */
+            mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            modeWeights: {
+                [key: string]: number;
+            };
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+            result: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    /** @description What the same day costs with no battery control, no appliance shifting and no EV scheduling. */
+                    baselineNetCostInr: number;
+                    batteryCycles: number;
+                    curtailedKwh: number;
+                    evShortfallKwh: number;
+                    exportKwh: number;
+                    importKwh: number;
+                    loadKwh: number;
+                    netCostInr: number;
+                    pvKwh: number;
+                    pvUsedKwh: number;
+                    savingsInr: number;
+                    selfConsumptionRatio: number | null;
+                    selfSufficiencyRatio: number | null;
+                    unservedKwh: number;
+                } | null;
+            };
+            schedule: {
+                applianceKw: {
+                    [key: string]: number[];
+                };
+                batteryChargeKw: number[];
+                batteryDischargeKw: number[];
+                batterySocKwh: number[];
+                evChargeKw: number[];
+                exportPrice: number[];
+                gridExportKw: number[];
+                gridImportKw: number[];
+                importPrice: number[];
+                loadKw: number[];
+                pvCurtailedKw: number[];
+                pvForecastKw: number[];
+                pvUsedKw: number[];
+                /** @description Start of each local hour. */
+                times: string[];
+            };
+            solver: {
+                integerVariables: number;
+                seconds: number;
+                status: string;
+            };
+            validation: {
+                maxBalanceErrorKw: number;
+                problems: string[];
+                valid: boolean;
+            };
+        };
+        PlanInput: {
+            appliances: {
+                energyKwh: number;
+                id: string;
+                name: string;
+                runHours: number;
+                startTime: string | null;
+            }[];
+            assumptions: string[];
+            createdAt: string;
+            decisions: {
+                kind: string;
+                kwh: number;
+                reason: string;
+                time: string;
+            }[];
+            horizon: {
+                start: string;
+                stepHours: number;
+                steps: number;
+            };
+            /** Format: uuid */
+            id: string;
+            inputs: {
+                battery: {
+                    capacityKwh: number;
+                    maxChargeKw: number;
+                    maxDischargeKw: number;
+                    reserveKwh: number | null;
+                    /** @enum {string} */
+                    startSocBasis: "USER_ENTERED" | "ASSUMPTION";
+                    startSocKwh: number;
+                    usableKwh: number;
+                } | null;
+                criticalKw: number;
+                ev: {
+                    departure: string;
+                    energyNeededKwh: number;
+                } | null;
+                load: {
+                    /** @enum {string} */
+                    basis: "FORECAST" | "TYPICAL_DAY";
+                    note: string;
+                };
+                solar: {
+                    note: string;
+                    systems: number;
+                };
+                tariff: {
+                    exportBasis: string;
+                    exportRate: number | null;
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    validity: string;
+                };
+            };
+            /** @enum {string} */
+            mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            modeWeights: {
+                [key: string]: number;
+            };
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+            result: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    /** @description What the same day costs with no battery control, no appliance shifting and no EV scheduling. */
+                    baselineNetCostInr: number;
+                    batteryCycles: number;
+                    curtailedKwh: number;
+                    evShortfallKwh: number;
+                    exportKwh: number;
+                    importKwh: number;
+                    loadKwh: number;
+                    netCostInr: number;
+                    pvKwh: number;
+                    pvUsedKwh: number;
+                    savingsInr: number;
+                    selfConsumptionRatio: number | null;
+                    selfSufficiencyRatio: number | null;
+                    unservedKwh: number;
+                } | null;
+            };
+            schedule: {
+                applianceKw: {
+                    [key: string]: number[];
+                };
+                batteryChargeKw: number[];
+                batteryDischargeKw: number[];
+                batterySocKwh: number[];
+                evChargeKw: number[];
+                exportPrice: number[];
+                gridExportKw: number[];
+                gridImportKw: number[];
+                importPrice: number[];
+                loadKw: number[];
+                pvCurtailedKw: number[];
+                pvForecastKw: number[];
+                pvUsedKw: number[];
+                /** @description Start of each local hour. */
+                times: string[];
+            };
+            solver: {
+                integerVariables: number;
+                seconds: number;
+                status: string;
+            };
+            validation: {
+                maxBalanceErrorKw: number;
+                problems: string[];
+                valid: boolean;
+            };
+        };
+        PlanRequest: {
+            /**
+             * @description How far ahead to plan.
+             * @default 24
+             */
+            hours: 24 | 48;
+            /**
+             * @description What to favour: money, independence from the grid, outage resilience, low carbon, export revenue, or a balance.
+             * @default BALANCED
+             * @enum {string}
+             */
+            mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            /** @description The battery's charge now, if you know it. Otherwise the plan assumes it starts at its reserve (or minimum) level and says so. */
+            startSocPercent?: number | null;
+        };
+        PlanRequestInput: {
+            /**
+             * @description How far ahead to plan.
+             * @default 24
+             */
+            hours: 24 | 48;
+            /**
+             * @description What to favour: money, independence from the grid, outage resilience, low carbon, export revenue, or a balance.
+             * @default BALANCED
+             * @enum {string}
+             */
+            mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            /** @description The battery's charge now, if you know it. Otherwise the plan assumes it starts at its reserve (or minimum) level and says so. */
+            startSocPercent?: number | null;
+        };
+        PlanSummary: {
+            baselineNetCostInr: number;
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            netCostInr: number;
+            savingsInr: number;
+            startsAt: string;
+            steps: number;
+        };
+        PlanSummaryInput: {
+            baselineNetCostInr: number;
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            netCostInr: number;
+            savingsInr: number;
+            startsAt: string;
+            steps: number;
         };
         PolicyRule: {
             appliesTo: string;

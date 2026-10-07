@@ -1,4 +1,4 @@
-import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, LoadForecast, Property, Provenance, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
+import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, LoadForecast, Plan, PlanSummary, Property, Provenance, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -303,4 +303,66 @@ export function loadForecast(over: Partial<LoadForecast> = {}): LoadForecast {
     notes: [],
     ...over,
   };
+}
+
+// ----------------------------------------------------------------------------------------------------------- plans
+
+/** A 24 hour plan from 16:00 IST (10:30 UTC): charge the battery on cheap night power and use it in the dear evening. */
+export function plan(over: Partial<Plan> = {}): Plan {
+  const start = Date.UTC(2026, 9, 7, 10, 30);
+  const steps = 24;
+  const times = Array.from({ length: steps }, (_, i) => new Date(start + i * 3_600_000).toISOString());
+  const hourIst = (i: number) => (16 + i) % 24;
+  const night = (i: number) => hourIst(i) < 6;
+  const evening = (i: number) => hourIst(i) >= 18 && hourIst(i) < 22;
+  const zeros = () => Array.from({ length: steps }, () => 0);
+  const p = provenance({ provider: "avishkar-engine", source: "AVISHKAR planner (linear programme, HiGHS) on forecast inputs", dataType: "energy_plan_outcome", status: "SIMULATED", modelVersion: "engine-0.1.0", notes: ["Baseline: the same day with no control.", "An outcome of the plan on forecast inputs, not a measurement; the real day will differ."] });
+  return {
+    id: "44444444-4444-4444-8444-444444444444",
+    propertyId: PROPERTY_ID,
+    createdAt: "2026-10-07T10:10:00.000Z",
+    mode: "BALANCED",
+    modeWeights: { importCost: 1, exportRevenue: 1, importEnergyPenalty: 1, backupReserve: 0 },
+    horizon: { start: times[0]!, stepHours: 1, steps },
+    schedule: {
+      times,
+      loadKw: Array.from({ length: steps }, (_, i) => (evening(i) ? 2.5 : 0.5)),
+      pvForecastKw: Array.from({ length: steps }, (_, i) => (i < 2 ? 1.2 : 0)),
+      pvUsedKw: Array.from({ length: steps }, (_, i) => (i < 2 ? 1.2 : 0)),
+      pvCurtailedKw: zeros(),
+      gridImportKw: Array.from({ length: steps }, (_, i) => (night(i) ? 3 : i < 2 ? 0 : 0.5)),
+      gridExportKw: zeros(),
+      batteryChargeKw: Array.from({ length: steps }, (_, i) => (night(i) ? 2.5 : 0)),
+      batteryDischargeKw: Array.from({ length: steps }, (_, i) => (evening(i) ? 2 : 0)),
+      batterySocKwh: Array.from({ length: steps }, (_, i) => (night(i) ? Math.min(9, 1 + 2.5 * (i - 7)) : evening(i) ? 4 : 2)),
+      evChargeKw: zeros(),
+      applianceKw: { washer: Array.from({ length: steps }, (_, i) => (i === 1 ? 2 : 0)) },
+      importPrice: Array.from({ length: steps }, (_, i) => (night(i) ? 4 : evening(i) ? 10 : 6)),
+      exportPrice: Array.from({ length: steps }, () => 3),
+    },
+    result: {
+      value: { netCostInr: 41.2, baselineNetCostInr: 52.9, savingsInr: 11.7, importKwh: 21.5, exportKwh: 0, loadKwh: 28, pvKwh: 2.4, pvUsedKwh: 2.4, curtailedKwh: 0, batteryCycles: 0.7, unservedKwh: 0, evShortfallKwh: 0, selfConsumptionRatio: 1, selfSufficiencyRatio: 0.3 },
+      unit: "INR",
+      provenance: p,
+    },
+    appliances: [{ id: "washer", name: "Washer", startTime: times[1]!, runHours: 2, energyKwh: 4 }],
+    decisions: Array.from({ length: 12 }, (_, i) => ({ time: times[8 + i]!, kind: i < 6 ? "charge_battery" : "discharge_battery", kwh: 2.5, reason: i < 6 ? "Charge now at INR 4.00 per kWh: it avoids buying later at INR 10.00." : "Use the battery now: buying would cost INR 10.00 per kWh." })),
+    inputs: {
+      tariff: { id: "55555555-5555-4555-8555-555555555555", name: "Test ToD", validity: "OPEN_ENDED", exportRate: 3, exportBasis: "USER_ENTERED" },
+      load: { basis: "FORECAST", note: "The load forecast from your meter readings (method: same_hour_of_week)." },
+      solar: { systems: 1, note: "The solar forecast's central estimate, resampled to local hours." },
+      battery: { capacityKwh: 10, usableKwh: 9, maxChargeKw: 5, maxDischargeKw: 5, startSocKwh: 1, startSocBasis: "ASSUMPTION", reserveKwh: null },
+      ev: null,
+      criticalKw: 0,
+    },
+    assumptions: ["The battery's charge now is not known, so the plan assumes it starts at its minimum level (1 kWh).", "No outage information is available, so none is planned for; the battery reserve you set is held back."],
+    solver: { status: "optimal", seconds: 0.03, integerVariables: 2 },
+    validation: { valid: true, maxBalanceErrorKw: 0, problems: [] },
+    notes: [],
+    ...over,
+  };
+}
+
+export function planSummary(over: Partial<PlanSummary> = {}): PlanSummary {
+  return { id: "44444444-4444-4444-8444-444444444444", createdAt: "2026-10-07T10:10:00.000Z", mode: "BALANCED", startsAt: "2026-10-07T10:30:00.000Z", steps: 24, netCostInr: 41.2, baselineNetCostInr: 52.9, savingsInr: 11.7, ...over };
 }

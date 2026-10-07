@@ -172,7 +172,7 @@ describeBoth("forecasts, through the API and the real engine", () => {
       expect(f.model.methods.length).toBeGreaterThanOrEqual(3);
       expect(f.model.selectedMethod).toBeTruthy();
       expect(f.history).toMatchObject({ intervalMinutes: 60, readingsUsed: 70 * 24, emptyIntervals: 0 });
-      expect(f.history.dataEndsDaysAgo).toBeLessThan(1);
+      expect(f.history.dataEndsDaysAgo).toBeLessThanOrEqual(1); // the data ends at the last midnight: up to a day ago, whatever the hour the test runs
       expect(await count("LOAD")).toBe(1);
     });
 
