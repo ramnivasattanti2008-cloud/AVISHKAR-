@@ -156,3 +156,20 @@ sourced JSON already in the repo, with manual entry; (3) appliances/battery/EV t
 `mysite`/`userdata` logic through the Python engine); (4) Python engine service and the forecast evaluation job
 (`weather_observations` forecasts vs ERA5 actuals) for the solar forecast engine with benchmarks; (5) optimiser and the
 engines that depend on it.
+
+## Entry 6: 2026-10-07: verification pass ("check now"), first real CI run
+
+- DONE (evidence, all run fresh): git clean and in sync with origin; `python -m pytest tests/avishkar_ems` 68 passed, 1 skipped;
+  ruff clean; `scripts/update_readme.py --check` up to date; platform `tsc`, `eslint`, `vitest` (176 passed), `build` clean;
+  `prisma migrate diff` against the schema empty.
+- FOUND: GitHub had **no CI runs**: the workflow only triggered on `main` and pull requests. Fixed (`push` on every branch,
+  plus `workflow_dispatch`). The first real run then **failed the platform typecheck**: `@prisma/client` and
+  `@prisma/adapter-pg` were imported but missing from `platform/api/package.json`; the code only worked locally because
+  of a leftover `node_modules`. Fixed (declared, pinned to 7.10.0; unused `fastify-plugin` removed). Reproduced and verified
+  in a fresh clone installed with `pnpm install --frozen-lockfile` before pushing.
+- DONE (evidence): CI run 37612815661 on commit 5fbd3c2: job `python` success, job `platform` success (typecheck, tests on a
+  real `postgis/postgis:16-3.4` service container, build). The pinned `requirements-lock.txt` installs and passes on Linux.
+- Lesson: only a clean clone proves the manifests. Before claiming a package works, run `pnpm install --frozen-lockfile` in a
+  fresh clone and typecheck there.
+- STILL NOT DONE / unchanged: Docker engine is still not running here (needs a human at Docker Desktop); everything listed
+  as not done in Entries 4 and 5; the web app is the next step.

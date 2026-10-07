@@ -11,7 +11,7 @@ specification) is tracked separately in [../platform/STATUS.md](../platform/STAT
 | 1 | Results did not reproduce; README, `results/` and dashboard disagreed | 5 | 5 | 3 | 30 | **Fixed** (see below) |
 | 2 | Silent failure handling hid solver and data problems | 3 | 3 | 1 | 30 | **Fixed** |
 | 3 | A self-written protocol check was shown as "Beckn validation" | 3 | 4 | 2 | 28 | **Fixed** (wording); official check still opt-in |
-| 4 | No CI; ruff config rewrote files; ruff absent from the venv | 3 | 3 | 2 | 24 | **Fixed** (CI not yet seen running on GitHub) |
+| 4 | No CI; ruff config rewrote files; ruff absent from the venv | 3 | 3 | 2 | 24 | **Fixed** (CI green on GitHub, run 37612815661) |
 | 5 | Packaging and deploy leftovers from upstream | 2 | 3 | 2 | 20 | Partly fixed |
 | 6 | Payback is a simple, extrapolated figure | 3 | 3 | 3 | 18 | Mitigated; headline stays simple |
 | 7 | Test coverage stopped at the library | 3 | 3 | 3 | 18 | **Fixed** (34 to 68 project tests) |
@@ -51,7 +51,7 @@ nothing sent to a live network. The one check against the official example (`tes
 `DEG_PUBLISH_EXAMPLE` points at the devkit's `publish-catalog.json` (the devkit is CC BY-NC-SA, so it is not vendored).
 
 **4. Tooling: fixed.** `.github/workflows/ci.yml` runs lint (`--no-fix`), the project tests and the README check. It has
-not run on GitHub yet: its steps were run locally and its YAML parsed, nothing more. `pyproject.toml` now sets ruff
+now run on GitHub (it triggers on every push and pull request); the first run caught a missing platform dependency, fixed. `pyproject.toml` now sets ruff
 `fix = false`. ruff is installed in `.venv`. Project code is lint-clean.
 
 **5. Packaging: partly fixed.** Removed the dead `asyncio` PyPI dependency (the venv had `asyncio 4.0.0` installed; stdlib
