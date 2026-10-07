@@ -189,7 +189,9 @@ engines that depend on it.
   opens a provenance panel; an UNAVAILABLE value is a dash with its reason, never a number.
 - DONE (evidence): web `typecheck`, `lint` (0 problems), `test` (57 passed in 5 files), `next build` all clean; API
   `typecheck` and `test` (179 passed, 10 files; one new test for the geocoder fix). CI gained a `web` job (install with the
-  frozen lockfile, API types match the committed OpenAPI, typecheck, lint, tests, build).
+  frozen lockfile, API types match the committed OpenAPI, typecheck, lint, tests, build). Reproduced in a fresh clone of the
+  commit with no `DATABASE_URL`: `pnpm install --frozen-lockfile`, `gen:api` with no diff, web typecheck, lint, 57 tests and
+  build, API typecheck and lint all pass.
 - DONE (evidence, manual, in a real browser against the running API and real PostGIS, not mocked): searching
   "Indiranagar Bengaluru" returned five real Nominatim places; choosing one flew the map there and showed REFERENCE solar
   resource (5.48 kWh/m2/day, NASA POWER), ESTIMATED yield per kWp, FORECAST next-24 h yield (Open-Meteo) and LIVE weather;
@@ -207,7 +209,11 @@ engines that depend on it.
   (3) chart time axes printed HH:MM at about 20 h spacing across three days, which read as backwards: ticks are now one short
   day label per day under its data and an unlabelled tick at each local midnight (`dayAxis`, tested);
   (4) the geocoder returned the same place twice under one display name: now one per name, first (most relevant) kept (tested);
-  (5) `/properties` and `/system` had the generic tab title; header buttons had no explicit `type`.
+  (5) `/properties` and `/system` had the generic tab title; header buttons had no explicit `type`;
+  (6) found only by a fresh clone: `pnpm install` runs `prisma generate` as a postinstall and Prisma's config threw when
+  `DATABASE_URL` was unset, so a clean checkout (and the new CI `web` job, which has no database) could not install. Now
+  `generate` alone falls back to a placeholder URL (it never connects); `migrate` and every other command still fail loudly
+  without a real URL (verified both ways).
 - NOT DONE (be exact): manual roof drawing (click vertices, double-click to finish) is implemented but was not exercised in
   a browser and has no test; "Locate me" is unit-tested with a stubbed geolocation, not against a real GPS fix; no axe or
   screen-reader accessibility pass; no browser end-to-end suite (the run above was manual); no analytic weather-grid map
