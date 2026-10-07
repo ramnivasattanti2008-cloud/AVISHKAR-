@@ -372,6 +372,8 @@ Next (in order): see the end of entry 10.
   against later readings, so the learning loop is not closed; the engine is not packaged for deployment (no Dockerfile: the
   Docker engine cannot run here); the web Plan and Forecast tabs have not had a screen-reader pass.
 
+- DONE (later the same day): **the learning loop for load forecasts** (`api/src/forecast/evaluate.ts`). Stored forecasts are scored against the readings that follow them, automatically after each meter import and on request: error, bias, band coverage, and skill against the same hour a week earlier; a forecast with too few readings is closed NOT_SCORABLE with the reason. A Forecast-tab panel shows each run. A household built to use exactly 20% above its pattern scored, to two decimals, as the arithmetic says it must. NOT DONE: no recalibration or automatic method switch from the live scores, no scheduled job, solar still scored against the weather model's analysis only.
+
 Next (in order): (5) the engines that depend on these: opportunity and value engines, the what-if simulator (24 h to a year),
 counterfactual, economics (NPV, IRR, the PM Surya Ghar calculator once an installed cost is given), carbon (needs a sourced
 factor table), resilience, autonomy, health and waste scores, the learning job, Copilot tools (the LLM adapter needs the

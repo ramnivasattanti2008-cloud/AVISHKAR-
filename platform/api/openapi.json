@@ -4153,6 +4153,474 @@
         ],
         "type": "object"
       },
+      "ForecastAccuracy": {
+        "additionalProperties": false,
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "load": {
+            "additionalProperties": false,
+            "properties": {
+              "runs": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "firstHour": {
+                      "type": "string"
+                    },
+                    "hours": {
+                      "type": "number"
+                    },
+                    "id": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "issuedAt": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "scores": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "biasKw": {
+                              "description": "Mean of forecast minus actual: positive means the forecast ran high.",
+                              "type": "number"
+                            },
+                            "coverage80": {
+                              "description": "Share of scored hours that fell inside the 10 to 90 percent band.",
+                              "type": "number"
+                            },
+                            "hours": {
+                              "type": "number"
+                            },
+                            "lastWeek": {
+                              "anyOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "hours": {
+                                      "type": "number"
+                                    },
+                                    "maeKw": {
+                                      "type": "number"
+                                    },
+                                    "modelMaeKw": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "hours",
+                                    "maeKw",
+                                    "modelMaeKw"
+                                  ],
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "maeKw": {
+                              "type": "number"
+                            },
+                            "rmseKw": {
+                              "type": "number"
+                            },
+                            "skillVsLastWeek": {
+                              "description": "1 minus the forecast's mean error over repeating the same hour a week earlier, on the hours where both exist.",
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "wapePct": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "hours",
+                            "maeKw",
+                            "rmseKw",
+                            "wapePct",
+                            "biasKw",
+                            "coverage80",
+                            "lastWeek",
+                            "skillVsLastWeek"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "description": "WAITING: the meter data does not yet cover its hours.",
+                      "enum": [
+                        "SCORED",
+                        "WAITING",
+                        "NOT_SCORABLE"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "issuedAt",
+                    "firstHour",
+                    "hours",
+                    "model",
+                    "status",
+                    "reason",
+                    "scores"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "summary": {
+                "additionalProperties": false,
+                "properties": {
+                  "provenance": {
+                    "$ref": "#/components/schemas/Provenance"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "meanBiasKw": {
+                            "type": "number"
+                          },
+                          "meanCoverage80": {
+                            "type": "number"
+                          },
+                          "meanMaeKw": {
+                            "type": "number"
+                          },
+                          "meanSkillVsLastWeek": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "scored": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "scored",
+                          "meanMaeKw",
+                          "meanBiasKw",
+                          "meanCoverage80",
+                          "meanSkillVsLastWeek"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "provenance"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "runs",
+              "summary"
+            ],
+            "type": "object"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "solar": {
+            "additionalProperties": false,
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available",
+              "reason"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "propertyId",
+          "generatedAt",
+          "load",
+          "solar",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "ForecastAccuracyInput": {
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "load": {
+            "properties": {
+              "runs": {
+                "items": {
+                  "properties": {
+                    "firstHour": {
+                      "type": "string"
+                    },
+                    "hours": {
+                      "type": "number"
+                    },
+                    "id": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "issuedAt": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "scores": {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "biasKw": {
+                              "description": "Mean of forecast minus actual: positive means the forecast ran high.",
+                              "type": "number"
+                            },
+                            "coverage80": {
+                              "description": "Share of scored hours that fell inside the 10 to 90 percent band.",
+                              "type": "number"
+                            },
+                            "hours": {
+                              "type": "number"
+                            },
+                            "lastWeek": {
+                              "anyOf": [
+                                {
+                                  "properties": {
+                                    "hours": {
+                                      "type": "number"
+                                    },
+                                    "maeKw": {
+                                      "type": "number"
+                                    },
+                                    "modelMaeKw": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "hours",
+                                    "maeKw",
+                                    "modelMaeKw"
+                                  ],
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "maeKw": {
+                              "type": "number"
+                            },
+                            "rmseKw": {
+                              "type": "number"
+                            },
+                            "skillVsLastWeek": {
+                              "description": "1 minus the forecast's mean error over repeating the same hour a week earlier, on the hours where both exist.",
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "wapePct": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "hours",
+                            "maeKw",
+                            "rmseKw",
+                            "wapePct",
+                            "biasKw",
+                            "coverage80",
+                            "lastWeek",
+                            "skillVsLastWeek"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "description": "WAITING: the meter data does not yet cover its hours.",
+                      "enum": [
+                        "SCORED",
+                        "WAITING",
+                        "NOT_SCORABLE"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "issuedAt",
+                    "firstHour",
+                    "hours",
+                    "model",
+                    "status",
+                    "reason",
+                    "scores"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "summary": {
+                "properties": {
+                  "provenance": {
+                    "$ref": "#/components/schemas/ProvenanceInput"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "meanBiasKw": {
+                            "type": "number"
+                          },
+                          "meanCoverage80": {
+                            "type": "number"
+                          },
+                          "meanMaeKw": {
+                            "type": "number"
+                          },
+                          "meanSkillVsLastWeek": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "scored": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "scored",
+                          "meanMaeKw",
+                          "meanBiasKw",
+                          "meanCoverage80",
+                          "meanSkillVsLastWeek"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "provenance"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "runs",
+              "summary"
+            ],
+            "type": "object"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "solar": {
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available",
+              "reason"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "propertyId",
+          "generatedAt",
+          "load",
+          "solar",
+          "notes"
+        ],
+        "type": "object"
+      },
       "GeoPoint": {
         "additionalProperties": false,
         "properties": {
@@ -13908,6 +14376,209 @@
         "summary": "Change an electric vehicle",
         "tags": [
           "assets"
+        ]
+      }
+    },
+    "/api/properties/{id}/forecast-accuracy": {
+      "get": {
+        "description": "Each load forecast made from current readings is kept as issued; once newer readings cover its hours it is scored (mean error, bias, how often the 10 to 90 percent band held) next to repeating the same hour a week earlier. WAITING means the readings do not reach its hours yet. Nothing is estimated: an hour with a reading missing is not scored.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastAccuracy"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "How the stored forecasts have done against the readings that followed",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
+    "/api/properties/{id}/forecast-accuracy/evaluate": {
+      "post": {
+        "description": "Also done automatically after each meter import. Safe to repeat: a forecast is scored once.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "notScorable": {
+                      "type": "number"
+                    },
+                    "scored": {
+                      "type": "number"
+                    },
+                    "waiting": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "scored",
+                    "notScorable",
+                    "waiting"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Score every stored forecast that the meter data now covers",
+        "tags": [
+          "forecast"
         ]
       }
     },

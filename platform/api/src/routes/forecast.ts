@@ -1,9 +1,11 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import type { AppDeps } from "../app.js";
+import { ownProperty } from "../assets/service.js";
 import { requireUser } from "../auth/hooks.js";
-import { LoadForecastSchema, SolarForecastSchema, SolarPerformanceSchema } from "../forecast/schemas.js";
-import { loadForecast, solarForecast, solarPerformance } from "../forecast/service.js";
+import { evaluateDueForecasts } from "../forecast/evaluate.js";
+import { ForecastAccuracySchema, LoadForecastSchema, SolarForecastSchema, SolarPerformanceSchema } from "../forecast/schemas.js";
+import { forecastAccuracy, loadForecast, solarForecast, solarPerformance } from "../forecast/service.js";
 import { ErrorResponse } from "../schemas.js";
 
 const P = z.object({ id: z.uuid() });
@@ -64,5 +66,40 @@ export const forecastRoutes: FastifyPluginAsyncZod<{ deps: AppDeps }> = async (a
       },
     },
     async (req) => loadForecast(fdeps, req.user!.id, req.params.id, { hours: req.query.hours, requestId: req.id }),
+  );
+
+  app.get(
+    "/api/properties/:id/forecast-accuracy",
+    {
+      preHandler: requireUser,
+      schema: {
+        tags: ["forecast"],
+        summary: "How the stored forecasts have done against the readings that followed",
+        description:
+          "Each load forecast made from current readings is kept as issued; once newer readings cover its hours it is scored (mean error, bias, how often the 10 to 90 percent band held) next to repeating the same hour a week earlier. WAITING means the readings do not reach its hours yet. Nothing is estimated: an hour with a reading missing is not scored.",
+        params: P,
+        response: { 200: ForecastAccuracySchema, ...upstream },
+      },
+    },
+    async (req) => forecastAccuracy(fdeps, req.user!.id, req.params.id),
+  );
+
+  app.post(
+    "/api/properties/:id/forecast-accuracy/evaluate",
+    {
+      preHandler: requireUser,
+      config: limit,
+      schema: {
+        tags: ["forecast"],
+        summary: "Score every stored forecast that the meter data now covers",
+        description: "Also done automatically after each meter import. Safe to repeat: a forecast is scored once.",
+        params: P,
+        response: { 200: z.object({ scored: z.number(), notScorable: z.number(), waiting: z.number() }), ...upstream },
+      },
+    },
+    async (req) => {
+      await ownProperty(deps.db, req.user!.id, req.params.id);
+      return evaluateDueForecasts(deps.db, req.params.id, deps.now());
+    },
   );
 };

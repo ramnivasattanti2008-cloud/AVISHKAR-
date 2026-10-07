@@ -2,8 +2,8 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LoadForecast, SolarForecast } from "@/lib/types";
-import { PROPERTY_ID, fakeApi, json, loadForecast, provenance, solarForecast, solarPerformance } from "@/test/fixtures";
-import { LoadForecastPanel, SolarForecastPanel } from "./ModelForecasts";
+import { PROPERTY_ID, fakeApi, forecastAccuracy, json, loadForecast, provenance, solarForecast, solarPerformance } from "@/test/fixtures";
+import { AccuracyPanel, LoadForecastPanel, SolarForecastPanel } from "./ModelForecasts";
 
 afterEach(() => {
   cleanup();
@@ -135,5 +135,47 @@ describe("LoadForecastPanel", () => {
     expect(await screen.findByText(/at least 14 days of readings/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Go to Meter data" })).toHaveAttribute("href", `/property/${PROPERTY_ID}/meter-data`);
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+});
+
+describe("AccuracyPanel", () => {
+  it("summarises the scored forecasts, lists each run with its status, and says why one could not be scored", async () => {
+    const api = fakeApi([["GET", `/api/properties/${PROPERTY_ID}/forecast-accuracy`, () => json(forecastAccuracy())]]);
+    vi.stubGlobal("fetch", api.fetch);
+    render(<AccuracyPanel id={PROPERTY_ID} />);
+    const panel = await screen.findByRole("region", { name: "Forecast accuracy over time" });
+    expect(await within(panel).findByText("0.18 kW")).toBeInTheDocument();
+    expect(within(panel).getByText("-0.07 kW")).toBeInTheDocument();
+    expect(within(panel).getByText("forecasts ran low")).toBeInTheDocument();
+    expect(within(panel).getByText("40% better")).toBeInTheDocument();
+    expect(within(panel).getByText("band held 79% of hours")).toBeInTheDocument();
+    expect(within(panel).getByText("1 waiting for readings")).toBeInTheDocument();
+    expect(within(panel).getByText("ESTIMATED")).toBeInTheDocument();
+    const rows = within(panel).getAllByRole("row");
+    expect(rows).toHaveLength(5); // the header and four runs
+    expect(within(panel).getByText("Waiting for readings")).toBeInTheDocument();
+    expect(within(panel).getAllByText("Scored")).toHaveLength(2);
+    expect(within(panel).getByText("Could not be scored")).toHaveAttribute("title", expect.stringContaining("Fewer than 12 of its 24 hours"));
+    expect(within(panel).getByText(/no generation meter/)).toBeInTheDocument();
+  });
+
+  it("does not claim a forecast beats last week's pattern when it does not", async () => {
+    const a = forecastAccuracy();
+    a.load.summary.value!.meanSkillVsLastWeek = -0.25;
+    vi.stubGlobal("fetch", fakeApi([["GET", /forecast-accuracy$/, () => json(a)]]).fetch);
+    render(<AccuracyPanel id={PROPERTY_ID} />);
+    expect(await screen.findByText("25% worse")).toBeInTheDocument();
+  });
+
+  it("says nothing has been scored yet, and why, with no figures, when none has", async () => {
+    const a = forecastAccuracy();
+    a.load.summary = { value: null, provenance: { ...a.load.summary.provenance, status: "UNAVAILABLE", notes: ["No stored forecast has been scored yet. A forecast made from current readings is scored once readings for its hours are imported."] } };
+    a.load.runs = [];
+    vi.stubGlobal("fetch", fakeApi([["GET", /forecast-accuracy$/, () => json(a)]]).fetch);
+    render(<AccuracyPanel id={PROPERTY_ID} />);
+    expect(await screen.findByText(/No stored forecast has been scored yet/)).toBeInTheDocument();
+    expect(screen.getByText("UNAVAILABLE")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.queryByText("Forecasts scored")).not.toBeInTheDocument();
   });
 });

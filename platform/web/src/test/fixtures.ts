@@ -1,4 +1,4 @@
-import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, LoadForecast, Plan, PlanSummary, Property, Provenance, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
+import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Plan, PlanSummary, Property, Provenance, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -358,6 +358,27 @@ export function plan(over: Partial<Plan> = {}): Plan {
     assumptions: ["The battery's charge now is not known, so the plan assumes it starts at its minimum level (1 kWh).", "No outage information is available, so none is planned for; the battery reserve you set is held back."],
     solver: { status: "optimal", seconds: 0.03, integerVariables: 2 },
     validation: { valid: true, maxBalanceErrorKw: 0, problems: [] },
+    notes: [],
+    ...over,
+  };
+}
+
+export function forecastAccuracy(over: Partial<ForecastAccuracy> = {}): ForecastAccuracy {
+  const scores = (mae: number, bias: number) => ({ hours: 24, maeKw: mae, rmseKw: mae * 1.3, wapePct: 14, biasKw: bias, coverage80: 0.79, lastWeek: { hours: 24, maeKw: 0.3, modelMaeKw: mae }, skillVsLastWeek: 1 - mae / 0.3 });
+  const p = provenance({ provider: "avishkar-learning", source: "Stored forecasts scored against this property's own meter readings", dataType: "load_forecast_accuracy", status: "ESTIMATED", notes: ["Estimated: the average over the 2 stored forecast(s) that could be scored."] });
+  return {
+    propertyId: PROPERTY_ID,
+    generatedAt: "2026-10-09T10:00:00.000Z",
+    load: {
+      runs: [
+        { id: "77777777-7777-4777-8777-777777777771", issuedAt: "2026-10-09T09:00:00.000Z", firstHour: "2026-10-09T10:30:00.000Z", hours: 24, model: "load:same_hour_of_week", status: "WAITING", reason: "The meter data does not yet cover these hours. Import newer readings and it is scored.", scores: null },
+        { id: "77777777-7777-4777-8777-777777777772", issuedAt: "2026-10-07T09:00:00.000Z", firstHour: "2026-10-07T10:30:00.000Z", hours: 24, model: "load:same_hour_of_week", status: "SCORED", reason: null, scores: scores(0.15, -0.05) },
+        { id: "77777777-7777-4777-8777-777777777773", issuedAt: "2026-10-05T09:00:00.000Z", firstHour: "2026-10-05T10:30:00.000Z", hours: 24, model: "load:same_hour_of_week", status: "SCORED", reason: null, scores: scores(0.21, -0.09) },
+        { id: "77777777-7777-4777-8777-777777777774", issuedAt: "2026-10-03T09:00:00.000Z", firstHour: "2026-10-03T10:30:00.000Z", hours: 24, model: "load:last_week", status: "NOT_SCORABLE", reason: "Fewer than 12 of its 24 hours have a complete meter reading, so there is not enough to score it against.", scores: null },
+      ],
+      summary: { value: { scored: 2, meanMaeKw: 0.18, meanBiasKw: -0.07, meanCoverage80: 0.79, meanSkillVsLastWeek: 0.4 }, provenance: p },
+    },
+    solar: { available: false, reason: "Solar forecasts are scored against the weather model's analysis, not against generation: there is no generation meter in the data to score them against." },
     notes: [],
     ...over,
   };

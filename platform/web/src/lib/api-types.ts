@@ -3255,6 +3255,200 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/properties/{id}/forecast-accuracy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * How the stored forecasts have done against the readings that followed
+         * @description Each load forecast made from current readings is kept as issued; once newer readings cover its hours it is scored (mean error, bias, how often the 10 to 90 percent band held) next to repeating the same hour a week earlier. WAITING means the readings do not reach its hours yet. Nothing is estimated: an hour with a reading missing is not scored.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ForecastAccuracy"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/forecast-accuracy/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Score every stored forecast that the meter data now covers
+         * @description Also done automatically after each meter import. Safe to repeat: a forecast is scored once.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            notScorable: number;
+                            scored: number;
+                            waiting: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/geometry": {
         parameters: {
             query?: never;
@@ -6060,6 +6254,114 @@ export interface components {
             source: "USER_ENTERED";
             targetSoc: number;
             updatedAt: string;
+        };
+        ForecastAccuracy: {
+            generatedAt: string;
+            load: {
+                runs: {
+                    firstHour: string;
+                    hours: number;
+                    /** Format: uuid */
+                    id: string;
+                    issuedAt: string;
+                    model: string;
+                    reason: string | null;
+                    scores: {
+                        /** @description Mean of forecast minus actual: positive means the forecast ran high. */
+                        biasKw: number;
+                        /** @description Share of scored hours that fell inside the 10 to 90 percent band. */
+                        coverage80: number;
+                        hours: number;
+                        lastWeek: {
+                            hours: number;
+                            maeKw: number;
+                            modelMaeKw: number;
+                        } | null;
+                        maeKw: number;
+                        rmseKw: number;
+                        /** @description 1 minus the forecast's mean error over repeating the same hour a week earlier, on the hours where both exist. */
+                        skillVsLastWeek: number | null;
+                        wapePct: number | null;
+                    } | null;
+                    /**
+                     * @description WAITING: the meter data does not yet cover its hours.
+                     * @enum {string}
+                     */
+                    status: "SCORED" | "WAITING" | "NOT_SCORABLE";
+                }[];
+                summary: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: {
+                        meanBiasKw: number;
+                        meanCoverage80: number;
+                        meanMaeKw: number;
+                        meanSkillVsLastWeek: number | null;
+                        scored: number;
+                    } | null;
+                };
+            };
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+            solar: {
+                available: boolean;
+                reason: string;
+            };
+        };
+        ForecastAccuracyInput: {
+            generatedAt: string;
+            load: {
+                runs: {
+                    firstHour: string;
+                    hours: number;
+                    /** Format: uuid */
+                    id: string;
+                    issuedAt: string;
+                    model: string;
+                    reason: string | null;
+                    scores: {
+                        /** @description Mean of forecast minus actual: positive means the forecast ran high. */
+                        biasKw: number;
+                        /** @description Share of scored hours that fell inside the 10 to 90 percent band. */
+                        coverage80: number;
+                        hours: number;
+                        lastWeek: {
+                            hours: number;
+                            maeKw: number;
+                            modelMaeKw: number;
+                        } | null;
+                        maeKw: number;
+                        rmseKw: number;
+                        /** @description 1 minus the forecast's mean error over repeating the same hour a week earlier, on the hours where both exist. */
+                        skillVsLastWeek: number | null;
+                        wapePct: number | null;
+                    } | null;
+                    /**
+                     * @description WAITING: the meter data does not yet cover its hours.
+                     * @enum {string}
+                     */
+                    status: "SCORED" | "WAITING" | "NOT_SCORABLE";
+                }[];
+                summary: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: {
+                        meanBiasKw: number;
+                        meanCoverage80: number;
+                        meanMaeKw: number;
+                        meanSkillVsLastWeek: number | null;
+                        scored: number;
+                    } | null;
+                };
+            };
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+            solar: {
+                available: boolean;
+                reason: string;
+            };
         };
         GeoPoint: {
             latitude: number;

@@ -7,6 +7,7 @@ import { requireUser } from "../auth/hooks.js";
 import { AppError } from "../errors.js";
 import { EnergyDnaSchema, EnergySummarySchema, ImportInput, ImportResultSchema, ImportSchema } from "../energy/schemas.js";
 import { deleteImport, energySummary, importMeterData, latestDna, listImports, toDnaDto } from "../energy/service.js";
+import { evaluateDueForecasts } from "../forecast/evaluate.js";
 import { ErrorResponse } from "../schemas.js";
 
 const P = z.object({ id: z.uuid() });
@@ -36,6 +37,8 @@ export const energyRoutes: FastifyPluginAsyncZod<{ deps: AppDeps }> = async (app
     },
     async (req, reply) => {
       const r = await importMeterData(db, req.user!.id, req.params.id, req.body, deps.now());
+      // new readings may cover hours that stored forecasts were made for: score them (best effort; the import has succeeded)
+      await evaluateDueForecasts(db, req.params.id, deps.now()).catch((e: unknown) => req.log.warn({ err: e }, "scoring stored forecasts failed"));
       await audit(db, { userId: req.user!.id, action: "energy.import", entityType: "property", entityId: req.params.id, requestId: req.id, ip: req.ip, detail: { importId: r.import.id, accepted: r.import.accepted, rejected: r.import.rejected } });
       reply.code(201);
       return r;

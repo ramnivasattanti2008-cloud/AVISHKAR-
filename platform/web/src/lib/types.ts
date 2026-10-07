@@ -53,3 +53,4 @@ export type LoadForecast = Resp<"/api/properties/{id}/load-forecast", "get", 200
 export type Plan = components["schemas"]["Plan"];
 export type PlanSummary = components["schemas"]["PlanSummary"];
 export type PlanRequest = components["schemas"]["PlanRequestInput"];
+export type ForecastAccuracy = components["schemas"]["ForecastAccuracy"];

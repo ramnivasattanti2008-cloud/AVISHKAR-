@@ -8,7 +8,7 @@ import type { WeatherReport } from "@/lib/types";
 import { useAuth } from "../AuthProvider";
 import { ProvenanceDetails, StatusBadge } from "../Provenance";
 import { HourlyChart } from "./HourlyChart";
-import { LoadForecastPanel, SolarForecastPanel } from "./ModelForecasts";
+import { AccuracyPanel, LoadForecastPanel, SolarForecastPanel } from "./ModelForecasts";
 import { PropertyTabs } from "./PropertyTabs";
 
 const CHARTS = [
@@ -53,6 +53,7 @@ export function ForecastView({ id }: { id: string }) {
         <SolarForecastPanel id={id} />
         <LoadForecastPanel id={id} />
       </div>
+      <AccuracyPanel id={id} />
       <h2 className="mt-8 text-lg font-semibold">The weather behind it</h2>
       {error && <p role="alert" className="mt-4 rounded-md bg-[color:var(--tone-unavailable-bg)] p-3 text-sm text-[color:var(--tone-unavailable-fg)]">{error}</p>}
       {!report && !error && <p role="status" className="mt-4 text-sm text-muted">Fetching the real hourly forecast…</p>}

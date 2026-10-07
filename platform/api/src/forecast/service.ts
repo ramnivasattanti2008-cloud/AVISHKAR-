@@ -10,6 +10,7 @@ import { getProperty } from "../properties/service.js";
 import type { Providers } from "../providers/index.js";
 import type { WeatherReport } from "../providers/weather.js";
 import { type Measured, estimated, forecast, unavailable } from "../provenance/index.js";
+import type { Evaluation } from "./evaluate.js";
 import { MAX_HISTORY_DAYS, buildLoadSeries } from "./load-series.js";
 
 export interface ForecastDeps {
@@ -371,4 +372,47 @@ async function remember(
   } catch {
     /* remembering a forecast must never stop it being shown */
   }
+}
+
+// -------------------------------------------------------------------------------- accuracy
+
+/** How the stored load forecasts have done against the readings that came in after them (spec sections 38 and 39). */
+export async function forecastAccuracy(deps: ForecastDeps, userId: string, propertyId: string) {
+  const { db, now } = deps;
+  const at = now();
+  await ownProperty(db, userId, propertyId);
+  const rows = await db.forecastRun.findMany({ where: { propertyId, kind: "LOAD" }, orderBy: { issuedAt: "desc" }, take: 60 });
+  const runs = rows.map((r) => {
+    const ev = r.evaluation as unknown as Evaluation | null;
+    return {
+      id: r.id,
+      issuedAt: r.issuedAt.toISOString(),
+      firstHour: r.firstHour.toISOString(),
+      hours: r.hours,
+      model: r.model,
+      status: (ev ? ev.status : "WAITING") as "SCORED" | "WAITING" | "NOT_SCORABLE",
+      reason: ev?.status === "NOT_SCORABLE" ? ev.reason : ev ? null : "The meter data does not yet cover these hours. Import newer readings and it is scored.",
+      scores: ev?.status === "SCORED" ? ev.scores : null,
+    };
+  });
+  const scored = runs.filter((r) => r.scores !== null);
+  const mean = (f: (s: NonNullable<(typeof runs)[number]["scores"]>) => number) => round(scored.reduce((a, r) => a + f(r.scores!), 0) / scored.length, 4);
+  const skills = scored.map((r) => r.scores!.skillVsLastWeek).filter((v): v is number => v !== null);
+  const base = { provider: "avishkar-learning", source: "Stored forecasts scored against this property's own meter readings", dataType: "load_forecast_accuracy", now: at };
+  return {
+    propertyId,
+    generatedAt: at.toISOString(),
+    load: {
+      runs,
+      summary:
+        scored.length === 0
+          ? unavailable<never>("No stored forecast has been scored yet. A forecast made from current readings is scored once readings for its hours are imported.", base)
+          : estimated(
+              { scored: scored.length, meanMaeKw: mean((s) => s.maeKw), meanBiasKw: mean((s) => s.biasKw), meanCoverage80: mean((s) => s.coverage80), meanSkillVsLastWeek: skills.length ? round(skills.reduce((a, b) => a + b, 0) / skills.length, 4) : null },
+              { ...base, basis: `the average over the ${scored.length} stored forecast(s) that could be scored, each against the readings that followed it.` },
+            ),
+    },
+    solar: { available: false, reason: "Solar forecasts are scored against the weather model's analysis (see the solar forecast's performance), not against generation: there is no generation meter in the data to score them against." },
+    notes: ["Only forecasts made from current readings are stored, one per hour at most; each is scored once, when readings for its whole horizon exist."],
+  };
 }

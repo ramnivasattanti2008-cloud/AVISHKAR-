@@ -136,3 +136,46 @@ export const LoadForecastSchema = z
     notes: z.array(z.string()),
   })
   .meta({ id: "LoadForecast" });
+
+const ScoresSchema = z.object({
+  hours: z.number(),
+  maeKw: z.number(),
+  rmseKw: z.number(),
+  wapePct: z.number().nullable(),
+  biasKw: z.number().describe("Mean of forecast minus actual: positive means the forecast ran high."),
+  coverage80: z.number().describe("Share of scored hours that fell inside the 10 to 90 percent band."),
+  lastWeek: z.object({ hours: z.number(), maeKw: z.number(), modelMaeKw: z.number() }).nullable(),
+  skillVsLastWeek: z.number().nullable().describe("1 minus the forecast's mean error over repeating the same hour a week earlier, on the hours where both exist."),
+});
+
+export const ForecastAccuracySchema = z
+  .object({
+    propertyId: z.uuid(),
+    generatedAt: iso,
+    load: z.object({
+      runs: z.array(
+        z.object({
+          id: z.uuid(),
+          issuedAt: iso,
+          firstHour: iso,
+          hours: z.number(),
+          model: z.string(),
+          status: z.enum(["SCORED", "WAITING", "NOT_SCORABLE"]).describe("WAITING: the meter data does not yet cover its hours."),
+          reason: z.string().nullable(),
+          scores: ScoresSchema.nullable(),
+        }),
+      ),
+      summary: measured(
+        z.object({
+          scored: z.number(),
+          meanMaeKw: z.number(),
+          meanBiasKw: z.number(),
+          meanCoverage80: z.number(),
+          meanSkillVsLastWeek: z.number().nullable(),
+        }),
+      ),
+    }),
+    solar: z.object({ available: z.boolean(), reason: z.string() }),
+    notes: z.array(z.string()),
+  })
+  .meta({ id: "ForecastAccuracy" });

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { compass, formatNumber, formatPercent } from "@/lib/format";
-import type { LoadForecast, SolarForecast, SolarPerformance } from "@/lib/types";
+import { compass, formatDateTime, formatNumber, formatPercent } from "@/lib/format";
+import type { ForecastAccuracy, LoadForecast, SolarForecast, SolarPerformance } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
 import { ProvenanceDetails, StatusBadge } from "../Provenance";
 import { BandChart } from "./BandChart";
@@ -280,6 +280,74 @@ export function LoadForecastPanel({ id }: { id: string }) {
           <div className="mt-2"><ProvenanceDetails p={d.hours.provenance} /></div>
         </>
       )}
+    </section>
+  );
+}
+
+// ------------------------------------------------------------------------------------------------ accuracy over time
+
+const RUN_STATUS = { SCORED: "Scored", WAITING: "Waiting for readings", NOT_SCORABLE: "Could not be scored" } as const;
+
+/** Every stored load forecast against the readings that followed it: the loop that shows whether the model is learning anything useful. */
+export function AccuracyPanel({ id }: { id: string }) {
+  const f = useApi<ForecastAccuracy>(`/api/properties/${id}/forecast-accuracy`);
+  const d = f.data;
+  const s = d?.load.summary;
+  const waiting = d?.load.runs.filter((r) => r.status === "WAITING").length ?? 0;
+  return (
+    <section className="card mt-4 p-4" aria-label="Forecast accuracy over time">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold">How have the forecasts done against what happened?</h2>
+        {s && <StatusBadge status={s.provenance.status} />}
+      </div>
+      <p className="mt-1 text-sm text-muted">
+        Each electricity-use forecast made from current readings is kept. When newer readings cover its hours, it is scored against them, next to simply repeating the same hour a week earlier.
+      </p>
+      {f.loading && <p role="status" className="mt-3 text-sm text-muted">Loading…</p>}
+      {f.error && <p role="alert" className="mt-3 text-sm text-[color:var(--tone-unavailable-fg)]">{f.error}</p>}
+      {d && s && !s.value && <Reason title="Nothing scored yet" reason={s.provenance.notes[0] ?? "No forecast has been scored."} />}
+      {d && s?.value && (
+        <dl className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Stat label="Forecasts scored" value={String(s.value.scored)} hint={waiting > 0 ? `${waiting} waiting for readings` : undefined} />
+          <Stat label="Typical error" value={`${formatNumber(s.value.meanMaeKw)} kW`} hint="mean over scored forecasts" />
+          <Stat label="Bias" value={`${s.value.meanBiasKw > 0 ? "+" : ""}${formatNumber(s.value.meanBiasKw)} kW`} hint={Math.abs(s.value.meanBiasKw) < 0.005 ? "none" : s.value.meanBiasKw > 0 ? "forecasts ran high" : "forecasts ran low"} />
+          <Stat
+            label="Against last week"
+            value={s.value.meanSkillVsLastWeek === null ? "—" : s.value.meanSkillVsLastWeek >= 0 ? `${formatPercent(s.value.meanSkillVsLastWeek)} better` : `${formatPercent(-s.value.meanSkillVsLastWeek)} worse`}
+            hint={`band held ${formatPercent(s.value.meanCoverage80)} of hours`}
+          />
+        </dl>
+      )}
+      {d && d.load.runs.length > 0 && (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[32rem] text-sm">
+            <caption className="sr-only">Stored forecasts and how each was scored</caption>
+            <thead>
+              <tr className="text-left text-xs text-muted">
+                <th className="py-1 pr-3 font-medium">Made</th>
+                <th className="py-1 pr-3 font-medium">Status</th>
+                <th className="py-1 pr-3 text-right font-medium">Hours scored</th>
+                <th className="py-1 pr-3 text-right font-medium">Mean error (kW)</th>
+                <th className="py-1 pr-3 text-right font-medium">Bias (kW)</th>
+                <th className="py-1 text-right font-medium">Band held</th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.load.runs.slice(0, 10).map((r) => (
+                <tr key={r.id} className="border-t border-line">
+                  <th scope="row" className="py-1 pr-3 text-left font-medium">{formatDateTime(r.issuedAt)}</th>
+                  <td className="py-1 pr-3" title={r.reason ?? undefined}>{RUN_STATUS[r.status]}</td>
+                  <td className="num py-1 pr-3 text-right">{r.scores ? `${r.scores.hours} of ${r.hours}` : "—"}</td>
+                  <td className="num py-1 pr-3 text-right">{r.scores ? formatNumber(r.scores.maeKw) : "—"}</td>
+                  <td className="num py-1 pr-3 text-right">{r.scores ? formatNumber(r.scores.biasKw) : "—"}</td>
+                  <td className="num py-1 text-right">{r.scores ? formatPercent(r.scores.coverage80) : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {d && <p className="mt-3 text-xs text-muted">{d.solar.reason}</p>}
     </section>
   );
 }
