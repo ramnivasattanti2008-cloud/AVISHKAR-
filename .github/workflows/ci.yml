@@ -56,6 +56,15 @@ jobs:
           node-version: 24
           cache: pnpm
           cache-dependency-path: platform/pnpm-lock.yaml
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+      - name: Python engine dependencies (the integration tests start the real engine)
+        run: |
+          grep -v -E '^(colorama|pywin32)' requirements-lock.txt > /tmp/lock.txt
+          pip install -r /tmp/lock.txt -r platform/engine/requirements.txt
       - name: Install
         working-directory: platform
         run: pnpm install --frozen-lockfile
@@ -65,12 +74,34 @@ jobs:
       - name: Lint
         working-directory: platform
         run: pnpm -C api lint
-      - name: Tests (unit + integration against real PostGIS)
+      - name: Tests (unit + integration against real PostGIS and the real engine)
         working-directory: platform
+        env:
+          # fail rather than skip if the engine cannot be started
+          REQUIRE_ENGINE: "1"
         run: pnpm -C api test
       - name: Build
         working-directory: platform
         run: pnpm -C api build
+
+  engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+      - name: Install (pinned environment from requirements-lock.txt, plus the web framework)
+        run: |
+          grep -v -E '^(colorama|pywin32)' requirements-lock.txt > /tmp/lock.txt
+          pip install -r /tmp/lock.txt -r platform/engine/requirements.txt ruff
+      - name: Lint
+        run: ruff check platform/engine --no-fix
+      - name: Engine tests (optimiser, validator, HTTP layer, committed OpenAPI)
+        working-directory: platform/engine
+        run: python -m pytest tests -q
 
   web:
     runs-on: ubuntu-latest

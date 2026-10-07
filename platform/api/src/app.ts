@@ -15,6 +15,7 @@ import {
 import { registerAuth } from "./auth/hooks.js";
 import type { Config } from "./config.js";
 import type { Db } from "./db.js";
+import type { EngineClient } from "./engine/client.js";
 import { AppError } from "./errors.js";
 import type { Providers } from "./providers/index.js";
 import { accountRoutes } from "./routes/account.js";
@@ -33,6 +34,8 @@ export interface AppDeps {
   config: Config;
   db: Db;
   providers: Providers;
+  /** The Python engine, or null when ENGINE_URL is not set (plans and model forecasts are then UNAVAILABLE). */
+  engine: EngineClient | null;
   /** Injected so tests control time; production uses the wall clock. */
   now: () => Date;
 }

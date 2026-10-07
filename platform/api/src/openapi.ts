@@ -14,7 +14,7 @@ export async function buildOpenApi(): Promise<Record<string, unknown>> {
     DATABASE_URL: "postgresql://unused@localhost/unused",
     SESSION_SECRET: "openapi-export-secret-0123456789abcdef",
   });
-  const app = await buildApp({ config, db: {} as Db, providers: {} as Providers, now: () => new Date(0) });
+  const app = await buildApp({ config, db: {} as Db, providers: {} as Providers, engine: null, now: () => new Date(0) });
   await app.ready();
   const doc = JSON.parse(JSON.stringify(app.swagger())) as Record<string, unknown>;
   await app.close();

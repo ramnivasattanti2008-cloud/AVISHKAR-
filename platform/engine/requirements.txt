@@ -1,0 +1,6 @@
+# The AVISHKAR engine runs in the same Python environment as the EMS (see ../../requirements-lock.txt, installed with
+# `pip install -r requirements-lock.txt`), plus the web framework. Only what the engine adds is listed here.
+#
+# Verified together with: numpy 2.2.6, pandas 2.3.3, scipy 1.18.1, scikit-learn 1.9.1, pvlib 0.16.1, highspy 1.15.1,
+# pydantic 2.13.5, starlette 1.7.0, uvicorn 0.30.6, httpx 0.28.1, pytest 9.1.1 (all pinned in the lock file).
+fastapi==0.142.2

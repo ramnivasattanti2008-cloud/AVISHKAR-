@@ -12176,6 +12176,44 @@
                       ],
                       "type": "object"
                     },
+                    "engine": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "error": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "solver": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "state": {
+                          "enum": [
+                            "healthy",
+                            "down",
+                            "not_configured"
+                          ],
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "state",
+                        "version",
+                        "solver",
+                        "error"
+                      ],
+                      "type": "object"
+                    },
                     "generatedAt": {
                       "type": "string"
                     },
@@ -12262,6 +12300,7 @@
                     "status",
                     "database",
                     "providers",
+                    "engine",
                     "windowMinutes",
                     "generatedAt"
                   ],

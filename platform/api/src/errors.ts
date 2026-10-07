@@ -13,6 +13,12 @@ export const ERROR_CODES = {
   PROVIDER_UNAVAILABLE: 503,
   PROVIDER_BAD_RESPONSE: 502,
   DATA_UNAVAILABLE: 503,
+  /** The planning engine did not answer, or refused our key: plans and model forecasts are unavailable. */
+  ENGINE_UNAVAILABLE: 503,
+  /** The planning engine answered in a shape this server does not understand. */
+  ENGINE_BAD_RESPONSE: 502,
+  /** The planning engine refused the inputs we built; its message says why. */
+  ENGINE_REJECTED: 502,
   INTERNAL: 500,
 } as const;
 

@@ -68,7 +68,17 @@ const Env = z.object({
 
   /** Map tiles are consumed by the browser, so these are exposed to the web app, not used by the API. */
   MAP_PROVIDER: z.string().default("osm-raster"),
+
+  /** The Python engine (planning, forecasting). Without it plans and model forecasts are UNAVAILABLE, and the API says so. */
   ENGINE_URL: z.url().optional(),
+  /** Shared with the engine's ENGINE_API_KEY. At least 16 characters; required in production when ENGINE_URL is set. */
+  ENGINE_API_KEY: z.string().min(16, "ENGINE_API_KEY must be at least 16 characters").optional(),
+  /** Longer than the engine's own solver time limit (20 s by default, 120 s at most). */
+  ENGINE_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(300_000).default(60_000),
+}).superRefine((v, ctx) => {
+  if (v.NODE_ENV === "production" && v.ENGINE_URL && !v.ENGINE_API_KEY) {
+    ctx.addIssue({ code: "custom", path: ["ENGINE_API_KEY"], message: "ENGINE_API_KEY is required in production when ENGINE_URL is set" });
+  }
 });
 
 export type Config = z.infer<typeof Env> & { cookieSecure: boolean };

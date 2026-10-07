@@ -1,6 +1,7 @@
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createDb } from "./db.js";
+import { buildEngine } from "./engine/index.js";
 import { DbCache } from "./providers/cache.js";
 import { buildProviders } from "./providers/index.js";
 import { DbRecorder } from "./providers/recorder.js";
@@ -11,7 +12,8 @@ async function main(): Promise<void> {
   const cache = new DbCache(db);
   const recorder = new DbRecorder(db, (e) => console.error("provider call telemetry failed", e)); // eslint-disable-line no-console
   const providers = buildProviders(config, { cache, recorder, db });
-  const app = await buildApp({ config, db, providers, now: () => new Date() });
+  const engine = buildEngine(config);
+  const app = await buildApp({ config, db, providers, engine, now: () => new Date() });
 
   const stop = async (signal: string) => {
     app.log.info({ signal }, "shutting down");

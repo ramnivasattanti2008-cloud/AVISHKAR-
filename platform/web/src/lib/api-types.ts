@@ -4068,6 +4068,13 @@ export interface paths {
                                 /** @enum {string} */
                                 state: "healthy" | "down";
                             };
+                            engine: {
+                                error: string | null;
+                                solver: string | null;
+                                /** @enum {string} */
+                                state: "healthy" | "down" | "not_configured";
+                                version: string | null;
+                            };
                             generatedAt: string;
                             providers: {
                                 calls: number;

@@ -35,6 +35,7 @@ export const healthRoutes: FastifyPluginAsyncZod<{ deps: AppDeps }> = async (app
             status: z.enum(["ok", "degraded"]),
             database: z.object({ state: z.enum(["healthy", "down"]), postgis: z.string().nullable(), latencyMs: z.number().nullable(), error: z.string().nullable() }),
             providers: z.array(ProviderHealthSchema),
+            engine: z.object({ state: z.enum(["healthy", "down", "not_configured"]), version: z.string().nullable(), solver: z.string().nullable(), error: z.string().nullable() }),
             windowMinutes: z.number(),
             generatedAt: z.string(),
           }),
@@ -51,8 +52,17 @@ export const healthRoutes: FastifyPluginAsyncZod<{ deps: AppDeps }> = async (app
         database = { state: "down", postgis: null, latencyMs: null, error: e instanceof Error ? e.message.slice(0, 200) : "database error" };
       }
       const providers = database.state === "healthy" ? await providerHealth(deps.db, [...PROVIDER_NAMES], 15, deps.now()) : [];
-      const degraded = database.state === "down" || providers.some((p) => p.state === "down" || p.state === "degraded");
-      return { status: degraded ? ("degraded" as const) : ("ok" as const), database, providers, windowMinutes: 15, generatedAt: deps.now().toISOString() };
+      let engine: { state: "healthy" | "down" | "not_configured"; version: string | null; solver: string | null; error: string | null } = { state: "not_configured", version: null, solver: null, error: null };
+      if (deps.engine) {
+        try {
+          const h = await deps.engine.health();
+          engine = { state: "healthy", version: h.version, solver: `HiGHS ${h.highs}`, error: null };
+        } catch (e) {
+          engine = { state: "down", version: null, solver: null, error: e instanceof Error ? e.message.slice(0, 200) : "engine error" };
+        }
+      }
+      const degraded = database.state === "down" || engine.state === "down" || providers.some((p) => p.state === "down" || p.state === "degraded");
+      return { status: degraded ? ("degraded" as const) : ("ok" as const), database, providers, engine, windowMinutes: 15, generatedAt: deps.now().toISOString() };
     },
   );
 };
