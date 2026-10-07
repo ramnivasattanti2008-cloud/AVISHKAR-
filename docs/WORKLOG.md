@@ -126,3 +126,33 @@ Next (in order): (1) weather provider (Open-Meteo forecast + archive) with the q
 and `solar_forecasts` tables, live test; (2) solar resource (NASA POWER) and building footprint (Overpass) providers;
 (3) satellite metadata (Earth Search STAC); (4) Energy Twin versioning and `POST /api/properties/:id/analyze`;
 (5) `web/`: Next.js, MapLibre map-first UI wired to these endpoints; (6) Python engine service and Phase 3 forecasts.
+
+## Entry 5: 2026-10-07: platform Phase 2 backend (real data and the Energy Twin)
+
+- DONE: providers, each isolated, validated against the real response shapes, cached, rate-spaced and telemetered:
+  Open-Meteo weather (quality engine applied, coordinates coarsened to about 1 km before leaving the machine, issued
+  values stored in `weather_observations`), NASA POWER solar climatology, Overpass building outlines (mirror failover; the
+  public server answers HTTP 504 about one request in three here), Earth Search STAC Sentinel-2 metadata.
+- DONE: migrations `weather_observations`, `energy_twin_and_satellite` (drift check empty). `POST /api/properties/:id/analyze`
+  builds a new versioned Energy Twin: a failed source is recorded and its part left empty, never invented; consumption,
+  tariff and autonomy score are `UNAVAILABLE` with reasons until real data exists; estimates are `ESTIMATED` with the
+  assumptions listed (`api/src/twin/estimate.ts`); `confidence` is data completeness, and says so.
+- DONE: `GET /api/preview` (map-click view, nothing saved), `GET /api/cloud-nowcast` (honest UNAVAILABLE), twin read and
+  version routes, OpenAPI updated.
+- DONE (evidence): 176 tests pass; typecheck, lint, build clean; 7 live tests pass against the real services; live smoke:
+  a twin for a real Bengaluru building in 11.7 s (603 m2 OSM outline, 11 levels so a shared-roof warning, NASA 5.48
+  kWh/m2/day, 24 h forecast, Sentinel-2c scene of 2026-10-04).
+- Lessons recorded: Prisma refuses `migrate reset --force` from an agent without the owner consent (respected; a fresh
+  database was created instead); `typescript-eslint` does not support TypeScript 7; shell heredocs containing apostrophes
+  break the tool shell, so write files with the file tools.
+- NOT DONE: everything from Phase 3 on (own solar and load forecast models with measured error, optimiser, opportunities,
+  value, what-if, counterfactual, economics, resilience, Copilot, community/VPP), the whole `web/` app including the map,
+  Energy DNA, tariff engine and policy tables, appliance/battery/EV models, admin API, job queue, Python engine service,
+  deployment files. See `platform/STATUS.md`.
+
+Next (in order): (1) `web/`: Next.js + MapLibre map-first UI wired to `/api/geocode`, `/api/preview`, properties, analyze
+(the first thing a user can see and touch); (2) tariff and policy tables (`tariffs`, `policy_rules`) seeded only from the
+sourced JSON already in the repo, with manual entry; (3) appliances/battery/EV tables and the load profile import (reuse
+`mysite`/`userdata` logic through the Python engine); (4) Python engine service and the forecast evaluation job
+(`weather_observations` forecasts vs ERA5 actuals) for the solar forecast engine with benchmarks; (5) optimiser and the
+engines that depend on it.

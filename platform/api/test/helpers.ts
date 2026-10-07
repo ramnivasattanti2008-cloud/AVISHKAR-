@@ -31,7 +31,7 @@ export function db(): Db {
 
 export async function resetDb(): Promise<void> {
   await db().$executeRawUnsafe(
-    'TRUNCATE TABLE "users", "audit_logs", "provider_calls", "cache_entries", "data_provenance" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "users", "audit_logs", "provider_calls", "cache_entries", "data_provenance", "weather_observations" RESTART IDENTITY CASCADE',
   );
 }
 
@@ -57,7 +57,7 @@ export async function makeApp(over: Record<string, string> = {}): Promise<TestAp
   // Starts at the real current time: rows the database timestamps itself (provider calls) must fall inside "now" windows.
   const clock = { now: new Date() };
   const recorder = new DbRecorder(db());
-  const providers = buildProviders(config, { cache: new MemoryCache(), recorder, fetchImpl });
+  const providers = buildProviders(config, { cache: new MemoryCache(), recorder, db: db(), fetchImpl });
   // geocoding spacing would slow tests down; the unit tests cover it
   const deps: AppDeps = { config, db: db(), providers, now: () => clock.now };
   const app = await buildApp(deps);

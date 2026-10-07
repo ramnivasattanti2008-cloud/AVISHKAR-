@@ -47,6 +47,12 @@ const Env = z.object({
 
   BUILDING_FOOTPRINT_PROVIDER: z.enum(["overpass"]).default("overpass"),
   BUILDING_FOOTPRINT_BASE_URL: z.url().default("https://overpass-api.de"),
+  /** Comma-separated Overpass mirrors tried in order when the primary fails (it does, about one request in three at times). */
+  BUILDING_FOOTPRINT_FALLBACK_URLS: z
+    .string()
+    .default("https://overpass.kumi.systems,https://overpass.private.coffee")
+    .transform((s) => s.split(",").map((x) => x.trim()).filter(Boolean))
+    .pipe(z.array(z.url())),
 
   SATELLITE_PROVIDER: z.enum(["earth-search"]).default("earth-search"),
   SATELLITE_BASE_URL: z.url().default("https://earth-search.aws.element84.com/v1"),

@@ -55,6 +55,18 @@ describe("ProviderHttp", () => {
     expect(recorder.calls[0]).toMatchObject({ provider: "test", operation: "op", ok: true, statusCode: 200 });
   });
 
+  it("POSTs a JSON body with a content type and validates the reply", async () => {
+    let seen: { method?: string; body?: string; type?: string | null } = {};
+    const { http } = client(() => json({ n: 5 }), {
+      fetchImpl: (async (_i: URL | string, init?: RequestInit) => {
+        seen = { method: init?.method, body: init?.body as string, type: new Headers(init?.headers).get("content-type") };
+        return json({ n: 5 });
+      }) as typeof fetch,
+    });
+    expect(await http.postJson("search", "/search", { a: [1, 2] }, { schema: Shape })).toEqual({ n: 5 });
+    expect(seen).toEqual({ method: "POST", body: '{"a":[1,2]}', type: "application/json" });
+  });
+
   it("builds the URL from base, path and query without undefined values", async () => {
     const { http, urls } = client(() => json({ n: 1 }));
     await http.getJson("op", "/search", { q: "a b", limit: 2, skip: undefined }, { schema: Shape });

@@ -12,15 +12,15 @@ The honest ledger. One row per requirement group in [SPEC.md](SPEC.md) (section 
 - Update the row in the same commit that changes the code. Append what you did to the WORKLOG as well.
 - "Python EMS" below means the pre-existing `src/avishkar_ems` package (see `CLAUDE.md`).
 
-Last updated: 2026-10-07, end of Phase 1 backend foundation. Evidence commands: `pnpm -C platform/api typecheck && pnpm -C platform/api lint && pnpm -C platform/api test && pnpm -C platform/api build` (106 tests: 59 unit, 47 integration against real PostgreSQL 16 + PostGIS 3.4).
+Last updated: 2026-10-07, end of the Phase 2 backend (real data and Energy Twin). Evidence: `pnpm -C platform/api typecheck && lint && test && build` all clean; 176 tests (unit, and integration against real PostgreSQL 16 + PostGIS 3.4); `pnpm -C platform/api test:live` runs 7 tests against the real Nominatim, Open-Meteo, NASA POWER, Overpass and Earth Search services (on demand, not CI).
 
 ## Summary
 
 | Phase (SPEC §84) | State |
 |---|---|
 | 1 Foundation: architecture, database, auth, map, property selection, geocoding | **Backend DONE** (database, migrations, auth, properties, geocoding, provenance, providers, health, OpenAPI). **Map UI NOT STARTED.** |
-| 2 Real data: weather, solar resource, satellite metadata, Energy Twin | NOT STARTED |
-| 3 Energy data, solar forecast, load forecast | NOT STARTED (REUSE: Python EMS quantile forecasts for 3 sites) |
+| 2 Real data: weather, solar resource, satellite metadata, Energy Twin | **Backend DONE** (live-verified end to end). Climate zone, Energy DNA and the web UI are not built. |
+| 3 Energy data, solar forecast, load forecast | NOT STARTED (only the provider's 24 h irradiation forecast is used; REUSE: Python EMS quantile forecasts for 3 sites) |
 | 4 Battery, EV, appliances, energy flow | NOT STARTED (REUSE: Python EMS battery model) |
 | 5 Optimisation, opportunities, value | NOT STARTED (REUSE: EMHASS LP planner) |
 | 6 What-if, counterfactual, economics, resilience | NOT STARTED (REUSE: payback, advisor, reserve) |
@@ -35,11 +35,11 @@ Last updated: 2026-10-07, end of Phase 1 backend foundation. Evidence commands: 
 | 0-3 | Real data only; provenance on every value | PARTIAL | `api/src/provenance` (envelope, freshness rules, 8 statuses), table `data_provenance` with a CHECK that refuses LIVE without an observation time (`test/api.test.ts` constraints) | Envelope used by geocoding only; weather/forecast values come in Phase 2/3 |
 | 4 | `PositioningProvider`, no fake NavIC | PARTIAL | `api/src/providers/positioning.ts`; API refuses `navic` unless `NAVIC_RECEIVER_ENABLED=true`; position source and accuracy stored and described (tests) | Browser geolocation client and UI not built; no NavIC hardware exists to test the enabled path against real data |
 | 5-7 | Map-first UX, geocoding, property selection (search, click, GPS, coordinates, polygon) | PARTIAL (API only) | `GET /api/geocode/search`, `/reverse` (live Nominatim verified), `POST/GET/PATCH/DELETE /api/properties`, `POST /api/properties/:id/geometry` (PostGIS-validated polygon) | No UI: map, search box, click, current location, drawing are not built. Building footprints (Overpass) not yet fetched; absence is reported as `BUILDING GEOMETRY UNAVAILABLE` |
-| 6 | Provider abstractions (map, satellite, geocoding, footprint, weather, solar resource) | PARTIAL | Geocoding provider (Nominatim) with HTTP client, retries, rate spacing, schema validation, DB cache, stale-if-error, failover helper, call telemetry (`api/src/providers`) | Weather, solar resource, footprint, satellite, map providers not built; Nominatim, Open-Meteo, NASA POWER, Overpass, Earth Search probed reachable, PVGIS is not |
-| 8-9 | Energy Twin (versioned) and Energy DNA | NOT STARTED | | |
-| 10 | Weather ingestion and storage | NOT STARTED | | Python EMS reads bundled PVGIS CSVs only |
-| 11-12 | Satellite metadata; cloud-movement nowcast | NOT STARTED | D9 | Nowcast will be `UNAVAILABLE` until a sub-hourly source exists |
-| 13 | Solar forecast engine, all horizons, benchmarked | REUSE | `bands.py` (P10/50/90 day-ahead for 3 sites) | No weather-provider-driven forecast; no 5-min to 7-day ladder; no persistence/clear-sky benchmark table |
+| 6 | Provider abstractions (map, satellite, geocoding, footprint, weather, solar resource) | PARTIAL | Geocoding (Nominatim), weather (Open-Meteo), solar resource (NASA POWER), building footprint (Overpass with mirror failover), satellite metadata (Earth Search STAC): each with retries, rate spacing, schema validation, DB cache, stale-if-error and call telemetry (`api/src/providers`); live-verified | Map/tile provider is a web concern (not built); PVGIS is not reachable from the dev machine |
+| 8-9 | Energy Twin (versioned) and Energy DNA | PARTIAL | Table `energy_twins` (versioned snapshots), `POST /api/properties/:id/analyze`, `GET .../twin`, `.../twin/versions`; every number is a labelled `Measured` value with sources, assumptions and gaps (`test/twin.test.ts`); live twin built for a real Bengaluru building | Energy DNA not built (needs load data); no climate zone (no source integrated); building metadata limited to OSM tags; household/appliance/battery/EV/tariff/resilience profiles come with their phases |
+| 10 | Weather ingestion and storage | DONE | Open-Meteo forecast with quality checks, coarsened coordinates, DB cache, issued values stored in `weather_observations` for later evaluation (`test/weather.test.ts`, live test) | Historical observations (archive API) and weather alerts not ingested; hourly resolution only |
+| 11-12 | Satellite metadata; cloud-movement nowcast | PARTIAL | Sentinel-2 scenes via STAC (satellite, sensor, acquisition and processing time, footprint, cloud %, status) stored in `satellite_observations`; `GET /api/cloud-nowcast` returns an explained UNAVAILABLE (a revisit of about 5 days cannot support a minutes-ahead nowcast) | No imagery, cloud masks, vegetation or flood layers; a real nowcast needs a sub-hourly geostationary source |
+| 13 | Solar forecast engine, all horizons, benchmarked | PARTIAL (REUSE) | Provider 24 h irradiation forecast converted to kWh/kWp (`forecastNext24h*`, labelled FORECAST); Python EMS `bands.py` P10/50/90 day-ahead for 3 sites | No own model, no 5 min to 7 day ladder, no benchmark vs persistence/clear-sky, no stored actuals or MAE yet |
 | 14 | Load forecast engine | REUSE | `bands.py` `load_features` | Needs user meter history; baseline "same hour average" not separately benchmarked |
 | 15 | Probabilistic forecasts | REUSE | `bands.QuantileBands`, conformal calibration | 80% coverage measured per site in `results/forecast_quality.csv` |
 | 16 | Energy futures (scenarios) | NOT STARTED | | |
@@ -65,7 +65,7 @@ Last updated: 2026-10-07, end of Phase 1 backend foundation. Evidence commands: 
 | 52 | PostgreSQL + PostGIS schema and migrations | PARTIAL | Migrations `foundation`, `reference_status`: users, sessions, properties (+ trigger-maintained PostGIS point), property_geometry, data_provenance, audit_logs, provider_calls, cache_entries; drift check empty; applied to PostGIS 3.4 | Remaining ~20 tables arrive with their phases (energy_twins, observations, forecasts, batteries, appliances, tariffs, policy_rules, ...) |
 | 53-54, 56 | TypeScript backend, Next.js frontend, pages | PARTIAL (backend) / NOT STARTED (web) | Fastify + Prisma 7 + zod API builds and runs (smoke-tested live) | `web/` not started; Python engine service (D1) not started |
 | 55, 78 | UI design system, accessibility | NOT STARTED | | |
-| 57-61 | Property dashboard, energy flow, map interaction, comparison, installation planner | NOT STARTED | | Streamlit dashboard covers 3 demo sites only |
+| 57-61 | Property dashboard, energy flow, map interaction, comparison, installation planner | PARTIAL (API only) | Map-click data exists: `GET /api/preview` (public, nothing saved) gives solar resource, weather now, yield per kWp, next-24 h yield and data quality; `POST /api/properties/:id/analyze` gives the twin | No UI at all; no energy flow, comparison or planner; risk, demand and energy score are not available yet |
 | 62-63 | Economics (NPV, IRR) and carbon | PARTIAL | `lifetime.py` (discounted payback, NPV with assumptions) | No IRR, no carbon factor table |
 | 64, 67 | Deterministic simulation; conservation check | PARTIAL | executor conserves energy per step (tested) | No stored simulation config; no `SIMULATION INVALID` gate |
 | 65-66 | Testing; safety tests | PARTIAL | Python EMS: 68 tests. Platform API: 106 tests incl. failure tests (provider down, invalid coordinates, bad input, duplicates, unauthenticated, cross-user access) | No end-to-end browser test; no optimiser safety tests yet (no optimiser) |

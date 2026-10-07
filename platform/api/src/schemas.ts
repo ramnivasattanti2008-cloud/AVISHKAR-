@@ -85,3 +85,18 @@ export const GeocodeResultSchema = z.object({
   osm: z.object({ type: z.string(), id: z.number() }).optional(),
   address: z.record(z.string(), z.string()).optional(),
 });
+
+const HourlyPoint = z.object({ time: z.string(), value: z.number() });
+
+/** Weather for a place: every value carries its own provenance, and rejected data is reported, not shown. */
+export const WeatherReportSchema = z.object({
+  requested: GeoPoint.describe("The place asked about, coarsened to about 1 km before being sent to the provider."),
+  grid: GeoPoint.describe("The grid point the provider used."),
+  elevationM: z.number().nullable(),
+  fetchedAt: z.string(),
+  stale: z.boolean().describe("True when the provider did not answer and an older copy is shown."),
+  current: z.record(z.string(), measured(z.number())),
+  hourly: z.record(z.string(), measured(z.array(HourlyPoint))),
+  quality: z.array(z.object({ variable: z.string(), rejected: z.number(), reasons: z.array(z.string()) })),
+  notes: z.array(z.string()),
+});

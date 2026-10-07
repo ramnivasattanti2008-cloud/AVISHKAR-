@@ -18,6 +18,8 @@ export interface HttpOptions {
 
 export interface RequestOptions<T> {
   schema: z.ZodType<T>;
+  /** JSON request body; makes the call a POST. */
+  body?: unknown;
   headers?: Record<string, string>;
   requestId?: string;
   /** Overrides the client's base URL for this call (used when one provider has several hosts). */
@@ -53,6 +55,15 @@ export class ProviderHttp {
   }
 
   async getJson<T>(operation: string, path: string, query: Query, opts: RequestOptions<T>): Promise<T> {
+    return this.request("GET", operation, path, query, opts);
+  }
+
+  /** POST a JSON body (for example a STAC search) with the same retry, validation and telemetry as getJson. */
+  async postJson<T>(operation: string, path: string, body: unknown, opts: RequestOptions<T>): Promise<T> {
+    return this.request("POST", operation, path, {}, { ...opts, body });
+  }
+
+  private async request<T>(method: "GET" | "POST", operation: string, path: string, query: Query, opts: RequestOptions<T>): Promise<T> {
     const url = new URL(path.replace(/^\//, ""), (opts.baseUrl ?? this.o.baseUrl).replace(/\/?$/, "/"));
     for (const [k, v] of Object.entries(query)) if (v !== undefined) url.searchParams.set(k, String(v));
     const attempts = 1 + (this.o.retries ?? 2);
@@ -64,7 +75,14 @@ export class ProviderHttp {
       let status: number | undefined;
       try {
         const res = await this.fetchImpl(url, {
-          headers: { "user-agent": this.o.userAgent, accept: "application/json", ...opts.headers },
+          method,
+          headers: {
+            "user-agent": this.o.userAgent,
+            accept: "application/json",
+            ...(opts.body !== undefined ? { "content-type": "application/json" } : {}),
+            ...opts.headers,
+          },
+          body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
           signal: AbortSignal.timeout(this.o.timeoutMs),
         });
         status = res.status;

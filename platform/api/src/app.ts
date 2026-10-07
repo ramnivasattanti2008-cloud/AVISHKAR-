@@ -21,6 +21,8 @@ import { authRoutes } from "./routes/auth.js";
 import { geocodeRoutes } from "./routes/geocode.js";
 import { healthRoutes } from "./routes/health.js";
 import { propertyRoutes } from "./routes/properties.js";
+import { twinRoutes } from "./routes/twin.js";
+import { weatherRoutes } from "./routes/weather.js";
 
 export interface AppDeps {
   config: Config;
@@ -67,6 +69,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         { name: "account", description: "Export and delete your data" },
         { name: "properties", description: "Saved properties" },
         { name: "geocoding", description: "Address and place search" },
+        { name: "weather", description: "Weather and irradiance with provenance" },
+        { name: "twin", description: "Energy Twin: versioned snapshot of a property" },
         { name: "system", description: "Health" },
       ],
     },
@@ -121,5 +125,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(accountRoutes, { deps });
   await app.register(geocodeRoutes, { deps });
   await app.register(propertyRoutes, { deps });
+  await app.register(weatherRoutes, { deps });
+  await app.register(twinRoutes, { deps });
   return app;
 }

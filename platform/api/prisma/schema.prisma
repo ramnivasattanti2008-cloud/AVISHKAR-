@@ -32,6 +32,21 @@ enum DataStatus {
   UNAVAILABLE
 }
 
+/// ANALYSIS: the provider's current model analysis (what the weather is now, per its model; not a station reading).
+/// FORECAST: a value the provider predicted at fetch time. HISTORICAL: reanalysis of the past (for evaluation).
+enum ObservationKind {
+  ANALYSIS
+  FORECAST
+  HISTORICAL
+}
+
+/// How complete the inputs behind an Energy Twin are (not a statistical confidence).
+enum DataQuality {
+  MINIMAL
+  PARTIAL
+  FULL
+}
+
 enum GeometryKind {
   BUILDING_FOOTPRINT
   USER_POLYGON
@@ -91,6 +106,7 @@ model Property {
 
   owner      User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   geometries PropertyGeometry[]
+  twins      EnergyTwin[]
 
   @@index([ownerId])
   @@index([location], type: Gist)
@@ -185,4 +201,95 @@ model CacheEntry {
 
   @@index([expiresAt])
   @@map("cache_entries")
+}
+
+/// Weather values as issued, kept per fetch so forecast error can be measured against what actually happened later
+/// (spec sections 13, 38, 39). Keyed by a 0.05 degree cell (about 5 km), not by property, so neighbours share rows.
+model WeatherObservation {
+  id        BigInt          @id @default(autoincrement())
+  provider  String
+  /// round(latitude * 20) and round(longitude * 20): a 0.05 degree grid cell.
+  latCell   Int             @map("lat_cell")
+  lonCell   Int             @map("lon_cell")
+  variable  String
+  kind      ObservationKind
+  /// The instant the value refers to (UTC).
+  validAt   DateTime        @map("valid_at") @db.Timestamptz(3)
+  value     Float
+  unit      String
+  /// When this platform fetched it: the forecast "issue time" for FORECAST rows.
+  fetchedAt DateTime        @map("fetched_at") @db.Timestamptz(3)
+
+  @@unique([provider, latCell, lonCell, variable, kind, validAt, fetchedAt])
+  @@index([latCell, lonCell, variable, validAt])
+  @@index([fetchedAt])
+  @@map("weather_observations")
+}
+
+/// One Sentinel-2 (or other) acquisition seen over a place. Metadata only; no imagery is stored (spec section 11).
+model SatelliteObservation {
+  id               String    @id @default(uuid()) @db.Uuid
+  provider         String
+  /// The catalogue's own id for the scene.
+  sceneId          String    @map("scene_id")
+  satellite        String
+  sensor           String
+  acquiredAt       DateTime  @map("acquired_at") @db.Timestamptz(3)
+  processedAt      DateTime? @map("processed_at") @db.Timestamptz(3)
+  cloudPercent     Float?    @map("cloud_percent")
+  /// GeoJSON polygon of the scene footprint.
+  footprint        Json
+  source           String
+  processingStatus String    @map("processing_status")
+  thumbnailUrl     String?   @map("thumbnail_url")
+  fetchedAt        DateTime  @default(now()) @map("fetched_at") @db.Timestamptz(3)
+
+  @@unique([provider, sceneId])
+  @@index([acquiredAt])
+  @@map("satellite_observations")
+}
+
+/// A versioned snapshot of what AVISHKAR knows about a property (spec section 8). Every analysis or major data change adds
+/// a version; old versions are kept. Scalar results are columns; the lists are short documentation of where they came from.
+model EnergyTwin {
+  id         String      @id @default(uuid()) @db.Uuid
+  propertyId String      @map("property_id") @db.Uuid
+  version    Int
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Why this version was made: analyze, geometry-added, ...
+  reason     String
+  dataQuality DataQuality @map("data_quality")
+  /// Weighted share of the inputs for a complete twin that are available, 0..1. See confidence_basis.
+  confidence Float
+  confidenceBasis Json   @map("confidence_basis")
+  latitude   Float
+  longitude  Float
+  elevationM Float?      @map("elevation_m")
+
+  geometryKind       GeometryKind? @map("geometry_kind")
+  roofAreaM2         Float?        @map("roof_area_m2")
+  usableRoofAreaM2   Float?        @map("usable_roof_area_m2")
+  solarCapacityKwEstimate Float?   @map("solar_capacity_kw_estimate")
+
+  ghiKwhM2Day        Float? @map("ghi_kwh_m2_day")
+  clearSkyKwhM2Day   Float? @map("clear_sky_kwh_m2_day")
+  clearnessIndex     Float? @map("clearness_index")
+  yieldKwhPerKwpDay  Float? @map("yield_kwh_per_kwp_day")
+  estimatedDailyGenerationKwh Float? @map("estimated_daily_generation_kwh")
+  forecastNext24hGhiKwhM2     Float? @map("forecast_next_24h_ghi_kwh_m2")
+  forecastNext24hKwhPerKwp    Float? @map("forecast_next_24h_kwh_per_kwp")
+
+  satelliteObservationId String? @map("satellite_observation_id") @db.Uuid
+
+  /// [{ provider, dataType, status, ok, at, note }]: every source tried, including the ones that failed.
+  sources     Json
+  /// [{ key, value, unit, rationale }]: every assumption that went into an estimate.
+  assumptions Json
+  /// [{ what, reason }]: things the twin cannot say yet and why.
+  unavailable Json
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, version])
+  @@map("energy_twins")
 }

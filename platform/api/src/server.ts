@@ -10,7 +10,7 @@ async function main(): Promise<void> {
   const db = createDb(config.DATABASE_URL);
   const cache = new DbCache(db);
   const recorder = new DbRecorder(db, (e) => console.error("provider call telemetry failed", e)); // eslint-disable-line no-console
-  const providers = buildProviders(config, { cache, recorder });
+  const providers = buildProviders(config, { cache, recorder, db });
   const app = await buildApp({ config, db, providers, now: () => new Date() });
 
   const stop = async (signal: string) => {
