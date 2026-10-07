@@ -1,0 +1,5 @@
+# Files whose content is checksummed or executed by a shell must keep LF line endings on every platform.
+*.sh text eol=lf
+*.sql text eol=lf
+platform/api/prisma/migrations/** text eol=lf
+*.cmd text eol=crlf
