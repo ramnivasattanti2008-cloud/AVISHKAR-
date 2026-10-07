@@ -71,3 +71,38 @@ jobs:
       - name: Build
         working-directory: platform
         run: pnpm -C api build
+
+  web:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: platform/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: platform/pnpm-lock.yaml
+      - name: Install
+        working-directory: platform
+        run: pnpm install --frozen-lockfile
+      - name: API types match the committed OpenAPI document
+        working-directory: platform
+        run: |
+          pnpm -C web gen:api
+          git diff --exit-code -- web/src/lib/api-types.ts
+      - name: Typecheck
+        working-directory: platform
+        run: pnpm -C web typecheck
+      - name: Lint
+        working-directory: platform
+        run: pnpm -C web lint
+      - name: Tests
+        working-directory: platform
+        run: pnpm -C web test
+      - name: Build
+        working-directory: platform
+        run: pnpm -C web build

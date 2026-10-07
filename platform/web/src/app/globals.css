@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. A serious instrument, not a toy: neutral surfaces, one accent, tabular numerals, and a fixed colour for each
+ * data status so a value's honesty is readable at a glance. All text/background pairs meet WCAG AA contrast.
+ */
+:root {
+  color-scheme: light;
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #eaeef4;
+  --ink: #0e1726;
+  --muted: #4d5b73;
+  --line: #d3dae5;
+  --accent: #0b6b57;
+  --accent-ink: #ffffff;
+  --focus: #1d4fb3;
+
+  --tone-live-fg: #0a6b3b;        --tone-live-bg: #d9f3e4;
+  --tone-updated-fg: #8a5200;     --tone-updated-bg: #fbe9c6;
+  --tone-forecast-fg: #1d4fb3;    --tone-forecast-bg: #dbe7ff;
+  --tone-estimated-fg: #6b3fb3;   --tone-estimated-bg: #ebe1fa;
+  --tone-simulated-fg: #0c6a77;   --tone-simulated-bg: #d6f0f3;
+  --tone-demo-fg: #a1286a;        --tone-demo-bg: #fadcec;
+  --tone-reference-fg: #465267;   --tone-reference-bg: #e4e9f0;
+  --tone-unavailable-fg: #a12a2a; --tone-unavailable-bg: #fadcdc;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1017;
+  --surface: #121923;
+  --surface-2: #1a2330;
+  --ink: #e8eef7;
+  --muted: #9fb0c7;
+  --line: #2a3546;
+  --accent: #3fd0a9;
+  --accent-ink: #04251d;
+  --focus: #8db4ff;
+
+  --tone-live-fg: #6ee7a3;        --tone-live-bg: #0f3a24;
+  --tone-updated-fg: #fbbf4d;     --tone-updated-bg: #3d2a06;
+  --tone-forecast-fg: #8db4ff;    --tone-forecast-bg: #14284f;
+  --tone-estimated-fg: #c4a4ff;   --tone-estimated-bg: #2a1c4d;
+  --tone-simulated-fg: #6fd6e4;   --tone-simulated-bg: #0b3a42;
+  --tone-demo-fg: #ff9ccd;        --tone-demo-bg: #4a1633;
+  --tone-reference-fg: #aeb9cb;   --tone-reference-bg: #26303f;
+  --tone-unavailable-fg: #ff9a9a; --tone-unavailable-bg: #4a1a1a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0b1017;
+    --surface: #121923;
+    --surface-2: #1a2330;
+    --ink: #e8eef7;
+    --muted: #9fb0c7;
+    --line: #2a3546;
+    --accent: #3fd0a9;
+    --accent-ink: #04251d;
+    --focus: #8db4ff;
+
+    --tone-live-fg: #6ee7a3;        --tone-live-bg: #0f3a24;
+    --tone-updated-fg: #fbbf4d;     --tone-updated-bg: #3d2a06;
+    --tone-forecast-fg: #8db4ff;    --tone-forecast-bg: #14284f;
+    --tone-estimated-fg: #c4a4ff;   --tone-estimated-bg: #2a1c4d;
+    --tone-simulated-fg: #6fd6e4;   --tone-simulated-bg: #0b3a42;
+    --tone-demo-fg: #ff9ccd;        --tone-demo-bg: #4a1633;
+    --tone-reference-fg: #aeb9cb;   --tone-reference-bg: #26303f;
+    --tone-unavailable-fg: #ff9a9a; --tone-unavailable-bg: #4a1a1a;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers line up in columns and do not jitter as they change. */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Component classes live in the components layer so Tailwind utilities (hidden, w-full, ...) can override them. */
+@layer components {
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.badge[data-tone="live"] { color: var(--tone-live-fg); background: var(--tone-live-bg); }
+.badge[data-tone="updated"] { color: var(--tone-updated-fg); background: var(--tone-updated-bg); }
+.badge[data-tone="forecast"] { color: var(--tone-forecast-fg); background: var(--tone-forecast-bg); }
+.badge[data-tone="estimated"] { color: var(--tone-estimated-fg); background: var(--tone-estimated-bg); }
+.badge[data-tone="simulated"] { color: var(--tone-simulated-fg); background: var(--tone-simulated-bg); }
+.badge[data-tone="demo"] { color: var(--tone-demo-fg); background: var(--tone-demo-bg); }
+.badge[data-tone="reference"] { color: var(--tone-reference-fg); background: var(--tone-reference-bg); }
+.badge[data-tone="unavailable"] { color: var(--tone-unavailable-fg); background: var(--tone-unavailable-bg); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) { background: var(--surface-2); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
+
+.field {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.maplibregl-map { font: inherit; }

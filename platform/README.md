@@ -11,7 +11,7 @@ management system (`../src/avishkar_ems`) is reused as the numerical engine and 
 |---|---|
 | `api/` | Fastify + TypeScript + Prisma API: auth, properties, geocoding, health, provenance, providers (`pnpm`) |
 | `api/prisma/` | Schema and SQL migrations (PostgreSQL + PostGIS) |
-| `web/` | Next.js app (map first): not started |
+| `web/` | Next.js app (map first): map with search / click / coordinates / location, property page with the Energy Twin, forecast charts, system health |
 | `engine/` | Python FastAPI service wrapping `avishkar_ems` and new engines: not started |
 
 ## Local development
@@ -25,9 +25,13 @@ pnpm install                      # also runs `prisma generate`
 cp api/.env.example api/.env      # fill DATABASE_URL, DATABASE_URL_TEST, SESSION_SECRET
 pnpm -C api db:migrate            # applies prisma/migrations to DATABASE_URL
 pnpm -C api dev                   # http://127.0.0.1:8080  (OpenAPI: /api/openapi.json)
+pnpm -C web dev                   # http://127.0.0.1:3000  (proxies /api to the API; set API_URL to point elsewhere)
 ```
 
-Checks (same as CI): `pnpm -C api typecheck && pnpm -C api lint && pnpm -C api test && pnpm -C api build`.
+Checks (same as CI): `pnpm -C api typecheck && pnpm -C api lint && pnpm -C api test && pnpm -C api build`, and for the web app
+`pnpm -C web typecheck && pnpm -C web lint && pnpm -C web test && pnpm -C web build`.
+The API contract is the committed `api/openapi.json` (`pnpm -C api openapi` regenerates it; a test fails when it is stale);
+`pnpm -C web gen:api` regenerates the web app's types from it.
 `pnpm -C api test` runs unit tests plus integration tests against the real database in `DATABASE_URL_TEST`; without it the
 database tests are skipped, never faked. `pnpm -C api test:live` calls the real public providers (on demand, not in CI).
 

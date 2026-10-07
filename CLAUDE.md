@@ -92,8 +92,9 @@ off EMHASS's default deferrable loads: this EMS plans PV, battery and grid only.
 ## Platform (TypeScript, `platform/`)
 
 Status per spec section: `platform/STATUS.md`. Decisions: `platform/ARCHITECTURE.md`. Backend phases 1 and 2 are done and
-verified (auth, properties, PostGIS, geocoding, weather, solar resource, building outline, satellite metadata, Energy Twin);
-the web app, forecasts, optimiser and everything after are not built.
+verified (auth, properties, PostGIS, geocoding, weather, solar resource, building outline, satellite metadata, Energy Twin),
+and `platform/web` shows them (map, property page, forecast charts, system health); tariffs, assets, forecasts, optimiser
+and everything after are not built.
 
 ```bash
 pnpm -C platform install                      # also generates the Prisma client
@@ -102,7 +103,18 @@ pnpm -C platform/api test                     # unit + integration on a REAL Pos
 pnpm -C platform/api test:live                # calls the real public providers; on demand, never in CI
 pnpm -C platform/api db:migrate               # apply prisma/migrations to DATABASE_URL
 pnpm -C platform/api dev                      # API on :8080, OpenAPI at /api/openapi.json
+pnpm -C platform/api openapi                  # regenerate api/openapi.json after changing any route schema (a test fails if stale)
+pnpm -C platform/web gen:api                  # regenerate web/src/lib/api-types.ts from api/openapi.json (CI checks it is current)
+pnpm -C platform/web typecheck && pnpm -C platform/web lint && pnpm -C platform/web test && pnpm -C platform/web build
+pnpm -C platform/web dev                      # web on :3000, proxies /api to API_URL (default http://127.0.0.1:8080)
 ```
+
+- **Web** (`platform/web`): Next 16 App Router, React 19, Tailwind 4, MapLibre, recharts. It only talks to `/api` (same-origin
+  proxy, so the HttpOnly session cookie is first-party and the CSRF token is echoed from the `avk_csrf` cookie). Show every
+  number through `components/Provenance.tsx` (`Measure`, `StatusBadge`) so it wears its data label; never print an
+  UNAVAILABLE value as a number. Component classes (`.btn`, `.card`, `.field`, `.badge`) are in `@layer components` so
+  Tailwind utilities can override them. The lint rule `react-hooks/set-state-in-effect` is on: derive state, do not set it
+  synchronously in an effect. Tests pin the time zone to Asia/Kolkata (`vitest.config.ts`).
 
 - **Database on this machine**: Docker's engine is not usable, so PostgreSQL 16 + PostGIS 3.4 run inside WSL Ubuntu
   (databases `avishkar_dev`, `avishkar_test`; credentials only in the git-ignored `platform/api/.env`). WSL stops idle

@@ -69,6 +69,17 @@ function toResult(p: Place): GeocodeResult | null {
   };
 }
 
+/** Nominatim can return several OSM objects (a node and a way, say) under one display name; a person cannot tell them apart, so keep the first (most relevant). */
+function dedupeByLabel(results: GeocodeResult[]): GeocodeResult[] {
+  const seen = new Set<string>();
+  return results.filter((r) => {
+    const k = r.label.trim().toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 export class NominatimGeocoder implements GeocodingProvider {
   readonly name = "nominatim";
   constructor(private readonly deps: { http: ProviderHttp; cache: Cache }) {}
@@ -92,7 +103,7 @@ export class NominatimGeocoder implements GeocodingProvider {
           { q, format: "jsonv2", addressdetails: 1, limit, countrycodes: countries },
           { schema: SearchResponse, requestId: ctx.requestId },
         );
-        return places.map(toResult).filter((r): r is GeocodeResult => r !== null);
+        return dedupeByLabel(places.map(toResult).filter((r): r is GeocodeResult => r !== null));
       },
       now,
     );

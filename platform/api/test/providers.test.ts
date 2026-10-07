@@ -214,6 +214,21 @@ describe("NominatimGeocoder", () => {
     expect(m.value!.map((r) => r.latitude)).toEqual([18.5]);
   });
 
+  it("keeps one result per display name, the first (most relevant), and still lists different places", async () => {
+    const { geo } = make(() =>
+      json([
+        place({ place_id: 1, osm_type: "node", osm_id: 1, display_name: "Indiranagar, Bengaluru" }),
+        place({ place_id: 2, lat: "12.99", osm_type: "way", osm_id: 2, display_name: "indiranagar, bengaluru " }),
+        place({ place_id: 3, lat: "13.2", osm_type: "node", osm_id: 3, display_name: "Indiranagar, Lucknow" }),
+      ]),
+    );
+    const m = await geo.search("indiranagar");
+    expect(m.value!.map((r) => [r.label, r.osm?.id])).toEqual([
+      ["Indiranagar, Bengaluru", 1],
+      ["Indiranagar, Lucknow", 3],
+    ]);
+  });
+
   it("caches, so the second identical search does not call the provider", async () => {
     const { geo, urls } = make(() => json([place()]));
     await geo.search("Bengaluru");
