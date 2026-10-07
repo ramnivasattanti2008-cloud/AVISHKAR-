@@ -342,7 +342,7 @@ describeDb("system health and observability", () => {
     const h = res.json();
     expect(h.database.state).toBe("healthy");
     expect(h.database.postgis).toMatch(/^3\./);
-    expect(h.providers.map((p: { provider: string }) => p.provider)).toEqual(["nominatim", "open-meteo", "nasa-power", "overpass", "earth-search"]);
+    expect(h.providers.map((p: { provider: string }) => p.provider)).toEqual(["nominatim", "open-meteo", "open-meteo-previous-runs", "nasa-power", "overpass", "earth-search"]);
     expect(h.providers.every((p: { state: string; calls: number }) => p.state === "unknown" && p.calls === 0)).toBe(true);
     expect(h.status).toBe("ok");
   });

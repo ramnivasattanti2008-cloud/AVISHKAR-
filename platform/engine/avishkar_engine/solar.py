@@ -35,6 +35,7 @@ from avishkar_engine.forecast_schemas import (
 TARGET_COVERAGE = 0.8
 KT_MAX = 1.25  # irradiance above this multiple of a clear sky is a provider artefact: clipped, and counted in the notes
 MIN_BIN_SAMPLES = 30
+MIN_HOLDOUT_HOURS = 30
 MIN_CALIBRATION_HOURS = 120
 SUN_UP_CS_GHI = 50.0  # W/m2 of clear-sky GHI below which an hour is too dark to say anything about clouds
 KT_BINS = (("overcast", 0.0, 0.35), ("partly cloudy", 0.35, 0.7), ("clear", 0.7, np.inf))
@@ -147,13 +148,19 @@ def _fit_bands(req: SolarForecastRequest) -> tuple[list[tuple[float, float, floa
         return out
 
     fit = stats(fit_sl)
+    # a sky condition the first 80% saw too rarely falls back to that part's pooled error: the same rule the issued band uses,
+    # so the check scores the band as it will actually be issued
+    fit_pooled = (float(np.quantile(err[fit_sl], 0.1)), float(np.quantile(err[fit_sl], 0.5)), float(np.quantile(err[fit_sl], 0.9)))
+    fit_resolved = [f if f is not None else fit_pooled for f in fit]
     holdout_cov: float | None = None
     test_n = len(err[test_sl])
-    if test_n >= 30 and all(f is not None for f in fit):
+    if test_n >= MIN_HOLDOUT_HOURS:
         b = _bin_of(kt_f[test_sl])
-        lo = np.array([fit[i][0] for i in b])  # type: ignore[index]
-        hi = np.array([fit[i][2] for i in b])  # type: ignore[index]
+        lo = np.array([fit_resolved[i][0] for i in b])
+        hi = np.array([fit_resolved[i][2] for i in b])
         holdout_cov = float(np.mean((err[test_sl] >= lo) & (err[test_sl] <= hi)))
+    else:
+        notes.append(f"The band could not be checked on hours it had not seen: only {test_n} were held back and at least {MIN_HOLDOUT_HOURS} are needed.")
     final = stats(slice(0, None))
     bin_counts = np.bincount(_bin_of(kt_f), minlength=len(KT_BINS))
     # a condition seen too rarely to calibrate falls back to the pooled error, and the notes say so
@@ -277,4 +284,4 @@ def evaluate(req: SolarEvaluateRequest) -> SolarEvaluateResponse:
         skill_c = round(1.0 - fm.mae_kw / cs.mae_kw, 4) if cs.mae_kw > 0 else None
     if fm.mape_pct is not None and fm.wape_pct is not None and fm.mape_pct > 3 * max(fm.wape_pct, 1e-9):
         notes.append("MAPE is much larger than WAPE because it is dominated by hours with very little output; WAPE is the steadier figure.")
-    return SolarEvaluateResponse(forecast=fm, persistence_24h=pers, clear_sky=cs, skill_vs_persistence=skill_p, skill_vs_clear_sky=skill_c, notes=notes)
+    return SolarEvaluateResponse(forecast=fm, persistence_baseline=pers, clear_sky=cs, skill_vs_persistence=skill_p, skill_vs_clear_sky=skill_c, notes=notes)

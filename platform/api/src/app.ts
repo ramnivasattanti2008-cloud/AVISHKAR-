@@ -22,6 +22,7 @@ import { accountRoutes } from "./routes/account.js";
 import { assetRoutes } from "./routes/assets.js";
 import { authRoutes } from "./routes/auth.js";
 import { energyRoutes } from "./routes/energy.js";
+import { forecastRoutes } from "./routes/forecast.js";
 import { geocodeRoutes } from "./routes/geocode.js";
 import { healthRoutes } from "./routes/health.js";
 import { policyRoutes } from "./routes/policy.js";
@@ -81,6 +82,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         { name: "twin", description: "Energy Twin: versioned snapshot of a property" },
         { name: "tariffs", description: "Electricity tariffs: catalogue from regulator orders, your own, and bill estimates" },
         { name: "energy", description: "Meter data you import, and the Energy DNA built from it" },
+        { name: "forecast", description: "Forecasts of solar output and electricity use, with calibrated bands and how well each has done" },
         { name: "assets", description: "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs" },
         { name: "policy", description: "Subsidy and net-metering rules as sourced configuration, and the eligibility calculator" },
         { name: "system", description: "Health" },
@@ -145,5 +147,6 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(policyRoutes, { deps });
   await app.register(assetRoutes, { deps });
   await app.register(energyRoutes, { deps });
+  await app.register(forecastRoutes, { deps });
   return app;
 }

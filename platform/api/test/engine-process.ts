@@ -16,7 +16,7 @@ export function pythonPath(): string | null {
   const candidates = [process.env.ENGINE_PYTHON, path.join(REPO_ROOT, ".venv", "Scripts", "python.exe"), path.join(REPO_ROOT, ".venv", "bin", "python"), "python3", "python"].filter((c): c is string => Boolean(c));
   for (const c of candidates) {
     if (c.includes(path.sep) && !existsSync(c)) continue;
-    const r = spawnSync(c, ["-c", "import fastapi, scipy, highspy, pydantic"], { encoding: "utf8" });
+    const r = spawnSync(c, ["-c", "import fastapi, scipy, highspy, pydantic, pvlib, sklearn, pandas"], { encoding: "utf8" });
     if (r.status === 0) return c;
   }
   return null;

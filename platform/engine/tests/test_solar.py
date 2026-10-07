@@ -204,6 +204,15 @@ class TestBands:
         r = run(w=self.forecast_day(0.5), history=hist)
         assert any("pooled error is used" in n for n in r.notes)
         assert r.p10_kw is not None
+        # the band is still scored on the held-out hours, using the same pooled fallback the issued band uses
+        assert r.calibration.holdout_coverage is not None and 0.5 <= r.calibration.holdout_coverage <= 1.0
+
+    def test_a_history_too_short_to_hold_hours_back_says_it_could_not_check_the_band(self):
+        hist, *_ = make_history(n_days=12)
+        r = run(w=self.forecast_day(0.7), history=hist)
+        assert r.p10_kw is not None  # enough hours to issue a band...
+        assert r.calibration.holdout_coverage is None  # ...but not enough left over to test it
+        assert any("could not be checked on hours it had not seen" in n for n in r.notes)
 
     def test_nothing_is_produced_outside_daylight(self):
         hist, *_ = make_history()
@@ -243,7 +252,7 @@ class TestEvaluate:
 
     def test_fewer_than_48_hours_cannot_score_persistence_and_says_so(self):
         r = solar.evaluate(SolarEvaluateRequest(forecast_kw=[1.0] * 30, actual_kw=[1.0] * 30))
-        assert r.persistence_24h is None and r.skill_vs_persistence is None
+        assert r.persistence_baseline is None and r.skill_vs_persistence is None
         assert any("Fewer than 48 hours" in n for n in r.notes)
 
     @pytest.mark.parametrize(("patch", "fragment"), [({"actual_kw": [1.0] * 10, "forecast_kw": [1.0] * 10}, "at least 24 hours"), ({"forecast_kw": [1.0] * 25}, "same hours")])

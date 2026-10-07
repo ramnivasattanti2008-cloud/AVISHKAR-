@@ -1,6 +1,16 @@
 import type { z } from "zod";
 import { AppError } from "../errors.js";
-import { EngineHealth, OptimiseResponse, type OptimiseRequest } from "./schemas.js";
+import {
+  EngineHealth,
+  LoadForecastResponse,
+  type LoadForecastRequest,
+  OptimiseResponse,
+  type OptimiseRequest,
+  SolarEvaluateResponse,
+  type SolarEvaluateRequest,
+  SolarForecastResponse,
+  type SolarForecastRequest,
+} from "./schemas.js";
 
 export interface EngineOptions {
   baseUrl: string;
@@ -29,6 +39,18 @@ export class EngineClient {
 
   async optimise(req: OptimiseRequest, ctx: Ctx = {}): Promise<OptimiseResponse> {
     return this.call("POST", "/v1/optimise", req, OptimiseResponse, ctx, this.o.timeoutMs);
+  }
+
+  async solarForecast(req: SolarForecastRequest, ctx: Ctx = {}): Promise<SolarForecastResponse> {
+    return this.call("POST", "/v1/solar/forecast", req, SolarForecastResponse, ctx, this.o.timeoutMs);
+  }
+
+  async solarEvaluate(req: SolarEvaluateRequest, ctx: Ctx = {}): Promise<SolarEvaluateResponse> {
+    return this.call("POST", "/v1/solar/evaluate", req, SolarEvaluateResponse, ctx, this.o.timeoutMs);
+  }
+
+  async loadForecast(req: LoadForecastRequest, ctx: Ctx = {}): Promise<LoadForecastResponse> {
+    return this.call("POST", "/v1/load/forecast", req, LoadForecastResponse, ctx, this.o.timeoutMs);
   }
 
   private async call<S extends z.ZodType>(method: "GET" | "POST", path: string, body: unknown, schema: S, ctx: Ctx, timeoutMs: number): Promise<z.output<S>> {

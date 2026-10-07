@@ -31,7 +31,8 @@ export function formatAge(seconds: number): string {
 export function formatNumber(v: number, unit?: string): string {
   const abs = Math.abs(v);
   const digits = abs >= 1000 ? 0 : abs >= 100 ? 1 : abs >= 10 ? 1 : 2;
-  const text = v.toLocaleString("en-IN", { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+  // a tiny negative rounds to "-0": say "0"
+  const text = v.toLocaleString("en-IN", { maximumFractionDigits: digits, minimumFractionDigits: 0 }).replace(/^-(0(\.0*)?)$/, "$1");
   return unit ? `${text} ${unit}` : text;
 }
 
@@ -72,4 +73,15 @@ export function parseCoordinates(text: string): { latitude: number; longitude: n
   if (m[4]?.toUpperCase() === "W") lon = -Math.abs(lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
   return { latitude: lat, longitude: lon };
+}
+
+const POINTS = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
+/** "south" for 180: the direction a panel faces, in words, from degrees clockwise from north. */
+export function compass(azimuthDeg: number): string {
+  return POINTS[Math.round((((azimuthDeg % 360) + 360) % 360) / 45) % 8]!;
+}
+
+/** A share between 0 and 1 as a percentage: "80%". */
+export function formatPercent(share: number, digits = 0): string {
+  return `${(share * 100).toFixed(digits)}%`;
 }

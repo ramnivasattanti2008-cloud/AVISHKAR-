@@ -2,6 +2,7 @@ import type { Config } from "../config.js";
 import type { Db } from "../db.js";
 import type { Cache } from "./cache.js";
 import { type BuildingFootprintProvider, OverpassFootprints } from "./footprint.js";
+import { type ForecastHistoryProvider, OpenMeteoPreviousRuns } from "./forecast-history.js";
 import { type GeocodingProvider, NominatimGeocoder } from "./geocoding.js";
 import { ProviderHttp } from "./http.js";
 import type { CallRecorder } from "./recorder.js";
@@ -14,6 +15,7 @@ import { persistWeather } from "./weather-store.js";
 export interface Providers {
   geocoding: GeocodingProvider;
   weather: WeatherProvider;
+  forecastHistory: ForecastHistoryProvider;
   solarResource: SolarResourceProvider;
   footprints: BuildingFootprintProvider;
   satellite: SatelliteProvider;
@@ -28,7 +30,7 @@ export interface ProviderDeps {
 }
 
 /** Names reported by the health endpoint; keep in step with the providers actually built. */
-export const PROVIDER_NAMES = ["nominatim", "open-meteo", "nasa-power", "overpass", "earth-search"] as const;
+export const PROVIDER_NAMES = ["nominatim", "open-meteo", "open-meteo-previous-runs", "nasa-power", "overpass", "earth-search"] as const;
 
 export function buildProviders(config: Config, deps: ProviderDeps): Providers {
   const http = (provider: string, baseUrl: string, extra: { minIntervalMs?: number; timeoutMs?: number; retries?: number } = {}) =>
@@ -51,6 +53,7 @@ export function buildProviders(config: Config, deps: ProviderDeps): Providers {
       cache: deps.cache,
       onFresh: db ? async (raw, fetchedAt) => void (await persistWeather(db, "open-meteo", raw, fetchedAt)) : undefined,
     }),
+    forecastHistory: new OpenMeteoPreviousRuns({ http: http("open-meteo-previous-runs", config.FORECAST_HISTORY_BASE_URL, { timeoutMs: 20_000 }), cache: deps.cache }),
     solarResource: new NasaPowerSolarResource({ http: http("nasa-power", config.SOLAR_RESOURCE_BASE_URL, { timeoutMs: 30_000 }), cache: deps.cache }),
     // Overpass is slow and intermittently answers 504: a long timeout, one retry per server, then the next mirror.
     footprints: new OverpassFootprints({

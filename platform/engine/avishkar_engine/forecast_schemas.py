@@ -114,7 +114,7 @@ class BandCalibration(Wire):
 
 class SolarForecastResponse(Wire):
     times: list[str] = Field(description="The label of each hour, in UTC, as sent.")
-    clear_sky_kw: list[float] = Field(description="What the system would produce under a cloudless sky: an upper bound.")
+    clear_sky_kw: list[float] = Field(description="What the system would produce under a cloudless sky, from a clear-sky model: a reference curve, not a ceiling. The forecast can sit above it where the weather model's irradiance exceeds the clear-sky model, up to 1.25 times, beyond which it is clipped.")
     p50_kw: list[float]
     p10_kw: list[float] | None
     p90_kw: list[float] | None
@@ -157,7 +157,7 @@ class Metrics(Wire):
 
 class SolarEvaluateResponse(Wire):
     forecast: Metrics
-    persistence_24h: Metrics | None = Field(description="The naive baseline: the output of the same hour a day earlier.")
+    persistence_baseline: Metrics | None = Field(description="The naive baseline: the output of the same hour a day earlier.")
     clear_sky: Metrics | None
     skill_vs_persistence: float | None = Field(description="1 - MAE(forecast)/MAE(persistence): above 0 means the forecast beats the naive baseline.")
     skill_vs_clear_sky: float | None

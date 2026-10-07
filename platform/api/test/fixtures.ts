@@ -55,6 +55,35 @@ export function openMeteoBody(now: Date, over: { current?: Record<string, unknow
   };
 }
 
+/**
+ * What the previous-runs API returns: for each hour of the last `pastDays` days, the analysis and the forecast issued a day
+ * earlier. Cloudiness differs by day, and the forecast is off by a deterministic few percent that depends on the day, so a
+ * band calibrated from it has something real to learn. Shape verified against the live API.
+ */
+export function previousRunsBody(now: Date, pastDays = 28) {
+  const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - pastDays * 86_400_000;
+  const hours = (pastDays + 1) * 24;
+  const times = Array.from({ length: hours }, (_, h) => new Date(start + h * 3_600_000).toISOString().slice(0, 16));
+  const clear = (h: number) => (h >= 1 && h <= 12 ? 850 * Math.sin(((h - 0.5) / 12) * Math.PI) : 0);
+  const day = (t: string) => Math.floor((Date.parse(`${t}:00Z`) - start) / 86_400_000);
+  const cloud = (d: number) => 0.35 + 0.65 * (((d * 37) % 11) / 10); // 0.35 to 1.0
+  const miss = (d: number, h: number) => 1 + 0.18 * Math.sin(d * 1.7 + h * 0.4);
+  const actual = times.map((t) => Math.round(clear(Number(t.slice(11, 13))) * cloud(day(t))));
+  return {
+    latitude: 12.970123,
+    longitude: 77.56364,
+    elevation: 910,
+    utc_offset_seconds: 0,
+    timezone: "GMT",
+    hourly: {
+      time: times,
+      shortwave_radiation: actual,
+      shortwave_radiation_previous_day1: times.map((t, i) => Math.round(actual[i]! * miss(day(t), Number(t.slice(11, 13))))),
+      temperature_2m: times.map(() => 27),
+    },
+  };
+}
+
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 export const POWER_ANNUAL_GHI = 5.4809;
 export function powerBody() {
@@ -101,6 +130,7 @@ type Route = (u: URL) => Response | Promise<Response>;
 export interface Routes {
   nominatim?: Route;
   openMeteo?: Route;
+  previousRuns?: Route;
   power?: Route;
   overpass?: Route;
   stac?: Route;
@@ -111,6 +141,7 @@ export function router(now: () => Date, over: Routes = {}): Route {
   return (u) => {
     const h = u.hostname;
     if (h.includes("nominatim")) return (over.nominatim ?? (() => json([])))(u);
+    if (h.includes("previous-runs")) return (over.previousRuns ?? (() => json(previousRunsBody(now()))))(u);
     if (h.includes("open-meteo")) return (over.openMeteo ?? (() => json(openMeteoBody(now()))))(u);
     if (h.includes("nasa.gov")) return (over.power ?? (() => json(powerBody())))(u);
     if (h.includes("overpass")) return (over.overpass ?? (() => json(overpassBody([buildingWay(111, square(LAT, LON, 10))]))))(u);

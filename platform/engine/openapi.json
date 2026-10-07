@@ -1390,7 +1390,7 @@
             "title": "Notes",
             "type": "array"
           },
-          "persistence24H": {
+          "persistenceBaseline": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/Metrics"
@@ -1427,7 +1427,7 @@
         },
         "required": [
           "forecast",
-          "persistence24H",
+          "persistenceBaseline",
           "clearSky",
           "skillVsPersistence",
           "skillVsClearSky",
@@ -1489,7 +1489,7 @@
             ]
           },
           "clearSkyKw": {
-            "description": "What the system would produce under a cloudless sky: an upper bound.",
+            "description": "What the system would produce under a cloudless sky, from a clear-sky model: a reference curve, not a ceiling. The forecast can sit above it where the weather model's irradiance exceeds the clear-sky model, up to 1.25 times, beyond which it is clipped.",
             "items": {
               "type": "number"
             },

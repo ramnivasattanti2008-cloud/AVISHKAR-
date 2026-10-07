@@ -40,6 +40,8 @@ const Env = z.object({
   WEATHER_PROVIDER: z.enum(["open-meteo"]).default("open-meteo"),
   WEATHER_BASE_URL: z.url().default("https://api.open-meteo.com"),
   WEATHER_ARCHIVE_BASE_URL: z.url().default("https://archive-api.open-meteo.com"),
+  /** Day-ahead forecasts as they were issued for past hours, to measure how wrong the irradiance forecast usually is. */
+  FORECAST_HISTORY_BASE_URL: z.url().default("https://previous-runs-api.open-meteo.com"),
   WEATHER_API_KEY: z.string().optional(),
 
   SOLAR_RESOURCE_PROVIDER: z.enum(["nasa-power"]).default("nasa-power"),

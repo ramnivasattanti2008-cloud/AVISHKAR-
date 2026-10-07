@@ -147,6 +147,7 @@ model Property {
   energyImports      EnergyImport[]
   energyObservations EnergyObservation[]
   energyDna  EnergyDna[]
+  forecastRuns ForecastRun[]
 
   @@index([ownerId])
   @@index([tariffPlanId])
@@ -654,4 +655,39 @@ model EnergyDna {
 
   @@unique([propertyId, version])
   @@map("energy_dna")
+}
+
+enum ForecastKind {
+  SOLAR
+  LOAD
+}
+
+/// One forecast exactly as it was issued, kept so that a later job can score it against what really happened (spec sections
+/// 13, 38 and 39). At most one is stored per property, kind and hour: the first one issued in that hour.
+model ForecastRun {
+  id         String       @id @default(uuid()) @db.Uuid
+  propertyId String       @map("property_id") @db.Uuid
+  kind       ForecastKind
+  issuedAt   DateTime     @map("issued_at") @db.Timestamptz(3)
+  /// issued_at cut to the hour: the uniqueness key.
+  issuedHour DateTime     @map("issued_hour") @db.Timestamptz(3)
+  /// The label of the first hour covered, as the engine returned it (UTC), and how many hours.
+  firstHour  DateTime     @map("first_hour") @db.Timestamptz(3)
+  hours      Int
+  /// "solar-pvlib-solis" or the load method that won its holdout, with the engine version that produced it.
+  model         String
+  engineVersion String @map("engine_version")
+  /// { times: string[], p10Kw: (number|null)[], p50Kw: number[], p90Kw: (number|null)[] }
+  series     Json
+  /// What it was built from: systems, history window, band calibration, holdout scores. Enough to explain it later.
+  basis      Json
+  /// Filled in by the evaluation job once the hours have passed and actuals exist.
+  evaluatedAt DateTime? @map("evaluated_at") @db.Timestamptz(3)
+  evaluation  Json?
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, kind, issuedHour])
+  @@index([propertyId, kind, issuedAt])
+  @@map("forecast_runs")
 }

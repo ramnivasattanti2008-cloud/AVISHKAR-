@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { STATUS, formatAge, formatDateTime, formatNumber, parseCoordinates, positionLabel } from "./format";
+import { STATUS, compass, formatAge, formatDateTime, formatNumber, formatPercent, parseCoordinates, positionLabel } from "./format";
 import type { DataStatus } from "./types";
 
 const ALL: DataStatus[] = ["LIVE", "UPDATED", "FORECAST", "ESTIMATED", "SIMULATED", "DEMO", "REFERENCE", "UNAVAILABLE"];
@@ -35,7 +35,22 @@ describe("formatAge", () => {
   ])("%d seconds is %s", (s, text) => expect(formatAge(s)).toBe(text));
 });
 
+describe("compass and formatPercent", () => {
+  it("names the way a panel faces from degrees clockwise from north, wrapping around", () => {
+    expect([0, 90, 180, 270, 135, 359, 360, -90].map(compass)).toEqual(["north", "east", "south", "west", "south-east", "north", "north", "west"]);
+  });
+  it("shows a share as a percentage", () => {
+    expect(formatPercent(0.8)).toBe("80%");
+    expect(formatPercent(0.0786, 1)).toBe("7.9%");
+  });
+});
+
 describe("formatNumber", () => {
+  it("never prints a tiny negative as -0", () => {
+    expect(formatNumber(-0.0004)).toBe("0");
+    expect(formatNumber(-0.0004, "kW")).toBe("0 kW");
+    expect(formatNumber(-0.4)).toBe("-0.4");
+  });
   it("keeps useful precision at each magnitude and groups in the Indian style", () => {
     expect(formatNumber(4.1137)).toBe("4.11");
     expect(formatNumber(21.44)).toBe("21.4");

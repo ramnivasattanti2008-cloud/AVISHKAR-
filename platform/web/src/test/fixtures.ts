@@ -1,4 +1,4 @@
-import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, Property, Provenance, SolarSystem, TariffPlan } from "@/lib/types";
+import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, LoadForecast, Property, Provenance, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -231,6 +231,76 @@ export function energySummary(over: Partial<EnergySummary> = {}): EnergySummary 
     dailyKwh: days,
     dna: energyDna(),
     dnaUnavailableReason: null,
+    ...over,
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------- forecasts
+
+const prov = (over: Partial<Provenance> = {}) => provenance({ provider: "avishkar-engine", source: "AVISHKAR solar model (pvlib) driven by the Open-Meteo irradiance forecast", dataType: "solar_output_forecast", status: "FORECAST", modelVersion: "engine-0.1.0", ...over });
+
+/** Two days of hourly values (UTC labels): a sun that peaks at 06-07 UTC, 80% / 120% around the central estimate. */
+export function solarForecast(over: Partial<SolarForecast> = {}): SolarForecast {
+  const hours = Array.from({ length: 48 }, (_, h) => {
+    const hod = h % 24;
+    const clear = hod >= 1 && hod <= 12 ? 4 * Math.sin(((hod - 0.5) / 12) * Math.PI) : 0;
+    const p50 = clear * 0.7;
+    return { time: new Date(Date.UTC(2026, 9, 7, h)).toISOString(), clearSkyKw: clear, p50Kw: p50, p10Kw: p50 * 0.8, p90Kw: p50 * 1.2 };
+  });
+  return {
+    propertyId: PROPERTY_ID,
+    generatedAt: "2026-10-07T09:00:00.000Z",
+    systems: [{ id: "33333333-3333-4333-8333-333333333333", name: "Roof", status: "EXISTING", capacityKwp: 5, tiltDeg: 12, azimuthDeg: 180, lossFraction: 0.14, lossBasis: "ASSUMPTION" }],
+    hours: { value: hours, unit: "kW", provenance: prov() },
+    energy: { value: { kwhP50: 31.4, kwhP10: 25.1, kwhP90: 37.7, kwhClearSky: 44.9, yieldKwhPerKwpP50: 6.28 }, unit: "kWh", provenance: prov() },
+    band: { available: true, reason: null, calibration: { method: "empirical", hoursUsed: 330, bins: [], medianResidualKt: 0, holdoutHours: 80, holdoutCoverage: 0.79, targetCoverage: 0.8 } },
+    weather: { provider: "open-meteo", fetchedAt: "2026-10-07T08:55:00.000Z", stale: false, grid: { latitude: 12.97, longitude: 77.56 }, elevationM: 910 },
+    assumptions: ["Fixed system losses of 14% (assumed)."],
+    notes: [],
+    ...over,
+  };
+}
+
+export function solarPerformance(over: Partial<SolarPerformance> = {}): SolarPerformance {
+  const m = (mae: number) => ({ hours: 672, maeKw: mae, rmseKw: mae * 1.4, mapePct: 22, wapePct: mae * 20, biasKw: 0.04 });
+  return {
+    propertyId: PROPERTY_ID,
+    generatedAt: "2026-10-07T09:00:00.000Z",
+    result: {
+      value: { window: { from: "2026-09-09T00:00:00Z", to: "2026-10-07T06:00:00.000Z", hours: 672 }, forecast: m(0.3), persistenceBaseline: m(0.5), clearSky: m(0.9), skillVsPersistence: 0.4, skillVsClearSky: 0.67 },
+      provenance: prov({ status: "ESTIMATED", dataType: "solar_forecast_skill", notes: ["Estimated: scored against analysis."] }),
+    },
+    basis: "A measure of the weather forecast, not of metered panel output.",
+    notes: [],
+    ...over,
+  };
+}
+
+export function loadForecast(over: Partial<LoadForecast> = {}): LoadForecast {
+  const hours = Array.from({ length: 24 }, (_, h) => {
+    const p50 = 0.5 + (h >= 18 && h < 22 ? 2 : 0);
+    return { time: new Date(Date.UTC(2026, 9, 7, h)).toISOString(), p10Kw: p50 * 0.8, p50Kw: p50, p90Kw: p50 * 1.3, peakProbability: h >= 18 && h < 22 ? 0.7 : 0.01 };
+  });
+  const lp = (over2: Partial<Provenance> = {}) => provenance({ provider: "avishkar-engine", source: "AVISHKAR load model on this property's own meter readings", dataType: "load_forecast", status: "FORECAST", ...over2 });
+  return {
+    propertyId: PROPERTY_ID,
+    generatedAt: "2026-10-07T09:00:00.000Z",
+    hours: { value: hours, unit: "kW", provenance: lp() },
+    energy: { value: { kwhP50: 28.4 }, unit: "kWh", provenance: lp() },
+    peakThresholdKw: 2.5,
+    model: {
+      selectedMethod: "same_hour_of_week",
+      holdoutDays: 14,
+      historyDays: 70,
+      gapsShare: 0.01,
+      methods: [
+        { method: "same_hour_of_week", description: "Mean of the same hour of the week over up to the last 8 weeks", maeKw: 0.08, rmseKw: 0.11, wapePct: 6.2, biasKw: 0, coverage80: 0.81 },
+        { method: "last_week", description: "The value at the same hour a week earlier", maeKw: 0.14, rmseKw: 0.2, wapePct: 11, biasKw: 0.01, coverage80: 0.79 },
+      ],
+    },
+    history: { from: "2026-07-30T00:00:00Z", to: "2026-10-07T00:00:00.000Z", intervalMinutes: 60, readingsUsed: 1680, readingsOtherInterval: 0, readingsOffGrid: 0, emptyIntervals: 12, dataEndsDaysAgo: 0.4 },
+    assumptions: [],
+    notes: [],
     ...over,
   };
 }

@@ -437,6 +437,140 @@
         ],
         "type": "object"
       },
+      "BandCalibration": {
+        "additionalProperties": false,
+        "properties": {
+          "bins": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "p10": {
+                  "type": "number"
+                },
+                "p50": {
+                  "type": "number"
+                },
+                "p90": {
+                  "type": "number"
+                },
+                "samples": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "name",
+                "samples",
+                "p10",
+                "p50",
+                "p90"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "holdoutCoverage": {
+            "description": "Share of hours the band had not seen that fell inside it. About 0.8 is what an 80% band should score.",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "holdoutHours": {
+            "type": "number"
+          },
+          "hoursUsed": {
+            "type": "number"
+          },
+          "medianResidualKt": {
+            "type": "number"
+          },
+          "method": {
+            "type": "string"
+          },
+          "targetCoverage": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "method",
+          "hoursUsed",
+          "bins",
+          "medianResidualKt",
+          "holdoutHours",
+          "holdoutCoverage",
+          "targetCoverage"
+        ],
+        "type": "object"
+      },
+      "BandCalibrationInput": {
+        "properties": {
+          "bins": {
+            "items": {
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "p10": {
+                  "type": "number"
+                },
+                "p50": {
+                  "type": "number"
+                },
+                "p90": {
+                  "type": "number"
+                },
+                "samples": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "name",
+                "samples",
+                "p10",
+                "p50",
+                "p90"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "holdoutCoverage": {
+            "description": "Share of hours the band had not seen that fell inside it. About 0.8 is what an 80% band should score.",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "holdoutHours": {
+            "type": "number"
+          },
+          "hoursUsed": {
+            "type": "number"
+          },
+          "medianResidualKt": {
+            "type": "number"
+          },
+          "method": {
+            "type": "string"
+          },
+          "targetCoverage": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "method",
+          "hoursUsed",
+          "bins",
+          "medianResidualKt",
+          "holdoutHours",
+          "holdoutCoverage",
+          "targetCoverage"
+        ],
+        "type": "object"
+      },
       "Battery": {
         "additionalProperties": false,
         "properties": {
@@ -4050,6 +4184,526 @@
         ],
         "type": "object"
       },
+      "LoadForecast": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "energy": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "kwhP50": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kwhP50"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "history": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "dataEndsDaysAgo": {
+                    "type": "number"
+                  },
+                  "emptyIntervals": {
+                    "type": "number"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "intervalMinutes": {
+                    "type": "number"
+                  },
+                  "readingsOffGrid": {
+                    "type": "number"
+                  },
+                  "readingsOtherInterval": {
+                    "type": "number"
+                  },
+                  "readingsUsed": {
+                    "type": "number"
+                  },
+                  "to": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to",
+                  "intervalMinutes",
+                  "readingsUsed",
+                  "readingsOtherInterval",
+                  "readingsOffGrid",
+                  "emptyIntervals",
+                  "dataEndsDaysAgo"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hours": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "$ref": "#/components/schemas/LoadHour"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "gapsShare": {
+                    "type": "number"
+                  },
+                  "historyDays": {
+                    "type": "number"
+                  },
+                  "holdoutDays": {
+                    "type": "number"
+                  },
+                  "methods": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "biasKw": {
+                          "type": "number"
+                        },
+                        "coverage80": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "maeKw": {
+                          "type": "number"
+                        },
+                        "method": {
+                          "type": "string"
+                        },
+                        "rmseKw": {
+                          "type": "number"
+                        },
+                        "wapePct": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "method",
+                        "description",
+                        "maeKw",
+                        "rmseKw",
+                        "wapePct",
+                        "biasKw",
+                        "coverage80"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "selectedMethod": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "selectedMethod",
+                  "methods",
+                  "holdoutDays",
+                  "historyDays",
+                  "gapsShare"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "peakThresholdKw": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "propertyId",
+          "generatedAt",
+          "hours",
+          "energy",
+          "peakThresholdKw",
+          "model",
+          "history",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "LoadForecastInput": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "energy": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "kwhP50": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kwhP50"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "history": {
+            "anyOf": [
+              {
+                "properties": {
+                  "dataEndsDaysAgo": {
+                    "type": "number"
+                  },
+                  "emptyIntervals": {
+                    "type": "number"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "intervalMinutes": {
+                    "type": "number"
+                  },
+                  "readingsOffGrid": {
+                    "type": "number"
+                  },
+                  "readingsOtherInterval": {
+                    "type": "number"
+                  },
+                  "readingsUsed": {
+                    "type": "number"
+                  },
+                  "to": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to",
+                  "intervalMinutes",
+                  "readingsUsed",
+                  "readingsOtherInterval",
+                  "readingsOffGrid",
+                  "emptyIntervals",
+                  "dataEndsDaysAgo"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hours": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "$ref": "#/components/schemas/LoadHourInput"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "properties": {
+                  "gapsShare": {
+                    "type": "number"
+                  },
+                  "historyDays": {
+                    "type": "number"
+                  },
+                  "holdoutDays": {
+                    "type": "number"
+                  },
+                  "methods": {
+                    "items": {
+                      "properties": {
+                        "biasKw": {
+                          "type": "number"
+                        },
+                        "coverage80": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "maeKw": {
+                          "type": "number"
+                        },
+                        "method": {
+                          "type": "string"
+                        },
+                        "rmseKw": {
+                          "type": "number"
+                        },
+                        "wapePct": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "method",
+                        "description",
+                        "maeKw",
+                        "rmseKw",
+                        "wapePct",
+                        "biasKw",
+                        "coverage80"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "selectedMethod": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "selectedMethod",
+                  "methods",
+                  "holdoutDays",
+                  "historyDays",
+                  "gapsShare"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "peakThresholdKw": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "propertyId",
+          "generatedAt",
+          "hours",
+          "energy",
+          "peakThresholdKw",
+          "model",
+          "history",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "LoadHour": {
+        "additionalProperties": false,
+        "properties": {
+          "p10Kw": {
+            "type": "number"
+          },
+          "p50Kw": {
+            "type": "number"
+          },
+          "p90Kw": {
+            "type": "number"
+          },
+          "peakProbability": {
+            "description": "Chance that this hour is one of the property's own top-5% hours.",
+            "type": "number"
+          },
+          "time": {
+            "description": "Start of the hour, UTC.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "p10Kw",
+          "p50Kw",
+          "p90Kw",
+          "peakProbability"
+        ],
+        "type": "object"
+      },
+      "LoadHourInput": {
+        "properties": {
+          "p10Kw": {
+            "type": "number"
+          },
+          "p50Kw": {
+            "type": "number"
+          },
+          "p90Kw": {
+            "type": "number"
+          },
+          "peakProbability": {
+            "description": "Chance that this hour is one of the property's own top-5% hours.",
+            "type": "number"
+          },
+          "time": {
+            "description": "Start of the hour, UTC.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "p10Kw",
+          "p50Kw",
+          "p90Kw",
+          "peakProbability"
+        ],
+        "type": "object"
+      },
       "PolicyRule": {
         "additionalProperties": false,
         "properties": {
@@ -4972,6 +5626,1007 @@
           "source",
           "processingStatus",
           "thumbnailUrl"
+        ],
+        "type": "object"
+      },
+      "SolarForecast": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "band": {
+            "additionalProperties": false,
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "calibration": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/BandCalibration"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "available",
+              "reason",
+              "calibration"
+            ],
+            "type": "object"
+          },
+          "energy": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "kwhClearSky": {
+                        "type": "number"
+                      },
+                      "kwhP10": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "kwhP50": {
+                        "type": "number"
+                      },
+                      "kwhP90": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "yieldKwhPerKwpP50": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kwhP50",
+                      "kwhP10",
+                      "kwhP90",
+                      "kwhClearSky",
+                      "yieldKwhPerKwpP50"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "hours": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "$ref": "#/components/schemas/SolarHour"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "systems": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "azimuthDeg": {
+                  "type": "number"
+                },
+                "capacityKwp": {
+                  "type": "number"
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "lossBasis": {
+                  "enum": [
+                    "USER_ENTERED",
+                    "ASSUMPTION"
+                  ],
+                  "type": "string"
+                },
+                "lossFraction": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "EXISTING",
+                    "PLANNED"
+                  ],
+                  "type": "string"
+                },
+                "tiltDeg": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "status",
+                "capacityKwp",
+                "tiltDeg",
+                "azimuthDeg",
+                "lossFraction",
+                "lossBasis"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "weather": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "elevationM": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "fetchedAt": {
+                    "type": "string"
+                  },
+                  "grid": {
+                    "$ref": "#/components/schemas/GeoPoint"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "stale": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "provider",
+                  "fetchedAt",
+                  "stale",
+                  "grid",
+                  "elevationM"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "propertyId",
+          "generatedAt",
+          "systems",
+          "hours",
+          "energy",
+          "band",
+          "weather",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "SolarForecastInput": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "band": {
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "calibration": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/BandCalibrationInput"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "available",
+              "reason",
+              "calibration"
+            ],
+            "type": "object"
+          },
+          "energy": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "kwhClearSky": {
+                        "type": "number"
+                      },
+                      "kwhP10": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "kwhP50": {
+                        "type": "number"
+                      },
+                      "kwhP90": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "yieldKwhPerKwpP50": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kwhP50",
+                      "kwhP10",
+                      "kwhP90",
+                      "kwhClearSky",
+                      "yieldKwhPerKwpP50"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "hours": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "$ref": "#/components/schemas/SolarHourInput"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "systems": {
+            "items": {
+              "properties": {
+                "azimuthDeg": {
+                  "type": "number"
+                },
+                "capacityKwp": {
+                  "type": "number"
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "lossBasis": {
+                  "enum": [
+                    "USER_ENTERED",
+                    "ASSUMPTION"
+                  ],
+                  "type": "string"
+                },
+                "lossFraction": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "EXISTING",
+                    "PLANNED"
+                  ],
+                  "type": "string"
+                },
+                "tiltDeg": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "status",
+                "capacityKwp",
+                "tiltDeg",
+                "azimuthDeg",
+                "lossFraction",
+                "lossBasis"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "weather": {
+            "anyOf": [
+              {
+                "properties": {
+                  "elevationM": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "fetchedAt": {
+                    "type": "string"
+                  },
+                  "grid": {
+                    "$ref": "#/components/schemas/GeoPointInput"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "stale": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "provider",
+                  "fetchedAt",
+                  "stale",
+                  "grid",
+                  "elevationM"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "propertyId",
+          "generatedAt",
+          "systems",
+          "hours",
+          "energy",
+          "band",
+          "weather",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "SolarHour": {
+        "additionalProperties": false,
+        "properties": {
+          "clearSkyKw": {
+            "description": "What a cloudless sky would give, as a reference curve. The forecast can sit slightly above it where the weather model is brighter than the clear-sky model.",
+            "type": "number"
+          },
+          "p10Kw": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "p50Kw": {
+            "type": "number"
+          },
+          "p90Kw": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "time": {
+            "description": "The hour, labelled by its end, in UTC.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "clearSkyKw",
+          "p50Kw",
+          "p10Kw",
+          "p90Kw"
+        ],
+        "type": "object"
+      },
+      "SolarHourInput": {
+        "properties": {
+          "clearSkyKw": {
+            "description": "What a cloudless sky would give, as a reference curve. The forecast can sit slightly above it where the weather model is brighter than the clear-sky model.",
+            "type": "number"
+          },
+          "p10Kw": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "p50Kw": {
+            "type": "number"
+          },
+          "p90Kw": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "time": {
+            "description": "The hour, labelled by its end, in UTC.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "clearSkyKw",
+          "p50Kw",
+          "p10Kw",
+          "p90Kw"
+        ],
+        "type": "object"
+      },
+      "SolarPerformance": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "result": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "clearSky": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "biasKw": {
+                                "type": "number"
+                              },
+                              "hours": {
+                                "type": "number"
+                              },
+                              "maeKw": {
+                                "type": "number"
+                              },
+                              "mapePct": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "rmseKw": {
+                                "type": "number"
+                              },
+                              "wapePct": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "hours",
+                              "maeKw",
+                              "rmseKw",
+                              "mapePct",
+                              "wapePct",
+                              "biasKw"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "forecast": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "biasKw": {
+                            "type": "number"
+                          },
+                          "hours": {
+                            "type": "number"
+                          },
+                          "maeKw": {
+                            "type": "number"
+                          },
+                          "mapePct": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "rmseKw": {
+                            "type": "number"
+                          },
+                          "wapePct": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "hours",
+                          "maeKw",
+                          "rmseKw",
+                          "mapePct",
+                          "wapePct",
+                          "biasKw"
+                        ],
+                        "type": "object"
+                      },
+                      "persistenceBaseline": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "biasKw": {
+                                "type": "number"
+                              },
+                              "hours": {
+                                "type": "number"
+                              },
+                              "maeKw": {
+                                "type": "number"
+                              },
+                              "mapePct": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "rmseKw": {
+                                "type": "number"
+                              },
+                              "wapePct": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "hours",
+                              "maeKw",
+                              "rmseKw",
+                              "mapePct",
+                              "wapePct",
+                              "biasKw"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "skillVsClearSky": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "skillVsPersistence": {
+                        "description": "1 minus the forecast's mean error over the naive baseline's. Above 0 means it beats yesterday's output.",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "window": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "from": {
+                            "type": "string"
+                          },
+                          "hours": {
+                            "type": "number"
+                          },
+                          "to": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "from",
+                          "to",
+                          "hours"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "window",
+                      "forecast",
+                      "persistenceBaseline",
+                      "clearSky",
+                      "skillVsPersistence",
+                      "skillVsClearSky"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "propertyId",
+          "generatedAt",
+          "result",
+          "basis",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "SolarPerformanceInput": {
+        "properties": {
+          "basis": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "result": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clearSky": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "biasKw": {
+                                "type": "number"
+                              },
+                              "hours": {
+                                "type": "number"
+                              },
+                              "maeKw": {
+                                "type": "number"
+                              },
+                              "mapePct": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "rmseKw": {
+                                "type": "number"
+                              },
+                              "wapePct": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "hours",
+                              "maeKw",
+                              "rmseKw",
+                              "mapePct",
+                              "wapePct",
+                              "biasKw"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "forecast": {
+                        "properties": {
+                          "biasKw": {
+                            "type": "number"
+                          },
+                          "hours": {
+                            "type": "number"
+                          },
+                          "maeKw": {
+                            "type": "number"
+                          },
+                          "mapePct": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "rmseKw": {
+                            "type": "number"
+                          },
+                          "wapePct": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "hours",
+                          "maeKw",
+                          "rmseKw",
+                          "mapePct",
+                          "wapePct",
+                          "biasKw"
+                        ],
+                        "type": "object"
+                      },
+                      "persistenceBaseline": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "biasKw": {
+                                "type": "number"
+                              },
+                              "hours": {
+                                "type": "number"
+                              },
+                              "maeKw": {
+                                "type": "number"
+                              },
+                              "mapePct": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "rmseKw": {
+                                "type": "number"
+                              },
+                              "wapePct": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "hours",
+                              "maeKw",
+                              "rmseKw",
+                              "mapePct",
+                              "wapePct",
+                              "biasKw"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "skillVsClearSky": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "skillVsPersistence": {
+                        "description": "1 minus the forecast's mean error over the naive baseline's. Above 0 means it beats yesterday's output.",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "window": {
+                        "properties": {
+                          "from": {
+                            "type": "string"
+                          },
+                          "hours": {
+                            "type": "number"
+                          },
+                          "to": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "from",
+                          "to",
+                          "hours"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "window",
+                      "forecast",
+                      "persistenceBaseline",
+                      "clearSky",
+                      "skillVsPersistence",
+                      "skillVsClearSky"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "propertyId",
+          "generatedAt",
+          "result",
+          "basis",
+          "notes"
         ],
         "type": "object"
       },
@@ -11068,6 +12723,307 @@
         ]
       }
     },
+    "/api/properties/{id}/load-forecast": {
+      "get": {
+        "description": "Weekly-lagged baselines and a calibrated quantile model compete on a chronological holdout; the winner is used and every method's error is returned. Needs two weeks of readings. When the readings end more than two days ago the forecast covers the hours after them and is labelled an estimate, not a forecast of tomorrow.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "hours",
+            "required": false,
+            "schema": {
+              "default": 24,
+              "maximum": 168,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadForecast"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Forecast the property's electricity use from its own meter readings",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
+    "/api/properties/{id}/solar-forecast": {
+      "get": {
+        "description": "A physical PV model (pvlib) driven by the Open-Meteo irradiance forecast. The 10th to 90th percentile band comes only from how wrong that forecast was at this place in the last weeks, and is absent (with the reason) when that record is missing. Uses the installed systems, or the planned ones when none is installed.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "maximum": 7,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolarForecast"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Forecast the output of the property's solar system",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
+    "/api/properties/{id}/solar-forecast/performance": {
+      "get": {
+        "description": "MAE, RMSE, MAPE, WAPE and bias over the last weeks, next to the baselines it has to beat (yesterday's output; a cloudless sky). Scored against the weather model's analysis, not metered output: the response says so.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolarPerformance"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "How well the solar forecast has done lately",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
     "/api/properties/{id}/solar-systems": {
       "get": {
         "parameters": [
@@ -13328,6 +15284,10 @@
     {
       "description": "Meter data you import, and the Energy DNA built from it",
       "name": "energy"
+    },
+    {
+      "description": "Forecasts of solar output and electricity use, with calibrated bands and how well each has done",
+      "name": "forecast"
     },
     {
       "description": "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs",

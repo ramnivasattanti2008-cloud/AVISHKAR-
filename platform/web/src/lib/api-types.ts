@@ -3339,6 +3339,295 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/load-forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Forecast the property's electricity use from its own meter readings
+         * @description Weekly-lagged baselines and a calibrated quantile model compete on a chronological holdout; the winner is used and every method's error is returned. Needs two weeks of readings. When the readings end more than two days ago the forecast covers the hours after them and is labelled an estimate, not a forecast of tomorrow.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    hours?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LoadForecast"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/solar-forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Forecast the output of the property's solar system
+         * @description A physical PV model (pvlib) driven by the Open-Meteo irradiance forecast. The 10th to 90th percentile band comes only from how wrong that forecast was at this place in the last weeks, and is absent (with the reason) when that record is missing. Uses the installed systems, or the planned ones when none is installed.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    days?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SolarForecast"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/solar-forecast/performance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * How well the solar forecast has done lately
+         * @description MAE, RMSE, MAPE, WAPE and bias over the last weeks, next to the baselines it has to beat (yesterday's output; a cloudless sky). Scored against the weather model's analysis, not metered output: the response says so.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SolarPerformance"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/solar-systems": {
         parameters: {
             query?: never;
@@ -4675,6 +4964,38 @@ export interface components {
             totalRatedKw: number;
             updatedAt: string;
         };
+        BandCalibration: {
+            bins: {
+                name: string;
+                p10: number;
+                p50: number;
+                p90: number;
+                samples: number;
+            }[];
+            /** @description Share of hours the band had not seen that fell inside it. About 0.8 is what an 80% band should score. */
+            holdoutCoverage: number | null;
+            holdoutHours: number;
+            hoursUsed: number;
+            medianResidualKt: number;
+            method: string;
+            targetCoverage: number;
+        };
+        BandCalibrationInput: {
+            bins: {
+                name: string;
+                p10: number;
+                p50: number;
+                p90: number;
+                samples: number;
+            }[];
+            /** @description Share of hours the band had not seen that fell inside it. About 0.8 is what an 80% band should score. */
+            holdoutCoverage: number | null;
+            holdoutHours: number;
+            hoursUsed: number;
+            medianResidualKt: number;
+            method: string;
+            targetCoverage: number;
+        };
         Battery: {
             capacityKwh: number;
             createdAt: string;
@@ -5467,6 +5788,114 @@ export interface components {
             latitude: number;
             longitude: number;
         };
+        LoadForecast: {
+            assumptions: string[];
+            energy: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    kwhP50: number;
+                } | null;
+            };
+            generatedAt: string;
+            history: {
+                dataEndsDaysAgo: number;
+                emptyIntervals: number;
+                from: string;
+                intervalMinutes: number;
+                readingsOffGrid: number;
+                readingsOtherInterval: number;
+                readingsUsed: number;
+                to: string;
+            } | null;
+            hours: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: components["schemas"]["LoadHour"][] | null;
+            };
+            model: {
+                gapsShare: number;
+                historyDays: number;
+                holdoutDays: number;
+                methods: {
+                    biasKw: number;
+                    coverage80: number | null;
+                    description: string;
+                    maeKw: number;
+                    method: string;
+                    rmseKw: number;
+                    wapePct: number | null;
+                }[];
+                selectedMethod: string | null;
+            } | null;
+            notes: string[];
+            peakThresholdKw: number | null;
+            /** Format: uuid */
+            propertyId: string;
+        };
+        LoadForecastInput: {
+            assumptions: string[];
+            energy: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    kwhP50: number;
+                } | null;
+            };
+            generatedAt: string;
+            history: {
+                dataEndsDaysAgo: number;
+                emptyIntervals: number;
+                from: string;
+                intervalMinutes: number;
+                readingsOffGrid: number;
+                readingsOtherInterval: number;
+                readingsUsed: number;
+                to: string;
+            } | null;
+            hours: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: components["schemas"]["LoadHourInput"][] | null;
+            };
+            model: {
+                gapsShare: number;
+                historyDays: number;
+                holdoutDays: number;
+                methods: {
+                    biasKw: number;
+                    coverage80: number | null;
+                    description: string;
+                    maeKw: number;
+                    method: string;
+                    rmseKw: number;
+                    wapePct: number | null;
+                }[];
+                selectedMethod: string | null;
+            } | null;
+            notes: string[];
+            peakThresholdKw: number | null;
+            /** Format: uuid */
+            propertyId: string;
+        };
+        LoadHour: {
+            p10Kw: number;
+            p50Kw: number;
+            p90Kw: number;
+            /** @description Chance that this hour is one of the property's own top-5% hours. */
+            peakProbability: number;
+            /** @description Start of the hour, UTC. */
+            time: string;
+        };
+        LoadHourInput: {
+            p10Kw: number;
+            p50Kw: number;
+            p90Kw: number;
+            /** @description Chance that this hour is one of the property's own top-5% hours. */
+            peakProbability: number;
+            /** @description Start of the hour, UTC. */
+            time: string;
+        };
         PolicyRule: {
             appliesTo: string;
             conditions: string[];
@@ -5682,6 +6111,210 @@ export interface components {
             sensor: string;
             source: string;
             thumbnailUrl: string | null;
+        };
+        SolarForecast: {
+            assumptions: string[];
+            band: {
+                available: boolean;
+                calibration: components["schemas"]["BandCalibration"] | null;
+                reason: string | null;
+            };
+            energy: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    kwhClearSky: number;
+                    kwhP10: number | null;
+                    kwhP50: number;
+                    kwhP90: number | null;
+                    yieldKwhPerKwpP50: number;
+                } | null;
+            };
+            generatedAt: string;
+            hours: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: components["schemas"]["SolarHour"][] | null;
+            };
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+            systems: {
+                azimuthDeg: number;
+                capacityKwp: number;
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                lossBasis: "USER_ENTERED" | "ASSUMPTION";
+                lossFraction: number;
+                name: string;
+                /** @enum {string} */
+                status: "EXISTING" | "PLANNED";
+                tiltDeg: number;
+            }[];
+            weather: {
+                elevationM: number | null;
+                fetchedAt: string;
+                grid: components["schemas"]["GeoPoint"];
+                provider: string;
+                stale: boolean;
+            } | null;
+        };
+        SolarForecastInput: {
+            assumptions: string[];
+            band: {
+                available: boolean;
+                calibration: components["schemas"]["BandCalibrationInput"] | null;
+                reason: string | null;
+            };
+            energy: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    kwhClearSky: number;
+                    kwhP10: number | null;
+                    kwhP50: number;
+                    kwhP90: number | null;
+                    yieldKwhPerKwpP50: number;
+                } | null;
+            };
+            generatedAt: string;
+            hours: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: components["schemas"]["SolarHourInput"][] | null;
+            };
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+            systems: {
+                azimuthDeg: number;
+                capacityKwp: number;
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                lossBasis: "USER_ENTERED" | "ASSUMPTION";
+                lossFraction: number;
+                name: string;
+                /** @enum {string} */
+                status: "EXISTING" | "PLANNED";
+                tiltDeg: number;
+            }[];
+            weather: {
+                elevationM: number | null;
+                fetchedAt: string;
+                grid: components["schemas"]["GeoPointInput"];
+                provider: string;
+                stale: boolean;
+            } | null;
+        };
+        SolarHour: {
+            /** @description What a cloudless sky would give, as a reference curve. The forecast can sit slightly above it where the weather model is brighter than the clear-sky model. */
+            clearSkyKw: number;
+            p10Kw: number | null;
+            p50Kw: number;
+            p90Kw: number | null;
+            /** @description The hour, labelled by its end, in UTC. */
+            time: string;
+        };
+        SolarHourInput: {
+            /** @description What a cloudless sky would give, as a reference curve. The forecast can sit slightly above it where the weather model is brighter than the clear-sky model. */
+            clearSkyKw: number;
+            p10Kw: number | null;
+            p50Kw: number;
+            p90Kw: number | null;
+            /** @description The hour, labelled by its end, in UTC. */
+            time: string;
+        };
+        SolarPerformance: {
+            basis: string;
+            generatedAt: string;
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+            result: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    clearSky: {
+                        biasKw: number;
+                        hours: number;
+                        maeKw: number;
+                        mapePct: number | null;
+                        rmseKw: number;
+                        wapePct: number | null;
+                    } | null;
+                    forecast: {
+                        biasKw: number;
+                        hours: number;
+                        maeKw: number;
+                        mapePct: number | null;
+                        rmseKw: number;
+                        wapePct: number | null;
+                    };
+                    persistenceBaseline: {
+                        biasKw: number;
+                        hours: number;
+                        maeKw: number;
+                        mapePct: number | null;
+                        rmseKw: number;
+                        wapePct: number | null;
+                    } | null;
+                    skillVsClearSky: number | null;
+                    /** @description 1 minus the forecast's mean error over the naive baseline's. Above 0 means it beats yesterday's output. */
+                    skillVsPersistence: number | null;
+                    window: {
+                        from: string;
+                        hours: number;
+                        to: string;
+                    };
+                } | null;
+            };
+        };
+        SolarPerformanceInput: {
+            basis: string;
+            generatedAt: string;
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+            result: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    clearSky: {
+                        biasKw: number;
+                        hours: number;
+                        maeKw: number;
+                        mapePct: number | null;
+                        rmseKw: number;
+                        wapePct: number | null;
+                    } | null;
+                    forecast: {
+                        biasKw: number;
+                        hours: number;
+                        maeKw: number;
+                        mapePct: number | null;
+                        rmseKw: number;
+                        wapePct: number | null;
+                    };
+                    persistenceBaseline: {
+                        biasKw: number;
+                        hours: number;
+                        maeKw: number;
+                        mapePct: number | null;
+                        rmseKw: number;
+                        wapePct: number | null;
+                    } | null;
+                    skillVsClearSky: number | null;
+                    /** @description 1 minus the forecast's mean error over the naive baseline's. Above 0 means it beats yesterday's output. */
+                    skillVsPersistence: number | null;
+                    window: {
+                        from: string;
+                        hours: number;
+                        to: string;
+                    };
+                } | null;
+            };
         };
         SolarSystem: {
             azimuthDeg: number;
