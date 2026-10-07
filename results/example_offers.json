@@ -5,8 +5,8 @@
     "action": "catalog/publish",
     "bppId": "sellerapp.example.com",
     "bppUri": "http://sellerapp.example.com/bpp/receiver",
-    "transactionId": "6fd72a9b-680e-4e4d-a8b4-a8550ac2cb6e",
-    "messageId": "0034d4da-607f-4a75-a2ab-b54a5264b306",
+    "transactionId": "fb895e8a-c2c1-46ed-85b3-63856827cadd",
+    "messageId": "c4ce03f9-56cf-4228-8265-5fa76c490d14",
     "timestamp": "2023-01-14T12:30:00Z",
     "schemaContext": [
       "https://schema.nfh.global/EnergyTradeOffer/v2.0/context.jsonld",
@@ -61,7 +61,7 @@
             "id": "offer-shop-pune-20230115T1100-0",
             "descriptor": {
               "name": "Solar surplus 11:00-16:00 IST",
-              "shortDesc": "14.6 kWh from 15 kWp + battery"
+              "shortDesc": "14.7 kWh from 15 kWp + battery"
             },
             "resourceIds": [
               "energy-resource-shop-pune"
@@ -131,7 +131,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          2.431
+                          2.0
                         ]
                       }
                     ]
@@ -148,7 +148,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          3.346
+                          3.922
                         ]
                       }
                     ]
@@ -182,7 +182,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          3.05
+                          3.026
                         ]
                       }
                     ]
@@ -199,7 +199,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          1.744
+                          1.733
                         ]
                       }
                     ]

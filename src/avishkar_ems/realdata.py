@@ -12,11 +12,13 @@ What is still an assumption (no public source reachable): outage log (`sim.simul
 
 from __future__ import annotations
 
+import calendar
 from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import requests
 from pvlib.iotools import get_pvgis_hourly
 
 from avishkar_ems.ceew import household_series
@@ -30,15 +32,57 @@ DATA = Path(__file__).resolve().parents[2] / "data" / "real"
 LOAD_CSV = DATA / "load_tool.csv"  # Tjaden, Zenodo 4683455, CC-BY 4.0, measured, 2018, 15-minute
 
 
+def _weather_stem(site: SiteSpec) -> str:
+    # the location is part of the key: two sites that share a name but not a place must not share weather
+    return f"pvgis_{site.site_id}_{site.lat:.2f}_{site.lon:.2f}_{site.tilt:.0f}_{site.azimuth:.0f}"
+
+
+def _cached_files(site: SiteSpec) -> list[tuple[int, int, Path]]:
+    """(first year, last year, file) for every cached weather file of exactly this site, place and angles."""
+    stem = _weather_stem(site)
+    out = []
+    for f in sorted(DATA.glob(f"{stem}_*_*.csv")):
+        try:
+            first, last = (int(x) for x in f.stem[len(stem) + 1:].split("_"))
+        except ValueError:
+            continue
+        out.append((first, last, f))
+    return out
+
+
+def cached_weather_years(site: SiteSpec) -> tuple[int, int] | None:
+    """The first and last year of a cached weather file for this site, or None if nothing is cached."""
+    files = _cached_files(site)
+    return (files[0][0], files[0][1]) if files else None
+
+
+def _covering_cache(site: SiteSpec, start: int, end: int) -> pd.DataFrame | None:
+    """Rows for start..end from any cached file of this site whose year range covers them (else None)."""
+    for first, last, f in _cached_files(site):
+        if first <= start and end <= last:
+            d = pd.read_csv(f, index_col=0, parse_dates=True)
+            return d[(d.index.year >= start) & (d.index.year <= end)]
+    return None
+
+
 def pvgis_weather(site: SiteSpec, start: int, end: int) -> pd.DataFrame:
-    """Hourly poa_global (W/m2) and temp_air (C) in site-local time, cached on disk."""
-    f = DATA / f"pvgis_{site.site_id}_{site.tilt:.0f}_{site.azimuth:.0f}_{start}_{end}.csv"
-    if f.exists():
-        return pd.read_csv(f, index_col=0, parse_dates=True)
-    d, _ = get_pvgis_hourly(site.lat, site.lon, start=start, end=end, surface_tilt=site.tilt,
-                            surface_azimuth=site.azimuth - 180, pvcalculation=False, components=False, usehorizon=True,
-                            map_variables=True)
+    """Hourly poa_global (W/m2) and temp_air (C) in site-local time, cached on disk.
+
+    A cached file covering the requested years is reused; otherwise the weather is downloaded from PVGIS."""
+    cached = _covering_cache(site, start, end)
+    if cached is not None:
+        return cached
+    try:
+        d, _ = get_pvgis_hourly(site.lat, site.lon, start=start, end=end, surface_tilt=site.tilt,
+                                surface_azimuth=site.azimuth - 180, pvcalculation=False, components=False,
+                                usehorizon=True, map_variables=True)
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(
+            f"Could not download weather for ({site.lat:.2f}, {site.lon:.2f}) from PVGIS ({type(e).__name__}). "
+            "Check the internet connection and try again; weather for the three demo sites is bundled and works offline."
+        ) from e
     d = d[["poa_global", "temp_air"]].tz_convert(site.tz)
+    f = DATA / f"{_weather_stem(site)}_{start}_{end}.csv"
     f.parent.mkdir(parents=True, exist_ok=True)
     d.to_csv(f)
     return d
@@ -70,8 +114,11 @@ def real_site_frame(site: SiteSpec, start: int = 2021, end: int = 2023, avg_load
     if load_kw is not None:
         index = load_kw.index
         base = pvgis_weather(site, weather_year, weather_year)
-        w_override = pd.concat([base.set_axis(pd.DatetimeIndex([t.replace(year=y) for t in base.index]))
-                                for y in sorted(set(index.year))]).sort_index()
+        parts = []
+        for y in sorted(set(index.year)):
+            b = base if calendar.isleap(y) else base[~((base.index.month == 2) & (base.index.day == 29))]
+            parts.append(b.set_axis(pd.DatetimeIndex([t.replace(year=y) for t in b.index])))  # a missing 29 Feb is interpolated
+        w_override = pd.concat(parts).sort_index()
         start, end = index[0].year, index[-1].year
     elif meter:
         hh = household_series(meter)
@@ -113,7 +160,7 @@ def real_site_frame(site: SiteSpec, start: int = 2021, end: int = 2023, avg_load
         load = np.maximum(measured_load(index, avg), site.critical_kw)
         outage_arr, planned = simulate_outages(index, np.random.default_rng(seed))
     imp, exp = site.tariff.import_rates(index), site.tariff.export_rates(index)
-    p2p = exp + (imp - exp) * 0.55  # no market data reachable: midpoint between export and retail
+    p2p = exp + (imp - exp) * site.tariff.p2p_share  # no market data reachable: an assumed share of the retail premium
     return pd.DataFrame({
         "pv_kw": pv_kw, "load_kw": load, "expected_kw": pv_kw, "pv_clear_kw": pv_clear_kw, "poa_wm2": poa,
         "temp_c": temp, "kt_actual": kt, "kt_fcst": kt_fcst, "temp_fcst": temp_fcst, "storm_prob": storm_prob,

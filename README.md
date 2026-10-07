@@ -25,25 +25,33 @@ lives in `src/avishkar_ems/` and calls EMHASS; nothing inside EMHASS was edited.
 | Outages at the shop and clinic | generated | assumption |
 | Day-ahead forecast inputs | persistence of yesterday's clearness | simple, no archived NWP |
 
-Mathura trains on Jun 2019 to Jun 2020 and tests on Jul 2020 to Feb 2021 (33 sampled days, so Mar to Jun is missing and
-its yearly figure leans one way). Pune and Jaipur train on 2021-22 and test on 2023 (52 sampled days).
+Mathura trains on Jun 2019 to Jun 2020 and tests on Jul 2020 to Feb 2021, so Mar to Jun is missing and its yearly figure
+leans one way. Pune and Jaipur train on 2021-22 and test on 2023. The figures below replay sampled held-out days and
+annualise them (the sampling and day counts are stated in the note at the end of the generated block).
 
-Payback in years, lower is better:
+<!-- results:start -->
+Payback in years, lower is better (best of the first three in bold):
 
 | Site | EMS | Battery idle | Fixed-rule battery | Perfect foresight |
 |---|---|---|---|---|
-| 3 kWp home, Mathura | 19.93 | 21.83 | 19.94 | 19.40 |
-| 15 kWp shop, Pune | **8.61** | 8.91 | 8.68 | 8.57 |
-| 30 kWp clinic, Jaipur | 7.73 | 7.83 | **7.71** | 7.66 |
+| 3 kWp home, Mathura | 19.94 | 21.74 | **19.89** | 19.36 |
+| 15 kWp shop, Pune | **8.59** | 8.91 | 8.68 | 8.55 |
+| 30 kWp clinic, Jaipur | 7.69 | 7.83 | **7.69** | 7.66 |
 
-With the PM Surya Ghar subsidy (Rs 78,000 for a 3 kW home, if you qualify) the Mathura EMS payback drops from 19.93 to 14.83 years. The shop and clinic are commercial, so no subsidy is applied.
+With the PM Surya Ghar subsidy (Rs 78,000 for a 3 kW home, if you qualify) the Mathura EMS payback drops from 19.94 to 14.84 years. The shop and clinic are commercial, so no subsidy is applied.
 
-- Against a battery left idle the EMS earns 9.5%, 3.5% and 1.3% more a year. Against a fixed-rule battery it ties at
-  Mathura (0.1%), wins by 0.9% at Pune, and loses by 0.3% at Jaipur. So the honest summary is: the optimiser's edge over
-  a sensible simple rule is small on these tariffs. Its clearer value is the reserve, the offers and the settlement.
-- Backup: critical load left without power during cuts was 0.08 / 0.00 / 0.00 kWh with the EMS, against 0.07 / 0.00 / 3.13
-  with an idle battery and 0.08 / 0.00 / 0.00 with the fixed rule. The Mathura figure is the same for all three because
-  the meter is not recording during a cut and the home has a small battery.
+- Against a battery left idle the EMS earns 9.1%, 3.8% and 1.9% more a year. Against a fixed-rule battery it loses by 0.2% at Mathura, wins by 1.1% at Pune and ties at Jaipur (0.0%). So the honest summary is: the optimiser's edge over a sensible simple rule is small on these tariffs. Its clearer value is the reserve, the offers and the settlement.
+- Backup: critical load left without power during cuts was 0.08 / 0.00 / 0.00 kWh with the EMS, against 0.08 / 0.00 / 0.00 with an idle battery and 0.08 / 0.00 / 0.00 with the fixed rule. The Mathura figure is the same for all three because the meter is not recording during a cut and the home has a small battery.
+- The noon re-plan (`intraday.py`) changed yearly benefit by -0.1% to +0.0% versus the EMS, so it did not help once execution was reactive. It is kept as an option and is off in the headline numbers.
+- Forecast bands (80% target): generation covered 86% / 86% / 84%. Load covered 78% at Mathura (measured), and 89% / 90% at the shop and clinic, where the near-repeating factory profile makes the bands too wide ([results/forecast_quality.csv](results/forecast_quality.csv)).
+- Sensitivity ([results/sensitivity.csv](results/sensitivity.csv)): a battery sized like ours adds 10.2% at Mathura, 4.2% at Pune and 2.0% at Jaipur compared with having none. With the export (net-metering) rate raised by Rs 2 the battery's gain becomes -4.3% at Mathura, +1.7% at Pune and +0.4% at Jaipur, so at Mathura the battery is a backup purchase, not a savings one.
+- P2P volume across the sampled days, delivered of committed: 8.7 of 8.7 kWh at Mathura, 12.4 of 13.5 kWh at Pune and 3.2 of 3.2 kWh at Jaipur (small, because real load absorbs most of the surplus).
+
+_Generated 2026-10-07 09:04 UTC by `examples/run_demo.py` and `examples/run_sensitivity.py`: one in every 7 held-out days, annualised (Mathura 33, Pune 52, Jaipur 52 sampled days). Python 3.12.10, numpy 2.2.6, pandas 2.3.3, pvlib 0.16.1; the full set is in `requirements-lock.txt`. This block is generated: run `python scripts/update_readme.py`._
+<!-- results:end -->
+
+How the numbers were improved along the way (history, not results):
+
 - The reserve floor now includes the 10% of the battery that cannot be used. An earlier version left it out, so a "4 hour"
   backup reserve covered about 3 hours. The executor also now backs up only the critical load during a cut and sheds the
   rest, as a critical-load panel does. Both fixes came out of testing against real tariffs.
@@ -51,18 +59,12 @@ With the PM Surya Ghar subsidy (Rs 78,000 for a 3 kW home, if you qualify) the M
   Mathura, because a single home's load is too noisy to plan that finely. The executor now follows the plan's price
   signal (when to hold energy, when to charge from the grid at night, what was promised to buyers) but reacts to the real
   load and sun.
-- The noon re-plan (`intraday.py`) did not help once execution was reactive: it changed yearly benefit by -0.4% to +0.1%.
-  It is kept as an option and is off in the headline numbers.
-- Forecast bands (80% target): generation covered 85% / 87% / 83%. Load covered 79% at Mathura (measured), and 89% / 91%
-  at the shop and clinic, where the near-repeating factory profile makes the bands too wide
-  ([results/forecast_quality.csv](results/forecast_quality.csv)).
-- Sensitivity ([results/sensitivity.csv](results/sensitivity.csv)): a battery sized like ours adds 10.1% at Mathura, 3.9% at
-  Pune and 1.5% at Jaipur compared with having none. If the export (net-metering) rate is raised to near retail, the
-  battery's value shrinks, and at Mathura it turns negative (-3.9% at an export rate of Rs 5). So at that home the battery is a backup
-  purchase, not a savings one.
-- P2P volume is small (a few kWh across the sampled days), because real load absorbs most of the surplus.
+- Days that are not consecutive no longer inherit each other's battery charge: each sampled day starts from the same
+  state, because yesterday's charge says nothing about a day weeks later.
 
-Full tables: [results/payback.csv](results/payback.csv). Offer message: [results/example_offers.json](results/example_offers.json).
+The numbers above are produced by `examples/run_demo.py` and `examples/run_sensitivity.py` and written into this file by
+`python scripts/update_readme.py` (CI checks they agree). Full tables: [results/payback.csv](results/payback.csv).
+Offer message: [results/example_offers.json](results/example_offers.json).
 
 ## What EMHASS already did, and what was missing
 
@@ -111,11 +113,16 @@ How this compares with similar tools is in [docs/RESEARCH.md](docs/RESEARCH.md).
 python -m venv venv && source venv/bin/activate      # Python 3.10 to 3.12
 pip install -e ".[app]"
 python examples/run_demo.py            # about 2 minutes, writes ./results
-streamlit run app/dashboard.py         # plan, offers, payback and monitoring
-pytest tests/avishkar_ems              # about a minute
+python scripts/precompute_cache.py     # optional: pre-warm the dashboard (a few minutes) so every tab opens instantly
+streamlit run app/dashboard.py         # plan, offers, payback and monitoring (Windows: run-dashboard.cmd)
+pytest tests/avishkar_ems              # about two minutes
 python examples/analyze_my_site.py --help   # use your own meter CSV
 python examples/run_sensitivity.py     # battery size and export rate, about 6 minutes
 ```
+
+For contributors and AI agents: [CLAUDE.md](CLAUDE.md) (commands, architecture, gotchas), [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)
+(prioritised drawbacks) and [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) (demo video script). `requirements-lock.txt` pins the
+environment the current `results/` were generated in.
 
 ## Using the organisers' dataset
 

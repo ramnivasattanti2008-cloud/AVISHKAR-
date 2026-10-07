@@ -80,3 +80,18 @@ def test_read_meter_csv_fills_short_gap(tmp_path):
     s = read_meter_csv(str(p))
     assert s.notna().all()
     assert s.median() == pytest.approx(1.0)
+
+
+def test_battery_advice_text_reads_naturally_when_it_never_repays():
+    import numpy as np
+    import pandas as pd
+
+    from avishkar_ems.advisor import advise_text
+
+    table = pd.DataFrame({"backup_hours": [7.0], "years_to_repay_from_bills": [np.nan]}, index=pd.Index([2.5], name="battery_kwh"))
+    en = advise_text(table, 4, "en")
+    assert "never repay" in en and "in never" not in en
+    hi = advise_text(table, 4, "hi")
+    assert "कभी नहीं लौटेगी" in hi and "कभी नहीं लगेंगे" not in hi
+    table["years_to_repay_from_bills"] = [14.0]
+    assert "repay it in 14 years" in advise_text(table, 4, "en")

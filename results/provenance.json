@@ -1,0 +1,58 @@
+{
+  "run_demo": {
+    "generated_at": "2026-10-07 09:04 UTC",
+    "python": "3.12.10",
+    "libraries": {
+      "numpy": "2.2.6",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.9.1",
+      "pvlib": "0.16.1",
+      "highspy": "1.15.1",
+      "cvxpy": "1.7.5",
+      "skforecast": "0.22.0"
+    },
+    "fingerprint": "d6092b0a6ed6738e",
+    "every_days": 7,
+    "quick": false,
+    "sampled_days": {
+      "home-mathura": 33,
+      "shop-pune": 52,
+      "clinic-jaipur": 52
+    },
+    "p2p": {
+      "home-mathura": {
+        "offers": 13,
+        "committed_kwh": 8.69333480351615,
+        "delivered_kwh": 8.69333480351615,
+        "shortfall_kwh": 0.0
+      },
+      "shop-pune": {
+        "offers": 10,
+        "committed_kwh": 13.510426173070275,
+        "delivered_kwh": 12.433654767348266,
+        "shortfall_kwh": 1.076771405722009
+      },
+      "clinic-jaipur": {
+        "offers": 1,
+        "committed_kwh": 3.2494035630491993,
+        "delivered_kwh": 3.2494035630491993,
+        "shortfall_kwh": 0.0
+      }
+    }
+  },
+  "run_sensitivity": {
+    "generated_at": "2026-10-07 09:10 UTC",
+    "python": "3.12.10",
+    "libraries": {
+      "numpy": "2.2.6",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.9.1",
+      "pvlib": "0.16.1",
+      "highspy": "1.15.1",
+      "cvxpy": "1.7.5",
+      "skforecast": "0.22.0"
+    },
+    "fingerprint": "d6092b0a6ed6738e",
+    "every_days": 28
+  }
+}

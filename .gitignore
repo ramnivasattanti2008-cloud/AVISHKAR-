@@ -5,3 +5,29 @@ __pycache__/
 venv/
 .venv/
 *.egg-info/
+
+# Generated at runtime, never commit (see CLAUDE.md, "Data and caches").
+# Dashboard result cache, filled by scripts/precompute_cache.py:
+data/cache/
+# Written by the vendored EMHASS code and its tests:
+data/last_run.json
+data/adjust_pv_regressor.pkl
+data/debug-*.csv
+# Scratch copy of a meter file uploaded in the dashboard:
+data/real/uploaded_*.csv
+# examples/analyze_my_site.py output:
+my_site_report.md
+.streamlit/credentials.toml
+.claude/settings.local.json
+
+# Weather cached for ad-hoc "my-site" analyses (examples/analyze_my_site.py, dashboard upload tab):
+data/real/pvgis_my-site_*.csv
+
+# platform (Node/Next.js)
+node_modules/
+.next/
+dist/
+*.tsbuildinfo
+coverage/
+platform/**/.env
+platform/**/.env.local

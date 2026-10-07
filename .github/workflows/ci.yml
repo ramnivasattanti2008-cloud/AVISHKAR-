@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install (pinned environment from requirements-lock.txt)
+        run: |
+          grep -v -E '^(colorama|pywin32)' requirements-lock.txt > /tmp/lock.txt
+          pip install -r /tmp/lock.txt ruff
+          pip install -e . --no-deps
+      - name: Lint (project code only; the vendored EMHASS code is not ours to lint)
+        run: ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix
+      - name: Project tests
+        run: python -m pytest tests/avishkar_ems -q -p no:cacheprovider
+      - name: README matches results/
+        run: python scripts/update_readme.py --check

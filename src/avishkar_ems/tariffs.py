@@ -25,6 +25,9 @@ class Tariff:
     p2p_charges: float  # network + platform charges on a P2P/UEI sale, INR/kWh
     shortfall_penalty: float  # INR per kWh committed but not delivered
     name: str = "custom"
+    # Where the expected P2P clearing price sits between the export rate (0) and the retail rate (1). An ASSUMPTION:
+    # no market data was available, so the midpoint-ish 0.55 is used. Set "p2p_share" in the tariff JSON to change it.
+    p2p_share: float = 0.55
 
     def import_rates(self, index: pd.DatetimeIndex) -> np.ndarray:
         """Retail import rate for every timestamp, in INR/kWh."""
@@ -84,7 +87,7 @@ def load_tariff(path: str | Path) -> Tariff:
     d = json.loads(Path(path).read_text())
     blocks = tuple((float(a), float(b), float(r)) for a, b, r in d["tou_blocks"])
     return Tariff(blocks, float(d["export_rate"]), float(d["p2p_charges"]), float(d["shortfall_penalty"]),
-                  d.get("name", "custom"))
+                  d.get("name", "custom"), float(d.get("p2p_share", 0.55)))
 
 
 PRESETS = {t.name: t for t in (COMMERCIAL_TOD, DOMESTIC_FLAT)}

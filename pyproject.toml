@@ -37,7 +37,6 @@ dependencies = [
     "quart",
     "aiofiles",
     "jinja2",
-    "asyncio",
     "aiohttp",
     "orjson",
     "websockets",
@@ -128,7 +127,7 @@ dev = ["emhass"]
 [tool.ruff]
 target-version = "py311"
 src = ["src", "tests"]
-fix = true
+fix = false
 show-fixes = true
 
 line-length = 100

@@ -13,9 +13,11 @@ import pandas as pd
 
 from avishkar_ems.payback import evaluate
 
+BATTERY_INR_PER_KWH = 25_000.0  # an ASSUMPTION: replace with a real quote
+
 
 def battery_advice(site, df, pv_model, load_model, test_days, sizes_kwh=(0.0, 2.5, 5.0, 10.0, 15.0),
-                   battery_inr_per_kwh: float = 25_000.0) -> pd.DataFrame:
+                   battery_inr_per_kwh: float = BATTERY_INR_PER_KWH) -> pd.DataFrame:
     rows = []
     for kwh in sizes_kwh:
         s = replace(site, battery_kwh=max(kwh, 0.01), battery_kw=max(min(site.battery_kw, kwh / 2 or 0.01), 0.01))
@@ -39,15 +41,18 @@ def advise_text(table: pd.DataFrame, wanted_backup_hours: float, lang: str = "en
                 if lang == "en" else "इस सूची में कोई बैटरी आपके माँगे गए बैकअप घंटे नहीं देती। बड़ी बैटरी या कम ज़रूरी लोड आज़माएँ।")
     r = table.loc[pick]
     yrs = r["years_to_repay_from_bills"]
-    pays = (f"{yrs:.0f} years" if pd.notna(yrs) else "never")
+    never, long_ = pd.isna(yrs), pd.isna(yrs) or yrs > 10
     if lang == "hi":
-        pays = (f"{yrs:.0f} साल" if pd.notna(yrs) else "कभी नहीं")
-        return (f"{pick:g} kWh की बैटरी आपके {wanted_backup_hours:g} घंटे के बैकअप के लिए काफ़ी है। सिर्फ़ बिजली बिल की बचत से "
-                f"उसकी कीमत लौटने में लगभग {pays} लगेंगे, इसलिए इसे बैकअप के लिए खरीदें, बचत के लिए नहीं।"
-                if (pd.isna(yrs) or yrs > 10) else
-                f"{pick:g} kWh की बैटरी आपके बैकअप के लिए काफ़ी है और बिल की बचत से लगभग {pays} में अपनी कीमत निकाल लेगी।")
-    if pd.isna(yrs) or yrs > 10:
-        return (f"A {pick:g} kWh battery is the smallest that gives your {wanted_backup_hours:g} hours of backup. Bill savings alone "
-                f"would repay it in {pays}, so buy it for backup, not for savings.")
-    return (f"A {pick:g} kWh battery is the smallest that gives your {wanted_backup_hours:g} hours of backup, and bill savings "
-            f"alone repay it in about {pays}.")
+        if never:
+            return (f"{pick:g} kWh की बैटरी आपके {wanted_backup_hours:g} घंटे के बैकअप के लिए काफ़ी है। सिर्फ़ बिजली बिल की बचत से "
+                    "उसकी कीमत कभी नहीं लौटेगी, इसलिए इसे बैकअप के लिए खरीदें, बचत के लिए नहीं।")
+        if long_:
+            return (f"{pick:g} kWh की बैटरी आपके {wanted_backup_hours:g} घंटे के बैकअप के लिए काफ़ी है। सिर्फ़ बिजली बिल की बचत से "
+                    f"उसकी कीमत लौटने में लगभग {yrs:.0f} साल लगेंगे, इसलिए इसे बैकअप के लिए खरीदें, बचत के लिए नहीं।")
+        return f"{pick:g} kWh की बैटरी आपके बैकअप के लिए काफ़ी है और बिल की बचत से लगभग {yrs:.0f} साल में अपनी कीमत निकाल लेगी।"
+    head = f"A {pick:g} kWh battery is the smallest that gives your {wanted_backup_hours:g} hours of backup."
+    if never:
+        return f"{head} Bill savings alone would never repay it, so buy it for backup, not for savings."
+    if long_:
+        return f"{head} Bill savings alone would repay it in {yrs:.0f} years, so buy it for backup, not for savings."
+    return f"{head} Bill savings alone repay it in about {yrs:.0f} years."
