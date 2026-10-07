@@ -89,6 +89,35 @@ version from package metadata. `planner._base_params` loads EMHASS's defaults an
 section holds each key (it raises `KeyError` on a missing key, which means an EMHASS version mismatch). The planner turns
 off EMHASS's default deferrable loads: this EMS plans PV, battery and grid only.
 
+## Platform (TypeScript, `platform/`)
+
+Status per spec section: `platform/STATUS.md`. Decisions: `platform/ARCHITECTURE.md`. Backend phases 1 and 2 are done and
+verified (auth, properties, PostGIS, geocoding, weather, solar resource, building outline, satellite metadata, Energy Twin);
+the web app, forecasts, optimiser and everything after are not built.
+
+```bash
+pnpm -C platform install                      # also generates the Prisma client
+pnpm -C platform/api typecheck && pnpm -C platform/api lint && pnpm -C platform/api build
+pnpm -C platform/api test                     # unit + integration on a REAL PostGIS (DATABASE_URL_TEST in platform/api/.env)
+pnpm -C platform/api test:live                # calls the real public providers; on demand, never in CI
+pnpm -C platform/api db:migrate               # apply prisma/migrations to DATABASE_URL
+pnpm -C platform/api dev                      # API on :8080, OpenAPI at /api/openapi.json
+```
+
+- **Database on this machine**: Docker's engine is not usable, so PostgreSQL 16 + PostGIS 3.4 run inside WSL Ubuntu
+  (databases `avishkar_dev`, `avishkar_test`; credentials only in the git-ignored `platform/api/.env`). WSL stops idle
+  distros and takes Postgres with it: keep it alive with
+  `wsl -d Ubuntu -u root -- bash -lc "service postgresql start; exec sleep infinity"` (run it in the background).
+- Prisma 7.10 (CLI pinned; `latest` resolves to an 8.0 release candidate) and TypeScript 5.9 (typescript-eslint does not
+  support TS 7). Migrations are SQL with hand-written additions; GiST indexes must be declared in `schema.prisma` or Prisma
+  drops them. Check drift with `pnpm -C platform/api exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`
+  (an empty migration is good). Prisma refuses `migrate reset --force` from an agent without the owner's consent: do not
+  work around it, create a fresh database instead.
+- Rules baked into the code: `LIVE` is derived from freshness (`src/provenance`), never chosen; provider failures give errors
+  or stale-marked values, never invented data; estimates are `ESTIMATED` with their assumptions; unknowns are `UNAVAILABLE`
+  with a reason; browser location is never labelled NavIC.
+- The public Overpass server answers HTTP 504 about one request in three from here: mirrors and retries are required.
+
 ## Data and caches
 
 - `data/` mixes three things: upstream EMHASS test fixtures (`data/*.csv`, `*.pbz2`, `*.pkl`), project inputs
@@ -121,7 +150,8 @@ off EMHASS's default deferrable loads: this EMS plans PV, battery and grid only.
 - Entry points log warnings (`logging.basicConfig`); EMHASS's `get_logger` adds a handler per call, so the planner uses one
   cached logger (`planner._plan_logger`). Do not call `get_logger` per plan.
 - `p2p_share` in a tariff JSON (default 0.55) sets the assumed P2P price between export and retail rate; it is an assumption.
-- When scripting edits with a shell heredoc, avoid backslash escapes in the text you write; they get mangled. Use the Edit tool.
+- The tool shell breaks on shell heredocs that contain apostrophes or backslash escapes (parse errors, or silently mangled
+  text). Write files with the Write/Edit tools; if a script is needed, write it to a file first, then run it.
 - Offer ids contain a random uuid, so offers are not byte-reproducible across runs.
 - Strings shown to users come in English/Hindi pairs (`explain.py`, `summary.py`, `advisor.py`); keep both when editing.
 

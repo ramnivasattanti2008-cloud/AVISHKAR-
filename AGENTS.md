@@ -20,4 +20,4 @@ Rules that matter even if you read nothing else:
   `results/` are stale: re-run `examples/run_demo.py`, `examples/run_sensitivity.py`, `scripts/precompute_cache.py --rebuild`,
   then `python scripts/update_readme.py`. Never hand-edit the README block between the `results` markers.
 - Python tests: `python -m pytest tests/avishkar_ems -q` (about 4 minutes). Platform tests: `pnpm -C platform test`.
-- In shell heredocs avoid backslash escapes in text you write to files; use the Edit/Write tools.
+- Do not write files through shell heredocs (apostrophes and backslashes break or mangle them); use the Edit/Write tools.
