@@ -11,7 +11,15 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from avishkar_engine import __version__
+from avishkar_engine import __version__, load, solar
+from avishkar_engine.forecast_schemas import (
+    LoadForecastRequest,
+    LoadForecastResponse,
+    SolarEvaluateRequest,
+    SolarEvaluateResponse,
+    SolarForecastRequest,
+    SolarForecastResponse,
+)
 from avishkar_engine.optimise import MODE_WEIGHTS, optimise
 from avishkar_engine.schemas import OptimiseRequest, OptimiseResponse
 
@@ -92,5 +100,22 @@ def create_app(api_key: str | None = None, insecure_dev: bool | None = None) -> 
         """Choose battery, grid, solar, EV and appliance schedules that minimise a mode-weighted cost. The plan is re-checked
         from scratch before it is returned (`validation`); an invalid plan must not be shown as a plan."""
         return optimise(req)
+
+    @app.post("/v1/solar/forecast", tags=["forecasting"], summary="Forecast solar output from a weather forecast", response_model=SolarForecastResponse, response_model_by_alias=True, dependencies=[Depends(authorise)])
+    def solar_forecast(req: SolarForecastRequest) -> SolarForecastResponse:
+        """A physical PV model driven by the irradiance forecast. The 10th to 90th percentile band exists only when the past errors
+        of that forecast are supplied (`errorHistory`); otherwise none is claimed."""
+        return solar.forecast(req)
+
+    @app.post("/v1/solar/evaluate", tags=["forecasting"], summary="Score a solar forecast against what happened", response_model=SolarEvaluateResponse, response_model_by_alias=True, dependencies=[Depends(authorise)])
+    def solar_evaluate(req: SolarEvaluateRequest) -> SolarEvaluateResponse:
+        """MAE, RMSE, MAPE, WAPE and bias, next to the persistence and clear-sky baselines the forecast has to beat."""
+        return solar.evaluate(req)
+
+    @app.post("/v1/load/forecast", tags=["forecasting"], summary="Forecast a property's load from its own history", response_model=LoadForecastResponse, response_model_by_alias=True, dependencies=[Depends(authorise)])
+    def load_forecast(req: LoadForecastRequest) -> LoadForecastResponse:
+        """Weekly-lagged baselines and a conformally calibrated quantile model, compared on a chronological holdout. The response
+        says which won, by how much, and how often the 80% band held on hours it had not seen."""
+        return load.forecast(req)
 
     return app

@@ -109,3 +109,40 @@ def test_an_internal_failure_does_not_leak_details(client, monkeypatch):
     assert r.status_code == 500
     assert "secret" not in r.text
     assert r.json()["error"]["code"] == "INTERNAL"
+
+
+def test_solar_forecast_and_evaluate_over_the_wire(client):
+    ghi = [0.0] * 6 + [100.0, 300.0, 500.0, 650.0, 700.0, 650.0, 500.0, 300.0, 100.0] + [0.0] * 9
+    body = {
+        "location": {"latitude": 12.97, "longitude": 77.59, "altitudeM": 900},
+        "system": {"capacityKwp": 3.3, "tiltDeg": 13, "azimuthDeg": 180},
+        "weather": {"startTime": "2026-03-20T00:00:00Z", "convention": "end", "ghiWm2": ghi, "temperatureC": [28.0] * 24},
+    }
+    r = client.post("/v1/solar/forecast", json=body, headers={"x-engine-key": KEY})
+    assert r.status_code == 200
+    out = r.json()
+    assert len(out["p50Kw"]) == 24 and out["p10Kw"] is None and out["calibration"] is None
+    assert out["kwhP50"] > 0 and max(out["p50Kw"]) <= out["clearSkyKw"][out["p50Kw"].index(max(out["p50Kw"]))] + 1e-6
+    assert "p50_kw" not in out
+
+    ev = client.post("/v1/solar/evaluate", json={"forecastKw": out["p50Kw"], "actualKw": out["p50Kw"]}, headers={"x-engine-key": KEY})
+    assert ev.status_code == 200 and ev.json()["forecast"]["maeKw"] == 0
+
+
+def test_load_forecast_over_the_wire(client):
+    import math
+
+    kwh = [1.0 + 0.5 * math.sin(2 * math.pi * (h % 24) / 24) for h in range(24 * 30)]
+    body = {"history": {"startTime": "2026-01-05T00:00:00+05:30", "intervalMinutes": 60, "kwh": kwh}, "horizonHours": 24}
+    r = client.post("/v1/load/forecast", json=body, headers={"x-engine-key": KEY})
+    assert r.status_code == 200
+    out = r.json()
+    assert out["status"] == "ok" and len(out["p50Kw"]) == 24 and out["selectedMethod"]
+    assert {m["method"] for m in out["methods"]} >= {"same_hour_of_week", "last_week"}
+
+
+def test_the_forecast_routes_need_the_key_and_report_bad_input_clearly(client):
+    assert client.post("/v1/load/forecast", json={}).status_code == 401
+    assert client.post("/v1/solar/forecast", json={}).status_code == 401
+    r = client.post("/v1/solar/forecast", json={"location": {"latitude": 99, "longitude": 0}, "system": {}, "weather": {}}, headers={"x-engine-key": KEY})
+    assert r.status_code == 400 and r.json()["error"]["code"] == "VALIDATION_FAILED"
