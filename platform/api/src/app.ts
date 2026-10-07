@@ -8,6 +8,7 @@ import {
   hasZodFastifySchemaValidationErrors,
   isResponseSerializationError,
   jsonSchemaTransform,
+  jsonSchemaTransformObject,
   serializerCompiler,
   validatorCompiler,
 } from "fastify-type-provider-zod";
@@ -75,6 +76,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       ],
     },
     transform: jsonSchemaTransform,
+    transformObject: jsonSchemaTransformObject,
   });
 
   app.addHook("onSend", async (req, reply) => {

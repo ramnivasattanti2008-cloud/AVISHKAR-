@@ -14,7 +14,8 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "postinstall": "prisma generate",
-    "test:live": "vitest run --config vitest.live.config.ts"
+    "test:live": "vitest run --config vitest.live.config.ts",
+    "openapi": "tsx scripts/export-openapi.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.2",

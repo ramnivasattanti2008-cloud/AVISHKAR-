@@ -10,9 +10,9 @@ export const ErrorResponse = z.object({
     requestId: z.string().optional(),
     details: z.unknown().optional(),
   }),
-});
+}).meta({ id: "ErrorResponse" });
 
-export const GeoPoint = z.object({ latitude: z.number(), longitude: z.number() });
+export const GeoPoint = z.object({ latitude: z.number(), longitude: z.number() }).meta({ id: "GeoPoint" });
 
 export const ProvenanceSchema = z.object({
   provider: z.string(),
@@ -29,7 +29,7 @@ export const ProvenanceSchema = z.object({
   modelVersion: z.string().optional(),
   ageSeconds: z.number().optional(),
   notes: z.array(z.string()),
-});
+}).meta({ id: "Provenance" });
 
 /** A value together with where it came from and how far to trust it (spec sections 3, 40). */
 export const measured = <T extends z.ZodType>(value: T) =>
@@ -40,7 +40,7 @@ export const UserSchema = z.object({
   email: z.string(),
   role: z.enum(["USER", "ADMIN"]),
   displayName: z.string().nullable(),
-});
+}).meta({ id: "User" });
 
 export const PositionSchema = z.object({
   source: z.string(),
@@ -73,7 +73,7 @@ export const PropertySchema = z.object({
   warnings: z.array(z.string()),
   createdAt: z.string(),
   updatedAt: z.string(),
-});
+}).meta({ id: "Property" });
 
 export const GeocodeResultSchema = z.object({
   label: z.string(),

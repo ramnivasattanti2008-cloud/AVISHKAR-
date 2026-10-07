@@ -12,7 +12,7 @@ export const SatelliteSceneSchema = z.object({
   source: z.string(),
   processingStatus: z.string(),
   thumbnailUrl: z.string().nullable(),
-});
+}).meta({ id: "SatelliteScene" });
 
 const SourceRecordSchema = z.object({ provider: z.string(), dataType: z.string(), status: z.string(), ok: z.boolean(), at: z.string(), note: z.string() });
 const GapSchema = z.object({ what: z.string(), reason: z.string() });
@@ -51,7 +51,7 @@ export const TwinSchema = z.object({
   sources: z.array(SourceRecordSchema),
   assumptions: z.array(AssumptionSchema),
   unavailable: z.array(GapSchema),
-});
+}).meta({ id: "EnergyTwin" });
 
 export const TwinVersionSchema = z.object({
   id: z.uuid(),
