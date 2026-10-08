@@ -15,11 +15,13 @@ import {
 import { registerAuth } from "./auth/hooks.js";
 import type { Config } from "./config.js";
 import type { Db } from "./db.js";
+import type { LlmAdapter } from "./copilot/llm.js";
 import type { EngineClient } from "./engine/client.js";
 import { AppError } from "./errors.js";
 import type { Providers } from "./providers/index.js";
 import { accountRoutes } from "./routes/account.js";
 import { assetRoutes } from "./routes/assets.js";
+import { copilotRoutes } from "./routes/copilot.js";
 import { authRoutes } from "./routes/auth.js";
 import { energyRoutes } from "./routes/energy.js";
 import { forecastRoutes } from "./routes/forecast.js";
@@ -29,6 +31,7 @@ import { opportunityRoutes } from "./routes/opportunities.js";
 import { planRoutes } from "./routes/plan.js";
 import { policyRoutes } from "./routes/policy.js";
 import { propertyRoutes } from "./routes/properties.js";
+import { reportRoutes } from "./routes/report.js";
 import { scenarioRoutes } from "./routes/scenarios.js";
 import { tariffRoutes } from "./routes/tariffs.js";
 import { twinRoutes } from "./routes/twin.js";
@@ -40,6 +43,8 @@ export interface AppDeps {
   providers: Providers;
   /** The Python engine, or null when ENGINE_URL is not set (plans and model forecasts are then UNAVAILABLE). */
   engine: EngineClient | null;
+  /** Words the Copilot's answers when a key is configured; null or absent means answers come from templates. */
+  llm?: LlmAdapter | null;
   /** Injected so tests control time; production uses the wall clock. */
   now: () => Date;
 }
@@ -88,6 +93,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         { name: "forecast", description: "Forecasts of solar output and electricity use, with calibrated bands and how well each has done" },
         { name: "plan", description: "The plan: when to charge, discharge, import, export and run flexible loads, checked from scratch before it is shown" },
         { name: "scenarios", description: "What-if: today's setup against added solar, a battery or another tariff over a typical year, with payback and net present value" },
+        { name: "copilot", description: "Ask about a property: answers are worded from backend tools, with the supporting data to inspect" },
         { name: "assets", description: "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs" },
         { name: "policy", description: "Subsidy and net-metering rules as sourced configuration, and the eligibility calculator" },
         { name: "system", description: "Health" },
@@ -156,5 +162,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(planRoutes, { deps });
   await app.register(scenarioRoutes, { deps });
   await app.register(opportunityRoutes, { deps });
+  await app.register(copilotRoutes, { deps });
+  await app.register(reportRoutes, { deps });
   return app;
 }

@@ -98,6 +98,7 @@ export function PropertyView({ id }: { id: string }) {
             </button>
           </div>
           {twin && <span className="text-xs text-muted">Twin v{twin.version}, built {formatDateTime(twin.createdAt)}</span>}
+          <a className="text-xs font-semibold text-accent underline" href={`/api/properties/${id}/report`} download>Download a report</a>
         </div>
       </header>
 

@@ -1240,6 +1240,309 @@
         ],
         "type": "object"
       },
+      "CopilotAnswer": {
+        "additionalProperties": false,
+        "properties": {
+          "citations": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "marker": {
+                  "type": "number"
+                },
+                "tool": {
+                  "type": "string"
+                },
+                "toolResultId": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "marker",
+                "toolResultId",
+                "tool"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "generatedBy": {
+            "enum": [
+              "TEMPLATES",
+              "LANGUAGE_MODEL"
+            ],
+            "type": "string"
+          },
+          "intent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "paragraphs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "question": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ANSWERED",
+              "UNAVAILABLE",
+              "NOT_UNDERSTOOD"
+            ],
+            "type": "string"
+          },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "toolResults": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "calledAt": {
+                  "type": "string"
+                },
+                "dataStatus": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "input": {},
+                "output": {},
+                "status": {
+                  "enum": [
+                    "OK",
+                    "UNAVAILABLE"
+                  ],
+                  "type": "string"
+                },
+                "tool": {
+                  "enum": [
+                    "getProperty",
+                    "getWeather",
+                    "getSatelliteObservations",
+                    "getSolarForecast",
+                    "getLoadForecast",
+                    "getBatteryState",
+                    "getTariff",
+                    "getEligibility",
+                    "getEnergyOpportunities",
+                    "runOptimization",
+                    "runSimulation",
+                    "calculateEconomics",
+                    "getResilience",
+                    "getCounterfactual",
+                    "getLatestPlan",
+                    "getForecastAccuracy"
+                  ],
+                  "type": "string"
+                },
+                "unavailableReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "tool",
+                "input",
+                "output",
+                "status",
+                "unavailableReason",
+                "dataStatus",
+                "calledAt"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "question",
+          "intent",
+          "status",
+          "paragraphs",
+          "citations",
+          "toolResults",
+          "generatedBy",
+          "notes",
+          "suggestions"
+        ],
+        "type": "object"
+      },
+      "CopilotAnswerInput": {
+        "properties": {
+          "citations": {
+            "items": {
+              "properties": {
+                "marker": {
+                  "type": "number"
+                },
+                "tool": {
+                  "type": "string"
+                },
+                "toolResultId": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "marker",
+                "toolResultId",
+                "tool"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "generatedBy": {
+            "enum": [
+              "TEMPLATES",
+              "LANGUAGE_MODEL"
+            ],
+            "type": "string"
+          },
+          "intent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "paragraphs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "question": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ANSWERED",
+              "UNAVAILABLE",
+              "NOT_UNDERSTOOD"
+            ],
+            "type": "string"
+          },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "toolResults": {
+            "items": {
+              "properties": {
+                "calledAt": {
+                  "type": "string"
+                },
+                "dataStatus": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "input": {},
+                "output": {},
+                "status": {
+                  "enum": [
+                    "OK",
+                    "UNAVAILABLE"
+                  ],
+                  "type": "string"
+                },
+                "tool": {
+                  "enum": [
+                    "getProperty",
+                    "getWeather",
+                    "getSatelliteObservations",
+                    "getSolarForecast",
+                    "getLoadForecast",
+                    "getBatteryState",
+                    "getTariff",
+                    "getEligibility",
+                    "getEnergyOpportunities",
+                    "runOptimization",
+                    "runSimulation",
+                    "calculateEconomics",
+                    "getResilience",
+                    "getCounterfactual",
+                    "getLatestPlan",
+                    "getForecastAccuracy"
+                  ],
+                  "type": "string"
+                },
+                "unavailableReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "tool",
+                "input",
+                "output",
+                "status",
+                "unavailableReason",
+                "dataStatus",
+                "calledAt"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "question",
+          "intent",
+          "status",
+          "paragraphs",
+          "citations",
+          "toolResults",
+          "generatedBy",
+          "notes",
+          "suggestions"
+        ],
+        "type": "object"
+      },
       "EnergyDna": {
         "additionalProperties": false,
         "properties": {
@@ -11738,6 +12041,95 @@
         ]
       }
     },
+    "/api/copilot/tools": {
+      "get": {
+        "description": "The backend tools the Copilot answers from (it can use nothing else), which of them store something, and example questions. Whether a language model words the answers depends on the server's configuration.",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "languageModel": {
+                      "type": "boolean"
+                    },
+                    "questions": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "tools": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "description": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "enum": [
+                              "getProperty",
+                              "getWeather",
+                              "getSatelliteObservations",
+                              "getSolarForecast",
+                              "getLoadForecast",
+                              "getBatteryState",
+                              "getTariff",
+                              "getEligibility",
+                              "getEnergyOpportunities",
+                              "runOptimization",
+                              "runSimulation",
+                              "calculateEconomics",
+                              "getResilience",
+                              "getCounterfactual",
+                              "getLatestPlan",
+                              "getForecastAccuracy"
+                            ],
+                            "type": "string"
+                          },
+                          "writes": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "description",
+                          "writes"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "tools",
+                    "questions",
+                    "languageModel"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "What the Copilot can look at, and the questions it can answer",
+        "tags": [
+          "copilot"
+        ]
+      }
+    },
     "/api/eligibility": {
       "post": {
         "description": "Never confirms eligibility (eligibilityConfirmed is always false): it applies a sourced rule to the numbers given and returns the rule, its source and its caveats. Where no sourced rule is on file it says so and returns no amount.",
@@ -15294,6 +15686,336 @@
         ]
       }
     },
+    "/api/properties/{id}/copilot/ask": {
+      "post": {
+        "description": "The question is routed to backend tools by fixed patterns, the tools run, and the answer is worded from what they returned, with each figure marked with the result it came from; the full results are returned so the supporting data can be inspected. A question it cannot answer is not guessed at. Making a plan or running a what-if is done only when the question asks for it. Nothing here comes from a language model unless the server has one configured, and its wording is checked against the tool results before it is used.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "question": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "question"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopilotAnswer"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Ask about this property",
+        "tags": [
+          "copilot"
+        ]
+      }
+    },
+    "/api/properties/{id}/copilot/tools/{tool}": {
+      "post": {
+        "description": "The same tools the Copilot uses, with their raw results. Tools that store something (a plan, a what-if) store it, as they do from their own pages.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tool",
+            "required": true,
+            "schema": {
+              "enum": [
+                "getProperty",
+                "getWeather",
+                "getSatelliteObservations",
+                "getSolarForecast",
+                "getLoadForecast",
+                "getBatteryState",
+                "getTariff",
+                "getEligibility",
+                "getEnergyOpportunities",
+                "runOptimization",
+                "runSimulation",
+                "calculateEconomics",
+                "getResilience",
+                "getCounterfactual",
+                "getLatestPlan",
+                "getForecastAccuracy"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": {},
+                "default": {},
+                "propertyNames": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "calledAt": {
+                      "type": "string"
+                    },
+                    "dataStatus": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "id": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "input": {},
+                    "output": {},
+                    "status": {
+                      "enum": [
+                        "OK",
+                        "UNAVAILABLE"
+                      ],
+                      "type": "string"
+                    },
+                    "tool": {
+                      "enum": [
+                        "getProperty",
+                        "getWeather",
+                        "getSatelliteObservations",
+                        "getSolarForecast",
+                        "getLoadForecast",
+                        "getBatteryState",
+                        "getTariff",
+                        "getEligibility",
+                        "getEnergyOpportunities",
+                        "runOptimization",
+                        "runSimulation",
+                        "calculateEconomics",
+                        "getResilience",
+                        "getCounterfactual",
+                        "getLatestPlan",
+                        "getForecastAccuracy"
+                      ],
+                      "type": "string"
+                    },
+                    "unavailableReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "tool",
+                    "input",
+                    "output",
+                    "status",
+                    "unavailableReason",
+                    "dataStatus",
+                    "calledAt"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Call one tool directly and inspect what it returns",
+        "tags": [
+          "copilot"
+        ]
+      }
+    },
     "/api/properties/{id}/energy": {
       "get": {
         "description": "Coverage, local-day totals (partial days are marked), the imports, and the Energy DNA when there is enough data.",
@@ -17151,6 +17873,69 @@
         "summary": "One plan as it was shown",
         "tags": [
           "plan"
+        ]
+      }
+    },
+    "/api/properties/{id}/report": {
+      "get": {
+        "description": "The tariff, the readings and their fingerprint, the equipment, the latest plan, the latest what-if and how the forecasts have done, each figure with its data label, and where something is missing, why. Assembled from what is stored: nothing is recomputed and no engine call is made.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Download a report of everything held for the property (Markdown)",
+        "tags": [
+          "properties"
         ]
       }
     },
@@ -19933,6 +20718,10 @@
     {
       "description": "What-if: today's setup against added solar, a battery or another tariff over a typical year, with payback and net present value",
       "name": "scenarios"
+    },
+    {
+      "description": "Ask about a property: answers are worded from backend tools, with the supporting data to inspect",
+      "name": "copilot"
     },
     {
       "description": "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs",

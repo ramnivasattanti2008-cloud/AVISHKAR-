@@ -1,4 +1,4 @@
-import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
+import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, CopilotAnswer, CopilotTools, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -380,6 +380,33 @@ export function forecastAccuracy(over: Partial<ForecastAccuracy> = {}): Forecast
     },
     solar: { available: false, reason: "Solar forecasts are scored against the weather model's analysis, not against generation: there is no generation meter in the data to score them against." },
     notes: [],
+    ...over,
+  };
+}
+
+export function copilotTools(over: Partial<CopilotTools> = {}): CopilotTools {
+  return {
+    tools: [
+      { name: "getLatestPlan", description: "The most recent plan as it was shown.", writes: false },
+      { name: "runOptimization", description: "Make a new plan and store it.", writes: true },
+    ],
+    questions: ["How much will I save?", "Which tariff am I on?"],
+    languageModel: false,
+    ...over,
+  };
+}
+
+export function copilotAnswer(over: Partial<CopilotAnswer> = {}): CopilotAnswer {
+  return {
+    question: "How much will I save?",
+    intent: "SAVINGS",
+    status: "ANSWERED",
+    paragraphs: ["The latest plan (balanced, made 7 Oct) is expected to cost ₹41.20 over 24 hours against ₹52.90 with no control: it saves ₹11.70 [1].", "That is a simulated outcome of forecasts, not a measurement."],
+    citations: [{ marker: 1, toolResultId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", tool: "getLatestPlan" }],
+    toolResults: [{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", tool: "getLatestPlan", input: {}, output: { netCostInr: 41.2, noControlCostInr: 52.9, savingsInr: 11.7 }, status: "OK", unavailableReason: null, dataStatus: "SIMULATED", calledAt: "2026-10-08T10:00:00.000Z" }],
+    generatedBy: "TEMPLATES",
+    notes: [],
+    suggestions: [],
     ...over,
   };
 }

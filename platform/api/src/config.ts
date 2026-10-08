@@ -77,6 +77,10 @@ const Env = z.object({
   ENGINE_API_KEY: z.string().min(16, "ENGINE_API_KEY must be at least 16 characters").optional(),
   /** Longer than the engine's own solver time limit (20 s by default, 120 s at most). */
   ENGINE_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(300_000).default(60_000),
+
+  /** Lets a language model word the Copilot's answers (its wording is checked against the tools' results). Without it the answers are written from templates. */
+  ANTHROPIC_API_KEY: z.string().min(20, "ANTHROPIC_API_KEY looks too short").optional(),
+  COPILOT_MODEL: z.string().min(3).default("claude-sonnet-5-5"),
 }).superRefine((v, ctx) => {
   if (v.NODE_ENV === "production" && v.ENGINE_URL && !v.ENGINE_API_KEY) {
     ctx.addIssue({ code: "custom", path: ["ENGINE_API_KEY"], message: "ENGINE_API_KEY is required in production when ENGINE_URL is set" });

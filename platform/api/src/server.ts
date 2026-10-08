@@ -1,6 +1,7 @@
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createDb } from "./db.js";
+import { AnthropicAdapter } from "./copilot/llm.js";
 import { buildEngine } from "./engine/index.js";
 import { DbCache } from "./providers/cache.js";
 import { buildProviders } from "./providers/index.js";
@@ -13,7 +14,8 @@ async function main(): Promise<void> {
   const recorder = new DbRecorder(db, (e) => console.error("provider call telemetry failed", e)); // eslint-disable-line no-console
   const providers = buildProviders(config, { cache, recorder, db });
   const engine = buildEngine(config);
-  const app = await buildApp({ config, db, providers, engine, now: () => new Date() });
+  const llm = config.ANTHROPIC_API_KEY ? new AnthropicAdapter({ apiKey: config.ANTHROPIC_API_KEY, model: config.COPILOT_MODEL }) : null;
+  const app = await buildApp({ config, db, providers, engine, llm, now: () => new Date() });
 
   const stop = async (signal: string) => {
     app.log.info({ signal }, "shutting down");

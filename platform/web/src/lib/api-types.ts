@@ -427,6 +427,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/copilot/tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What the Copilot can look at, and the questions it can answer
+         * @description The backend tools the Copilot answers from (it can use nothing else), which of them store something, and example questions. Whether a language model words the answers depends on the server's configuration.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            languageModel: boolean;
+                            questions: string[];
+                            tools: {
+                                description: string;
+                                /** @enum {string} */
+                                name: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
+                                writes: boolean;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/eligibility": {
         parameters: {
             query?: never;
@@ -2542,6 +2599,239 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/copilot/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask about this property
+         * @description The question is routed to backend tools by fixed patterns, the tools run, and the answer is worded from what they returned, with each figure marked with the result it came from; the full results are returned so the supporting data can be inspected. A question it cannot answer is not guessed at. Making a plan or running a what-if is done only when the question asks for it. Nothing here comes from a language model unless the server has one configured, and its wording is checked against the tool results before it is used.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        question: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CopilotAnswer"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/copilot/tools/{tool}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call one tool directly and inspect what it returns
+         * @description The same tools the Copilot uses, with their raw results. Tools that store something (a plan, a what-if) store it, as they do from their own pages.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            calledAt: string;
+                            dataStatus: string | null;
+                            /** Format: uuid */
+                            id: string;
+                            input: unknown;
+                            output: unknown;
+                            /** @enum {string} */
+                            status: "OK" | "UNAVAILABLE";
+                            /** @enum {string} */
+                            tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
+                            unavailableReason: string | null;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/energy": {
         parameters: {
             query?: never;
@@ -3998,6 +4288,74 @@ export interface paths {
                 };
                 /** @description Default Response */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download a report of everything held for the property (Markdown)
+         * @description The tariff, the readings and their fingerprint, the equipment, the latest plan, the latest what-if and how the forecasts have done, each figure with its data label, and where something is missing, why. Assembled from what is stored: nothing is recomputed and no engine call is made.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5980,6 +6338,66 @@ export interface components {
             updatedAt: string;
             /** @description Capacity between the minimum and maximum charge. */
             usableKwh: number;
+        };
+        CopilotAnswer: {
+            citations: {
+                marker: number;
+                tool: string;
+                /** Format: uuid */
+                toolResultId: string;
+            }[];
+            /** @enum {string} */
+            generatedBy: "TEMPLATES" | "LANGUAGE_MODEL";
+            intent: string | null;
+            notes: string[];
+            paragraphs: string[];
+            question: string;
+            /** @enum {string} */
+            status: "ANSWERED" | "UNAVAILABLE" | "NOT_UNDERSTOOD";
+            suggestions: string[];
+            toolResults: {
+                calledAt: string;
+                dataStatus: string | null;
+                /** Format: uuid */
+                id: string;
+                input: unknown;
+                output: unknown;
+                /** @enum {string} */
+                status: "OK" | "UNAVAILABLE";
+                /** @enum {string} */
+                tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
+                unavailableReason: string | null;
+            }[];
+        };
+        CopilotAnswerInput: {
+            citations: {
+                marker: number;
+                tool: string;
+                /** Format: uuid */
+                toolResultId: string;
+            }[];
+            /** @enum {string} */
+            generatedBy: "TEMPLATES" | "LANGUAGE_MODEL";
+            intent: string | null;
+            notes: string[];
+            paragraphs: string[];
+            question: string;
+            /** @enum {string} */
+            status: "ANSWERED" | "UNAVAILABLE" | "NOT_UNDERSTOOD";
+            suggestions: string[];
+            toolResults: {
+                calledAt: string;
+                dataStatus: string | null;
+                /** Format: uuid */
+                id: string;
+                input: unknown;
+                output: unknown;
+                /** @enum {string} */
+                status: "OK" | "UNAVAILABLE";
+                /** @enum {string} */
+                tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
+                unavailableReason: string | null;
+            }[];
         };
         EnergyDna: {
             baseline: {

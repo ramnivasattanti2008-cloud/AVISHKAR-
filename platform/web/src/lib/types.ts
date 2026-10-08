@@ -59,3 +59,5 @@ export type ScenarioSummary = components["schemas"]["ScenarioSummary"];
 export type ScenarioRequest = components["schemas"]["ScenarioRequestInput"];
 export type Opportunities = components["schemas"]["Opportunities"];
 export type Opportunity = components["schemas"]["Opportunity"];
+export type CopilotAnswer = components["schemas"]["CopilotAnswer"];
+export type CopilotTools = Resp<"/api/copilot/tools", "get", 200>;
