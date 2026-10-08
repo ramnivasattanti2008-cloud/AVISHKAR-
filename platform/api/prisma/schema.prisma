@@ -149,6 +149,7 @@ model Property {
   energyDna  EnergyDna[]
   forecastRuns ForecastRun[]
   optimizationRuns OptimizationRun[]
+  scenarios  Scenario[]
 
   @@index([ownerId])
   @@index([tariffPlanId])
@@ -724,4 +725,25 @@ model OptimizationRun {
 
   @@index([propertyId, createdAt])
   @@map("optimization_runs")
+}
+
+/// A what-if the owner asked for (spec sections 32, 33, 37 and 62): today's setup against a changed one over a typical year, with the
+/// money arithmetic. The result is an ESTIMATE from typical days, kept whole as it was shown so it can be compared and explained.
+model Scenario {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  createdAt  DateTime @map("created_at") @db.Timestamptz(3)
+  name       String
+  /// What was asked: the changes, the costs and the economic assumptions.
+  request    Json
+  /// The whole result as it was shown.
+  result     Json
+  /// The yearly saving of the change over today's setup, INR (negative when it costs more).
+  annualSavingsInr Float @map("annual_savings_inr")
+  engineVersion String @map("engine_version")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, createdAt])
+  @@map("scenarios")
 }

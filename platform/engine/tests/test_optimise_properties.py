@@ -64,6 +64,24 @@ def test_every_random_plan_balances_and_is_never_worse_than_doing_nothing(seed):
     assert soc[-1] >= b["initialSocKwh"] - 1e-5  # ends as full as it began
 
 
+@pytest.mark.parametrize("seed", range(30))
+def test_a_cyclic_battery_is_valid_ends_where_it_began_and_is_never_worse_than_any_fixed_start(seed):
+    rng = np.random.default_rng(4000 + seed)
+    payload = random_case(rng, with_ev=False, with_appliance=bool(seed % 3 == 0))
+    fixed = run(payload)
+    payload["battery"] = {**payload["battery"], "cyclic": True}
+    r = run(payload)
+    assert r.solver.status == "optimal" and r.validation.valid, r.validation.problems
+    b = payload["battery"]
+    soc = np.array(r.schedule.battery_soc_kwh)
+    start = r.schedule.battery_initial_soc_kwh
+    assert start is not None and b["minSocKwh"] - 1e-6 <= start <= b["maxSocKwh"] + 1e-6
+    assert soc[-1] >= start - 1e-5  # ends at least where it began
+    assert soc.min() >= b["minSocKwh"] - 1e-6 and soc.max() <= b["maxSocKwh"] + 1e-6
+    # choosing the start can only help against the start the other case was given (its start and end are the same value)
+    assert r.totals.net_cost_inr <= fixed.totals.net_cost_inr + 1e-5
+
+
 @pytest.mark.parametrize("seed", range(25))
 @pytest.mark.parametrize("mode", sorted(MODE_WEIGHTS))
 def test_every_mode_returns_a_physically_valid_plan(seed, mode):

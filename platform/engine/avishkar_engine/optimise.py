@@ -122,6 +122,7 @@ class _Layout:
     chg: list[int] = field(default_factory=list)
     dis: list[int] = field(default_factory=list)
     soc: list[int] = field(default_factory=list)
+    soc0: int | None = None  # the starting charge as a variable, when the battery is cyclic
     evc: list[int] = field(default_factory=list)
     ush: list[int] = field(default_factory=list)
     reserve_short: list[int] = field(default_factory=list)
@@ -219,16 +220,21 @@ def optimise(req: OptimiseRequest) -> OptimiseResponse:
             L.dis.append(m.var(0, b.max_discharge_kw, (b.wear_inr_per_kwh / b.discharge_efficiency + TIE_BREAK) * dt))
     if b:
         floor = _reserve_floor(req, outage, weights)
+        if b.cyclic:
+            L.soc0 = m.var(b.min_soc_kwh, b.max_soc_kwh)
         for t in range(n):
             L.soc.append(m.var(0.0, b.max_soc_kwh))
             L.reserve_short.append(m.var(0, b.max_soc_kwh, RESERVE_SHORTFALL_INR_PER_KWH))
             m.row([(L.soc[t], 1.0), (L.reserve_short[t], 1.0)], float(floor[t]), np.inf)  # soc + shortfall >= floor
-            prev = [(L.soc[t - 1], -1.0)] if t else []
-            rhs = b.initial_soc_kwh if t == 0 else 0.0
+            prev = [(L.soc[t - 1], -1.0)] if t else ([(L.soc0, -1.0)] if L.soc0 is not None else [])
+            rhs = b.initial_soc_kwh if t == 0 and L.soc0 is None else 0.0
             m.eq([(L.soc[t], 1.0), *prev, (L.chg[t], -b.charge_efficiency * dt), (L.dis[t], dt / b.discharge_efficiency)], rhs)
-        terminal = b.terminal_soc_kwh if b.terminal_soc_kwh is not None else b.initial_soc_kwh
         L.terminal_short = m.var(0, b.max_soc_kwh, RESERVE_SHORTFALL_INR_PER_KWH)
-        m.row([(L.soc[n - 1], 1.0), (L.terminal_short, 1.0)], float(terminal), np.inf)
+        if L.soc0 is not None:
+            m.row([(L.soc[n - 1], 1.0), (L.soc0, -1.0), (L.terminal_short, 1.0)], 0.0, np.inf)  # ends at least where it began
+        else:
+            terminal = b.terminal_soc_kwh if b.terminal_soc_kwh is not None else b.initial_soc_kwh
+            m.row([(L.soc[n - 1], 1.0), (L.terminal_short, 1.0)], float(terminal), np.inf)
     if req.ev:
         ev = req.ev
         for t in range(n):
@@ -296,7 +302,8 @@ def optimise(req: OptimiseRequest) -> OptimiseResponse:
         if rs > 1e-4:
             notes.append(f"The backup reserve could not be fully held: at worst the battery is {rs:.2f} kWh below it (it starts below it or cannot be charged fast enough).")
         if ts > 1e-4:
-            notes.append(f"The battery cannot end the horizon at {b.terminal_soc_kwh if b.terminal_soc_kwh is not None else b.initial_soc_kwh:.2f} kWh: it ends {ts:.2f} kWh below.")
+            target = "where it began" if b.cyclic else f"at {b.terminal_soc_kwh if b.terminal_soc_kwh is not None else b.initial_soc_kwh:.2f} kWh"
+            notes.append(f"The battery cannot end the horizon {target}: it ends {ts:.2f} kWh below.")
     if totals.ev_shortfall_kwh > 1e-4:
         notes.append(f"The vehicle cannot receive all the energy it needs before it leaves: {totals.ev_shortfall_kwh:.2f} kWh short (charger power and time).")
     if totals.unserved_kwh > 1e-4:
@@ -368,6 +375,7 @@ def _extract(req: OptimiseRequest, L: _Layout, x: np.ndarray, eff_load: np.ndarr
         appliance_kw={k: _clean(v) for k, v in app_kw.items()},
         served_load_kw=_clean(eff_load - ush),
         unserved_kw=_clean(ush),
+        battery_initial_soc_kwh=(round(float(x[L.soc0]), 6) if L.soc0 is not None else req.battery.initial_soc_kwh) if req.battery else None,
     )
     return sched, results
 
@@ -484,7 +492,11 @@ def validate(req: OptimiseRequest, s: Schedule) -> Validation:
         problems.append("the grid is used during an outage")
     b = req.battery
     if b:
-        prev = np.concatenate([[b.initial_soc_kwh], soc[:-1]])
+        start = s.battery_initial_soc_kwh if b.cyclic else b.initial_soc_kwh
+        if start is None or not (b.min_soc_kwh - 1e-6 <= start <= b.max_soc_kwh + 1e-6):
+            problems.append("the charge the horizon starts with is missing or outside the battery's range")
+            start = b.initial_soc_kwh
+        prev = np.concatenate([[start], soc[:-1]])
         dyn = soc - (prev + b.charge_efficiency * chg * dt - dis * dt / b.discharge_efficiency)
         if np.any(np.abs(dyn) > 1e-5):
             problems.append(f"the battery's state of charge does not follow its charge and discharge at step {int(np.argmax(np.abs(dyn)))}")

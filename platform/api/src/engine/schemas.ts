@@ -26,6 +26,8 @@ export interface OptimiseRequest {
     initialSocKwh: number;
     terminalSocKwh?: number | null;
     wearInrPerKwh?: number;
+    /** The horizon starts and ends at the same charge, which the planner chooses (a typical day that repeats). */
+    cyclic?: boolean;
   } | null;
   grid?: { importLimitKw?: number | null; exportLimitKw?: number | null; outages?: { startStep: number; endStep: number }[] };
   criticalKw?: number;
@@ -56,6 +58,7 @@ export const OptimiseResponse = z.object({
       applianceKw: z.record(z.string(), nums),
       servedLoadKw: nums,
       unservedKw: nums,
+      batteryInitialSocKwh: z.number().nullable().optional(),
     })
     .nullable(),
   appliances: z.array(z.object({ id: z.string(), name: z.string(), startStep: z.number().nullable(), runSteps: z.array(z.number()), energyKwh: z.number() })),
@@ -205,3 +208,26 @@ export const LoadForecastResponse = z.object({
   notes: z.array(z.string()),
 });
 export type LoadForecastResponse = z.infer<typeof LoadForecastResponse>;
+
+export interface TypicalDaysRequest {
+  location: { latitude: number; longitude: number; altitudeM?: number };
+  system: { capacityKwp: number; tiltDeg: number; azimuthDeg: number; lossFraction?: number; tempCoeffPerC?: number; inverterKw?: number | null };
+  months: { month: number; ghiKwhM2Day: number; airTempC?: number | null }[];
+  timezoneOffsetMinutes?: number;
+}
+
+export const TypicalDaysResponse = z.object({
+  days: z.array(
+    z.object({
+      month: z.number(),
+      ghiKwhM2DayUsed: z.number(),
+      clearness: z.number(),
+      capped: z.boolean(),
+      pvKw: nums,
+      kwhPerKwp: z.number(),
+    }),
+  ),
+  assumptions: z.array(z.string()),
+  notes: z.array(z.string()),
+});
+export type TypicalDaysResponse = z.infer<typeof TypicalDaysResponse>;

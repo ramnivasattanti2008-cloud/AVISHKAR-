@@ -54,3 +54,6 @@ export type Plan = components["schemas"]["Plan"];
 export type PlanSummary = components["schemas"]["PlanSummary"];
 export type PlanRequest = components["schemas"]["PlanRequestInput"];
 export type ForecastAccuracy = components["schemas"]["ForecastAccuracy"];
+export type Scenario = components["schemas"]["Scenario"];
+export type ScenarioSummary = components["schemas"]["ScenarioSummary"];
+export type ScenarioRequest = components["schemas"]["ScenarioRequestInput"];

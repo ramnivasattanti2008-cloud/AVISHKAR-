@@ -30,6 +30,9 @@ from avishkar_engine.forecast_schemas import (
     SolarEvaluateResponse,
     SolarForecastRequest,
     SolarForecastResponse,
+    TypicalDay,
+    TypicalDaysRequest,
+    TypicalDaysResponse,
 )
 
 TARGET_COVERAGE = 0.8
@@ -285,3 +288,50 @@ def evaluate(req: SolarEvaluateRequest) -> SolarEvaluateResponse:
     if fm.mape_pct is not None and fm.wape_pct is not None and fm.mape_pct > 3 * max(fm.wape_pct, 1e-9):
         notes.append("MAPE is much larger than WAPE because it is dominated by hours with very little output; WAPE is the steadier figure.")
     return SolarEvaluateResponse(forecast=fm, persistence_baseline=pers, clear_sky=cs, skill_vs_persistence=skill_p, skill_vs_clear_sky=skill_c, notes=notes)
+
+
+# ------------------------------------------------------------------------------ typical days
+
+
+def typical_days(req: TypicalDaysRequest) -> TypicalDaysResponse:
+    """One representative day per month from a monthly climatology: the clear-sky day of the middle of the month, scaled so that its
+    irradiation is the month's mean. The hours are local hours. A mean day has no cloudy-day variability, which the notes say."""
+    off = pd.Timedelta(minutes=req.timezone_offset_minutes)
+    days: list[TypicalDay] = []
+    notes: list[str] = []
+    for mc in sorted(req.months, key=lambda m: m.month):
+        local_midnight = pd.Timestamp(year=2026, month=mc.month, day=15, tz="UTC") - off
+        starts = pd.date_range(local_midnight, periods=24, freq="1h")
+        mids = starts + pd.Timedelta(minutes=30)
+        ch = _chain(req.location, mids)
+        clear_day = float(ch.cs_ghi.sum()) / 1000.0  # kWh/m2: hourly means over 24 one-hour steps
+        if clear_day <= 0:
+            raise ValueError(f"month {mc.month} has no daylight at this location")
+        k = mc.ghi_kwh_m2_day / clear_day
+        capped = k > KT_MAX
+        k_used = min(k, KT_MAX)
+        if capped:
+            notes.append(f"Month {mc.month}: the climatology ({mc.ghi_kwh_m2_day:.2f} kWh/m2/day) is above {KT_MAX:.2f} times the modelled clear day ({clear_day:.2f}); it was capped there.")
+        ghi = np.where(ch.zenith >= 90, 0.0, ch.cs_ghi * k_used)
+        temp = np.full(24, 25.0 if mc.air_temp_c is None else mc.air_temp_c)
+        p = power_kw(req.system, _poa_from_ghi(ch, req.system, ghi), temp)
+        days.append(
+            TypicalDay(
+                month=mc.month,
+                ghi_kwh_m2_day_used=round(float(ghi.sum()) / 1000.0, 4),
+                clearness=round(k_used, 4),
+                capped=capped,
+                pv_kw=[float(v) for v in np.round(p, 5)],
+                kwh_per_kwp=round(float(p.sum() / req.system.capacity_kwp), 4),
+            )
+        )
+    return TypicalDaysResponse(
+        days=days,
+        assumptions=[
+            "Each month is one day, the 15th: the clear-sky day of that date (Simplified Solis), scaled hour by hour so its irradiation equals the month's climatological mean.",
+            "Power comes from the same plane-of-array and power model as the forecast (Erbs split, isotropic transposition, cell temperature, fixed losses, temperature coefficient).",
+            "The air temperature is the month's mean at every hour, so the afternoon heat loss is understated and the morning's overstated; the effect on a day's energy is small.",
+            "A mean day has no cloudy-day variability: the energy over a month is right, but the value of storing or shifting energy on a cloudy day is not captured.",
+        ],
+        notes=notes,
+    )

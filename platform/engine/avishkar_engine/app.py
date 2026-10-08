@@ -19,6 +19,8 @@ from avishkar_engine.forecast_schemas import (
     SolarEvaluateResponse,
     SolarForecastRequest,
     SolarForecastResponse,
+    TypicalDaysRequest,
+    TypicalDaysResponse,
 )
 from avishkar_engine.optimise import MODE_WEIGHTS, optimise
 from avishkar_engine.schemas import OptimiseRequest, OptimiseResponse
@@ -111,6 +113,12 @@ def create_app(api_key: str | None = None, insecure_dev: bool | None = None) -> 
     def solar_evaluate(req: SolarEvaluateRequest) -> SolarEvaluateResponse:
         """MAE, RMSE, MAPE, WAPE and bias, next to the persistence and clear-sky baselines the forecast has to beat."""
         return solar.evaluate(req)
+
+    @app.post("/v1/solar/typical-days", tags=["forecasting"], summary="One typical day of output per month from a monthly climatology", response_model=TypicalDaysResponse, response_model_by_alias=True, dependencies=[Depends(authorise)])
+    def solar_typical_days(req: TypicalDaysRequest) -> TypicalDaysResponse:
+        """The clear-sky day of mid-month scaled to the month's mean irradiation, as local-hour power. For annual what-if simulation: it carries
+        each month's energy but no cloudy-day variability, which the response says."""
+        return solar.typical_days(req)
 
     @app.post("/v1/load/forecast", tags=["forecasting"], summary="Forecast a property's load from its own history", response_model=LoadForecastResponse, response_model_by_alias=True, dependencies=[Depends(authorise)])
     def load_forecast(req: LoadForecastRequest) -> LoadForecastResponse:

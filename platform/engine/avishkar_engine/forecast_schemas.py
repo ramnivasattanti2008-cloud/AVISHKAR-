@@ -229,3 +229,40 @@ class LoadForecastResponse(Wire):
     gaps_share: float = Field(description="Share of hours in the history with no reading.")
     assumptions: list[str]
     notes: list[str]
+
+
+# ------------------------------------------------------------------------------ typical days
+
+
+class MonthClimate(Wire):
+    month: int = Field(ge=1, le=12)
+    ghi_kwh_m2_day: float = Field(gt=0, le=12, description="Mean daily global horizontal irradiation of that month, kWh/m2/day (a climatology, not a forecast).")
+    air_temp_c: float | None = Field(default=None, ge=-60, le=60, description="Mean air temperature of that month; 25 C when absent.")
+
+
+class TypicalDaysRequest(Wire):
+    location: LocationIn
+    system: PvSystemIn
+    months: list[MonthClimate] = Field(min_length=1, max_length=12)
+    timezone_offset_minutes: int = Field(default=330, ge=-720, le=840, description="Hours of the typical day are local hours at this offset from UTC.")
+
+    @model_validator(mode="after")
+    def _unique(self) -> TypicalDaysRequest:
+        if len({m.month for m in self.months}) != len(self.months):
+            raise ValueError("each month may appear once")
+        return self
+
+
+class TypicalDay(Wire):
+    month: int
+    ghi_kwh_m2_day_used: float = Field(description="The irradiation the typical day carries. Equals the input unless it exceeded 1.25 times a clear day, when it is capped.")
+    clearness: float = Field(description="That irradiation as a share of a clear day's.")
+    capped: bool
+    pv_kw: list[float] = Field(description="Mean power in each of the 24 local hours (hour 0 is midnight to 1 am).")
+    kwh_per_kwp: float
+
+
+class TypicalDaysResponse(Wire):
+    days: list[TypicalDay]
+    assumptions: list[str]
+    notes: list[str]

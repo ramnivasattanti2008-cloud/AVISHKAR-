@@ -28,6 +28,7 @@ import { healthRoutes } from "./routes/health.js";
 import { planRoutes } from "./routes/plan.js";
 import { policyRoutes } from "./routes/policy.js";
 import { propertyRoutes } from "./routes/properties.js";
+import { scenarioRoutes } from "./routes/scenarios.js";
 import { tariffRoutes } from "./routes/tariffs.js";
 import { twinRoutes } from "./routes/twin.js";
 import { weatherRoutes } from "./routes/weather.js";
@@ -85,6 +86,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         { name: "energy", description: "Meter data you import, and the Energy DNA built from it" },
         { name: "forecast", description: "Forecasts of solar output and electricity use, with calibrated bands and how well each has done" },
         { name: "plan", description: "The plan: when to charge, discharge, import, export and run flexible loads, checked from scratch before it is shown" },
+        { name: "scenarios", description: "What-if: today's setup against added solar, a battery or another tariff over a typical year, with payback and net present value" },
         { name: "assets", description: "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs" },
         { name: "policy", description: "Subsidy and net-metering rules as sourced configuration, and the eligibility calculator" },
         { name: "system", description: "Health" },
@@ -151,5 +153,6 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(energyRoutes, { deps });
   await app.register(forecastRoutes, { deps });
   await app.register(planRoutes, { deps });
+  await app.register(scenarioRoutes, { deps });
   return app;
 }

@@ -7392,6 +7392,1640 @@
         ],
         "type": "object"
       },
+      "Scenario": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "base": {
+            "additionalProperties": false,
+            "properties": {
+              "batteryCycles": {
+                "type": "number"
+              },
+              "exportKwh": {
+                "type": "number"
+              },
+              "gridOnlyCostInr": {
+                "description": "The bill with no solar and no battery.",
+                "type": "number"
+              },
+              "importKwh": {
+                "type": "number"
+              },
+              "loadKwh": {
+                "type": "number"
+              },
+              "months": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "days": {
+                      "type": "number"
+                    },
+                    "exportKwh": {
+                      "type": "number"
+                    },
+                    "importKwh": {
+                      "type": "number"
+                    },
+                    "loadKwh": {
+                      "type": "number"
+                    },
+                    "month": {
+                      "type": "number"
+                    },
+                    "netCostInr": {
+                      "type": "number"
+                    },
+                    "pvKwh": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "month",
+                    "days",
+                    "netCostInr",
+                    "importKwh",
+                    "exportKwh",
+                    "pvKwh",
+                    "loadKwh"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "netCostInr": {
+                "description": "The same equipment, planned hour by hour.",
+                "type": "number"
+              },
+              "pvKwh": {
+                "type": "number"
+              },
+              "pvUsedKwh": {
+                "type": "number"
+              },
+              "selfConsumptionRatio": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "selfSufficiencyRatio": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "uncontrolledCostInr": {
+                "description": "The same equipment with no control: battery idle, solar used as it falls.",
+                "type": "number"
+              }
+            },
+            "required": [
+              "gridOnlyCostInr",
+              "uncontrolledCostInr",
+              "netCostInr",
+              "importKwh",
+              "exportKwh",
+              "loadKwh",
+              "pvKwh",
+              "pvUsedKwh",
+              "selfConsumptionRatio",
+              "selfSufficiencyRatio",
+              "batteryCycles",
+              "months"
+            ],
+            "type": "object"
+          },
+          "carbon": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "avoidedKgPerYear": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "avoidedKgPerYear"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "comparison": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "annualSavingsInr": {
+                        "description": "What the change saves each year: the planned cost of today's setup minus that of the changed one.",
+                        "type": "number"
+                      },
+                      "exportKwhChange": {
+                        "type": "number"
+                      },
+                      "importKwhChange": {
+                        "type": "number"
+                      },
+                      "savingsPercent": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "selfSufficiencyChange": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "annualSavingsInr",
+                      "savingsPercent",
+                      "importKwhChange",
+                      "exportKwhChange",
+                      "selfSufficiencyChange"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "economics": {
+            "additionalProperties": false,
+            "description": "Without any subsidy.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "cashflows": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "cumulativeInr": {
+                              "type": "number"
+                            },
+                            "discountedCumulativeInr": {
+                              "type": "number"
+                            },
+                            "savingsInr": {
+                              "type": "number"
+                            },
+                            "year": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "year",
+                            "savingsInr",
+                            "cumulativeInr",
+                            "discountedCumulativeInr"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "discountedPaybackYears": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "irrPercent": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "netGainInr": {
+                        "type": "number"
+                      },
+                      "npvInr": {
+                        "type": "number"
+                      },
+                      "paybackYears": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "paybackYears",
+                      "discountedPaybackYears",
+                      "npvInr",
+                      "irrPercent",
+                      "netGainInr",
+                      "cashflows"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "economicsAssumptions": {
+            "additionalProperties": false,
+            "properties": {
+              "degradationPercent": {
+                "type": "number"
+              },
+              "discountRatePercent": {
+                "type": "number"
+              },
+              "tariffEscalationPercent": {
+                "type": "number"
+              },
+              "years": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "years",
+              "discountRatePercent",
+              "tariffEscalationPercent",
+              "degradationPercent"
+            ],
+            "type": "object"
+          },
+          "economicsIfSubsidised": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "provenance": {
+                    "$ref": "#/components/schemas/Provenance"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "cashflows": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "cumulativeInr": {
+                                  "type": "number"
+                                },
+                                "discountedCumulativeInr": {
+                                  "type": "number"
+                                },
+                                "savingsInr": {
+                                  "type": "number"
+                                },
+                                "year": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "year",
+                                "savingsInr",
+                                "cumulativeInr",
+                                "discountedCumulativeInr"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "discountedPaybackYears": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "irrPercent": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "netGainInr": {
+                            "type": "number"
+                          },
+                          "npvInr": {
+                            "type": "number"
+                          },
+                          "paybackYears": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "paybackYears",
+                          "discountedPaybackYears",
+                          "npvInr",
+                          "irrPercent",
+                          "netGainInr",
+                          "cashflows"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "provenance"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "equipment": {
+            "additionalProperties": false,
+            "properties": {
+              "base": {
+                "additionalProperties": false,
+                "properties": {
+                  "batteryKwh": {
+                    "type": "number"
+                  },
+                  "solarKwp": {
+                    "type": "number"
+                  },
+                  "tariff": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "solarKwp",
+                  "batteryKwh",
+                  "tariff"
+                ],
+                "type": "object"
+              },
+              "scenario": {
+                "additionalProperties": false,
+                "properties": {
+                  "batteryKwh": {
+                    "type": "number"
+                  },
+                  "solarKwp": {
+                    "type": "number"
+                  },
+                  "tariff": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "solarKwp",
+                  "batteryKwh",
+                  "tariff"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "base",
+              "scenario"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "investment": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "batteryInr": {
+                        "type": "number"
+                      },
+                      "otherInr": {
+                        "type": "number"
+                      },
+                      "solarInr": {
+                        "type": "number"
+                      },
+                      "totalInr": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "totalInr",
+                      "solarInr",
+                      "batteryInr",
+                      "otherInr"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/ScenarioRequest"
+          },
+          "scenario": {
+            "additionalProperties": false,
+            "properties": {
+              "batteryCycles": {
+                "type": "number"
+              },
+              "exportKwh": {
+                "type": "number"
+              },
+              "gridOnlyCostInr": {
+                "description": "The bill with no solar and no battery.",
+                "type": "number"
+              },
+              "importKwh": {
+                "type": "number"
+              },
+              "loadKwh": {
+                "type": "number"
+              },
+              "months": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "days": {
+                      "type": "number"
+                    },
+                    "exportKwh": {
+                      "type": "number"
+                    },
+                    "importKwh": {
+                      "type": "number"
+                    },
+                    "loadKwh": {
+                      "type": "number"
+                    },
+                    "month": {
+                      "type": "number"
+                    },
+                    "netCostInr": {
+                      "type": "number"
+                    },
+                    "pvKwh": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "month",
+                    "days",
+                    "netCostInr",
+                    "importKwh",
+                    "exportKwh",
+                    "pvKwh",
+                    "loadKwh"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "netCostInr": {
+                "description": "The same equipment, planned hour by hour.",
+                "type": "number"
+              },
+              "pvKwh": {
+                "type": "number"
+              },
+              "pvUsedKwh": {
+                "type": "number"
+              },
+              "selfConsumptionRatio": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "selfSufficiencyRatio": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "uncontrolledCostInr": {
+                "description": "The same equipment with no control: battery idle, solar used as it falls.",
+                "type": "number"
+              }
+            },
+            "required": [
+              "gridOnlyCostInr",
+              "uncontrolledCostInr",
+              "netCostInr",
+              "importKwh",
+              "exportKwh",
+              "loadKwh",
+              "pvKwh",
+              "pvUsedKwh",
+              "selfConsumptionRatio",
+              "selfSufficiencyRatio",
+              "batteryCycles",
+              "months"
+            ],
+            "type": "object"
+          },
+          "subsidy": {
+            "additionalProperties": false,
+            "description": "What a published scheme would pay on the added solar, if you qualify. Not netted off the investment.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "propertyId",
+          "createdAt",
+          "name",
+          "request",
+          "equipment",
+          "base",
+          "scenario",
+          "comparison",
+          "investment",
+          "subsidy",
+          "economics",
+          "economicsIfSubsidised",
+          "carbon",
+          "economicsAssumptions",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "ScenarioInput": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "base": {
+            "properties": {
+              "batteryCycles": {
+                "type": "number"
+              },
+              "exportKwh": {
+                "type": "number"
+              },
+              "gridOnlyCostInr": {
+                "description": "The bill with no solar and no battery.",
+                "type": "number"
+              },
+              "importKwh": {
+                "type": "number"
+              },
+              "loadKwh": {
+                "type": "number"
+              },
+              "months": {
+                "items": {
+                  "properties": {
+                    "days": {
+                      "type": "number"
+                    },
+                    "exportKwh": {
+                      "type": "number"
+                    },
+                    "importKwh": {
+                      "type": "number"
+                    },
+                    "loadKwh": {
+                      "type": "number"
+                    },
+                    "month": {
+                      "type": "number"
+                    },
+                    "netCostInr": {
+                      "type": "number"
+                    },
+                    "pvKwh": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "month",
+                    "days",
+                    "netCostInr",
+                    "importKwh",
+                    "exportKwh",
+                    "pvKwh",
+                    "loadKwh"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "netCostInr": {
+                "description": "The same equipment, planned hour by hour.",
+                "type": "number"
+              },
+              "pvKwh": {
+                "type": "number"
+              },
+              "pvUsedKwh": {
+                "type": "number"
+              },
+              "selfConsumptionRatio": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "selfSufficiencyRatio": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "uncontrolledCostInr": {
+                "description": "The same equipment with no control: battery idle, solar used as it falls.",
+                "type": "number"
+              }
+            },
+            "required": [
+              "gridOnlyCostInr",
+              "uncontrolledCostInr",
+              "netCostInr",
+              "importKwh",
+              "exportKwh",
+              "loadKwh",
+              "pvKwh",
+              "pvUsedKwh",
+              "selfConsumptionRatio",
+              "selfSufficiencyRatio",
+              "batteryCycles",
+              "months"
+            ],
+            "type": "object"
+          },
+          "carbon": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "avoidedKgPerYear": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "avoidedKgPerYear"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "comparison": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "annualSavingsInr": {
+                        "description": "What the change saves each year: the planned cost of today's setup minus that of the changed one.",
+                        "type": "number"
+                      },
+                      "exportKwhChange": {
+                        "type": "number"
+                      },
+                      "importKwhChange": {
+                        "type": "number"
+                      },
+                      "savingsPercent": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "selfSufficiencyChange": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "annualSavingsInr",
+                      "savingsPercent",
+                      "importKwhChange",
+                      "exportKwhChange",
+                      "selfSufficiencyChange"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "economics": {
+            "description": "Without any subsidy.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "cashflows": {
+                        "items": {
+                          "properties": {
+                            "cumulativeInr": {
+                              "type": "number"
+                            },
+                            "discountedCumulativeInr": {
+                              "type": "number"
+                            },
+                            "savingsInr": {
+                              "type": "number"
+                            },
+                            "year": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "year",
+                            "savingsInr",
+                            "cumulativeInr",
+                            "discountedCumulativeInr"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "discountedPaybackYears": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "irrPercent": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "netGainInr": {
+                        "type": "number"
+                      },
+                      "npvInr": {
+                        "type": "number"
+                      },
+                      "paybackYears": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "paybackYears",
+                      "discountedPaybackYears",
+                      "npvInr",
+                      "irrPercent",
+                      "netGainInr",
+                      "cashflows"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "economicsAssumptions": {
+            "properties": {
+              "degradationPercent": {
+                "type": "number"
+              },
+              "discountRatePercent": {
+                "type": "number"
+              },
+              "tariffEscalationPercent": {
+                "type": "number"
+              },
+              "years": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "years",
+              "discountRatePercent",
+              "tariffEscalationPercent",
+              "degradationPercent"
+            ],
+            "type": "object"
+          },
+          "economicsIfSubsidised": {
+            "anyOf": [
+              {
+                "properties": {
+                  "provenance": {
+                    "$ref": "#/components/schemas/ProvenanceInput"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "cashflows": {
+                            "items": {
+                              "properties": {
+                                "cumulativeInr": {
+                                  "type": "number"
+                                },
+                                "discountedCumulativeInr": {
+                                  "type": "number"
+                                },
+                                "savingsInr": {
+                                  "type": "number"
+                                },
+                                "year": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "year",
+                                "savingsInr",
+                                "cumulativeInr",
+                                "discountedCumulativeInr"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "discountedPaybackYears": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "irrPercent": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "netGainInr": {
+                            "type": "number"
+                          },
+                          "npvInr": {
+                            "type": "number"
+                          },
+                          "paybackYears": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "paybackYears",
+                          "discountedPaybackYears",
+                          "npvInr",
+                          "irrPercent",
+                          "netGainInr",
+                          "cashflows"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "provenance"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "equipment": {
+            "properties": {
+              "base": {
+                "properties": {
+                  "batteryKwh": {
+                    "type": "number"
+                  },
+                  "solarKwp": {
+                    "type": "number"
+                  },
+                  "tariff": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "solarKwp",
+                  "batteryKwh",
+                  "tariff"
+                ],
+                "type": "object"
+              },
+              "scenario": {
+                "properties": {
+                  "batteryKwh": {
+                    "type": "number"
+                  },
+                  "solarKwp": {
+                    "type": "number"
+                  },
+                  "tariff": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "solarKwp",
+                  "batteryKwh",
+                  "tariff"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "base",
+              "scenario"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "investment": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "batteryInr": {
+                        "type": "number"
+                      },
+                      "otherInr": {
+                        "type": "number"
+                      },
+                      "solarInr": {
+                        "type": "number"
+                      },
+                      "totalInr": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "totalInr",
+                      "solarInr",
+                      "batteryInr",
+                      "otherInr"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/ScenarioRequestInput"
+          },
+          "scenario": {
+            "properties": {
+              "batteryCycles": {
+                "type": "number"
+              },
+              "exportKwh": {
+                "type": "number"
+              },
+              "gridOnlyCostInr": {
+                "description": "The bill with no solar and no battery.",
+                "type": "number"
+              },
+              "importKwh": {
+                "type": "number"
+              },
+              "loadKwh": {
+                "type": "number"
+              },
+              "months": {
+                "items": {
+                  "properties": {
+                    "days": {
+                      "type": "number"
+                    },
+                    "exportKwh": {
+                      "type": "number"
+                    },
+                    "importKwh": {
+                      "type": "number"
+                    },
+                    "loadKwh": {
+                      "type": "number"
+                    },
+                    "month": {
+                      "type": "number"
+                    },
+                    "netCostInr": {
+                      "type": "number"
+                    },
+                    "pvKwh": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "month",
+                    "days",
+                    "netCostInr",
+                    "importKwh",
+                    "exportKwh",
+                    "pvKwh",
+                    "loadKwh"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "netCostInr": {
+                "description": "The same equipment, planned hour by hour.",
+                "type": "number"
+              },
+              "pvKwh": {
+                "type": "number"
+              },
+              "pvUsedKwh": {
+                "type": "number"
+              },
+              "selfConsumptionRatio": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "selfSufficiencyRatio": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "uncontrolledCostInr": {
+                "description": "The same equipment with no control: battery idle, solar used as it falls.",
+                "type": "number"
+              }
+            },
+            "required": [
+              "gridOnlyCostInr",
+              "uncontrolledCostInr",
+              "netCostInr",
+              "importKwh",
+              "exportKwh",
+              "loadKwh",
+              "pvKwh",
+              "pvUsedKwh",
+              "selfConsumptionRatio",
+              "selfSufficiencyRatio",
+              "batteryCycles",
+              "months"
+            ],
+            "type": "object"
+          },
+          "subsidy": {
+            "description": "What a published scheme would pay on the added solar, if you qualify. Not netted off the investment.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "propertyId",
+          "createdAt",
+          "name",
+          "request",
+          "equipment",
+          "base",
+          "scenario",
+          "comparison",
+          "investment",
+          "subsidy",
+          "economics",
+          "economicsIfSubsidised",
+          "carbon",
+          "economicsAssumptions",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "ScenarioRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "addBatteryKwh": {
+            "description": "Battery capacity to add, kWh.",
+            "exclusiveMinimum": 0,
+            "maximum": 10000,
+            "type": "number"
+          },
+          "addSolarKwp": {
+            "description": "Solar capacity to add, kWp.",
+            "exclusiveMinimum": 0,
+            "maximum": 1000,
+            "type": "number"
+          },
+          "batteryPowerKw": {
+            "description": "Charge and discharge power of the added battery. Default: half its capacity per hour.",
+            "exclusiveMinimum": 0,
+            "maximum": 10000,
+            "type": "number"
+          },
+          "costs": {
+            "additionalProperties": false,
+            "description": "What you would pay, from a quote. AVISHKAR has no price list: without these there is no payback.",
+            "properties": {
+              "batteryInrPerKwh": {
+                "maximum": 1000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              "otherInr": {
+                "description": "Anything else paid up front: wiring, mounting, a new inverter.",
+                "maximum": 1000000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              "solarInrPerKwp": {
+                "maximum": 1000000,
+                "minimum": 0,
+                "type": "number"
+              }
+            },
+            "type": "object"
+          },
+          "economics": {
+            "additionalProperties": false,
+            "properties": {
+              "degradationPercent": {
+                "description": "Yearly loss of the saving as equipment ages. Default 0.5.",
+                "maximum": 10,
+                "minimum": 0,
+                "type": "number"
+              },
+              "discountRatePercent": {
+                "description": "What money is worth to you each year. Default 8.",
+                "maximum": 40,
+                "minimum": 0,
+                "type": "number"
+              },
+              "tariffEscalationPercent": {
+                "description": "Yearly rise in the tariff. Default 0: no rise is assumed.",
+                "maximum": 25,
+                "minimum": 0,
+                "type": "number"
+              },
+              "years": {
+                "description": "Years the saving lasts. Default 20.",
+                "maximum": 40,
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "gridCarbonKgPerKwh": {
+            "description": "The grid's emission factor, kg CO2 per kWh, from your utility or a published table. None is built in.",
+            "maximum": 3,
+            "minimum": 0,
+            "type": "number"
+          },
+          "name": {
+            "description": "A label for your own reference.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "solarAzimuthDeg": {
+            "description": "Direction the added panels face, degrees clockwise from north. Default: 180, south.",
+            "exclusiveMaximum": 360,
+            "minimum": 0,
+            "type": "number"
+          },
+          "solarTiltDeg": {
+            "description": "Tilt of the added panels. Default: the latitude, a common rule for a fixed array.",
+            "maximum": 90,
+            "minimum": 0,
+            "type": "number"
+          },
+          "tariffPlanId": {
+            "description": "Compare against a different tariff, your own or a curated one.",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ScenarioRequestInput": {
+        "properties": {
+          "addBatteryKwh": {
+            "description": "Battery capacity to add, kWh.",
+            "exclusiveMinimum": 0,
+            "maximum": 10000,
+            "type": "number"
+          },
+          "addSolarKwp": {
+            "description": "Solar capacity to add, kWp.",
+            "exclusiveMinimum": 0,
+            "maximum": 1000,
+            "type": "number"
+          },
+          "batteryPowerKw": {
+            "description": "Charge and discharge power of the added battery. Default: half its capacity per hour.",
+            "exclusiveMinimum": 0,
+            "maximum": 10000,
+            "type": "number"
+          },
+          "costs": {
+            "description": "What you would pay, from a quote. AVISHKAR has no price list: without these there is no payback.",
+            "properties": {
+              "batteryInrPerKwh": {
+                "maximum": 1000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              "otherInr": {
+                "description": "Anything else paid up front: wiring, mounting, a new inverter.",
+                "maximum": 1000000000,
+                "minimum": 0,
+                "type": "number"
+              },
+              "solarInrPerKwp": {
+                "maximum": 1000000,
+                "minimum": 0,
+                "type": "number"
+              }
+            },
+            "type": "object"
+          },
+          "economics": {
+            "properties": {
+              "degradationPercent": {
+                "description": "Yearly loss of the saving as equipment ages. Default 0.5.",
+                "maximum": 10,
+                "minimum": 0,
+                "type": "number"
+              },
+              "discountRatePercent": {
+                "description": "What money is worth to you each year. Default 8.",
+                "maximum": 40,
+                "minimum": 0,
+                "type": "number"
+              },
+              "tariffEscalationPercent": {
+                "description": "Yearly rise in the tariff. Default 0: no rise is assumed.",
+                "maximum": 25,
+                "minimum": 0,
+                "type": "number"
+              },
+              "years": {
+                "description": "Years the saving lasts. Default 20.",
+                "maximum": 40,
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "gridCarbonKgPerKwh": {
+            "description": "The grid's emission factor, kg CO2 per kWh, from your utility or a published table. None is built in.",
+            "maximum": 3,
+            "minimum": 0,
+            "type": "number"
+          },
+          "name": {
+            "description": "A label for your own reference.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "solarAzimuthDeg": {
+            "description": "Direction the added panels face, degrees clockwise from north. Default: 180, south.",
+            "exclusiveMaximum": 360,
+            "minimum": 0,
+            "type": "number"
+          },
+          "solarTiltDeg": {
+            "description": "Tilt of the added panels. Default: the latitude, a common rule for a fixed array.",
+            "maximum": 90,
+            "minimum": 0,
+            "type": "number"
+          },
+          "tariffPlanId": {
+            "description": "Compare against a different tariff, your own or a curated one.",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ScenarioSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "addBatteryKwh": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "addSolarKwp": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "annualSavingsInr": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tariffChanged": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "name",
+          "annualSavingsInr",
+          "addSolarKwp",
+          "addBatteryKwh",
+          "tariffChanged"
+        ],
+        "type": "object"
+      },
+      "ScenarioSummaryInput": {
+        "properties": {
+          "addBatteryKwh": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "addSolarKwp": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "annualSavingsInr": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tariffChanged": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "name",
+          "annualSavingsInr",
+          "addSolarKwp",
+          "addBatteryKwh",
+          "tariffChanged"
+        ],
+        "type": "object"
+      },
       "SolarForecast": {
         "additionalProperties": false,
         "properties": {
@@ -15102,6 +16736,316 @@
         ]
       }
     },
+    "/api/properties/{id}/scenarios": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "scenarios": {
+                      "items": {
+                        "$ref": "#/components/schemas/ScenarioSummary"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "scenarios"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Scenarios run for a property, newest first",
+        "tags": [
+          "scenarios"
+        ]
+      },
+      "post": {
+        "description": "Compares today's setup with the changed one over a typical year (one typical weekday and weekend day per month, planned for the lowest bill) and gives the yearly saving. With the prices you were quoted it adds payback, net present value and rate of return; without them it says so and does not guess. An estimate, not a forecast of any particular year: the response lists every assumption. Needs a chosen tariff and meter readings (422 PLAN_INPUTS_MISSING says which).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scenario"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "What would adding solar, a battery or a different tariff do over a year",
+        "tags": [
+          "scenarios"
+        ]
+      }
+    },
+    "/api/properties/{id}/scenarios/{scenarioId}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "scenarioId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Delete a scenario",
+        "tags": [
+          "scenarios"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "scenarioId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scenario"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "One scenario as it was shown",
+        "tags": [
+          "scenarios"
+        ]
+      }
+    },
     "/api/properties/{id}/solar-forecast": {
       "get": {
         "description": "A physical PV model (pvlib) driven by the Open-Meteo irradiance forecast. The 10th to 90th percentile band comes only from how wrong that forecast was at this place in the last weeks, and is absent (with the reason) when that record is missing. Uses the installed systems, or the planned ones when none is installed.",
@@ -17567,6 +19511,10 @@
     {
       "description": "The plan: when to charge, discharge, import, export and run flexible loads, checked from scratch before it is shown",
       "name": "plan"
+    },
+    {
+      "description": "What-if: today's setup against added solar, a battery or another tariff over a typical year, with payback and net present value",
+      "name": "scenarios"
     },
     {
       "description": "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs",

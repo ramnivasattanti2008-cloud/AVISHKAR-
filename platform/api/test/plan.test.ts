@@ -111,6 +111,7 @@ describeBoth("plans, through the API and the real engine", () => {
     expect(text).toContain("charge now is not known");
     expect(text).toContain("Fixed monthly charges");
     expect(text).toContain("No outage information");
+    expect(text).toContain("Energy sent to the grid is credited at INR 3 per kWh (entered by you)");
     expect(p.inputs).toMatchObject({
       load: { basis: "FORECAST" },
       solar: { systems: 1 },

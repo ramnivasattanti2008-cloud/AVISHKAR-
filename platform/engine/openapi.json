@@ -204,6 +204,12 @@
             "title": "Chargeefficiency",
             "type": "number"
           },
+          "cyclic": {
+            "default": false,
+            "description": "The horizon starts and ends at the same charge, which the planner chooses: for a typical day that repeats. initialSocKwh and terminalSocKwh are then not used (send any value in range).",
+            "title": "Cyclic",
+            "type": "boolean"
+          },
           "dischargeEfficiency": {
             "maximum": 1.0,
             "minimum": 0.5,
@@ -891,6 +897,44 @@
         "title": "Metrics",
         "type": "object"
       },
+      "MonthClimate": {
+        "additionalProperties": false,
+        "properties": {
+          "airTempC": {
+            "anyOf": [
+              {
+                "maximum": 60.0,
+                "minimum": -60.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mean air temperature of that month; 25 C when absent.",
+            "title": "Airtempc"
+          },
+          "ghiKwhM2Day": {
+            "description": "Mean daily global horizontal irradiation of that month, kWh/m2/day (a climatology, not a forecast).",
+            "exclusiveMinimum": 0.0,
+            "maximum": 12.0,
+            "title": "Ghikwhm2Day",
+            "type": "number"
+          },
+          "month": {
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Month",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "ghiKwhM2Day"
+        ],
+        "title": "MonthClimate",
+        "type": "object"
+      },
       "OptimiseRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1247,6 +1291,18 @@
             },
             "title": "Batterydischargekw",
             "type": "array"
+          },
+          "batteryInitialSocKwh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The charge the horizon started with. Always given when a battery is planned.",
+            "title": "Batteryinitialsockwh"
           },
           "batterySocKwh": {
             "items": {
@@ -1755,6 +1811,119 @@
         "title": "Totals",
         "type": "object"
       },
+      "TypicalDay": {
+        "additionalProperties": false,
+        "properties": {
+          "capped": {
+            "title": "Capped",
+            "type": "boolean"
+          },
+          "clearness": {
+            "description": "That irradiation as a share of a clear day's.",
+            "title": "Clearness",
+            "type": "number"
+          },
+          "ghiKwhM2DayUsed": {
+            "description": "The irradiation the typical day carries. Equals the input unless it exceeded 1.25 times a clear day, when it is capped.",
+            "title": "Ghikwhm2Dayused",
+            "type": "number"
+          },
+          "kwhPerKwp": {
+            "title": "Kwhperkwp",
+            "type": "number"
+          },
+          "month": {
+            "title": "Month",
+            "type": "integer"
+          },
+          "pvKw": {
+            "description": "Mean power in each of the 24 local hours (hour 0 is midnight to 1 am).",
+            "items": {
+              "type": "number"
+            },
+            "title": "Pvkw",
+            "type": "array"
+          }
+        },
+        "required": [
+          "month",
+          "ghiKwhM2DayUsed",
+          "clearness",
+          "capped",
+          "pvKw",
+          "kwhPerKwp"
+        ],
+        "title": "TypicalDay",
+        "type": "object"
+      },
+      "TypicalDaysRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/LocationIn"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/MonthClimate"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "Months",
+            "type": "array"
+          },
+          "system": {
+            "$ref": "#/components/schemas/PvSystemIn"
+          },
+          "timezoneOffsetMinutes": {
+            "default": 330,
+            "description": "Hours of the typical day are local hours at this offset from UTC.",
+            "maximum": 840.0,
+            "minimum": -720.0,
+            "title": "Timezoneoffsetminutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "location",
+          "system",
+          "months"
+        ],
+        "title": "TypicalDaysRequest",
+        "type": "object"
+      },
+      "TypicalDaysResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/TypicalDay"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "assumptions",
+          "notes"
+        ],
+        "title": "TypicalDaysResponse",
+        "type": "object"
+      },
       "Validation": {
         "additionalProperties": false,
         "properties": {
@@ -2089,6 +2258,66 @@
           }
         },
         "summary": "Forecast solar output from a weather forecast",
+        "tags": [
+          "forecasting"
+        ]
+      }
+    },
+    "/v1/solar/typical-days": {
+      "post": {
+        "description": "The clear-sky day of mid-month scaled to the month's mean irradiation, as local-hour power. For annual what-if simulation: it carries\neach month's energy but no cloudy-day variability, which the response says.",
+        "operationId": "solar_typical_days_v1_solar_typical_days_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-engine-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Engine-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TypicalDaysRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypicalDaysResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "One typical day of output per month from a monthly climatology",
         "tags": [
           "forecasting"
         ]

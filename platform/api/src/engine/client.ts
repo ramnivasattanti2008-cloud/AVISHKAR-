@@ -10,6 +10,8 @@ import {
   type SolarEvaluateRequest,
   SolarForecastResponse,
   type SolarForecastRequest,
+  TypicalDaysResponse,
+  type TypicalDaysRequest,
 } from "./schemas.js";
 
 export interface EngineOptions {
@@ -43,6 +45,10 @@ export class EngineClient {
 
   async solarForecast(req: SolarForecastRequest, ctx: Ctx = {}): Promise<SolarForecastResponse> {
     return this.call("POST", "/v1/solar/forecast", req, SolarForecastResponse, ctx, this.o.timeoutMs);
+  }
+
+  async solarTypicalDays(req: TypicalDaysRequest, ctx: Ctx = {}): Promise<TypicalDaysResponse> {
+    return this.call("POST", "/v1/solar/typical-days", req, TypicalDaysResponse, ctx, this.o.timeoutMs);
   }
 
   async solarEvaluate(req: SolarEvaluateRequest, ctx: Ctx = {}): Promise<SolarEvaluateResponse> {

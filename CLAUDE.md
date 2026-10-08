@@ -127,7 +127,11 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
   schemas), `api/src/forecast` (solar and load routes, the Open-Meteo previous-runs provider), `api/src/plan` (builds the
   optimiser input from tariff, forecasts and assets; `horizon.ts` is the local-clock arithmetic, steps are whole IST hours).
   The solar provider's hours sit half an hour off IST: `plan/horizon.ts resample` averages the two it overlaps. Plans are stored
-  whole in `optimization_runs`; forecasts as issued in `forecast_runs`. Tests that depend on the hour of day pin the clock.
+  whole in `optimization_runs`; forecasts as issued in `forecast_runs`; what-ifs in `scenarios`. Tests that depend on the hour of
+  day pin the clock. `api/src/scenarios` estimates a year from 24 typical days (a weekday and a weekend day per month) planned with
+  a `cyclic` battery, weighted by the next 365 days; money arithmetic is `economics.ts`, and only prices the owner enters are used
+  (never a built-in price list or emission factor). `api/src/forecast/evaluate.ts` scores stored load forecasts against readings
+  imported later (automatically after each meter import).
 - Tool-shell traps seen again: a heredoc containing `\b`, `\d` or a curly apostrophe is mangled (a Python `'''` string turned
   `\b` into a literal backspace in a regex). Write scripts and files with the Write tool, then run them.
 

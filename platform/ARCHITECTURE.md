@@ -121,6 +121,15 @@ chronological holdout and the winner must beat the best baseline by 2%. A foreca
 the future: a load forecast made from meter data that ends days ago is labelled ESTIMATED and says so. Each forecast is
 stored as issued (`forecast_runs`) so a later job can score it against what really happened; that job is not built yet.
 
+**D18. A year is estimated from typical days, and money is only ever the owner's numbers (§32, §33, §62).** A yearly what-if is one
+typical weekday and weekend day per month, each planned by the same optimiser as the daily plan (the day repeats, so the battery
+starts at the charge the planner chooses), weighted by the next 365 days' calendar. Load comes from the property's own Energy
+DNA, solar from the monthly climatology; the limits (no cloudy-day variability, months without readings use the average month,
+no EV or appliances) are listed with every result. Payback, discounted payback, NPV and IRR are computed only from prices the
+owner enters: there is no price list and no emission-factor table, because none has been read from a source, and an absent price
+makes the money UNAVAILABLE with the reason while the saving is still shown. A published subsidy is shown beside the investment,
+never netted off it, and never for an addition to an existing system.
+
 ## 3. Target architecture
 
 ```

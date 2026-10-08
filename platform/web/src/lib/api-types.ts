@@ -3911,6 +3911,270 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scenarios run for a property, newest first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            scenarios: components["schemas"]["ScenarioSummary"][];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * What would adding solar, a battery or a different tariff do over a year
+         * @description Compares today's setup with the changed one over a typical year (one typical weekday and weekend day per month, planned for the lowest bill) and gives the yearly saving. With the prices you were quoted it adds payback, net present value and rate of return; without them it says so and does not guess. An estimate, not a forecast of any particular year: the response lists every assumption. Needs a chosen tariff and meter readings (422 PLAN_INPUTS_MISSING says which).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ScenarioRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Scenario"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/scenarios/{scenarioId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One scenario as it was shown */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    scenarioId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Scenario"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete a scenario */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    scenarioId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/solar-forecast": {
         parameters: {
             query?: never;
@@ -6980,6 +7244,400 @@ export interface components {
             sensor: string;
             source: string;
             thumbnailUrl: string | null;
+        };
+        Scenario: {
+            assumptions: string[];
+            base: {
+                batteryCycles: number;
+                exportKwh: number;
+                /** @description The bill with no solar and no battery. */
+                gridOnlyCostInr: number;
+                importKwh: number;
+                loadKwh: number;
+                months: {
+                    days: number;
+                    exportKwh: number;
+                    importKwh: number;
+                    loadKwh: number;
+                    month: number;
+                    netCostInr: number;
+                    pvKwh: number;
+                }[];
+                /** @description The same equipment, planned hour by hour. */
+                netCostInr: number;
+                pvKwh: number;
+                pvUsedKwh: number;
+                selfConsumptionRatio: number | null;
+                selfSufficiencyRatio: number | null;
+                /** @description The same equipment with no control: battery idle, solar used as it falls. */
+                uncontrolledCostInr: number;
+            };
+            carbon: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    avoidedKgPerYear: number;
+                } | null;
+            };
+            comparison: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    /** @description What the change saves each year: the planned cost of today's setup minus that of the changed one. */
+                    annualSavingsInr: number;
+                    exportKwhChange: number;
+                    importKwhChange: number;
+                    savingsPercent: number | null;
+                    selfSufficiencyChange: number | null;
+                } | null;
+            };
+            createdAt: string;
+            /** @description Without any subsidy. */
+            economics: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    cashflows: {
+                        cumulativeInr: number;
+                        discountedCumulativeInr: number;
+                        savingsInr: number;
+                        year: number;
+                    }[];
+                    discountedPaybackYears: number | null;
+                    irrPercent: number | null;
+                    netGainInr: number;
+                    npvInr: number;
+                    paybackYears: number | null;
+                } | null;
+            };
+            economicsAssumptions: {
+                degradationPercent: number;
+                discountRatePercent: number;
+                tariffEscalationPercent: number;
+                years: number;
+            };
+            economicsIfSubsidised: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    cashflows: {
+                        cumulativeInr: number;
+                        discountedCumulativeInr: number;
+                        savingsInr: number;
+                        year: number;
+                    }[];
+                    discountedPaybackYears: number | null;
+                    irrPercent: number | null;
+                    netGainInr: number;
+                    npvInr: number;
+                    paybackYears: number | null;
+                } | null;
+            } | null;
+            equipment: {
+                base: {
+                    batteryKwh: number;
+                    solarKwp: number;
+                    tariff: string;
+                };
+                scenario: {
+                    batteryKwh: number;
+                    solarKwp: number;
+                    tariff: string;
+                };
+            };
+            /** Format: uuid */
+            id: string;
+            investment: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    batteryInr: number;
+                    otherInr: number;
+                    solarInr: number;
+                    totalInr: number;
+                } | null;
+            };
+            name: string;
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+            request: components["schemas"]["ScenarioRequest"];
+            scenario: {
+                batteryCycles: number;
+                exportKwh: number;
+                /** @description The bill with no solar and no battery. */
+                gridOnlyCostInr: number;
+                importKwh: number;
+                loadKwh: number;
+                months: {
+                    days: number;
+                    exportKwh: number;
+                    importKwh: number;
+                    loadKwh: number;
+                    month: number;
+                    netCostInr: number;
+                    pvKwh: number;
+                }[];
+                /** @description The same equipment, planned hour by hour. */
+                netCostInr: number;
+                pvKwh: number;
+                pvUsedKwh: number;
+                selfConsumptionRatio: number | null;
+                selfSufficiencyRatio: number | null;
+                /** @description The same equipment with no control: battery idle, solar used as it falls. */
+                uncontrolledCostInr: number;
+            };
+            /** @description What a published scheme would pay on the added solar, if you qualify. Not netted off the investment. */
+            subsidy: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: number | null;
+            };
+        };
+        ScenarioInput: {
+            assumptions: string[];
+            base: {
+                batteryCycles: number;
+                exportKwh: number;
+                /** @description The bill with no solar and no battery. */
+                gridOnlyCostInr: number;
+                importKwh: number;
+                loadKwh: number;
+                months: {
+                    days: number;
+                    exportKwh: number;
+                    importKwh: number;
+                    loadKwh: number;
+                    month: number;
+                    netCostInr: number;
+                    pvKwh: number;
+                }[];
+                /** @description The same equipment, planned hour by hour. */
+                netCostInr: number;
+                pvKwh: number;
+                pvUsedKwh: number;
+                selfConsumptionRatio: number | null;
+                selfSufficiencyRatio: number | null;
+                /** @description The same equipment with no control: battery idle, solar used as it falls. */
+                uncontrolledCostInr: number;
+            };
+            carbon: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    avoidedKgPerYear: number;
+                } | null;
+            };
+            comparison: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    /** @description What the change saves each year: the planned cost of today's setup minus that of the changed one. */
+                    annualSavingsInr: number;
+                    exportKwhChange: number;
+                    importKwhChange: number;
+                    savingsPercent: number | null;
+                    selfSufficiencyChange: number | null;
+                } | null;
+            };
+            createdAt: string;
+            /** @description Without any subsidy. */
+            economics: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    cashflows: {
+                        cumulativeInr: number;
+                        discountedCumulativeInr: number;
+                        savingsInr: number;
+                        year: number;
+                    }[];
+                    discountedPaybackYears: number | null;
+                    irrPercent: number | null;
+                    netGainInr: number;
+                    npvInr: number;
+                    paybackYears: number | null;
+                } | null;
+            };
+            economicsAssumptions: {
+                degradationPercent: number;
+                discountRatePercent: number;
+                tariffEscalationPercent: number;
+                years: number;
+            };
+            economicsIfSubsidised: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    cashflows: {
+                        cumulativeInr: number;
+                        discountedCumulativeInr: number;
+                        savingsInr: number;
+                        year: number;
+                    }[];
+                    discountedPaybackYears: number | null;
+                    irrPercent: number | null;
+                    netGainInr: number;
+                    npvInr: number;
+                    paybackYears: number | null;
+                } | null;
+            } | null;
+            equipment: {
+                base: {
+                    batteryKwh: number;
+                    solarKwp: number;
+                    tariff: string;
+                };
+                scenario: {
+                    batteryKwh: number;
+                    solarKwp: number;
+                    tariff: string;
+                };
+            };
+            /** Format: uuid */
+            id: string;
+            investment: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    batteryInr: number;
+                    otherInr: number;
+                    solarInr: number;
+                    totalInr: number;
+                } | null;
+            };
+            name: string;
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+            request: components["schemas"]["ScenarioRequestInput"];
+            scenario: {
+                batteryCycles: number;
+                exportKwh: number;
+                /** @description The bill with no solar and no battery. */
+                gridOnlyCostInr: number;
+                importKwh: number;
+                loadKwh: number;
+                months: {
+                    days: number;
+                    exportKwh: number;
+                    importKwh: number;
+                    loadKwh: number;
+                    month: number;
+                    netCostInr: number;
+                    pvKwh: number;
+                }[];
+                /** @description The same equipment, planned hour by hour. */
+                netCostInr: number;
+                pvKwh: number;
+                pvUsedKwh: number;
+                selfConsumptionRatio: number | null;
+                selfSufficiencyRatio: number | null;
+                /** @description The same equipment with no control: battery idle, solar used as it falls. */
+                uncontrolledCostInr: number;
+            };
+            /** @description What a published scheme would pay on the added solar, if you qualify. Not netted off the investment. */
+            subsidy: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: number | null;
+            };
+        };
+        ScenarioRequest: {
+            /** @description Battery capacity to add, kWh. */
+            addBatteryKwh?: number;
+            /** @description Solar capacity to add, kWp. */
+            addSolarKwp?: number;
+            /** @description Charge and discharge power of the added battery. Default: half its capacity per hour. */
+            batteryPowerKw?: number;
+            /** @description What you would pay, from a quote. AVISHKAR has no price list: without these there is no payback. */
+            costs?: {
+                batteryInrPerKwh?: number;
+                /** @description Anything else paid up front: wiring, mounting, a new inverter. */
+                otherInr?: number;
+                solarInrPerKwp?: number;
+            };
+            economics?: {
+                /** @description Yearly loss of the saving as equipment ages. Default 0.5. */
+                degradationPercent?: number;
+                /** @description What money is worth to you each year. Default 8. */
+                discountRatePercent?: number;
+                /** @description Yearly rise in the tariff. Default 0: no rise is assumed. */
+                tariffEscalationPercent?: number;
+                /** @description Years the saving lasts. Default 20. */
+                years?: number;
+            };
+            /** @description The grid's emission factor, kg CO2 per kWh, from your utility or a published table. None is built in. */
+            gridCarbonKgPerKwh?: number;
+            /** @description A label for your own reference. */
+            name?: string;
+            /** @description Direction the added panels face, degrees clockwise from north. Default: 180, south. */
+            solarAzimuthDeg?: number;
+            /** @description Tilt of the added panels. Default: the latitude, a common rule for a fixed array. */
+            solarTiltDeg?: number;
+            /**
+             * Format: uuid
+             * @description Compare against a different tariff, your own or a curated one.
+             */
+            tariffPlanId?: string;
+        };
+        ScenarioRequestInput: {
+            /** @description Battery capacity to add, kWh. */
+            addBatteryKwh?: number;
+            /** @description Solar capacity to add, kWp. */
+            addSolarKwp?: number;
+            /** @description Charge and discharge power of the added battery. Default: half its capacity per hour. */
+            batteryPowerKw?: number;
+            /** @description What you would pay, from a quote. AVISHKAR has no price list: without these there is no payback. */
+            costs?: {
+                batteryInrPerKwh?: number;
+                /** @description Anything else paid up front: wiring, mounting, a new inverter. */
+                otherInr?: number;
+                solarInrPerKwp?: number;
+            };
+            economics?: {
+                /** @description Yearly loss of the saving as equipment ages. Default 0.5. */
+                degradationPercent?: number;
+                /** @description What money is worth to you each year. Default 8. */
+                discountRatePercent?: number;
+                /** @description Yearly rise in the tariff. Default 0: no rise is assumed. */
+                tariffEscalationPercent?: number;
+                /** @description Years the saving lasts. Default 20. */
+                years?: number;
+            };
+            /** @description The grid's emission factor, kg CO2 per kWh, from your utility or a published table. None is built in. */
+            gridCarbonKgPerKwh?: number;
+            /** @description A label for your own reference. */
+            name?: string;
+            /** @description Direction the added panels face, degrees clockwise from north. Default: 180, south. */
+            solarAzimuthDeg?: number;
+            /** @description Tilt of the added panels. Default: the latitude, a common rule for a fixed array. */
+            solarTiltDeg?: number;
+            /**
+             * Format: uuid
+             * @description Compare against a different tariff, your own or a curated one.
+             */
+            tariffPlanId?: string;
+        };
+        ScenarioSummary: {
+            addBatteryKwh: number | null;
+            addSolarKwp: number | null;
+            annualSavingsInr: number;
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            tariffChanged: boolean;
+        };
+        ScenarioSummaryInput: {
+            addBatteryKwh: number | null;
+            addSolarKwp: number | null;
+            annualSavingsInr: number;
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            tariffChanged: boolean;
         };
         SolarForecast: {
             assumptions: string[];

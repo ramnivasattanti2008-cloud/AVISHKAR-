@@ -49,6 +49,14 @@ export function priceSeries(tariff: Pick<TariffPlanDto, "hourlyRates" | "slabs" 
   return { importPrice, exportPrice, notes };
 }
 
+/** Where the credit for exported energy comes from, in a sentence: the plan and the yearly estimate both lean on it. */
+export function exportBasisNote(tariff: Pick<TariffPlanDto, "export">): string {
+  const { rate, basis } = tariff.export;
+  if (rate === null) return "The tariff has no export rate, so energy sent to the grid earns nothing.";
+  if (basis === "ASSUMPTION") return `Energy sent to the grid is credited at INR ${rate} per kWh, an assumption: the tariff's source states no export rate. Net metering and net billing rules for your utility are not modelled.`;
+  return `Energy sent to the grid is credited at INR ${rate} per kWh (${basis === "USER_ENTERED" ? "entered by you" : "from the tariff's source"}). Net metering and net billing rules for your utility are not modelled.`;
+}
+
 // ------------------------------------------------------------------------------------ assets
 
 interface BatteryPlan {
@@ -258,6 +266,7 @@ export async function createPlan(deps: ForecastDeps, userId: string, propertyId:
     pv = r.map((v) => round(v ?? 0, 4));
     if (unknown > 0) solarNote += ` The forecast does not reach the last ${unknown} hour(s); no sun is assumed there.`;
     assumptions.push("Solar output is the forecast's central estimate. The provider's hours are half an hour off the local clock, so each local hour averages the two it overlaps.");
+    assumptions.push(exportBasisNote(tariff));
   }
 
   const [batteryRows, evRows, applianceRows] = await Promise.all([db.battery.findMany({ where: { propertyId }, orderBy: { createdAt: "asc" } }), db.ev.findMany({ where: { propertyId }, orderBy: { createdAt: "asc" } }), db.appliance.findMany({ where: { propertyId }, orderBy: { createdAt: "asc" } })]);

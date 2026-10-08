@@ -1,4 +1,4 @@
-import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Plan, PlanSummary, Property, Provenance, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
+import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -382,6 +382,57 @@ export function forecastAccuracy(over: Partial<ForecastAccuracy> = {}): Forecast
     notes: [],
     ...over,
   };
+}
+
+export function scenario(over: Partial<Scenario> = {}): Scenario {
+  const month = (m: number, cost: number, imp: number, pv: number) => ({ month: m, days: 30, netCostInr: cost, importKwh: imp, exportKwh: 0, pvKwh: pv, loadKwh: 600 });
+  const annual = (cost: number, imp: number, pv: number) => ({
+    gridOnlyCostInr: 57_670,
+    uncontrolledCostInr: cost + 2_000,
+    netCostInr: cost,
+    importKwh: imp,
+    exportKwh: 0,
+    loadKwh: 7_300,
+    pvKwh: pv,
+    pvUsedKwh: pv,
+    selfConsumptionRatio: pv > 0 ? 1 : null,
+    selfSufficiencyRatio: 1 - imp / 7_300,
+    batteryCycles: 0,
+    months: Array.from({ length: 12 }, (_, i) => month(i + 1, cost / 12, imp / 12, pv / 12)),
+  });
+  const p = provenance({ provider: "avishkar-scenarios", source: "AVISHKAR typical-year simulation", dataType: "scenario_comparison", status: "ESTIMATED", notes: ["Estimated: typical days from your own readings and the monthly solar climatology: an estimate for a typical year, not a forecast of any particular one."] });
+  const econ = (payback: number) => ({
+    paybackYears: payback,
+    discountedPaybackYears: payback + 1.5,
+    npvInr: 118_400,
+    irrPercent: 13.4,
+    netGainInr: 210_000,
+    cashflows: Array.from({ length: 20 }, (_, i) => ({ year: i + 1, savingsInr: 33_000, cumulativeInr: -250_000 + 33_000 * (i + 1), discountedCumulativeInr: -250_000 + 20_000 * (i + 1) })),
+  });
+  return {
+    id: "88888888-8888-4888-8888-888888888888",
+    propertyId: PROPERTY_ID,
+    createdAt: "2026-10-08T10:00:00.000Z",
+    name: "Add 5 kWp solar",
+    request: { addSolarKwp: 5, costs: { solarInrPerKwp: 50_000 } },
+    equipment: { base: { solarKwp: 0, batteryKwh: 0, tariff: "Test ToD" }, scenario: { solarKwp: 5, batteryKwh: 0, tariff: "Test ToD" } },
+    base: annual(57_670, 7_300, 0),
+    scenario: annual(24_400, 2_900, 7_800),
+    comparison: { value: { annualSavingsInr: 33_270, savingsPercent: 57.7, importKwhChange: -4_400, exportKwhChange: 0, selfSufficiencyChange: 0.6 }, unit: "INR", provenance: p },
+    investment: { value: { totalInr: 250_000, solarInr: 250_000, batteryInr: 0, otherInr: 0 }, unit: "INR", provenance: provenance({ status: "REFERENCE", provider: "avishkar-scenarios", notes: ["Entered by you, from a quote; AVISHKAR has not checked it."] }) },
+    subsidy: { value: 78_000, unit: "INR", provenance: provenance({ status: "ESTIMATED", provider: "avishkar-policy-engine", notes: [] }) },
+    economics: { value: econ(7.5), provenance: p },
+    economicsIfSubsidised: { value: econ(5.2), provenance: p },
+    carbon: { value: null, provenance: provenance({ status: "UNAVAILABLE", provider: "avishkar-scenarios", notes: ["No grid emission factor is built in: a sourced figure for your region has not been loaded. Enter your utility's or a published factor to see the carbon change."] }) },
+    economicsAssumptions: { years: 20, discountRatePercent: 8, tariffEscalationPercent: 0, degradationPercent: 0.5 },
+    assumptions: ["A year is one typical weekday and one typical weekend day for each month, planned hour by hour for the lowest bill, then weighted by how many such days the next 12 months have.", "The added panels face south (180 degrees); you did not give a direction."],
+    notes: [],
+    ...over,
+  };
+}
+
+export function scenarioSummary(over: Partial<ScenarioSummary> = {}): ScenarioSummary {
+  return { id: "88888888-8888-4888-8888-888888888888", createdAt: "2026-10-08T10:00:00.000Z", name: "Add 5 kWp solar", annualSavingsInr: 33_270, addSolarKwp: 5, addBatteryKwh: null, tariffChanged: false, ...over };
 }
 
 export function planSummary(over: Partial<PlanSummary> = {}): PlanSummary {

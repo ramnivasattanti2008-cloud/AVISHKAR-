@@ -63,6 +63,52 @@ class TestBatteryArbitrage:
         assert r.schedule.battery_soc_kwh[-1] == approx(3.0)
 
 
+class TestCyclicBattery:
+    """A typical day that repeats: the battery starts and ends at the same charge, which the planner chooses."""
+
+    def day(self, **bat):
+        # 6 steps: a cheap pair, a middle pair, a dear pair; the load is 2 kW in the dear pair only
+        return request(6, loadKw=[0, 0, 0, 0, 2, 2], importPrice=[1, 1, 5, 5, 10, 10], battery=battery(capacityKwh=4, maxSocKwh=4, cyclic=True, **bat))
+
+    def test_it_chooses_the_start_that_pays_best_and_reports_it(self):
+        # empty at the start: charge 4 kWh at INR 1, spend it at INR 10: net cost 4 against 40 for doing nothing. Starting full would
+        # be worse for a day that ends where it began, so the chosen start must be empty.
+        r = run(self.day(initialSocKwh=2))  # the value given is not used
+        assert r.solver.status == "optimal" and r.validation.valid, r.validation.problems
+        assert r.schedule.battery_initial_soc_kwh == approx(0.0)
+        assert r.totals.net_cost_inr == approx(4.0)
+        assert r.baseline.net_cost_inr == approx(40.0)
+        assert r.schedule.battery_soc_kwh[-1] >= r.schedule.battery_initial_soc_kwh - 1e-6  # it ends at least where it began
+
+    def test_it_is_never_worse_than_any_fixed_start_and_better_than_a_middling_one(self):
+        cyc = run(self.day()).totals.net_cost_inr
+        mid = request(6, loadKw=[0, 0, 0, 0, 2, 2], importPrice=[1, 1, 5, 5, 10, 10], battery=battery(capacityKwh=4, maxSocKwh=4, initialSocKwh=2, terminalSocKwh=2))
+        fixed_mid = run(mid).totals.net_cost_inr
+        assert cyc <= fixed_mid + 1e-9
+        # starting and ending at 2 kWh it can swap only 2 kWh a day: fill 2 kWh at INR 1 (cost 2), spend 2 kWh in the dear pair (saving
+        # 20) and still buy the other 2 kWh of the evening at INR 10 (cost 20): 22. Free to choose its start it swaps all 4 kWh: cost 4.
+        assert fixed_mid == approx(22.0)
+        assert cyc == approx(4.0)
+
+    def test_a_cyclic_day_on_a_flat_tariff_does_not_cycle(self):
+        r = run(request(4, loadKw=[1, 1, 1, 1], importPrice=[5, 5, 5, 5], battery=battery(cyclic=True)))
+        assert r.totals.net_cost_inr == approx(20.0)
+        assert sum(r.schedule.battery_charge_kw) == approx(0.0)
+
+    def test_an_invalid_start_is_caught_by_the_independent_check(self):
+        from avishkar_engine.optimise import validate
+        from avishkar_engine.schemas import OptimiseRequest
+
+        req = OptimiseRequest.model_validate(self.day())
+        good = run(self.day()).schedule
+        assert validate(req, good).valid
+        bad = good.model_copy(update={"battery_initial_soc_kwh": 3.0})  # the stored energy no longer follows from the flows
+        v = validate(req, bad)
+        assert not v.valid and any("state of charge does not follow" in p for p in v.problems)
+        gone = good.model_copy(update={"battery_initial_soc_kwh": None})
+        assert not validate(req, gone).valid
+
+
 class TestSolar:
     def test_surplus_solar_is_stored_and_used_in_the_evening(self):
         # noon: 4 kW of sun and 1 kW load; evening: no sun and 3 kW load at INR 8. The battery moves 3 kWh across.

@@ -8,6 +8,7 @@ const TABS = [
   { href: "/meter-data", label: "Meter data" },
   { href: "/assets", label: "Assets" },
   { href: "/plan", label: "Plan" },
+  { href: "/what-if", label: "What if" },
 ] as const;
 
 export type PropertyTab = (typeof TABS)[number]["href"];

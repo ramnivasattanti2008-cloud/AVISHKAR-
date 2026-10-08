@@ -39,6 +39,10 @@ class BatteryIn(Wire):
     initial_soc_kwh: float = Field(ge=0)
     terminal_soc_kwh: float | None = Field(default=None, ge=0, description="Stored energy to end the horizon with. None: as much as it started with.")
     wear_inr_per_kwh: float = Field(default=0, ge=0, le=1000, description="Cost of wear per kWh drawn out of the battery.")
+    cyclic: bool = Field(
+        default=False,
+        description="The horizon starts and ends at the same charge, which the planner chooses: for a typical day that repeats. initialSocKwh and terminalSocKwh are then not used (send any value in range).",
+    )
 
     @model_validator(mode="after")
     def _ordered(self) -> BatteryIn:
@@ -185,6 +189,7 @@ class Schedule(Wire):
     appliance_kw: dict[str, list[float]]
     served_load_kw: list[float]
     unserved_kw: list[float]
+    battery_initial_soc_kwh: float | None = Field(default=None, description="The charge the horizon started with. Always given when a battery is planned.")
 
 
 class ApplianceResult(Wire):
