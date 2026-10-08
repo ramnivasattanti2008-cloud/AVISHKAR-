@@ -13,7 +13,7 @@ import { usePropertyData } from "../property/usePropertyData";
 const RISK_TONE = { LOW: "live", MEDIUM: "updated", HIGH: "unavailable" } as const;
 
 /** One figure with its label, its data status, and the reason when there is none: an UNAVAILABLE value never prints a number. */
-function Tile({ title, provenance, value, hint, children }: { title: string; provenance: Provenance; value: string | null; hint?: string; children?: React.ReactNode }) {
+function Tile({ title, provenance, value, hint, tone, children }: { title: string; provenance: Provenance; value: string | null; hint?: string; tone?: string; children?: React.ReactNode }) {
   const missing = provenance.status === "UNAVAILABLE" || value === null;
   return (
     <li className="card flex flex-col p-4" aria-label={title}>
@@ -25,7 +25,7 @@ function Tile({ title, provenance, value, hint, children }: { title: string; pro
         <p className="mt-2 text-sm text-muted">{provenance.notes.at(-1) ?? "Not available."}</p>
       ) : (
         <>
-          <p className="num mt-1 text-2xl font-semibold">{value}</p>
+          <p className="num mt-1 text-2xl font-semibold" style={tone ? { color: `var(--tone-${tone}-fg)` } : undefined}>{value}</p>
           {hint && <p className="text-xs text-muted">{hint}</p>}
         </>
       )}
@@ -93,10 +93,8 @@ export function TodayView({ id }: { id: string }) {
             <Tile title="Generation today" provenance={today.generation.provenance} value={today.generation.value ? `${formatNumber(today.generation.value.kwh)} kWh` : null} hint={today.generation.value ? `forecast issued ${formatDateTime(today.generation.value.forecastIssuedAt)}` : undefined} />
             <Tile title="Consumption today" provenance={today.consumption.provenance} value={today.consumption.value ? `${formatNumber(today.consumption.value.kwh)} kWh` : null} hint={today.consumption.value ? (today.consumption.value.basis === "FORECAST" ? "from the load forecast" : "your typical day, not a forecast") : undefined} />
             <Tile title="Available surplus" provenance={today.surplus.provenance} value={today.surplus.value ? `${formatNumber(today.surplus.value.kwh)} kWh` : null} hint={today.surplus.value?.note} />
-            <Tile title="Weather risk to the sun" provenance={today.weatherRisk.provenance} value={today.weatherRisk.value ? today.weatherRisk.value.level : null} hint={today.weatherRisk.value ? `${today.weatherRisk.value.meanCloudPercent}% cloud over the next ${today.weatherRisk.value.hours} daylight hours` : undefined}>
-              {today.weatherRisk.value && <p className="mt-1 text-xs"><span className="badge" data-tone={RISK_TONE[today.weatherRisk.value.level]}>{today.weatherRisk.value.level}</span></p>}
-            </Tile>
-            <Tile title="Critical-load backup" provenance={today.resilience.provenance} value={today.resilience.value ? `${today.resilience.value.atLeast ? "at least " : ""}${formatNumber(today.resilience.value.hours)} h` : null} hint={today.resilience.value ? `if the grid failed now · score ${today.resilience.value.score} / 100` : undefined} />
+            <Tile title="Weather risk to the sun" provenance={today.weatherRisk.provenance} value={today.weatherRisk.value ? today.weatherRisk.value.level : null} hint={today.weatherRisk.value ? `${today.weatherRisk.value.meanCloudPercent}% cloud over the next ${today.weatherRisk.value.hours} daylight hours` : undefined} tone={today.weatherRisk.value ? RISK_TONE[today.weatherRisk.value.level] : undefined} />
+            <Tile title="Critical-load backup" provenance={today.resilience.provenance} value={today.resilience.value ? `${today.resilience.value.atLeast ? "at least " : ""}${formatNumber(today.resilience.value.hours)} h` : null} hint={today.resilience.value ? `if the grid failed now · score ${today.resilience.value.score} / 100${today.resilience.value.chargeAssumed ? ". The battery's charge is not known, so it is taken as at its lowest: enter the real charge for a real answer" : ""}` : undefined} />
             <Tile title="Expected value" provenance={today.plan.provenance} value={plan ? formatInr(plan.savingsInr) : null} hint={plan ? `saved over the plan's hours against no control${plan.stale ? " (an old plan)" : ""}` : undefined} />
             <Tile title="Confidence in the advice" provenance={today.plan.provenance} value={rec ? (rec.confidence.assessed ? `${rec.confidence.agreeing} of ${rec.confidence.total}` : "not assessed") : null} hint={rec ? (rec.confidence.assessed ? "forecasts give the same advice" : "nothing to vary") : undefined} />
           </ul>

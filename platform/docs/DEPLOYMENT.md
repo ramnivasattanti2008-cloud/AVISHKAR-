@@ -31,7 +31,7 @@ the web origin (or a reverse proxy) and the engine on a private network.
    start. Then `pnpm -C platform/web build` and run the standalone server.
 5. **First administrator.** Register an account in the web app, then `pnpm -C platform/api db:make-admin you@example.com` on the
    server. This is the only way to make an administrator, and it is recorded in the audit log.
-6. **Check.** `GET /api/health` answers 200 when the process is up. `GET /api/system/health` reports the database, PostGIS, the
+6. **Check.** After building the web app, `pnpm -C platform/web smoke <web address>` fetches the pages, the map's worker files and the security headers of a running production build (CI runs it); then `GET /api/health` answers 200 when the process is up. `GET /api/system/health` reports the database, PostGIS, the
    engine and each provider from real recent calls; `unknown` means no recent traffic, not healthy.
 
 ## Environment (API)

@@ -16,7 +16,7 @@ export const TodaySchema = z
     weatherRisk: measured(
       z.object({ level: Level, meanCloudPercent: z.number(), maxRainMmPerHour: z.number(), hours: z.number(), rule: z.string() }),
     ).describe("The risk the weather poses to the sun in the next daylight hours."),
-    resilience: measured(z.object({ hours: z.number(), atLeast: z.boolean(), score: z.number().int() })).describe("How long the critical load would last if the grid failed now."),
+    resilience: measured(z.object({ hours: z.number(), atLeast: z.boolean(), score: z.number().int(), chargeAssumed: z.boolean().describe("True when the battery's charge is not known and was taken at its lowest, so the hours are the least it could be.") })).describe("How long the critical load would last if the grid failed now."),
     plan: measured(
       z.object({
         planId: z.uuid(),

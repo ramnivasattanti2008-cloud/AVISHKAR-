@@ -94,6 +94,57 @@ export interface paths {
                                 entityType: string | null;
                             }[];
                             exportedAt: string;
+                            holdings: {
+                                /** @description Tariffs you entered. Curated plans are shared reference data and are not yours. */
+                                ownTariffs: {
+                                    [key: string]: unknown;
+                                }[];
+                                properties: {
+                                    control: {
+                                        automateUntil: string | null;
+                                        maxChargeKw: number | null;
+                                        maxDischargeKw: number | null;
+                                        minSocPercent: number | null;
+                                        mode: string;
+                                    } | null;
+                                    equipment: {
+                                        appliances: {
+                                            [key: string]: unknown;
+                                        }[];
+                                        batteries: {
+                                            [key: string]: unknown;
+                                        }[];
+                                        evs: {
+                                            [key: string]: unknown;
+                                        }[];
+                                        solarSystems: {
+                                            [key: string]: unknown;
+                                        }[];
+                                    };
+                                    /** @description The files imported: name, rows accepted and refused, range. Not the readings themselves, which are your own file. */
+                                    meterImports: {
+                                        [key: string]: unknown;
+                                    }[];
+                                    meterReadings: {
+                                        count: number;
+                                        first: string | null;
+                                        last: string | null;
+                                    };
+                                    name: string;
+                                    /** Format: uuid */
+                                    propertyId: string;
+                                    /** @description Counts of what AVISHKAR worked out and stored for this property. Each plan and what-if is in the property's report. */
+                                    stored: {
+                                        controlProposals: number;
+                                        energyTwinVersions: number;
+                                        forecasts: number;
+                                        plans: number;
+                                        roofOutlines: number;
+                                        whatIfs: number;
+                                    };
+                                    tariffPlanId: string | null;
+                                }[];
+                            };
                             properties: components["schemas"]["Property"][];
                             user: {
                                 createdAt: string;
@@ -11102,6 +11153,8 @@ export interface components {
                 unit?: string;
                 value: {
                     atLeast: boolean;
+                    /** @description True when the battery's charge is not known and was taken at its lowest, so the hours are the least it could be. */
+                    chargeAssumed: boolean;
                     hours: number;
                     score: number;
                 } | null;
@@ -11199,6 +11252,8 @@ export interface components {
                 unit?: string;
                 value: {
                     atLeast: boolean;
+                    /** @description True when the battery's charge is not known and was taken at its lowest, so the hours are the least it could be. */
+                    chargeAssumed: boolean;
                     hours: number;
                     score: number;
                 } | null;

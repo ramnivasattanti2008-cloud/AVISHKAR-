@@ -164,7 +164,8 @@ describeBoth("Today, from stored forecasts and a plan, through the real engine",
     await call("GET", `/api/properties/${ctx.pid}/solar-forecast`);
     const t = await today();
     const r = (await call("GET", `/api/properties/${ctx.pid}/resilience`)).json().resilience.value;
-    expect(t.resilience.value).toEqual({ hours: r.backupHours.withForecastSun, atLeast: r.backupHours.atLeast, score: r.score });
+    expect(t.resilience.value).toEqual({ hours: r.backupHours.withForecastSun, atLeast: r.backupHours.atLeast, score: r.score, chargeAssumed: r.battery.startSocBasis === "ASSUMPTION" });
+    expect(t.resilience.value.chargeAssumed).toBe(true); // the battery's charge was never entered
     expect(t.resilience.provenance.status).toBe("SIMULATED");
   }, 240_000);
 

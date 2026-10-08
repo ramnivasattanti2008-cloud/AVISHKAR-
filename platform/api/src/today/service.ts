@@ -148,7 +148,7 @@ export async function today(deps: ForecastDeps, userId: string, propertyId: stri
     const pv = solarRun ? resample(solarPts, "end", Math.ceil((at.getTime() + 330 * 60_000) / HOUR_MS) * HOUR_MS - 330 * 60_000, 48).map((v) => v ?? 0) : new Array<number>(48).fill(0);
     const rep = await resilienceReport(deps, userId, propertyId, { targetHours: 4, startSocPercent: null }, ctx, { pv, solarNote: solarRun ? null : "No solar forecast is stored, so only the battery is counted." });
     const v = rep.resilience.value;
-    resilience = v ? { value: { hours: v.backupHours.withForecastSun, atLeast: v.backupHours.atLeast, score: v.score }, unit: "h", provenance: rep.resilience.provenance } : unavailable("No resilience figure could be made.", { ...base, dataType: "resilience" });
+    resilience = v ? { value: { hours: v.backupHours.withForecastSun, atLeast: v.backupHours.atLeast, score: v.score, chargeAssumed: v.battery?.startSocBasis === "ASSUMPTION" }, unit: "h", provenance: rep.resilience.provenance } : unavailable("No resilience figure could be made.", { ...base, dataType: "resilience" });
   } catch (e) {
     const why = e instanceof AppError ? e.message : "error";
     resilience = unavailable(why, { ...base, dataType: "resilience" });

@@ -137,3 +137,9 @@ jobs:
       - name: Build
         working-directory: platform
         run: pnpm -C web build
+      - name: Smoke test of the production build (the map's worker is served, the security headers are sent)
+        working-directory: platform/web
+        run: |
+          pnpm exec next start -p 3100 > /tmp/web-start.log 2>&1 &
+          for i in $(seq 1 40); do curl -sf -o /dev/null http://127.0.0.1:3100/ && break; sleep 1; done
+          node scripts/smoke.mjs http://127.0.0.1:3100 || { cat /tmp/web-start.log; exit 1; }

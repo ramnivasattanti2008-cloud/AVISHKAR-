@@ -104,8 +104,9 @@ What the platform does not do, does only partly, or does with a caveat the user 
 - **Nothing can be controlled.** The Control tab records modes, safety limits, proposals and decisions, and every approval says that
   no device is connected and nothing changed. Automate cannot be chosen until a device integration exists.
 - **Accounts:** no email verification, password reset or two-factor sign-in; registering an address that exists is reported
-  (`EMAIL_TAKEN`), which lets someone test whether an address has an account. No privacy notice, consent screen or retention
-  schedule. No Content-Security-Policy on the web app (see SECURITY.md).
+  (`EMAIL_TAKEN`), which lets someone test whether an address has an account. The Account page states what is kept and what leaves, and offers export and
+  deletion, but there is no consent screen, retention schedule or backup policy (those are the operator's). The export holds equipment,
+  tariffs entered, meter-file records and counts of what is stored, not the readings themselves or each plan. The web app's Content-Security-Policy allows inline scripts (see SECURITY.md).
 - **Interface:** English only (the Python dashboard has Hindi). No screen-reader or axe pass has been done on the platform's
   pages; no browser end-to-end suite exists, only component tests with a stubbed API plus manual checks in a real browser.
   The manual roof-drawing tool has not been exercised in a browser.

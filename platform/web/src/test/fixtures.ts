@@ -736,7 +736,7 @@ export function today(over: Partial<Today> = {}): Today {
     consumption: { value: { kwh: 28.2, hoursCovered: 24, basis: "FORECAST" }, unit: "kWh", provenance: f("load_energy_today") },
     surplus: { value: { kwh: 9.6, note: "Over the 24 hours of today for which both the solar forecast and the use are known." }, unit: "kWh", provenance: f("solar_surplus_today") },
     weatherRisk: { value: { level: "MEDIUM", meanCloudPercent: 52, maxRainMmPerHour: 0, hours: 9, rule: "Over the next 12 hours of daylight: LOW when the mean cloud cover is under 40%." }, provenance: provenance({ status: "FORECAST", provider: "open-meteo", dataType: "weather_risk" }) },
-    resilience: { value: { hours: 9.5, atLeast: false, score: 40 }, unit: "h", provenance: provenance({ status: "SIMULATED", provider: "avishkar-resilience", dataType: "resilience" }) },
+    resilience: { value: { hours: 9.5, atLeast: false, score: 40, chargeAssumed: false }, unit: "h", provenance: provenance({ status: "SIMULATED", provider: "avishkar-resilience", dataType: "resilience" }) },
     plan: {
       value: { planId: "44444444-4444-4444-8444-444444444444", madeAt: "2026-10-08T09:00:00.000Z", stale: false, savingsInr: 40.4, baselineNetCostInr: 150.2, netCostInr: 109.8, importKwh: 12.5, autonomyScore: 81 },
       unit: "INR",

@@ -17,6 +17,8 @@ import { getTariff } from "../tariff/service.js";
 const inr = (v: number): string => `INR ${Math.abs(v) >= 1000 ? Math.round(v).toLocaleString("en-IN") : v.toFixed(2)}`;
 const n = (v: number, d = 1): string => (Math.round(v * 10 ** d) / 10 ** d).toLocaleString("en-IN", { maximumFractionDigits: d });
 const day = (iso: string): string => iso.slice(0, 10);
+/** An instant on the clock the person lives by: the reasons the planner gives are worded in it, so the times beside them must be too. */
+const ist = (iso: string): string => `${new Date(Date.parse(iso) + 330 * 60_000).toISOString().slice(0, 16).replace("T", " ")} IST`;
 const kindLabel: Record<string, string> = { charge_battery: "charge the battery", discharge_battery: "use the battery", export: "sell to the grid", curtail: "leave solar unused", ev_charge: "charge the car", appliance: "run an appliance", import_peak: "buy at a high price", shed: "switch off non-critical load" };
 
 export async function buildReport(deps: ForecastDeps, userId: string, propertyId: string): Promise<{ markdown: string; filename: string }> {
@@ -32,7 +34,7 @@ export async function buildReport(deps: ForecastDeps, userId: string, propertyId
   if (p.isDemo) {
     L.push("**DEMO DATA.** This is a demo property: its readings and equipment are invented. Every figure computed from them below is demonstration data, whatever its label says (read FORECAST, ESTIMATED or SIMULATED as DEMO). Only the weather, the sun and the sourced tariff are real.", "");
   }
-  L.push(`Made${at.toISOString().slice(0, 16).replace("T", " ")} UTC from what AVISHKAR holds for this property. Nothing in it was recomputed for the report, and nothing was added: where something is missing it says so.`);
+  L.push(`Made ${ist(at.toISOString())} from what AVISHKAR holds for this property. Nothing in it was recomputed for the report, and nothing was added: where something is missing it says so.`);
 
   h("The property");
   L.push(`- Location: ${p.latitude.toFixed(5)}, ${p.longitude.toFixed(5)}${p.address ? ` (${p.address})` : ""}.`, `- How the position was obtained: ${p.position.label}${p.position.accuracyM ? `, accurate to about ${Math.round(p.position.accuracyM)} m` : ""}. ${p.position.note}`);
@@ -70,12 +72,12 @@ export async function buildReport(deps: ForecastDeps, userId: string, propertyId
   try {
     const plan = await getPlan(db, userId, propertyId);
     const r = plan.result.value;
-    L.push(`- Made ${plan.createdAt.slice(0, 16).replace("T", " ")} UTC; ${plan.mode.toLowerCase().replace("_", " ")} mode; ${plan.horizon.steps} hours from ${plan.horizon.start.slice(0, 16).replace("T", " ")} UTC. [${plan.result.provenance.status}]`);
+    L.push(`- Made ${ist(plan.createdAt)}; ${plan.mode.toLowerCase().replace("_", " ")} mode; ${plan.horizon.steps} hours from ${ist(plan.horizon.start)}. [${plan.result.provenance.status}]`);
     if (r) L.push(`- Expected cost ${inr(r.netCostInr)} against ${inr(r.baselineNetCostInr)} with no control: a saving of ${inr(r.savingsInr)}. Bought from the grid ${n(r.importKwh)} kWh; solar put to use ${n(r.pvUsedKwh)} of ${n(r.pvKwh)} kWh.`);
     L.push("- This is a simulated outcome of forecasts, not a measurement.");
     if (plan.decisions.length) {
       L.push("", "Decisions (each with the planner's own reason):", "");
-      for (const d of plan.decisions.slice(0, 12)) L.push(`- ${d.time.slice(0, 16).replace("T", " ")} UTC: ${kindLabel[d.kind] ?? d.kind}, ${n(d.kwh, 2)} kWh. ${d.reason}`);
+      for (const d of plan.decisions.slice(0, 12)) L.push(`- ${ist(d.time)}: ${kindLabel[d.kind] ?? d.kind}, ${n(d.kwh, 2)} kWh. ${d.reason}`);
       if (plan.decisions.length > 12) L.push(`- ... and ${plan.decisions.length - 12} more.`);
     }
     if (plan.assumptions.length) L.push("", "Assumptions:", "", ...plan.assumptions.map((a) => `- ${a}`));

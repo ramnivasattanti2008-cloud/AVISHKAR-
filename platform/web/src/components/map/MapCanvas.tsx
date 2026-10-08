@@ -1,9 +1,13 @@
 "use client";
 
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Map as MapLibreMap, Marker, NavigationControl, ScaleControl, type GeoJSONSource, type MapMouseEvent } from "maplibre-gl";
+import { Map as MapLibreMap, Marker, NavigationControl, ScaleControl, setWorkerUrl, type GeoJSONSource, type MapMouseEvent } from "maplibre-gl";
 import { useEffect, useRef } from "react";
 import { BASEMAPS, INITIAL_VIEW, type Basemap, styleFor } from "@/lib/basemaps";
+
+// The worker files are copied to public/maplibre/ at build time (scripts/copy-maplibre-worker.mjs): the bundler renames assets, and
+// MapLibre finds its worker by name. Without this the production build draws no map.
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 export interface MapMarker {
   id: string;

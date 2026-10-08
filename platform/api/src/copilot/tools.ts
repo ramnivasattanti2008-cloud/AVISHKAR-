@@ -11,6 +11,7 @@ import { AppError } from "../errors.js";
 import { findOpportunities } from "../opportunities/service.js";
 import { type ForecastDeps, forecastAccuracy, loadForecast, solarForecast } from "../forecast/service.js";
 import { createPlan, getPlan } from "../plan/service.js";
+import { resilienceReport } from "../resilience/service.js";
 import { PlanRequest } from "../plan/schemas.js";
 import { evaluateEligibility } from "../policy/service.js";
 import { getProperty } from "../properties/service.js";
@@ -299,10 +300,30 @@ export const TOOLS: Record<ToolName, ToolDef> = {
       const known = batteries.every((b) => b.currentSoc !== null && b.currentSocAt !== null && now - b.currentSocAt.getTime() <= 24 * 3_600_000);
       const minFrac = (b: (typeof batteries)[number], d: (typeof dtos)[number]) => (d.effective.minSoc.value ?? 0) * b.capacityKwh;
       const nowKwh = known ? batteries.reduce((a, b, i) => a + Math.max(0, b.currentSoc! * b.capacityKwh - minFrac(b, dtos[i]!)), 0) : null;
+      // the fuller answer, with the forecast sun and the battery's charge as entered or assumed (the same engine as the Resilience tab)
+      let ifGridFailedNow: Record<string, unknown> | null = null;
+      try {
+        const rep = await resilienceReport(c.deps, c.userId, c.propertyId, { targetHours: 4, startSocPercent: null }, { requestId: c.requestId });
+        const v = rep.resilience.value;
+        if (v && v.battery) {
+          ifGridFailedNow = {
+            hours: v.backupHours.withForecastSun,
+            atLeast: v.backupHours.atLeast,
+            hoursBatteryAlone: v.backupHours.withoutSun,
+            score: v.score,
+            chargeAssumed: v.battery.startSocBasis === "ASSUMPTION",
+            startChargeKwh: v.battery.startSocKwh,
+            reserve: v.recommendedReserve && { targetHours: v.recommendedReserve.targetHours, reserveKwh: v.recommendedReserve.reserveKwh, currentReserveKwh: v.recommendedReserve.currentReserveKwh, feasible: v.recommendedReserve.feasible },
+          };
+        }
+      } catch {
+        // without the engine or a forecast the fuller answer is left out, and the batteries-alone figures still stand
+      }
       return {
         output: {
           criticalKw: round(criticalKw, 3),
           criticalAppliances: appliances.map((a) => a.name),
+          ifGridFailedNow,
           batteryUsableKwh: round(usable, 2),
           hoursAtFullCharge: round((usable * eta) / criticalKw, 1),
           hoursAtCurrentCharge: nowKwh === null ? null : round((nowKwh * eta) / criticalKw, 1),

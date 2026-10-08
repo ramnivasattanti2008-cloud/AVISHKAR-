@@ -219,7 +219,13 @@ export function render(intent: Intent, question: string, results: ToolResult[]):
     case "OUTAGE": {
       w.p(`Your batteries hold ${num(o.batteryUsableKwh, 1)} kWh of usable energy and your critical loads draw ${num(o.criticalKw, 2)} kW, so fully charged they could carry those loads for about ${num(o.hoursAtFullCharge, 1)} hours ${c}.`);
       if (o.hoursAtCurrentCharge !== null) w.p(`At the charge you last entered it would be about ${num(o.hoursAtCurrentCharge, 1)} hours.`);
-      w.p("That counts the batteries only, not solar during the outage, and no outage has been forecast: no outage data is available.");
+      const g = o.ifGridFailedNow as Out | null;
+      if (g) {
+        w.p(`If the grid failed now, with the forecast sun and the battery at ${g.chargeAssumed ? "its lowest charge, because its real charge has not been entered" : "the charge you entered"}, your critical loads would be served for ${g.atLeast ? "at least " : "about "}${num(g.hours, 1)} hours, a resilience score of ${num(g.score, 0)} out of 100 ${c}.`);
+        const r = g.reserve as Out | null;
+        if (r) w.p(`To keep them going for ${num(r.targetHours, 0)} hours with no sun you would hold back ${num(r.reserveKwh, 1)} kWh${r.feasible ? "" : ", more than this battery can hold"}; you hold back ${num(r.currentReserveKwh, 1)} kWh now.`);
+      }
+      w.p("The first figures count the batteries only, with no solar, and no outage has been forecast: no outage data is available.");
       break;
     }
     case "SUBSIDY": {

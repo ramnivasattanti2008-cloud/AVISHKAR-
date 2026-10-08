@@ -97,7 +97,7 @@ and `platform/web` shows them (map, property page, forecast charts, system healt
 calculator (milestone 3a, WORKLOG entry 8), assets, meter-data import and Energy DNA (milestone 3b, entry 9), and the Python
 engine with solar and load forecasts and the planner (milestone 4, entry 10) are built, and so are the engines on top of them
 (learning loop, yearly what-if and economics, opportunities, Copilot and report, community view and VPP simulator; entry 10).
-The demo world (`api/src/demo`, DEMO relabelling hook), the cloud-front scenario (`api/src/cloudfront`), plan recommendations with confidence (`api/src/plan/explain.ts`) and resilience and autonomy (`api/src/resilience`), human control (`api/src/control`, no device: an approval is only a record), background jobs (`api/src/jobs`, `JOBS_ENABLED`) and the admin API (`api/src/admin`, grant with `pnpm -C platform/api db:make-admin <email>`), the Today view (`api/src/today`: reads stored forecasts and the latest plan, recomputes nothing) are built too. `pnpm -C platform/api bench` times the spec's targets against a running API and engine (creates a throwaway account). Not built: the city map,
+The demo world (`api/src/demo`, DEMO relabelling hook), the cloud-front scenario (`api/src/cloudfront`), plan recommendations with confidence (`api/src/plan/explain.ts`) and resilience and autonomy (`api/src/resilience`), human control (`api/src/control`, no device: an approval is only a record), background jobs (`api/src/jobs`, `JOBS_ENABLED`) and the admin API (`api/src/admin`, grant with `pnpm -C platform/api db:make-admin <email>`), the Today view (`api/src/today`: reads stored forecasts and the latest plan, recomputes nothing) are built too, and the Account page (`web/.../account`, `api/src/routes/account.ts`, `api/src/account/holdings.ts`): when a provider call changes what coordinates it sends, change the precision statements in `AccountView.tsx` and `docs/SECURITY.md` with it; the audit log is append-only (a trigger), and account deletion erases the user link and the address from its rows through the one edit the trigger allows (`test/account-deletion.test.ts` compares the whole database before and after). `pnpm -C platform/api bench` times the spec's targets against a running API and engine (creates a throwaway account). Not built: the city map,
 deployment files.
 
 ```bash
@@ -144,6 +144,11 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
   Tailwind utilities can override them. The lint rule `react-hooks/set-state-in-effect` is on: derive state, do not set it
   synchronously in an effect. Tests pin the time zone to Asia/Kolkata (`vitest.config.ts`).
 
+- **The map worker**: `maplibre-gl` v6 finds its tile worker by a fixed file name next to its own module, and a production build renames
+  assets with a hash, so without help the production map is blank ("Worker failed to load" in the console; `next dev` hides it).
+  `scripts/copy-maplibre-worker.mjs` (run by `pnpm build` and `pnpm dev`) copies the worker and its shared chunk to the git-ignored
+  `public/maplibre/`, and `MapCanvas.tsx` calls `setWorkerUrl`. After changing the map library, check a production build in a browser.
+  The web app also sends a CSP and other security headers (`src/lib/csp.ts`): a new outside host (a tile server) must be added there.
 - **Database on this machine**: Docker's engine is not usable, so PostgreSQL 16 + PostGIS 3.4 run inside WSL Ubuntu
   (databases `avishkar_dev`, `avishkar_test`; credentials only in the git-ignored `platform/api/.env`). WSL stops idle
   distros and takes Postgres with it: keep it alive with

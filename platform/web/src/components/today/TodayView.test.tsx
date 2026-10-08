@@ -104,6 +104,15 @@ describe("TodayView", () => {
     expect(within(sec).getByText("12.5 kWh")).toBeInTheDocument();
   });
 
+  it("says the backup hours are the least they could be when the battery's charge is not known", async () => {
+    const t = today();
+    world({ ...t, resilience: { ...t.resilience, value: { ...t.resilience.value!, hours: 0, score: 0, chargeAssumed: true } } });
+    render(<TodayView id={PROPERTY_ID} />);
+    const res = await tile("Critical-load backup");
+    expect(await res.findByText("0 h")).toBeInTheDocument();
+    expect(res.getByText(/The battery's charge is not known, so it is taken as at its lowest: enter the real charge for a real answer/)).toBeInTheDocument();
+  });
+
   it("marks an old plan as old, in the value tile", async () => {
     const t = today();
     world({ ...t, plan: { ...t.plan, value: { ...t.plan.value!, stale: true } } });

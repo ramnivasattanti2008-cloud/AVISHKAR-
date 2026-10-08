@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { securityHeaders } from "./src/lib/csp";
 
 /**
  * The browser only ever talks to this origin. /api/* is proxied to the AVISHKAR API, so session and CSRF cookies are
@@ -12,6 +13,9 @@ const config: NextConfig = {
   poweredByHeader: false,
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }];
+  },
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders({ development: process.env.NODE_ENV !== "production", tileUrl: process.env.NEXT_PUBLIC_OSM_TILE_URL }) }];
   },
 };
 

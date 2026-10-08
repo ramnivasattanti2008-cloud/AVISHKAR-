@@ -16394,6 +16394,10 @@
                       "atLeast": {
                         "type": "boolean"
                       },
+                      "chargeAssumed": {
+                        "description": "True when the battery's charge is not known and was taken at its lowest, so the hours are the least it could be.",
+                        "type": "boolean"
+                      },
                       "hours": {
                         "type": "number"
                       },
@@ -16406,7 +16410,8 @@
                     "required": [
                       "hours",
                       "atLeast",
-                      "score"
+                      "score",
+                      "chargeAssumed"
                     ],
                     "type": "object"
                   },
@@ -16803,6 +16808,10 @@
                       "atLeast": {
                         "type": "boolean"
                       },
+                      "chargeAssumed": {
+                        "description": "True when the battery's charge is not known and was taken at its lowest, so the hours are the least it could be.",
+                        "type": "boolean"
+                      },
                       "hours": {
                         "type": "number"
                       },
@@ -16815,7 +16824,8 @@
                     "required": [
                       "hours",
                       "atLeast",
-                      "score"
+                      "score",
+                      "chargeAssumed"
                     ],
                     "type": "object"
                   },
@@ -17960,6 +17970,235 @@
                     "exportedAt": {
                       "type": "string"
                     },
+                    "holdings": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "ownTariffs": {
+                          "description": "Tariffs you entered. Curated plans are shared reference data and are not yours.",
+                          "items": {
+                            "additionalProperties": {},
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "properties": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "control": {
+                                "anyOf": [
+                                  {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "automateUntil": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "maxChargeKw": {
+                                        "type": [
+                                          "number",
+                                          "null"
+                                        ]
+                                      },
+                                      "maxDischargeKw": {
+                                        "type": [
+                                          "number",
+                                          "null"
+                                        ]
+                                      },
+                                      "minSocPercent": {
+                                        "type": [
+                                          "number",
+                                          "null"
+                                        ]
+                                      },
+                                      "mode": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "mode",
+                                      "maxChargeKw",
+                                      "maxDischargeKw",
+                                      "minSocPercent",
+                                      "automateUntil"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "equipment": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "appliances": {
+                                    "items": {
+                                      "additionalProperties": {},
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "type": "object"
+                                    },
+                                    "type": "array"
+                                  },
+                                  "batteries": {
+                                    "items": {
+                                      "additionalProperties": {},
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "type": "object"
+                                    },
+                                    "type": "array"
+                                  },
+                                  "evs": {
+                                    "items": {
+                                      "additionalProperties": {},
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "type": "object"
+                                    },
+                                    "type": "array"
+                                  },
+                                  "solarSystems": {
+                                    "items": {
+                                      "additionalProperties": {},
+                                      "propertyNames": {
+                                        "type": "string"
+                                      },
+                                      "type": "object"
+                                    },
+                                    "type": "array"
+                                  }
+                                },
+                                "required": [
+                                  "batteries",
+                                  "solarSystems",
+                                  "evs",
+                                  "appliances"
+                                ],
+                                "type": "object"
+                              },
+                              "meterImports": {
+                                "description": "The files imported: name, rows accepted and refused, range. Not the readings themselves, which are your own file.",
+                                "items": {
+                                  "additionalProperties": {},
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              },
+                              "meterReadings": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "count": {
+                                    "type": "number"
+                                  },
+                                  "first": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "last": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "count",
+                                  "first",
+                                  "last"
+                                ],
+                                "type": "object"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "propertyId": {
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                "type": "string"
+                              },
+                              "stored": {
+                                "additionalProperties": false,
+                                "description": "Counts of what AVISHKAR worked out and stored for this property. Each plan and what-if is in the property's report.",
+                                "properties": {
+                                  "controlProposals": {
+                                    "type": "number"
+                                  },
+                                  "energyTwinVersions": {
+                                    "type": "number"
+                                  },
+                                  "forecasts": {
+                                    "type": "number"
+                                  },
+                                  "plans": {
+                                    "type": "number"
+                                  },
+                                  "roofOutlines": {
+                                    "type": "number"
+                                  },
+                                  "whatIfs": {
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "energyTwinVersions",
+                                  "forecasts",
+                                  "plans",
+                                  "whatIfs",
+                                  "controlProposals",
+                                  "roofOutlines"
+                                ],
+                                "type": "object"
+                              },
+                              "tariffPlanId": {
+                                "anyOf": [
+                                  {
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "propertyId",
+                              "name",
+                              "tariffPlanId",
+                              "equipment",
+                              "meterImports",
+                              "meterReadings",
+                              "control",
+                              "stored"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "ownTariffs",
+                        "properties"
+                      ],
+                      "type": "object"
+                    },
                     "properties": {
                       "items": {
                         "$ref": "#/components/schemas/Property"
@@ -18008,6 +18247,7 @@
                     "exportedAt",
                     "user",
                     "properties",
+                    "holdings",
                     "activeSessions",
                     "auditLog"
                   ],

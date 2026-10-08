@@ -11,6 +11,8 @@ interface AuthState {
   login(email: string, password: string): Promise<void>;
   register(email: string, password: string, displayName?: string): Promise<void>;
   logout(): Promise<void>;
+  /** Drop the signed-in user from this page without calling the server: for when the server has already ended the session (the account was deleted). */
+  forget(): void;
 }
 
 const Ctx = createContext<AuthState | null>(null);
@@ -46,7 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const value = useMemo(() => ({ user, loading, login, register, logout }), [user, loading, login, register, logout]);
+  const forget = useCallback(() => setUser(null), []);
+
+  const value = useMemo(() => ({ user, loading, login, register, logout, forget }), [user, loading, login, register, logout, forget]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

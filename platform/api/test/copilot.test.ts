@@ -150,11 +150,21 @@ describeBoth("the Copilot, through the API, the real tools and the real engine",
     expect(o.hoursAtFullCharge).toBeCloseTo((9 * Math.sqrt(0.9)) / 0.3, 1);
     expect(o.hoursAtCurrentCharge).toBeNull(); // no charge entered
     expect(text(a)).toContain("no outage has been forecast");
+    // the fuller answer, from the same engine as the Resilience tab: the charge was never entered, so it says it took the lowest
+    expect(o.ifGridFailedNow.chargeAssumed).toBe(true);
+    expect(o.ifGridFailedNow.hours).toBeGreaterThanOrEqual(o.ifGridFailedNow.hoursBatteryAlone - 0.1); // the sun can only add to the battery alone
+    expect(o.ifGridFailedNow.score).toBe(Math.round((100 * Math.min(o.ifGridFailedNow.hours, 24)) / 24));
+    expect(text(a)).toContain("If the grid failed now, with the forecast sun and the battery at its lowest charge, because its real charge has not been entered");
+    expect(o.ifGridFailedNow.reserve.reserveKwh).toBeCloseTo(1 + (4 * 0.3) / Math.sqrt(0.9), 1); // the floor plus four hours of 0.3 kW, counting discharge losses
+    grounded(a);
     // with the charge entered (50%): 4 kWh above the floor
     const b = (await call("GET", `/api/properties/${pid}/batteries`)).json().batteries[0];
     await call("PATCH" as "POST", `/api/properties/${pid}/batteries/${b.id}`, { currentSoc: 0.5 });
     a = await ask("how long could my battery keep my critical loads going in a power cut");
     expect(a.toolResults[0].output.hoursAtCurrentCharge).toBeCloseTo((4 * Math.sqrt(0.9)) / 0.3, 1);
+    expect(a.toolResults[0].output.ifGridFailedNow.chargeAssumed).toBe(false);
+    expect(a.toolResults[0].output.ifGridFailedNow.hours).toBeGreaterThanOrEqual(a.toolResults[0].output.hoursAtCurrentCharge - 0.1); // the sun can only add to the battery alone
+    expect(text(a)).toContain("the battery at the charge you entered");
     grounded(a);
   });
 

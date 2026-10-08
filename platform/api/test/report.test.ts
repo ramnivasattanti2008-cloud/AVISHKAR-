@@ -39,6 +39,7 @@ describeDb("the report of a property with nothing in it", () => {
     expect(res.headers["content-disposition"]).toBe('attachment; filename="avishkar-report-empty-home-2026-10-08.md"');
     const md = res.body;
     expect(md).toContain("# AVISHKAR report: Empty Home");
+    expect(md).toContain("Made 2026-10-08 11:30 IST from what AVISHKAR holds for this property."); // 06:00 UTC, on the clock the person lives by, and the date is separated from the word
     expect(md).toContain("*Tariff: not available. No tariff has been chosen for this property.*");
     expect(md).toContain("*Meter readings: not available. None have been imported.*");
     expect(md).toContain("*Equipment: not available. Nothing has been entered.*");
@@ -88,6 +89,11 @@ describeBoth("the report of a property with a plan and a what-if", () => {
     expect(md).toContain("[SIMULATED]");
     expect(md).toContain("This is a simulated outcome of forecasts, not a measurement.");
     expect(md).toContain(plan.decisions[0].reason);
+    // the time beside each decision is on the same clock as the time written in its reason (a report once mixed UTC with IST)
+    const timed = [...md.matchAll(/^- (\d{4}-\d\d-\d\d) (\d\d:\d\d) IST: .*? kWh\. .*? at (\d\d:\d\d)/gm)];
+    expect(timed.length).toBeGreaterThan(0);
+    for (const m of timed) expect(m[3], m[0]).toBe(m[2]);
+    expect(md).not.toMatch(/\d\d:\d\d UTC/);
     expect(md).toContain(`${sc.name} (`);
     expect(md).toContain(`Planned yearly cost today ${inr(sc.base.netCostInr)}; with the change ${inr(sc.scenario.netCostInr)}`);
     expect(md).toContain("You would pay INR 1,50,000 (your quote)");
