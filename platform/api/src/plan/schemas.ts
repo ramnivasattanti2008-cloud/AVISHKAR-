@@ -31,6 +31,28 @@ const Totals = z.object({
   selfSufficiencyRatio: z.number().nullable(),
 });
 
+const Move = z.enum(["charge", "discharge", "idle"]);
+export const RecommendationSchema = z
+  .object({
+    headline: z.string().describe("What to do in the next hours, in a sentence."),
+    kind: z.enum(["CHARGE_BATTERY", "USE_BATTERY", "HOLD", "NO_BATTERY_MOVE"]),
+    why: z.array(z.string()).describe("The planner's own reasons for the move, in words: the prices and flows behind it."),
+    dataUsed: z.array(z.string()).describe("What the plan was built from: the tariff, the load, the sun, the battery."),
+    assumptions: z.array(z.string()),
+    expectedBenefit: z.object({ savingsInr: z.number(), basis: z.string() }),
+    confidence: z
+      .object({
+        assessed: z.boolean().describe("False when there was nothing to vary (no battery, or forecasts with no band)."),
+        agreeing: z.number().int().describe("Forecasts tried, the central one included, in which the planner gives the same advice for the next three hours."),
+        total: z.number().int(),
+        statement: z.string().describe("Says exactly what was tested. It is not a probability."),
+        scenarios: z.array(z.object({ label: z.string(), agrees: z.boolean().nullable(), chargeKwh: z.number().nullable(), dischargeKwh: z.number().nullable(), moves: z.array(Move) })),
+      })
+      .describe("How steady the advice is when the sun and the demand land at the ends of their forecast bands."),
+  })
+  .meta({ id: "Recommendation" });
+export type Recommendation = z.infer<typeof RecommendationSchema>;
+
 export const PlanSchema = z
   .object({
     id: z.uuid(),
@@ -68,6 +90,7 @@ export const PlanSchema = z
       ev: z.object({ energyNeededKwh: z.number(), departure: iso }).nullable(),
       criticalKw: z.number(),
     }),
+    recommendation: RecommendationSchema.optional().describe("Absent on plans made before recommendations existed."),
     assumptions: z.array(z.string()),
     solver: z.object({ status: z.string(), seconds: z.number(), integerVariables: z.number() }),
     validation: z.object({ valid: z.boolean(), maxBalanceErrorKw: z.number(), problems: z.array(z.string()) }),

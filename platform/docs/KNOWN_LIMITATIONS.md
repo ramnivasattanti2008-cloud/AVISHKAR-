@@ -49,6 +49,28 @@ What the platform does not do, does only partly, or does with a caveat the user 
 - The learning loop reports how forecasts did; it does not retrain or switch methods on its own, and runs only after a meter
   import or on request (no scheduled job).
 
+## Today and speed
+
+- The Today view reads the latest stored forecasts and plan and recomputes nothing: a figure is as old as the forecast or plan it came from, and
+  says so (a plan more than a day old is marked old). 'Achieved' is what the plan is expected to save, never a measurement: there is no
+  device feed. Carbon is not stated.
+- Response times were measured on the development machine only (`pnpm -C platform/api bench`): cached queries 20 to 70 ms, a 24-hour plan
+  about 2 s, a one-year what-if about 1.5 s. That is one user, one host and warm caches, not a load test; the load model is fitted again on
+  every call and is the slowest thing a page waits for.
+
+## Recommendations, resilience and autonomy
+
+- A recommendation's confidence is a count of forecasts (the central estimate and the sun and the demand at each end of their bands)
+  in which the planner gives the same advice for the next three hours. It is not a probability, it tests only the battery's moves
+  (not appliances or the vehicle), and it cannot see a wrong tariff, a missing reading or a forecast outside its band. With no
+  battery, or forecasts that carry no band, it says 'not assessed'.
+- Resilience is 'if the grid failed at the start of the next hour, how long?', never 'will it?': there is no outage data and the
+  outage risk is returned UNAVAILABLE. It assumes the battery's inverter can run the home with the grid down (a grid-tied solar
+  system without one gives no backup), counts every CRITICAL appliance at its rated power together (cautious), and uses the central
+  solar forecast. No energy health score and no waste engine exist.
+- Autonomy is the plan's grid purchases as a share of its energy use, shown with its parts: not a weighted blend of the four
+  components the specification lists, because the weights would be invented.
+
 ## What-if, opportunities, community
 
 - A yearly result is **24 typical days**, not a simulated year: no cloudy-day variability. Money results exist only from prices
@@ -73,9 +95,14 @@ What the platform does not do, does only partly, or does with a caveat the user 
 
 ## Product and operations
 
-- **Not deployed.** No hosted instance, Dockerfile, compose file, infrastructure code, backup, job runner (pg-boss), alerting
-  or load test (see DEPLOYMENT.md).
-- **No admin interface.** An `ADMIN` role exists in the schema and a guard exists, but no route uses it.
+- **Not deployed.** No hosted instance, Dockerfile, compose file, infrastructure code, backup, alerting or load test (see
+  DEPLOYMENT.md). Background jobs (forecast scoring, weather and satellite refresh, tariff checks) run from one in-process
+  scheduler with a database check, off unless `JOBS_ENABLED=true`; re-planning and opportunity recalculation are not scheduled.
+- **The admin page is read-mostly.** It shows health, the catalogue, the models, the jobs and the audit log, and can run a job; it
+  does not edit tariffs or policy (files with sources), disable accounts or change roles. One administrator role, no finer
+  permissions.
+- **Nothing can be controlled.** The Control tab records modes, safety limits, proposals and decisions, and every approval says that
+  no device is connected and nothing changed. Automate cannot be chosen until a device integration exists.
 - **Accounts:** no email verification, password reset or two-factor sign-in; registering an address that exists is reported
   (`EMAIL_TAKEN`), which lets someone test whether an address has an account. No privacy notice, consent screen or retention
   schedule. No Content-Security-Policy on the web app (see SECURITY.md).

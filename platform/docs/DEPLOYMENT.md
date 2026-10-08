@@ -29,7 +29,9 @@ the web origin (or a reverse proxy) and the engine on a private network.
 3. **API.** Set the environment (below), then `pnpm -C platform/api build` and `node dist/server.js`.
 4. **Web.** Set `API_URL` to the API's address **before building**: the proxy rewrite is read when the app is built, not at
    start. Then `pnpm -C platform/web build` and run the standalone server.
-5. **Check.** `GET /api/health` answers 200 when the process is up. `GET /api/system/health` reports the database, PostGIS, the
+5. **First administrator.** Register an account in the web app, then `pnpm -C platform/api db:make-admin you@example.com` on the
+   server. This is the only way to make an administrator, and it is recorded in the audit log.
+6. **Check.** `GET /api/health` answers 200 when the process is up. `GET /api/system/health` reports the database, PostGIS, the
    engine and each provider from real recent calls; `unknown` means no recent traffic, not healthy.
 
 ## Environment (API)
@@ -45,6 +47,7 @@ The full list with comments is `platform/api/.env.example`. Values that must be 
 | `TRUST_PROXY` | `true` only behind a proxy you control, otherwise every client shares one rate-limit bucket (or can forge its address) |
 | `PROVIDER_USER_AGENT` | Must identify the service with a real contact; Nominatim's policy requires it |
 | `ANTHROPIC_API_KEY` | Optional; the Copilot works from templates without it |
+| `JOBS_ENABLED` | `true` on exactly one API process to run the background jobs (forecast scoring, weather and satellite refresh, tariff checks); the database stops two from running one job at once. Off by default |
 
 `.env` files are git-ignored. Never put a real secret in `.env.example`, the repository or the CI file.
 
@@ -75,7 +78,7 @@ PostGIS service and the real engine (typecheck, lint, tests, build), the engine 
 - Dockerfiles and a compose file for the four services (the Docker engine cannot run on the development machine, so none could
   be tested; an untested image would not be evidence).
 - Infrastructure as code, a staging environment, a rollback procedure, zero-downtime migrations.
-- A job runner: scheduled forecast scoring, weather refresh and report generation do not run on a schedule. The learning loop
-  scores stored forecasts after each meter import and on request only.
+- An external queue (pg-boss or similar): the jobs run from one in-process scheduler (`JOBS_ENABLED=true`), which is enough for
+  four small jobs and not for work that must survive a restart or spread over machines.
 - Structured metrics, tracing and alerting beyond the provider-health endpoint and request-id'd logs.
-- A load test or any systematic timing measurement. The speed targets in the specification (§77) are not verified.
+- A load test. Single-user response times against the specification's targets were measured on the development machine (`pnpm -C platform/api bench`, STATUS row 77) and met; nothing has been measured under concurrent load or on hosted hardware.

@@ -126,6 +126,319 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The audit log, newest first */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    /** @description Only actions that start with this, for example plan or admin. */
+                    action?: string;
+                    before?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminAudit"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The background jobs, when each is next due and what it did lately */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminJobs"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/jobs/{name}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run one background job now
+         * @description Recorded as a manual run by you. If the job is already running, the answer is a SKIPPED run saying so.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string | null;
+                            finishedAt: string | null;
+                            /** Format: uuid */
+                            id: string;
+                            job: string;
+                            seconds: number | null;
+                            startedAt: string;
+                            /** @enum {string} */
+                            status: "RUNNING" | "OK" | "FAILED" | "SKIPPED";
+                            summary: {
+                                [key: string]: unknown;
+                            } | null;
+                            /** @enum {string} */
+                            trigger: "SCHEDULE" | "MANUAL";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health of the data, the catalogue, the models and the providers: counts, and no one's readings */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminOverview"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -2974,6 +3287,383 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/control": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * How much AVISHKAR may do for this property, its safety limits and the moves waiting for a decision
+         * @description Observe, Recommend, Approve or Automate. No device is connected, so no mode changes anything outside the platform; Automate cannot be chosen until one is.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Control"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        /** Choose the mode and the safety limits */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ControlSettingsInputInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Control"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/control/proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn the latest plan's moves into proposals, each put through your safety limits
+         * @description Moves already proposed are not proposed twice. A move that breaks a limit you set is recorded as BLOCKED, with the reason, and cannot be approved.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            control: components["schemas"]["Control"];
+                            created: number;
+                            skipped: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/control/proposals/{proposalId}/{action}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve, reject, withdraw or roll back one proposed move
+         * @description Approving needs the Approve mode and a move that passed its safety checks. Withdraw is for an approved move that has not started; rollback undoes an applied move through the device, or records that nothing had been applied.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    proposalId: string;
+                    action: "approve" | "reject" | "withdraw" | "rollback";
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        note?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Control"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/copilot/ask": {
         parameters: {
             query?: never;
@@ -4748,6 +5438,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/resilience": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * How long the critical load would last if the grid failed, and how autonomous the plan is
+         * @description Resilience: if the grid failed at the start of the next hour, how long the appliances you marked CRITICAL would be served from the battery and the forecast sun, a score, and the reserve to keep for the time you want. No outage is predicted: grid outage risk is UNAVAILABLE because no outage data exists. Autonomy: the share of the latest plan's energy that did not come from the grid, with its method.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description How long you want the critical load to last, for the reserve to recommend. */
+                    targetHours?: number;
+                    /** @description The battery's charge now, if you know it. */
+                    startSocPercent?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResilienceReport"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/scenarios": {
         parameters: {
             query?: never;
@@ -5655,6 +6454,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Today: generation, use, surplus, weather risk, backup, autonomy, expected value, and what to do next
+         * @description Read from the latest stored forecasts and plan, each figure labelled as what it is, with how old it is; what has none is UNAVAILABLE with the reason and a link to what would fill it in. It recomputes nothing: the one live call is the weather, cached for ten minutes.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Today"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/twin": {
         parameters: {
             query?: never;
@@ -6556,6 +7432,260 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AdminAudit: {
+            entries: {
+                action: string;
+                createdAt: string;
+                detail: unknown | null;
+                entityId: string | null;
+                entityType: string | null;
+                id: string;
+                ip: string | null;
+                requestId: string | null;
+                user: string | null;
+            }[];
+            /** @description Pass as `before` to read the next, older page. */
+            next: string | null;
+        };
+        AdminAuditInput: {
+            entries: {
+                action: string;
+                createdAt: string;
+                detail: unknown | null;
+                entityId: string | null;
+                entityType: string | null;
+                id: string;
+                ip: string | null;
+                requestId: string | null;
+                user: string | null;
+            }[];
+            /** @description Pass as `before` to read the next, older page. */
+            next: string | null;
+        };
+        AdminJobs: {
+            jobs: {
+                description: string;
+                dueInSeconds: number;
+                everyMinutes: number;
+                name: string;
+                recent: {
+                    error: string | null;
+                    finishedAt: string | null;
+                    /** Format: uuid */
+                    id: string;
+                    job: string;
+                    seconds: number | null;
+                    startedAt: string;
+                    /** @enum {string} */
+                    status: "RUNNING" | "OK" | "FAILED" | "SKIPPED";
+                    summary: {
+                        [key: string]: unknown;
+                    } | null;
+                    /** @enum {string} */
+                    trigger: "SCHEDULE" | "MANUAL";
+                }[];
+                retryMinutes: number;
+            }[];
+            /** @description Whether this API process checks for due jobs once a minute (JOBS_ENABLED). */
+            schedulerEnabled: boolean;
+        };
+        AdminJobsInput: {
+            jobs: {
+                description: string;
+                dueInSeconds: number;
+                everyMinutes: number;
+                name: string;
+                recent: {
+                    error: string | null;
+                    finishedAt: string | null;
+                    /** Format: uuid */
+                    id: string;
+                    job: string;
+                    seconds: number | null;
+                    startedAt: string;
+                    /** @enum {string} */
+                    status: "RUNNING" | "OK" | "FAILED" | "SKIPPED";
+                    summary: {
+                        [key: string]: unknown;
+                    } | null;
+                    /** @enum {string} */
+                    trigger: "SCHEDULE" | "MANUAL";
+                }[];
+                retryMinutes: number;
+            }[];
+            /** @description Whether this API process checks for due jobs once a minute (JOBS_ENABLED). */
+            schedulerEnabled: boolean;
+        };
+        AdminOverview: {
+            catalogue: {
+                policyRules: {
+                    appliesTo: string;
+                    effectiveFrom: string | null;
+                    effectiveTo: string | null;
+                    /** Format: uuid */
+                    id: string;
+                    program: string;
+                    region: string;
+                    ruleKey: string;
+                    source: string;
+                    sourceUrl: string | null;
+                    verifiedAt: string | null;
+                }[];
+                tariffs: {
+                    category: string | null;
+                    discom: string | null;
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    propertiesUsing: number;
+                    source: string;
+                    sourceUrl: string | null;
+                    state: string | null;
+                    validity: string;
+                    validityMessage: string;
+                    verifiedAt: string | null;
+                }[];
+            };
+            dataHealth: {
+                /** @description Stored forecasts whose hours have passed but that have not been scored. */
+                forecastsAwaitingScore: number;
+                forecastsNotScorable: number;
+                forecastsScored: number;
+                /** @description Properties whose newest meter reading is more than two days old. */
+                meterDataStale: number;
+                propertiesOnExpiredTariff: number;
+            };
+            generatedAt: string;
+            models: {
+                engine: {
+                    error: string | null;
+                    solver: string | null;
+                    /** @enum {string} */
+                    state: "healthy" | "down" | "not_configured";
+                    version: string | null;
+                };
+                forecastRuns: {
+                    engineVersion: string;
+                    kind: string;
+                    model: string;
+                    runs: number;
+                }[];
+                planRunsByEngineVersion: {
+                    [key: string]: number;
+                };
+            };
+            properties: {
+                demo: number;
+                total: number;
+                withBattery: number;
+                withMeterData: number;
+                withSolar: number;
+                withTariff: number;
+            };
+            providers: {
+                calls: number;
+                failures: number;
+                lastError: string | null;
+                p95Ms: number | null;
+                provider: string;
+                /** @enum {string} */
+                state: "healthy" | "degraded" | "down" | "unknown";
+            }[];
+            /** @description How many times each audited action happened. */
+            usageLast7Days: {
+                [key: string]: number;
+            };
+            users: {
+                admins: number;
+                joinedLast7Days: number;
+                total: number;
+            };
+        };
+        AdminOverviewInput: {
+            catalogue: {
+                policyRules: {
+                    appliesTo: string;
+                    effectiveFrom: string | null;
+                    effectiveTo: string | null;
+                    /** Format: uuid */
+                    id: string;
+                    program: string;
+                    region: string;
+                    ruleKey: string;
+                    source: string;
+                    sourceUrl: string | null;
+                    verifiedAt: string | null;
+                }[];
+                tariffs: {
+                    category: string | null;
+                    discom: string | null;
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    propertiesUsing: number;
+                    source: string;
+                    sourceUrl: string | null;
+                    state: string | null;
+                    validity: string;
+                    validityMessage: string;
+                    verifiedAt: string | null;
+                }[];
+            };
+            dataHealth: {
+                /** @description Stored forecasts whose hours have passed but that have not been scored. */
+                forecastsAwaitingScore: number;
+                forecastsNotScorable: number;
+                forecastsScored: number;
+                /** @description Properties whose newest meter reading is more than two days old. */
+                meterDataStale: number;
+                propertiesOnExpiredTariff: number;
+            };
+            generatedAt: string;
+            models: {
+                engine: {
+                    error: string | null;
+                    solver: string | null;
+                    /** @enum {string} */
+                    state: "healthy" | "down" | "not_configured";
+                    version: string | null;
+                };
+                forecastRuns: {
+                    engineVersion: string;
+                    kind: string;
+                    model: string;
+                    runs: number;
+                }[];
+                planRunsByEngineVersion: {
+                    [key: string]: number;
+                };
+            };
+            properties: {
+                demo: number;
+                total: number;
+                withBattery: number;
+                withMeterData: number;
+                withSolar: number;
+                withTariff: number;
+            };
+            providers: {
+                calls: number;
+                failures: number;
+                lastError: string | null;
+                p95Ms: number | null;
+                provider: string;
+                /** @enum {string} */
+                state: "healthy" | "degraded" | "down" | "unknown";
+            }[];
+            /** @description How many times each audited action happened. */
+            usageLast7Days: {
+                [key: string]: number;
+            };
+            users: {
+                admins: number;
+                joinedLast7Days: number;
+                total: number;
+            };
+        };
         Appliance: {
             comfortNote: string | null;
             createdAt: string;
@@ -7145,6 +8275,196 @@ export interface components {
                     vehicleChargerKw: number;
                 } | null;
             };
+        };
+        Control: {
+            automateUntil: string | null;
+            executor: {
+                available: boolean;
+                message: string;
+                name: string;
+            };
+            limits: {
+                maxChargeKw: number | null;
+                maxDischargeKw: number | null;
+                minSocPercent: number | null;
+            };
+            /** @enum {string} */
+            mode: "OBSERVE" | "RECOMMEND" | "APPROVE" | "AUTOMATE";
+            modeMeaning: string;
+            modes: {
+                available: boolean;
+                label: string;
+                meaning: string;
+                /** @enum {string} */
+                mode: "OBSERVE" | "RECOMMEND" | "APPROVE" | "AUTOMATE";
+                unavailableReason: string | null;
+            }[];
+            proposals: components["schemas"]["ControlProposal"][];
+            updatedAt: string | null;
+        };
+        ControlInput: {
+            automateUntil: string | null;
+            executor: {
+                available: boolean;
+                message: string;
+                name: string;
+            };
+            limits: {
+                maxChargeKw: number | null;
+                maxDischargeKw: number | null;
+                minSocPercent: number | null;
+            };
+            /** @enum {string} */
+            mode: "OBSERVE" | "RECOMMEND" | "APPROVE" | "AUTOMATE";
+            modeMeaning: string;
+            modes: {
+                available: boolean;
+                label: string;
+                meaning: string;
+                /** @enum {string} */
+                mode: "OBSERVE" | "RECOMMEND" | "APPROVE" | "AUTOMATE";
+                unavailableReason: string | null;
+            }[];
+            proposals: components["schemas"]["ControlProposalInput"][];
+            updatedAt: string | null;
+        };
+        ControlProposal: {
+            can: {
+                approve: {
+                    allowed: boolean;
+                    /** @description Why not, when it is not allowed: no button is dead without saying why. */
+                    reason: string | null;
+                };
+                reject: {
+                    allowed: boolean;
+                    /** @description Why not, when it is not allowed: no button is dead without saying why. */
+                    reason: string | null;
+                };
+                rollback: {
+                    allowed: boolean;
+                    /** @description Why not, when it is not allowed: no button is dead without saying why. */
+                    reason: string | null;
+                };
+                withdraw: {
+                    allowed: boolean;
+                    /** @description Why not, when it is not allowed: no button is dead without saying why. */
+                    reason: string | null;
+                };
+            };
+            command: {
+                [key: string]: number | string;
+            };
+            createdAt: string;
+            decidedAt: string | null;
+            /** @description The email of who decided; null when the system did under an AUTOMATE authorization or time did. */
+            decidedBy: string | null;
+            decisionNote: string | null;
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "BATTERY_CHARGE" | "BATTERY_DISCHARGE" | "APPLIANCE_RUN" | "EV_CHARGE";
+            planId: string | null;
+            /** @description The planner's own reason for the move, in words. */
+            reason: string;
+            /** @description What the device executor answered, as it answered. */
+            result: {
+                applied: boolean;
+                message: string;
+            } | null;
+            safety: {
+                checks: {
+                    check: string;
+                    detail: string;
+                    ok: boolean;
+                }[];
+                ok: boolean;
+            };
+            startsAt: string;
+            /** @enum {string} */
+            state: "PROPOSED" | "APPROVED" | "REJECTED" | "WITHDRAWN" | "EXPIRED" | "APPLIED" | "FAILED" | "ROLLED_BACK" | "BLOCKED";
+        };
+        ControlProposalInput: {
+            can: {
+                approve: {
+                    allowed: boolean;
+                    /** @description Why not, when it is not allowed: no button is dead without saying why. */
+                    reason: string | null;
+                };
+                reject: {
+                    allowed: boolean;
+                    /** @description Why not, when it is not allowed: no button is dead without saying why. */
+                    reason: string | null;
+                };
+                rollback: {
+                    allowed: boolean;
+                    /** @description Why not, when it is not allowed: no button is dead without saying why. */
+                    reason: string | null;
+                };
+                withdraw: {
+                    allowed: boolean;
+                    /** @description Why not, when it is not allowed: no button is dead without saying why. */
+                    reason: string | null;
+                };
+            };
+            command: {
+                [key: string]: number | string;
+            };
+            createdAt: string;
+            decidedAt: string | null;
+            /** @description The email of who decided; null when the system did under an AUTOMATE authorization or time did. */
+            decidedBy: string | null;
+            decisionNote: string | null;
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "BATTERY_CHARGE" | "BATTERY_DISCHARGE" | "APPLIANCE_RUN" | "EV_CHARGE";
+            planId: string | null;
+            /** @description The planner's own reason for the move, in words. */
+            reason: string;
+            /** @description What the device executor answered, as it answered. */
+            result: {
+                applied: boolean;
+                message: string;
+            } | null;
+            safety: {
+                checks: {
+                    check: string;
+                    detail: string;
+                    ok: boolean;
+                }[];
+                ok: boolean;
+            };
+            startsAt: string;
+            /** @enum {string} */
+            state: "PROPOSED" | "APPROVED" | "REJECTED" | "WITHDRAWN" | "EXPIRED" | "APPLIED" | "FAILED" | "ROLLED_BACK" | "BLOCKED";
+        };
+        ControlSettingsInput: {
+            /** @description AUTOMATE only: how many hours your authorization lasts. It never lasts longer than 30 days and is never open-ended. */
+            automateHours?: number;
+            /** @description AUTOMATE only: true says you authorise moves to be made without asking each time. */
+            confirmAutomate?: boolean;
+            /** @description The most power AVISHKAR may ask the battery to charge at. Empty: the battery's own limit. */
+            maxChargeKw?: number | null;
+            maxDischargeKw?: number | null;
+            /** @description The lowest charge, as a share of capacity, the battery may be taken to. */
+            minSocPercent?: number | null;
+            /** @enum {string} */
+            mode: "OBSERVE" | "RECOMMEND" | "APPROVE" | "AUTOMATE";
+        };
+        ControlSettingsInputInput: {
+            /** @description AUTOMATE only: how many hours your authorization lasts. It never lasts longer than 30 days and is never open-ended. */
+            automateHours?: number;
+            /** @description AUTOMATE only: true says you authorise moves to be made without asking each time. */
+            confirmAutomate?: boolean;
+            /** @description The most power AVISHKAR may ask the battery to charge at. Empty: the battery's own limit. */
+            maxChargeKw?: number | null;
+            maxDischargeKw?: number | null;
+            /** @description The lowest charge, as a share of capacity, the battery may be taken to. */
+            minSocPercent?: number | null;
+            /** @enum {string} */
+            mode: "OBSERVE" | "RECOMMEND" | "APPROVE" | "AUTOMATE";
         };
         CopilotAnswer: {
             citations: {
@@ -8245,6 +9565,8 @@ export interface components {
             notes: string[];
             /** Format: uuid */
             propertyId: string;
+            /** @description Absent on plans made before recommendations existed. */
+            recommendation?: components["schemas"]["Recommendation"];
             result: {
                 provenance: components["schemas"]["Provenance"];
                 unit?: string;
@@ -8361,6 +9683,8 @@ export interface components {
             notes: string[];
             /** Format: uuid */
             propertyId: string;
+            /** @description Absent on plans made before recommendations existed. */
+            recommendation?: components["schemas"]["RecommendationInput"];
             result: {
                 provenance: components["schemas"]["ProvenanceInput"];
                 unit?: string;
@@ -8655,6 +9979,252 @@ export interface components {
              */
             status: "LIVE" | "UPDATED" | "FORECAST" | "ESTIMATED" | "SIMULATED" | "DEMO" | "REFERENCE" | "UNAVAILABLE";
             validFor?: string;
+        };
+        Recommendation: {
+            assumptions: string[];
+            /** @description How steady the advice is when the sun and the demand land at the ends of their forecast bands. */
+            confidence: {
+                /** @description Forecasts tried, the central one included, in which the planner gives the same advice for the next three hours. */
+                agreeing: number;
+                /** @description False when there was nothing to vary (no battery, or forecasts with no band). */
+                assessed: boolean;
+                scenarios: {
+                    agrees: boolean | null;
+                    chargeKwh: number | null;
+                    dischargeKwh: number | null;
+                    label: string;
+                    moves: ("charge" | "discharge" | "idle")[];
+                }[];
+                /** @description Says exactly what was tested. It is not a probability. */
+                statement: string;
+                total: number;
+            };
+            /** @description What the plan was built from: the tariff, the load, the sun, the battery. */
+            dataUsed: string[];
+            expectedBenefit: {
+                basis: string;
+                savingsInr: number;
+            };
+            /** @description What to do in the next hours, in a sentence. */
+            headline: string;
+            /** @enum {string} */
+            kind: "CHARGE_BATTERY" | "USE_BATTERY" | "HOLD" | "NO_BATTERY_MOVE";
+            /** @description The planner's own reasons for the move, in words: the prices and flows behind it. */
+            why: string[];
+        };
+        RecommendationInput: {
+            assumptions: string[];
+            /** @description How steady the advice is when the sun and the demand land at the ends of their forecast bands. */
+            confidence: {
+                /** @description Forecasts tried, the central one included, in which the planner gives the same advice for the next three hours. */
+                agreeing: number;
+                /** @description False when there was nothing to vary (no battery, or forecasts with no band). */
+                assessed: boolean;
+                scenarios: {
+                    agrees: boolean | null;
+                    chargeKwh: number | null;
+                    dischargeKwh: number | null;
+                    label: string;
+                    moves: ("charge" | "discharge" | "idle")[];
+                }[];
+                /** @description Says exactly what was tested. It is not a probability. */
+                statement: string;
+                total: number;
+            };
+            /** @description What the plan was built from: the tariff, the load, the sun, the battery. */
+            dataUsed: string[];
+            expectedBenefit: {
+                basis: string;
+                savingsInr: number;
+            };
+            /** @description What to do in the next hours, in a sentence. */
+            headline: string;
+            /** @enum {string} */
+            kind: "CHARGE_BATTERY" | "USE_BATTERY" | "HOLD" | "NO_BATTERY_MOVE";
+            /** @description The planner's own reasons for the move, in words: the prices and flows behind it. */
+            why: string[];
+        };
+        ResilienceReport: {
+            assumptions: string[];
+            autonomy: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    /** @description How long the critical load would last with the forecast sun if the grid failed now (from the resilience figures). */
+                    criticalCoverageHours: number | null;
+                    methodology: string;
+                    parts: {
+                        batteryReleasedKwh: number;
+                        boughtKwh: number;
+                        consumedKwh: number;
+                        gridDependencyPercent: number;
+                        solarUsedKwh: number;
+                    };
+                    /** Format: uuid */
+                    planId: string;
+                    planMadeAt: string;
+                    score: number;
+                } | null;
+            };
+            /** @constant */
+            label: "RESILIENCE AND AUTONOMY";
+            madeAt: string;
+            notes: string[];
+            /** @description Grid outage risk is never predicted: no outage data source exists. */
+            outageRisk: {
+                reason: string;
+                /** @constant */
+                status: "UNAVAILABLE";
+            };
+            request: {
+                startSocPercent: number | null;
+                targetHours: number;
+            };
+            resilience: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    backupHours: {
+                        /** @description True when it was served through the whole 48 hours examined, so the figure is a lower bound. */
+                        atLeast: boolean;
+                        /** @description If the grid failed at the start of the next hour: how long the critical load is served with the forecast sun and the battery. */
+                        withForecastSun: number;
+                        /** @description The battery alone: as at night or under heavy cloud. */
+                        withoutSun: number;
+                    };
+                    battery: {
+                        reserveKwh: number | null;
+                        /** @enum {string} */
+                        startSocBasis: "USER_ENTERED" | "ASSUMPTION";
+                        startSocKwh: number;
+                        usableKwh: number;
+                    } | null;
+                    /** @description The power the appliances you marked CRITICAL draw together. */
+                    criticalKw: number;
+                    criticalLoads: {
+                        kw: number;
+                        name: string;
+                        quantity: number;
+                        ratedPowerW: number;
+                    }[];
+                    recommendedReserve: {
+                        /** @description What the battery keeps back now: the reserve you set, or its floor. */
+                        currentReserveKwh: number;
+                        /** @description False when the battery cannot hold that much. */
+                        feasible: boolean;
+                        /** @description How much more to hold back than now; zero or negative when the current reserve is enough. */
+                        gapKwh: number;
+                        /** @description The longest the full battery could carry the critical load with no sun. */
+                        longestPossibleHours: number;
+                        /** @description The charge to keep back so the critical load lasts the target time with no sun. */
+                        reserveKwh: number;
+                        reservePercentOfCapacity: number;
+                        targetHours: number;
+                    } | null;
+                    score: number;
+                    scoreMethod: string;
+                } | null;
+            };
+        };
+        ResilienceReportInput: {
+            assumptions: string[];
+            autonomy: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    /** @description How long the critical load would last with the forecast sun if the grid failed now (from the resilience figures). */
+                    criticalCoverageHours: number | null;
+                    methodology: string;
+                    parts: {
+                        batteryReleasedKwh: number;
+                        boughtKwh: number;
+                        consumedKwh: number;
+                        gridDependencyPercent: number;
+                        solarUsedKwh: number;
+                    };
+                    /** Format: uuid */
+                    planId: string;
+                    planMadeAt: string;
+                    score: number;
+                } | null;
+            };
+            /** @constant */
+            label: "RESILIENCE AND AUTONOMY";
+            madeAt: string;
+            notes: string[];
+            /** @description Grid outage risk is never predicted: no outage data source exists. */
+            outageRisk: {
+                reason: string;
+                /** @constant */
+                status: "UNAVAILABLE";
+            };
+            request: {
+                startSocPercent: number | null;
+                targetHours: number;
+            };
+            resilience: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    backupHours: {
+                        /** @description True when it was served through the whole 48 hours examined, so the figure is a lower bound. */
+                        atLeast: boolean;
+                        /** @description If the grid failed at the start of the next hour: how long the critical load is served with the forecast sun and the battery. */
+                        withForecastSun: number;
+                        /** @description The battery alone: as at night or under heavy cloud. */
+                        withoutSun: number;
+                    };
+                    battery: {
+                        reserveKwh: number | null;
+                        /** @enum {string} */
+                        startSocBasis: "USER_ENTERED" | "ASSUMPTION";
+                        startSocKwh: number;
+                        usableKwh: number;
+                    } | null;
+                    /** @description The power the appliances you marked CRITICAL draw together. */
+                    criticalKw: number;
+                    criticalLoads: {
+                        kw: number;
+                        name: string;
+                        quantity: number;
+                        ratedPowerW: number;
+                    }[];
+                    recommendedReserve: {
+                        /** @description What the battery keeps back now: the reserve you set, or its floor. */
+                        currentReserveKwh: number;
+                        /** @description False when the battery cannot hold that much. */
+                        feasible: boolean;
+                        /** @description How much more to hold back than now; zero or negative when the current reserve is enough. */
+                        gapKwh: number;
+                        /** @description The longest the full battery could carry the critical load with no sun. */
+                        longestPossibleHours: number;
+                        /** @description The charge to keep back so the critical load lasts the target time with no sun. */
+                        reserveKwh: number;
+                        reservePercentOfCapacity: number;
+                        targetHours: number;
+                    } | null;
+                    score: number;
+                    scoreMethod: string;
+                } | null;
+            };
+        };
+        ResilienceRequest: {
+            /** @description The battery's charge now, if you know it. Otherwise the level you last entered within the day, or the battery's reserve level. */
+            startSocPercent?: number | null;
+            /**
+             * @description How long you want the critical load to last, for the reserve to recommend.
+             * @default 4
+             */
+            targetHours: number;
+        };
+        ResilienceRequestInput: {
+            /** @description The battery's charge now, if you know it. Otherwise the level you last entered within the day, or the battery's reserve level. */
+            startSocPercent?: number | null;
+            /**
+             * @description How long you want the critical load to last, for the reserve to recommend.
+             * @default 4
+             */
+            targetHours: number;
         };
         SatelliteScene: {
             acquiredAt: string;
@@ -9461,6 +11031,200 @@ export interface components {
                 status: "WITHIN" | "EXPIRED" | "NOT_YET_EFFECTIVE" | "OPEN_ENDED" | "UNKNOWN";
             };
             verifiedAt: string | null;
+        };
+        Today: {
+            /** @description What AVISHKAR is expected to have achieved: from the plan, not measured. */
+            achieved: {
+                basis: string;
+                carbon: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+                expectedSavingsInr: number | null;
+            };
+            /** @description What the property is expected to use today. */
+            consumption: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    /** @enum {string} */
+                    basis: "FORECAST" | "TYPICAL_DAY";
+                    hoursCovered: number;
+                    kwh: number;
+                } | null;
+            };
+            /** @description What the solar system is forecast to make today. */
+            generation: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    forecastIssuedAt: string;
+                    hoursCovered: number;
+                    kwh: number;
+                } | null;
+            };
+            /** @constant */
+            label: "TODAY";
+            /** @description Today on the India Standard Time clock, YYYY-MM-DD. */
+            localDate: string;
+            madeAt: string;
+            /** @description What would fill in what is missing, each with where to do it. */
+            next: {
+                href: string;
+                label: string;
+                why: string;
+            }[];
+            /** @description The latest plan: what it is expected to save, and how autonomous it is. */
+            plan: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    autonomyScore: number | null;
+                    baselineNetCostInr: number;
+                    importKwh: number;
+                    madeAt: string;
+                    netCostInr: number;
+                    /** Format: uuid */
+                    planId: string;
+                    savingsInr: number;
+                    /** @description True when the plan was made more than a day ago. */
+                    stale: boolean;
+                } | null;
+            };
+            /** Format: uuid */
+            propertyId: string;
+            /** @description What to do next, with why, the data used, the assumptions and how steady the advice is. */
+            recommendation: components["schemas"]["Recommendation"] | null;
+            /** @description How long the critical load would last if the grid failed now. */
+            resilience: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    atLeast: boolean;
+                    hours: number;
+                    score: number;
+                } | null;
+            };
+            /** @description Solar that exceeds use hour by hour today: what is free to store, sell or shift into. */
+            surplus: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    kwh: number;
+                    note: string;
+                } | null;
+            };
+            /** @description The risk the weather poses to the sun in the next daylight hours. */
+            weatherRisk: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    hours: number;
+                    /** @enum {string} */
+                    level: "LOW" | "MEDIUM" | "HIGH";
+                    maxRainMmPerHour: number;
+                    meanCloudPercent: number;
+                    rule: string;
+                } | null;
+            };
+        };
+        TodayInput: {
+            /** @description What AVISHKAR is expected to have achieved: from the plan, not measured. */
+            achieved: {
+                basis: string;
+                carbon: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+                expectedSavingsInr: number | null;
+            };
+            /** @description What the property is expected to use today. */
+            consumption: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    /** @enum {string} */
+                    basis: "FORECAST" | "TYPICAL_DAY";
+                    hoursCovered: number;
+                    kwh: number;
+                } | null;
+            };
+            /** @description What the solar system is forecast to make today. */
+            generation: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    forecastIssuedAt: string;
+                    hoursCovered: number;
+                    kwh: number;
+                } | null;
+            };
+            /** @constant */
+            label: "TODAY";
+            /** @description Today on the India Standard Time clock, YYYY-MM-DD. */
+            localDate: string;
+            madeAt: string;
+            /** @description What would fill in what is missing, each with where to do it. */
+            next: {
+                href: string;
+                label: string;
+                why: string;
+            }[];
+            /** @description The latest plan: what it is expected to save, and how autonomous it is. */
+            plan: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    autonomyScore: number | null;
+                    baselineNetCostInr: number;
+                    importKwh: number;
+                    madeAt: string;
+                    netCostInr: number;
+                    /** Format: uuid */
+                    planId: string;
+                    savingsInr: number;
+                    /** @description True when the plan was made more than a day ago. */
+                    stale: boolean;
+                } | null;
+            };
+            /** Format: uuid */
+            propertyId: string;
+            /** @description What to do next, with why, the data used, the assumptions and how steady the advice is. */
+            recommendation: components["schemas"]["RecommendationInput"] | null;
+            /** @description How long the critical load would last if the grid failed now. */
+            resilience: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    atLeast: boolean;
+                    hours: number;
+                    score: number;
+                } | null;
+            };
+            /** @description Solar that exceeds use hour by hour today: what is free to store, sell or shift into. */
+            surplus: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    kwh: number;
+                    note: string;
+                } | null;
+            };
+            /** @description The risk the weather poses to the sun in the next daylight hours. */
+            weatherRisk: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    hours: number;
+                    /** @enum {string} */
+                    level: "LOW" | "MEDIUM" | "HIGH";
+                    maxRainMmPerHour: number;
+                    meanCloudPercent: number;
+                    rule: string;
+                } | null;
+            };
         };
         User: {
             displayName: string | null;

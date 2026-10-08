@@ -94,7 +94,7 @@ async function storeFootprint(db: Db, propertyId: string, fp: Footprint): Promis
             'overpass-osm', ${fp.sourceRef}, now())`;
 }
 
-async function storeScenes(db: Db, provider: string, scenes: SatelliteScene[], now: Date): Promise<Map<string, string>> {
+export async function storeScenes(db: Db, provider: string, scenes: SatelliteScene[], now: Date): Promise<Map<string, string>> {
   const ids = new Map<string, string>();
   for (const s of scenes) {
     const data = {

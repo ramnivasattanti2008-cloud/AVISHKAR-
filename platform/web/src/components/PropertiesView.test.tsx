@@ -61,7 +61,7 @@ describe("PropertiesView and the demo world", () => {
     const demo = screen.getByRole("list", { name: "Demo properties" });
     expect(within(demo).getByText("Demo shop, Pune")).toBeInTheDocument();
     expect(within(demo).getByText("DEMO")).toBeInTheDocument();
-    expect(within(demo).getByRole("link", { name: /Demo shop, Pune/ })).toHaveAttribute("href", "/property/d0000001-0000-4000-8000-000000000000");
+    expect(within(demo).getByRole("link", { name: /Demo shop, Pune/ })).toHaveAttribute("href", "/property/d0000001-0000-4000-8000-000000000000/today");
     expect(screen.getByText(/nothing here is added up with them/)).toBeInTheDocument();
   });
 

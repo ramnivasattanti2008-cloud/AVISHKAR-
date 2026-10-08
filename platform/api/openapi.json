@@ -1,6 +1,1188 @@
 {
   "components": {
     "schemas": {
+      "AdminAudit": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "action": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "detail": {
+                  "anyOf": [
+                    {},
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "entityId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "entityType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "ip": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "requestId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "user": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "createdAt",
+                "action",
+                "user",
+                "entityType",
+                "entityId",
+                "requestId",
+                "ip",
+                "detail"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "next": {
+            "description": "Pass as `before` to read the next, older page.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "entries",
+          "next"
+        ],
+        "type": "object"
+      },
+      "AdminAuditInput": {
+        "properties": {
+          "entries": {
+            "items": {
+              "properties": {
+                "action": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "detail": {
+                  "anyOf": [
+                    {},
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "entityId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "entityType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "id": {
+                  "type": "string"
+                },
+                "ip": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "requestId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "user": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "createdAt",
+                "action",
+                "user",
+                "entityType",
+                "entityId",
+                "requestId",
+                "ip",
+                "detail"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "next": {
+            "description": "Pass as `before` to read the next, older page.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "entries",
+          "next"
+        ],
+        "type": "object"
+      },
+      "AdminJobs": {
+        "additionalProperties": false,
+        "properties": {
+          "jobs": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "dueInSeconds": {
+                  "type": "number"
+                },
+                "everyMinutes": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "recent": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "error": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "finishedAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "id": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      "job": {
+                        "type": "string"
+                      },
+                      "seconds": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "startedAt": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "enum": [
+                          "RUNNING",
+                          "OK",
+                          "FAILED",
+                          "SKIPPED"
+                        ],
+                        "type": "string"
+                      },
+                      "summary": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {},
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "trigger": {
+                        "enum": [
+                          "SCHEDULE",
+                          "MANUAL"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "job",
+                      "trigger",
+                      "startedAt",
+                      "finishedAt",
+                      "status",
+                      "seconds",
+                      "summary",
+                      "error"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "retryMinutes": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "name",
+                "description",
+                "everyMinutes",
+                "retryMinutes",
+                "dueInSeconds",
+                "recent"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "schedulerEnabled": {
+            "description": "Whether this API process checks for due jobs once a minute (JOBS_ENABLED).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "schedulerEnabled",
+          "jobs"
+        ],
+        "type": "object"
+      },
+      "AdminJobsInput": {
+        "properties": {
+          "jobs": {
+            "items": {
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "dueInSeconds": {
+                  "type": "number"
+                },
+                "everyMinutes": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "recent": {
+                  "items": {
+                    "properties": {
+                      "error": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "finishedAt": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "id": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      "job": {
+                        "type": "string"
+                      },
+                      "seconds": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "startedAt": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "enum": [
+                          "RUNNING",
+                          "OK",
+                          "FAILED",
+                          "SKIPPED"
+                        ],
+                        "type": "string"
+                      },
+                      "summary": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {},
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "trigger": {
+                        "enum": [
+                          "SCHEDULE",
+                          "MANUAL"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "job",
+                      "trigger",
+                      "startedAt",
+                      "finishedAt",
+                      "status",
+                      "seconds",
+                      "summary",
+                      "error"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "retryMinutes": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "name",
+                "description",
+                "everyMinutes",
+                "retryMinutes",
+                "dueInSeconds",
+                "recent"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "schedulerEnabled": {
+            "description": "Whether this API process checks for due jobs once a minute (JOBS_ENABLED).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "schedulerEnabled",
+          "jobs"
+        ],
+        "type": "object"
+      },
+      "AdminOverview": {
+        "additionalProperties": false,
+        "properties": {
+          "catalogue": {
+            "additionalProperties": false,
+            "properties": {
+              "policyRules": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "appliesTo": {
+                      "type": "string"
+                    },
+                    "effectiveFrom": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "effectiveTo": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "id": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "program": {
+                      "type": "string"
+                    },
+                    "region": {
+                      "type": "string"
+                    },
+                    "ruleKey": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "sourceUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "verifiedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "program",
+                    "ruleKey",
+                    "region",
+                    "appliesTo",
+                    "source",
+                    "sourceUrl",
+                    "verifiedAt",
+                    "effectiveFrom",
+                    "effectiveTo"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "tariffs": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "category": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "discom": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "id": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "propertiesUsing": {
+                      "type": "number"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "sourceUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "state": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "validity": {
+                      "type": "string"
+                    },
+                    "validityMessage": {
+                      "type": "string"
+                    },
+                    "verifiedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "state",
+                    "discom",
+                    "category",
+                    "validity",
+                    "validityMessage",
+                    "verifiedAt",
+                    "source",
+                    "sourceUrl",
+                    "propertiesUsing"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "tariffs",
+              "policyRules"
+            ],
+            "type": "object"
+          },
+          "dataHealth": {
+            "additionalProperties": false,
+            "properties": {
+              "forecastsAwaitingScore": {
+                "description": "Stored forecasts whose hours have passed but that have not been scored.",
+                "type": "number"
+              },
+              "forecastsNotScorable": {
+                "type": "number"
+              },
+              "forecastsScored": {
+                "type": "number"
+              },
+              "meterDataStale": {
+                "description": "Properties whose newest meter reading is more than two days old.",
+                "type": "number"
+              },
+              "propertiesOnExpiredTariff": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "meterDataStale",
+              "forecastsAwaitingScore",
+              "forecastsScored",
+              "forecastsNotScorable",
+              "propertiesOnExpiredTariff"
+            ],
+            "type": "object"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "models": {
+            "additionalProperties": false,
+            "properties": {
+              "engine": {
+                "additionalProperties": false,
+                "properties": {
+                  "error": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "solver": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "state": {
+                    "enum": [
+                      "healthy",
+                      "down",
+                      "not_configured"
+                    ],
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "state",
+                  "version",
+                  "solver",
+                  "error"
+                ],
+                "type": "object"
+              },
+              "forecastRuns": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "engineVersion": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "runs": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "model",
+                    "engineVersion",
+                    "runs"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "planRunsByEngineVersion": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "propertyNames": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            },
+            "required": [
+              "engine",
+              "forecastRuns",
+              "planRunsByEngineVersion"
+            ],
+            "type": "object"
+          },
+          "properties": {
+            "additionalProperties": false,
+            "properties": {
+              "demo": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "withBattery": {
+                "type": "number"
+              },
+              "withMeterData": {
+                "type": "number"
+              },
+              "withSolar": {
+                "type": "number"
+              },
+              "withTariff": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "total",
+              "demo",
+              "withMeterData",
+              "withTariff",
+              "withSolar",
+              "withBattery"
+            ],
+            "type": "object"
+          },
+          "providers": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "calls": {
+                  "type": "number"
+                },
+                "failures": {
+                  "type": "number"
+                },
+                "lastError": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "p95Ms": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "provider": {
+                  "type": "string"
+                },
+                "state": {
+                  "enum": [
+                    "healthy",
+                    "degraded",
+                    "down",
+                    "unknown"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "provider",
+                "state",
+                "calls",
+                "failures",
+                "p95Ms",
+                "lastError"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "usageLast7Days": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "How many times each audited action happened.",
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "users": {
+            "additionalProperties": false,
+            "properties": {
+              "admins": {
+                "type": "number"
+              },
+              "joinedLast7Days": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "total",
+              "admins",
+              "joinedLast7Days"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "generatedAt",
+          "users",
+          "properties",
+          "dataHealth",
+          "catalogue",
+          "models",
+          "usageLast7Days",
+          "providers"
+        ],
+        "type": "object"
+      },
+      "AdminOverviewInput": {
+        "properties": {
+          "catalogue": {
+            "properties": {
+              "policyRules": {
+                "items": {
+                  "properties": {
+                    "appliesTo": {
+                      "type": "string"
+                    },
+                    "effectiveFrom": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "effectiveTo": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "id": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "program": {
+                      "type": "string"
+                    },
+                    "region": {
+                      "type": "string"
+                    },
+                    "ruleKey": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "sourceUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "verifiedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "program",
+                    "ruleKey",
+                    "region",
+                    "appliesTo",
+                    "source",
+                    "sourceUrl",
+                    "verifiedAt",
+                    "effectiveFrom",
+                    "effectiveTo"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "tariffs": {
+                "items": {
+                  "properties": {
+                    "category": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "discom": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "id": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "propertiesUsing": {
+                      "type": "number"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "sourceUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "state": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "validity": {
+                      "type": "string"
+                    },
+                    "validityMessage": {
+                      "type": "string"
+                    },
+                    "verifiedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "state",
+                    "discom",
+                    "category",
+                    "validity",
+                    "validityMessage",
+                    "verifiedAt",
+                    "source",
+                    "sourceUrl",
+                    "propertiesUsing"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "tariffs",
+              "policyRules"
+            ],
+            "type": "object"
+          },
+          "dataHealth": {
+            "properties": {
+              "forecastsAwaitingScore": {
+                "description": "Stored forecasts whose hours have passed but that have not been scored.",
+                "type": "number"
+              },
+              "forecastsNotScorable": {
+                "type": "number"
+              },
+              "forecastsScored": {
+                "type": "number"
+              },
+              "meterDataStale": {
+                "description": "Properties whose newest meter reading is more than two days old.",
+                "type": "number"
+              },
+              "propertiesOnExpiredTariff": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "meterDataStale",
+              "forecastsAwaitingScore",
+              "forecastsScored",
+              "forecastsNotScorable",
+              "propertiesOnExpiredTariff"
+            ],
+            "type": "object"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "models": {
+            "properties": {
+              "engine": {
+                "properties": {
+                  "error": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "solver": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "state": {
+                    "enum": [
+                      "healthy",
+                      "down",
+                      "not_configured"
+                    ],
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "state",
+                  "version",
+                  "solver",
+                  "error"
+                ],
+                "type": "object"
+              },
+              "forecastRuns": {
+                "items": {
+                  "properties": {
+                    "engineVersion": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "runs": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "model",
+                    "engineVersion",
+                    "runs"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "planRunsByEngineVersion": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "propertyNames": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            },
+            "required": [
+              "engine",
+              "forecastRuns",
+              "planRunsByEngineVersion"
+            ],
+            "type": "object"
+          },
+          "properties": {
+            "properties": {
+              "demo": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "withBattery": {
+                "type": "number"
+              },
+              "withMeterData": {
+                "type": "number"
+              },
+              "withSolar": {
+                "type": "number"
+              },
+              "withTariff": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "total",
+              "demo",
+              "withMeterData",
+              "withTariff",
+              "withSolar",
+              "withBattery"
+            ],
+            "type": "object"
+          },
+          "providers": {
+            "items": {
+              "properties": {
+                "calls": {
+                  "type": "number"
+                },
+                "failures": {
+                  "type": "number"
+                },
+                "lastError": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "p95Ms": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "provider": {
+                  "type": "string"
+                },
+                "state": {
+                  "enum": [
+                    "healthy",
+                    "degraded",
+                    "down",
+                    "unknown"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "provider",
+                "state",
+                "calls",
+                "failures",
+                "p95Ms",
+                "lastError"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "usageLast7Days": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "How many times each audited action happened.",
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "users": {
+            "properties": {
+              "admins": {
+                "type": "number"
+              },
+              "joinedLast7Days": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "total",
+              "admins",
+              "joinedLast7Days"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "generatedAt",
+          "users",
+          "properties",
+          "dataHealth",
+          "catalogue",
+          "models",
+          "usageLast7Days",
+          "providers"
+        ],
+        "type": "object"
+      },
       "Appliance": {
         "additionalProperties": false,
         "properties": {
@@ -2600,6 +3782,912 @@
           "totals",
           "hourly",
           "notes"
+        ],
+        "type": "object"
+      },
+      "Control": {
+        "additionalProperties": false,
+        "properties": {
+          "automateUntil": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "executor": {
+            "additionalProperties": false,
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "available",
+              "message"
+            ],
+            "type": "object"
+          },
+          "limits": {
+            "additionalProperties": false,
+            "properties": {
+              "maxChargeKw": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "maxDischargeKw": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "minSocPercent": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "maxChargeKw",
+              "maxDischargeKw",
+              "minSocPercent"
+            ],
+            "type": "object"
+          },
+          "mode": {
+            "enum": [
+              "OBSERVE",
+              "RECOMMEND",
+              "APPROVE",
+              "AUTOMATE"
+            ],
+            "type": "string"
+          },
+          "modeMeaning": {
+            "type": "string"
+          },
+          "modes": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "available": {
+                  "type": "boolean"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "meaning": {
+                  "type": "string"
+                },
+                "mode": {
+                  "enum": [
+                    "OBSERVE",
+                    "RECOMMEND",
+                    "APPROVE",
+                    "AUTOMATE"
+                  ],
+                  "type": "string"
+                },
+                "unavailableReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "mode",
+                "label",
+                "meaning",
+                "available",
+                "unavailableReason"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "proposals": {
+            "items": {
+              "$ref": "#/components/schemas/ControlProposal"
+            },
+            "type": "array"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "mode",
+          "modeMeaning",
+          "limits",
+          "automateUntil",
+          "updatedAt",
+          "executor",
+          "modes",
+          "proposals"
+        ],
+        "type": "object"
+      },
+      "ControlInput": {
+        "properties": {
+          "automateUntil": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "executor": {
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "available",
+              "message"
+            ],
+            "type": "object"
+          },
+          "limits": {
+            "properties": {
+              "maxChargeKw": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "maxDischargeKw": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "minSocPercent": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "maxChargeKw",
+              "maxDischargeKw",
+              "minSocPercent"
+            ],
+            "type": "object"
+          },
+          "mode": {
+            "enum": [
+              "OBSERVE",
+              "RECOMMEND",
+              "APPROVE",
+              "AUTOMATE"
+            ],
+            "type": "string"
+          },
+          "modeMeaning": {
+            "type": "string"
+          },
+          "modes": {
+            "items": {
+              "properties": {
+                "available": {
+                  "type": "boolean"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "meaning": {
+                  "type": "string"
+                },
+                "mode": {
+                  "enum": [
+                    "OBSERVE",
+                    "RECOMMEND",
+                    "APPROVE",
+                    "AUTOMATE"
+                  ],
+                  "type": "string"
+                },
+                "unavailableReason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "mode",
+                "label",
+                "meaning",
+                "available",
+                "unavailableReason"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "proposals": {
+            "items": {
+              "$ref": "#/components/schemas/ControlProposalInput"
+            },
+            "type": "array"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "mode",
+          "modeMeaning",
+          "limits",
+          "automateUntil",
+          "updatedAt",
+          "executor",
+          "modes",
+          "proposals"
+        ],
+        "type": "object"
+      },
+      "ControlProposal": {
+        "additionalProperties": false,
+        "properties": {
+          "can": {
+            "additionalProperties": false,
+            "properties": {
+              "approve": {
+                "additionalProperties": false,
+                "properties": {
+                  "allowed": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "description": "Why not, when it is not allowed: no button is dead without saying why.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "reject": {
+                "additionalProperties": false,
+                "properties": {
+                  "allowed": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "description": "Why not, when it is not allowed: no button is dead without saying why.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "rollback": {
+                "additionalProperties": false,
+                "properties": {
+                  "allowed": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "description": "Why not, when it is not allowed: no button is dead without saying why.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "withdraw": {
+                "additionalProperties": false,
+                "properties": {
+                  "allowed": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "description": "Why not, when it is not allowed: no button is dead without saying why.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "reason"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "approve",
+              "reject",
+              "withdraw",
+              "rollback"
+            ],
+            "type": "object"
+          },
+          "command": {
+            "additionalProperties": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedBy": {
+            "description": "The email of who decided; null when the system did under an AUTOMATE authorization or time did.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endsAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "BATTERY_CHARGE",
+              "BATTERY_DISCHARGE",
+              "APPLIANCE_RUN",
+              "EV_CHARGE"
+            ],
+            "type": "string"
+          },
+          "planId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "description": "The planner's own reason for the move, in words.",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "applied": {
+                    "type": "boolean"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "applied",
+                  "message"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the device executor answered, as it answered."
+          },
+          "safety": {
+            "additionalProperties": false,
+            "properties": {
+              "checks": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "check": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "check",
+                    "ok",
+                    "detail"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "ok": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "ok",
+              "checks"
+            ],
+            "type": "object"
+          },
+          "startsAt": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "PROPOSED",
+              "APPROVED",
+              "REJECTED",
+              "WITHDRAWN",
+              "EXPIRED",
+              "APPLIED",
+              "FAILED",
+              "ROLLED_BACK",
+              "BLOCKED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "planId",
+          "createdAt",
+          "kind",
+          "startsAt",
+          "endsAt",
+          "command",
+          "reason",
+          "state",
+          "decidedAt",
+          "decidedBy",
+          "decisionNote",
+          "result",
+          "safety",
+          "can"
+        ],
+        "type": "object"
+      },
+      "ControlProposalInput": {
+        "properties": {
+          "can": {
+            "properties": {
+              "approve": {
+                "properties": {
+                  "allowed": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "description": "Why not, when it is not allowed: no button is dead without saying why.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "reject": {
+                "properties": {
+                  "allowed": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "description": "Why not, when it is not allowed: no button is dead without saying why.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "rollback": {
+                "properties": {
+                  "allowed": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "description": "Why not, when it is not allowed: no button is dead without saying why.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "withdraw": {
+                "properties": {
+                  "allowed": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "description": "Why not, when it is not allowed: no button is dead without saying why.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "allowed",
+                  "reason"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "approve",
+              "reject",
+              "withdraw",
+              "rollback"
+            ],
+            "type": "object"
+          },
+          "command": {
+            "additionalProperties": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedBy": {
+            "description": "The email of who decided; null when the system did under an AUTOMATE authorization or time did.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endsAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "BATTERY_CHARGE",
+              "BATTERY_DISCHARGE",
+              "APPLIANCE_RUN",
+              "EV_CHARGE"
+            ],
+            "type": "string"
+          },
+          "planId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "description": "The planner's own reason for the move, in words.",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "properties": {
+                  "applied": {
+                    "type": "boolean"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "applied",
+                  "message"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the device executor answered, as it answered."
+          },
+          "safety": {
+            "properties": {
+              "checks": {
+                "items": {
+                  "properties": {
+                    "check": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "check",
+                    "ok",
+                    "detail"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "ok": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "ok",
+              "checks"
+            ],
+            "type": "object"
+          },
+          "startsAt": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "PROPOSED",
+              "APPROVED",
+              "REJECTED",
+              "WITHDRAWN",
+              "EXPIRED",
+              "APPLIED",
+              "FAILED",
+              "ROLLED_BACK",
+              "BLOCKED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "planId",
+          "createdAt",
+          "kind",
+          "startsAt",
+          "endsAt",
+          "command",
+          "reason",
+          "state",
+          "decidedAt",
+          "decidedBy",
+          "decisionNote",
+          "result",
+          "safety",
+          "can"
+        ],
+        "type": "object"
+      },
+      "ControlSettingsInput": {
+        "additionalProperties": false,
+        "properties": {
+          "automateHours": {
+            "description": "AUTOMATE only: how many hours your authorization lasts. It never lasts longer than 30 days and is never open-ended.",
+            "maximum": 720,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "confirmAutomate": {
+            "description": "AUTOMATE only: true says you authorise moves to be made without asking each time.",
+            "type": "boolean"
+          },
+          "maxChargeKw": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The most power AVISHKAR may ask the battery to charge at. Empty: the battery's own limit."
+          },
+          "maxDischargeKw": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minSocPercent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lowest charge, as a share of capacity, the battery may be taken to."
+          },
+          "mode": {
+            "enum": [
+              "OBSERVE",
+              "RECOMMEND",
+              "APPROVE",
+              "AUTOMATE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "type": "object"
+      },
+      "ControlSettingsInputInput": {
+        "properties": {
+          "automateHours": {
+            "description": "AUTOMATE only: how many hours your authorization lasts. It never lasts longer than 30 days and is never open-ended.",
+            "maximum": 720,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "confirmAutomate": {
+            "description": "AUTOMATE only: true says you authorise moves to be made without asking each time.",
+            "type": "boolean"
+          },
+          "maxChargeKw": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The most power AVISHKAR may ask the battery to charge at. Empty: the battery's own limit."
+          },
+          "maxDischargeKw": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 100000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minSocPercent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lowest charge, as a share of capacity, the battery may be taken to."
+          },
+          "mode": {
+            "enum": [
+              "OBSERVE",
+              "RECOMMEND",
+              "APPROVE",
+              "AUTOMATE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
         ],
         "type": "object"
       },
@@ -7603,6 +9691,10 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "type": "string"
           },
+          "recommendation": {
+            "$ref": "#/components/schemas/Recommendation",
+            "description": "Absent on plans made before recommendations existed."
+          },
           "result": {
             "additionalProperties": false,
             "properties": {
@@ -8150,6 +10242,10 @@
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "type": "string"
+          },
+          "recommendation": {
+            "$ref": "#/components/schemas/RecommendationInput",
+            "description": "Absent on plans made before recommendations existed."
           },
           "result": {
             "properties": {
@@ -9409,6 +11505,1026 @@
           "processingVersion",
           "notes"
         ],
+        "type": "object"
+      },
+      "Recommendation": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "confidence": {
+            "additionalProperties": false,
+            "description": "How steady the advice is when the sun and the demand land at the ends of their forecast bands.",
+            "properties": {
+              "agreeing": {
+                "description": "Forecasts tried, the central one included, in which the planner gives the same advice for the next three hours.",
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "assessed": {
+                "description": "False when there was nothing to vary (no battery, or forecasts with no band).",
+                "type": "boolean"
+              },
+              "scenarios": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "agrees": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "chargeKwh": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "dischargeKwh": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "moves": {
+                      "items": {
+                        "enum": [
+                          "charge",
+                          "discharge",
+                          "idle"
+                        ],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "agrees",
+                    "chargeKwh",
+                    "dischargeKwh",
+                    "moves"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "statement": {
+                "description": "Says exactly what was tested. It is not a probability.",
+                "type": "string"
+              },
+              "total": {
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "assessed",
+              "agreeing",
+              "total",
+              "statement",
+              "scenarios"
+            ],
+            "type": "object"
+          },
+          "dataUsed": {
+            "description": "What the plan was built from: the tariff, the load, the sun, the battery.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "expectedBenefit": {
+            "additionalProperties": false,
+            "properties": {
+              "basis": {
+                "type": "string"
+              },
+              "savingsInr": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "savingsInr",
+              "basis"
+            ],
+            "type": "object"
+          },
+          "headline": {
+            "description": "What to do in the next hours, in a sentence.",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "CHARGE_BATTERY",
+              "USE_BATTERY",
+              "HOLD",
+              "NO_BATTERY_MOVE"
+            ],
+            "type": "string"
+          },
+          "why": {
+            "description": "The planner's own reasons for the move, in words: the prices and flows behind it.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "headline",
+          "kind",
+          "why",
+          "dataUsed",
+          "assumptions",
+          "expectedBenefit",
+          "confidence"
+        ],
+        "type": "object"
+      },
+      "RecommendationInput": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "confidence": {
+            "description": "How steady the advice is when the sun and the demand land at the ends of their forecast bands.",
+            "properties": {
+              "agreeing": {
+                "description": "Forecasts tried, the central one included, in which the planner gives the same advice for the next three hours.",
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "assessed": {
+                "description": "False when there was nothing to vary (no battery, or forecasts with no band).",
+                "type": "boolean"
+              },
+              "scenarios": {
+                "items": {
+                  "properties": {
+                    "agrees": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "chargeKwh": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "dischargeKwh": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "moves": {
+                      "items": {
+                        "enum": [
+                          "charge",
+                          "discharge",
+                          "idle"
+                        ],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "agrees",
+                    "chargeKwh",
+                    "dischargeKwh",
+                    "moves"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "statement": {
+                "description": "Says exactly what was tested. It is not a probability.",
+                "type": "string"
+              },
+              "total": {
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "assessed",
+              "agreeing",
+              "total",
+              "statement",
+              "scenarios"
+            ],
+            "type": "object"
+          },
+          "dataUsed": {
+            "description": "What the plan was built from: the tariff, the load, the sun, the battery.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "expectedBenefit": {
+            "properties": {
+              "basis": {
+                "type": "string"
+              },
+              "savingsInr": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "savingsInr",
+              "basis"
+            ],
+            "type": "object"
+          },
+          "headline": {
+            "description": "What to do in the next hours, in a sentence.",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "CHARGE_BATTERY",
+              "USE_BATTERY",
+              "HOLD",
+              "NO_BATTERY_MOVE"
+            ],
+            "type": "string"
+          },
+          "why": {
+            "description": "The planner's own reasons for the move, in words: the prices and flows behind it.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "headline",
+          "kind",
+          "why",
+          "dataUsed",
+          "assumptions",
+          "expectedBenefit",
+          "confidence"
+        ],
+        "type": "object"
+      },
+      "ResilienceReport": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "autonomy": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "criticalCoverageHours": {
+                        "description": "How long the critical load would last with the forecast sun if the grid failed now (from the resilience figures).",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "methodology": {
+                        "type": "string"
+                      },
+                      "parts": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "batteryReleasedKwh": {
+                            "type": "number"
+                          },
+                          "boughtKwh": {
+                            "type": "number"
+                          },
+                          "consumedKwh": {
+                            "type": "number"
+                          },
+                          "gridDependencyPercent": {
+                            "type": "number"
+                          },
+                          "solarUsedKwh": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "consumedKwh",
+                          "solarUsedKwh",
+                          "batteryReleasedKwh",
+                          "boughtKwh",
+                          "gridDependencyPercent"
+                        ],
+                        "type": "object"
+                      },
+                      "planId": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      "planMadeAt": {
+                        "type": "string"
+                      },
+                      "score": {
+                        "maximum": 100,
+                        "minimum": 0,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "score",
+                      "methodology",
+                      "parts",
+                      "criticalCoverageHours",
+                      "planId",
+                      "planMadeAt"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "RESILIENCE AND AUTONOMY",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "outageRisk": {
+            "additionalProperties": false,
+            "description": "Grid outage risk is never predicted: no outage data source exists.",
+            "properties": {
+              "reason": {
+                "type": "string"
+              },
+              "status": {
+                "const": "UNAVAILABLE",
+                "type": "string"
+              }
+            },
+            "required": [
+              "status",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "request": {
+            "additionalProperties": false,
+            "properties": {
+              "startSocPercent": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "targetHours": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "targetHours",
+              "startSocPercent"
+            ],
+            "type": "object"
+          },
+          "resilience": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "backupHours": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "atLeast": {
+                            "description": "True when it was served through the whole 48 hours examined, so the figure is a lower bound.",
+                            "type": "boolean"
+                          },
+                          "withForecastSun": {
+                            "description": "If the grid failed at the start of the next hour: how long the critical load is served with the forecast sun and the battery.",
+                            "type": "number"
+                          },
+                          "withoutSun": {
+                            "description": "The battery alone: as at night or under heavy cloud.",
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "withForecastSun",
+                          "atLeast",
+                          "withoutSun"
+                        ],
+                        "type": "object"
+                      },
+                      "battery": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "reserveKwh": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "startSocBasis": {
+                                "enum": [
+                                  "USER_ENTERED",
+                                  "ASSUMPTION"
+                                ],
+                                "type": "string"
+                              },
+                              "startSocKwh": {
+                                "type": "number"
+                              },
+                              "usableKwh": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "usableKwh",
+                              "startSocKwh",
+                              "startSocBasis",
+                              "reserveKwh"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "criticalKw": {
+                        "description": "The power the appliances you marked CRITICAL draw together.",
+                        "type": "number"
+                      },
+                      "criticalLoads": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "kw": {
+                              "type": "number"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "quantity": {
+                              "type": "number"
+                            },
+                            "ratedPowerW": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "quantity",
+                            "ratedPowerW",
+                            "kw"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "recommendedReserve": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "currentReserveKwh": {
+                                "description": "What the battery keeps back now: the reserve you set, or its floor.",
+                                "type": "number"
+                              },
+                              "feasible": {
+                                "description": "False when the battery cannot hold that much.",
+                                "type": "boolean"
+                              },
+                              "gapKwh": {
+                                "description": "How much more to hold back than now; zero or negative when the current reserve is enough.",
+                                "type": "number"
+                              },
+                              "longestPossibleHours": {
+                                "description": "The longest the full battery could carry the critical load with no sun.",
+                                "type": "number"
+                              },
+                              "reserveKwh": {
+                                "description": "The charge to keep back so the critical load lasts the target time with no sun.",
+                                "type": "number"
+                              },
+                              "reservePercentOfCapacity": {
+                                "type": "number"
+                              },
+                              "targetHours": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "targetHours",
+                              "reserveKwh",
+                              "reservePercentOfCapacity",
+                              "currentReserveKwh",
+                              "gapKwh",
+                              "feasible",
+                              "longestPossibleHours"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "score": {
+                        "maximum": 100,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "scoreMethod": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "criticalKw",
+                      "criticalLoads",
+                      "battery",
+                      "backupHours",
+                      "score",
+                      "scoreMethod",
+                      "recommendedReserve"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "request",
+          "madeAt",
+          "outageRisk",
+          "resilience",
+          "autonomy",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "ResilienceReportInput": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "autonomy": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "criticalCoverageHours": {
+                        "description": "How long the critical load would last with the forecast sun if the grid failed now (from the resilience figures).",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "methodology": {
+                        "type": "string"
+                      },
+                      "parts": {
+                        "properties": {
+                          "batteryReleasedKwh": {
+                            "type": "number"
+                          },
+                          "boughtKwh": {
+                            "type": "number"
+                          },
+                          "consumedKwh": {
+                            "type": "number"
+                          },
+                          "gridDependencyPercent": {
+                            "type": "number"
+                          },
+                          "solarUsedKwh": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "consumedKwh",
+                          "solarUsedKwh",
+                          "batteryReleasedKwh",
+                          "boughtKwh",
+                          "gridDependencyPercent"
+                        ],
+                        "type": "object"
+                      },
+                      "planId": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      "planMadeAt": {
+                        "type": "string"
+                      },
+                      "score": {
+                        "maximum": 100,
+                        "minimum": 0,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "score",
+                      "methodology",
+                      "parts",
+                      "criticalCoverageHours",
+                      "planId",
+                      "planMadeAt"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "RESILIENCE AND AUTONOMY",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "outageRisk": {
+            "description": "Grid outage risk is never predicted: no outage data source exists.",
+            "properties": {
+              "reason": {
+                "type": "string"
+              },
+              "status": {
+                "const": "UNAVAILABLE",
+                "type": "string"
+              }
+            },
+            "required": [
+              "status",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "request": {
+            "properties": {
+              "startSocPercent": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "targetHours": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "targetHours",
+              "startSocPercent"
+            ],
+            "type": "object"
+          },
+          "resilience": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "backupHours": {
+                        "properties": {
+                          "atLeast": {
+                            "description": "True when it was served through the whole 48 hours examined, so the figure is a lower bound.",
+                            "type": "boolean"
+                          },
+                          "withForecastSun": {
+                            "description": "If the grid failed at the start of the next hour: how long the critical load is served with the forecast sun and the battery.",
+                            "type": "number"
+                          },
+                          "withoutSun": {
+                            "description": "The battery alone: as at night or under heavy cloud.",
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "withForecastSun",
+                          "atLeast",
+                          "withoutSun"
+                        ],
+                        "type": "object"
+                      },
+                      "battery": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "reserveKwh": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "startSocBasis": {
+                                "enum": [
+                                  "USER_ENTERED",
+                                  "ASSUMPTION"
+                                ],
+                                "type": "string"
+                              },
+                              "startSocKwh": {
+                                "type": "number"
+                              },
+                              "usableKwh": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "usableKwh",
+                              "startSocKwh",
+                              "startSocBasis",
+                              "reserveKwh"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "criticalKw": {
+                        "description": "The power the appliances you marked CRITICAL draw together.",
+                        "type": "number"
+                      },
+                      "criticalLoads": {
+                        "items": {
+                          "properties": {
+                            "kw": {
+                              "type": "number"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "quantity": {
+                              "type": "number"
+                            },
+                            "ratedPowerW": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "quantity",
+                            "ratedPowerW",
+                            "kw"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "recommendedReserve": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "currentReserveKwh": {
+                                "description": "What the battery keeps back now: the reserve you set, or its floor.",
+                                "type": "number"
+                              },
+                              "feasible": {
+                                "description": "False when the battery cannot hold that much.",
+                                "type": "boolean"
+                              },
+                              "gapKwh": {
+                                "description": "How much more to hold back than now; zero or negative when the current reserve is enough.",
+                                "type": "number"
+                              },
+                              "longestPossibleHours": {
+                                "description": "The longest the full battery could carry the critical load with no sun.",
+                                "type": "number"
+                              },
+                              "reserveKwh": {
+                                "description": "The charge to keep back so the critical load lasts the target time with no sun.",
+                                "type": "number"
+                              },
+                              "reservePercentOfCapacity": {
+                                "type": "number"
+                              },
+                              "targetHours": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "targetHours",
+                              "reserveKwh",
+                              "reservePercentOfCapacity",
+                              "currentReserveKwh",
+                              "gapKwh",
+                              "feasible",
+                              "longestPossibleHours"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "score": {
+                        "maximum": 100,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "scoreMethod": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "criticalKw",
+                      "criticalLoads",
+                      "battery",
+                      "backupHours",
+                      "score",
+                      "scoreMethod",
+                      "recommendedReserve"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "request",
+          "madeAt",
+          "outageRisk",
+          "resilience",
+          "autonomy",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "ResilienceRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "startSocPercent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The battery's charge now, if you know it. Otherwise the level you last entered within the day, or the battery's reserve level."
+          },
+          "targetHours": {
+            "default": 4,
+            "description": "How long you want the critical load to last, for the reserve to recommend.",
+            "maximum": 24,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "targetHours"
+        ],
+        "type": "object"
+      },
+      "ResilienceRequestInput": {
+        "properties": {
+          "startSocPercent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The battery's charge now, if you know it. Otherwise the level you last entered within the day, or the battery's reserve level."
+          },
+          "targetHours": {
+            "default": 4,
+            "description": "How long you want the critical load to last, for the reserve to recommend.",
+            "maximum": 24,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
         "type": "object"
       },
       "SatelliteScene": {
@@ -13000,6 +16116,832 @@
         ],
         "type": "object"
       },
+      "Today": {
+        "additionalProperties": false,
+        "properties": {
+          "achieved": {
+            "additionalProperties": false,
+            "description": "What AVISHKAR is expected to have achieved: from the plan, not measured.",
+            "properties": {
+              "basis": {
+                "type": "string"
+              },
+              "carbon": {
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "expectedSavingsInr": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "expectedSavingsInr",
+              "basis",
+              "carbon"
+            ],
+            "type": "object"
+          },
+          "consumption": {
+            "additionalProperties": false,
+            "description": "What the property is expected to use today.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "basis": {
+                        "enum": [
+                          "FORECAST",
+                          "TYPICAL_DAY"
+                        ],
+                        "type": "string"
+                      },
+                      "hoursCovered": {
+                        "type": "number"
+                      },
+                      "kwh": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kwh",
+                      "hoursCovered",
+                      "basis"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "generation": {
+            "additionalProperties": false,
+            "description": "What the solar system is forecast to make today.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "forecastIssuedAt": {
+                        "type": "string"
+                      },
+                      "hoursCovered": {
+                        "type": "number"
+                      },
+                      "kwh": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kwh",
+                      "hoursCovered",
+                      "forecastIssuedAt"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "TODAY",
+            "type": "string"
+          },
+          "localDate": {
+            "description": "Today on the India Standard Time clock, YYYY-MM-DD.",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "next": {
+            "description": "What would fill in what is missing, each with where to do it.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "href": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "href",
+                "why"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "plan": {
+            "additionalProperties": false,
+            "description": "The latest plan: what it is expected to save, and how autonomous it is.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "autonomyScore": {
+                        "anyOf": [
+                          {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "baselineNetCostInr": {
+                        "type": "number"
+                      },
+                      "importKwh": {
+                        "type": "number"
+                      },
+                      "madeAt": {
+                        "type": "string"
+                      },
+                      "netCostInr": {
+                        "type": "number"
+                      },
+                      "planId": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      "savingsInr": {
+                        "type": "number"
+                      },
+                      "stale": {
+                        "description": "True when the plan was made more than a day ago.",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "planId",
+                      "madeAt",
+                      "stale",
+                      "savingsInr",
+                      "baselineNetCostInr",
+                      "netCostInr",
+                      "importKwh",
+                      "autonomyScore"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Recommendation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What to do next, with why, the data used, the assumptions and how steady the advice is."
+          },
+          "resilience": {
+            "additionalProperties": false,
+            "description": "How long the critical load would last if the grid failed now.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "atLeast": {
+                        "type": "boolean"
+                      },
+                      "hours": {
+                        "type": "number"
+                      },
+                      "score": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "hours",
+                      "atLeast",
+                      "score"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "surplus": {
+            "additionalProperties": false,
+            "description": "Solar that exceeds use hour by hour today: what is free to store, sell or shift into.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "kwh": {
+                        "type": "number"
+                      },
+                      "note": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kwh",
+                      "note"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "weatherRisk": {
+            "additionalProperties": false,
+            "description": "The risk the weather poses to the sun in the next daylight hours.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "hours": {
+                        "type": "number"
+                      },
+                      "level": {
+                        "enum": [
+                          "LOW",
+                          "MEDIUM",
+                          "HIGH"
+                        ],
+                        "type": "string"
+                      },
+                      "maxRainMmPerHour": {
+                        "type": "number"
+                      },
+                      "meanCloudPercent": {
+                        "type": "number"
+                      },
+                      "rule": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "level",
+                      "meanCloudPercent",
+                      "maxRainMmPerHour",
+                      "hours",
+                      "rule"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "propertyId",
+          "madeAt",
+          "localDate",
+          "generation",
+          "consumption",
+          "surplus",
+          "weatherRisk",
+          "resilience",
+          "plan",
+          "recommendation",
+          "achieved",
+          "next"
+        ],
+        "type": "object"
+      },
+      "TodayInput": {
+        "properties": {
+          "achieved": {
+            "description": "What AVISHKAR is expected to have achieved: from the plan, not measured.",
+            "properties": {
+              "basis": {
+                "type": "string"
+              },
+              "carbon": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "expectedSavingsInr": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "expectedSavingsInr",
+              "basis",
+              "carbon"
+            ],
+            "type": "object"
+          },
+          "consumption": {
+            "description": "What the property is expected to use today.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "basis": {
+                        "enum": [
+                          "FORECAST",
+                          "TYPICAL_DAY"
+                        ],
+                        "type": "string"
+                      },
+                      "hoursCovered": {
+                        "type": "number"
+                      },
+                      "kwh": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kwh",
+                      "hoursCovered",
+                      "basis"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "generation": {
+            "description": "What the solar system is forecast to make today.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "forecastIssuedAt": {
+                        "type": "string"
+                      },
+                      "hoursCovered": {
+                        "type": "number"
+                      },
+                      "kwh": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "kwh",
+                      "hoursCovered",
+                      "forecastIssuedAt"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "TODAY",
+            "type": "string"
+          },
+          "localDate": {
+            "description": "Today on the India Standard Time clock, YYYY-MM-DD.",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "next": {
+            "description": "What would fill in what is missing, each with where to do it.",
+            "items": {
+              "properties": {
+                "href": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "href",
+                "why"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "plan": {
+            "description": "The latest plan: what it is expected to save, and how autonomous it is.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autonomyScore": {
+                        "anyOf": [
+                          {
+                            "maximum": 9007199254740991,
+                            "minimum": -9007199254740991,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "baselineNetCostInr": {
+                        "type": "number"
+                      },
+                      "importKwh": {
+                        "type": "number"
+                      },
+                      "madeAt": {
+                        "type": "string"
+                      },
+                      "netCostInr": {
+                        "type": "number"
+                      },
+                      "planId": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      "savingsInr": {
+                        "type": "number"
+                      },
+                      "stale": {
+                        "description": "True when the plan was made more than a day ago.",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "planId",
+                      "madeAt",
+                      "stale",
+                      "savingsInr",
+                      "baselineNetCostInr",
+                      "netCostInr",
+                      "importKwh",
+                      "autonomyScore"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecommendationInput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What to do next, with why, the data used, the assumptions and how steady the advice is."
+          },
+          "resilience": {
+            "description": "How long the critical load would last if the grid failed now.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "atLeast": {
+                        "type": "boolean"
+                      },
+                      "hours": {
+                        "type": "number"
+                      },
+                      "score": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "hours",
+                      "atLeast",
+                      "score"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "surplus": {
+            "description": "Solar that exceeds use hour by hour today: what is free to store, sell or shift into.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "kwh": {
+                        "type": "number"
+                      },
+                      "note": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kwh",
+                      "note"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "weatherRisk": {
+            "description": "The risk the weather poses to the sun in the next daylight hours.",
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "hours": {
+                        "type": "number"
+                      },
+                      "level": {
+                        "enum": [
+                          "LOW",
+                          "MEDIUM",
+                          "HIGH"
+                        ],
+                        "type": "string"
+                      },
+                      "maxRainMmPerHour": {
+                        "type": "number"
+                      },
+                      "meanCloudPercent": {
+                        "type": "number"
+                      },
+                      "rule": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "level",
+                      "meanCloudPercent",
+                      "maxRainMmPerHour",
+                      "hours",
+                      "rule"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "propertyId",
+          "madeAt",
+          "localDate",
+          "generation",
+          "consumption",
+          "surplus",
+          "weatherRisk",
+          "resilience",
+          "plan",
+          "recommendation",
+          "achieved",
+          "next"
+        ],
+        "type": "object"
+      },
       "User": {
         "additionalProperties": false,
         "properties": {
@@ -14089,6 +18031,365 @@
         "summary": "Download all of your data",
         "tags": [
           "account"
+        ]
+      }
+    },
+    "/api/admin/audit": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Only actions that start with this, for example plan or admin.",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{1,18}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAudit"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "The audit log, newest first",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/jobs": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminJobs"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "The background jobs, when each is next due and what it did lately",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/jobs/{name}/run": {
+      "post": {
+        "description": "Recorded as a manual run by you. If the job is already running, the answer is a SKIPPED run saying so.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "finishedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "id": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "job": {
+                      "type": "string"
+                    },
+                    "seconds": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "enum": [
+                        "RUNNING",
+                        "OK",
+                        "FAILED",
+                        "SKIPPED"
+                      ],
+                      "type": "string"
+                    },
+                    "summary": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": {},
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "trigger": {
+                      "enum": [
+                        "SCHEDULE",
+                        "MANUAL"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "job",
+                    "trigger",
+                    "startedAt",
+                    "finishedAt",
+                    "status",
+                    "seconds",
+                    "summary",
+                    "error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Run one background job now",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/overview": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOverview"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Health of the data, the catalogue, the models and the providers: counts, and no one's readings",
+        "tags": [
+          "admin"
         ]
       }
     },
@@ -18441,6 +22742,447 @@
         ]
       }
     },
+    "/api/properties/{id}/control": {
+      "get": {
+        "description": "Observe, Recommend, Approve or Automate. No device is connected, so no mode changes anything outside the platform; Automate cannot be chosen until one is.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Control"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "How much AVISHKAR may do for this property, its safety limits and the moves waiting for a decision",
+        "tags": [
+          "control"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ControlSettingsInputInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Control"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Choose the mode and the safety limits",
+        "tags": [
+          "control"
+        ]
+      }
+    },
+    "/api/properties/{id}/control/proposals": {
+      "post": {
+        "description": "Moves already proposed are not proposed twice. A move that breaks a limit you set is recorded as BLOCKED, with the reason, and cannot be approved.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "control": {
+                      "$ref": "#/components/schemas/Control"
+                    },
+                    "created": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "skipped": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "created",
+                    "skipped",
+                    "control"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Turn the latest plan's moves into proposals, each put through your safety limits",
+        "tags": [
+          "control"
+        ]
+      }
+    },
+    "/api/properties/{id}/control/proposals/{proposalId}/{action}": {
+      "post": {
+        "description": "Approving needs the Approve mode and a move that passed its safety checks. Withdraw is for an approved move that has not started; rollback undoes an applied move through the device, or records that nothing had been applied.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "proposalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "enum": [
+                "approve",
+                "reject",
+                "withdraw",
+                "rollback"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "default": {},
+                "properties": {
+                  "note": {
+                    "maxLength": 300,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Control"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Approve, reject, withdraw or roll back one proposed move",
+        "tags": [
+          "control"
+        ]
+      }
+    },
     "/api/properties/{id}/copilot/ask": {
       "post": {
         "description": "The question is routed to backend tools by fixed patterns, the tools run, and the answer is worded from what they returned, with each figure marked with the result it came from; the full results are returned so the supporting data can be inspected. A question it cannot answer is not guessed at. Making a plan or running a what-if is done only when the question asks for it. Nothing here comes from a language model unless the server has one configured, and its wording is checked against the tool results before it is used.",
@@ -20694,6 +25436,132 @@
         ]
       }
     },
+    "/api/properties/{id}/resilience": {
+      "get": {
+        "description": "Resilience: if the grid failed at the start of the next hour, how long the appliances you marked CRITICAL would be served from the battery and the forecast sun, a score, and the reserve to keep for the time you want. No outage is predicted: grid outage risk is UNAVAILABLE because no outage data exists. Autonomy: the share of the latest plan's energy that did not come from the grid, with its method.",
+        "parameters": [
+          {
+            "description": "How long you want the critical load to last, for the reserve to recommend.",
+            "in": "query",
+            "name": "targetHours",
+            "required": false,
+            "schema": {
+              "default": 4,
+              "maximum": 24,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "The battery's charge now, if you know it.",
+            "in": "query",
+            "name": "startSocPercent",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResilienceReport"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "How long the critical load would last if the grid failed, and how autonomous the plan is",
+        "tags": [
+          "plan"
+        ]
+      }
+    },
     "/api/properties/{id}/scenarios": {
       "get": {
         "parameters": [
@@ -21861,6 +26729,79 @@
         "tags": [
           "tariffs",
           "properties"
+        ]
+      }
+    },
+    "/api/properties/{id}/today": {
+      "get": {
+        "description": "Read from the latest stored forecasts and plan, each figure labelled as what it is, with how old it is; what has none is UNAVAILABLE with the reason and a link to what would fill it in. It recomputes nothing: the one live call is the weather, cached for ten minutes.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Today"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Today: generation, use, surplus, weather risk, backup, autonomy, expected value, and what to do next",
+        "tags": [
+          "plan"
         ]
       }
     },
@@ -23578,6 +28519,14 @@
     {
       "description": "Ask about a property: answers are worded from backend tools, with the supporting data to inspect",
       "name": "copilot"
+    },
+    {
+      "description": "For administrators: the health of data, catalogue, models and providers, the background jobs and the audit log",
+      "name": "admin"
+    },
+    {
+      "description": "Human control: Observe, Recommend, Approve, Automate; safety limits; the moves waiting for a decision, every decision audited",
+      "name": "control"
     },
     {
       "description": "The demo world: invented properties in real places, labelled DEMO DATA, for trying everything before you have a meter file",

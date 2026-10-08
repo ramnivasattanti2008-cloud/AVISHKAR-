@@ -1,4 +1,4 @@
-import type { Appliance, Battery, Bill, CloudFront, Community, DemoWorld, EnergyDna, EnergyImport, CopilotAnswer, CopilotTools, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan, VppSimulation } from "@/lib/types";
+import type { AdminAudit, AdminJobs, AdminOverview, Appliance, Today, Battery, Bill, CloudFront, Community, Control, ControlProposal, DemoWorld, ResilienceReport, EnergyDna, EnergyImport, CopilotAnswer, CopilotTools, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan, VppSimulation } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -356,6 +356,26 @@ export function plan(over: Partial<Plan> = {}): Plan {
       ev: null,
       criticalKw: 0,
     },
+    recommendation: {
+      headline: "Use the battery from 16:00: 2 kWh before 19:00.",
+      kind: "USE_BATTERY",
+      why: ["discharged at 18:00 to avoid importing at INR 10.00 per kWh"],
+      dataUsed: ["Tariff: Test ToD (in force, no end date)", "Load: The load forecast from your meter readings (method: same_hour_of_week).", "Sun: The solar forecast's central estimate, resampled to local hours.", "Battery: 9 kWh usable, starting at 1 kWh (assumed)"],
+      assumptions: ["The battery's charge now is not known, so the plan assumes it starts at its minimum level (1 kWh)."],
+      expectedBenefit: { savingsInr: 11.7, basis: "The whole 24-hour plan against the same hours with no control, not this move alone. A forecast, not a promise." },
+      confidence: {
+        assessed: true,
+        agreeing: 3,
+        total: 4,
+        statement: "Less steady: the planner gives the same advice for the next 3 hours in 3 of 4 forecasts tried. It changes if the sun or the demand lands at the edge of its band.",
+        scenarios: [
+          { label: "The forecast as it is (central estimate)", agrees: true, chargeKwh: 0, dischargeKwh: 2, moves: ["idle", "idle", "discharge"] },
+          { label: "Less sun than forecast (10th percentile)", agrees: true, chargeKwh: 0, dischargeKwh: 2, moves: ["idle", "idle", "discharge"] },
+          { label: "More sun than forecast (90th percentile)", agrees: false, chargeKwh: 1.2, dischargeKwh: 0.8, moves: ["charge", "idle", "discharge"] },
+          { label: "More demand than forecast (90th percentile)", agrees: true, chargeKwh: 0, dischargeKwh: 2.4, moves: ["idle", "idle", "discharge"] },
+        ],
+      },
+    },
     assumptions: ["The battery's charge now is not known, so the plan assumes it starts at its minimum level (1 kWh).", "No outage information is available, so none is planned for; the battery reserve you set is held back."],
     solver: { status: "optimal", seconds: 0.03, integerVariables: 2 },
     validation: { valid: true, maxBalanceErrorKw: 0, problems: [] },
@@ -578,6 +598,153 @@ export function cloudFront(over: Partial<CloudFront> = {}): CloudFront {
     },
     assumptions: ["The front is a scenario you set, not an observation: AVISHKAR has no cloud-nowcast source (a satellite that returns every few days cannot see a front minutes away).", "Another assumption."],
     notes: [],
+    ...over,
+  };
+}
+
+export function resilienceReport(over: Partial<ResilienceReport> = {}): ResilienceReport {
+  const sim = (dataType: string, notes: string[] = []) => provenance({ status: "SIMULATED", provider: "avishkar-resilience", dataType, notes });
+  return {
+    label: "RESILIENCE AND AUTONOMY",
+    request: { targetHours: 4, startSocPercent: null },
+    madeAt: "2026-10-07T10:10:00.000Z",
+    outageRisk: { status: "UNAVAILABLE", reason: "Grid outage risk is unavailable: no outage or grid-reliability data source exists, and none is invented. The figures use the weather and the battery only." },
+    resilience: {
+      value: {
+        criticalKw: 1,
+        criticalLoads: [{ name: "Fridge", quantity: 2, ratedPowerW: 500, kw: 1 }],
+        battery: { usableKwh: 9, startSocKwh: 1, startSocBasis: "ASSUMPTION", reserveKwh: null },
+        backupHours: { withForecastSun: 4.7, atLeast: false, withoutSun: 4.7 },
+        score: 20,
+        scoreMethod: "Score = 100 x the hours the critical load is served if the grid fails at the start of the next hour, counted up to 24, divided by 24.",
+        recommendedReserve: { targetHours: 4, reserveKwh: 5.22, reservePercentOfCapacity: 52, currentReserveKwh: 1, gapKwh: 4.22, feasible: true, longestPossibleHours: 8.5 },
+      },
+      provenance: sim("resilience", ["A calculation on forecast sun and the battery's charge as entered or assumed, not a measurement of any outage."]),
+    },
+    autonomy: {
+      value: { score: 24, methodology: "Autonomy = 100 x (1 - energy bought from the grid / energy used), over the hours of your latest plan.", parts: { consumedKwh: 28, solarUsedKwh: 2.4, batteryReleasedKwh: 8, boughtKwh: 21.5, gridDependencyPercent: 77 }, criticalCoverageHours: 4.7, planId: "44444444-4444-4444-8444-444444444444", planMadeAt: "2026-10-07T10:10:00.000Z" },
+      provenance: sim("autonomy"),
+    },
+    assumptions: ["No outage is predicted.", "The critical load is the rated power of each CRITICAL appliance."],
+    notes: [],
+    ...over,
+  };
+}
+
+const yes = { allowed: true, reason: null };
+const no = (reason: string) => ({ allowed: false, reason });
+
+export function proposal(over: Partial<ControlProposal> = {}): ControlProposal {
+  return {
+    id: "c1000000-0000-4000-8000-000000000001",
+    planId: "44444444-4444-4444-8444-444444444444",
+    createdAt: "2026-10-07T10:10:00.000Z",
+    kind: "BATTERY_CHARGE",
+    startsAt: "2026-10-07T20:30:00.000Z",
+    endsAt: "2026-10-07T23:30:00.000Z",
+    command: { avgKw: 2, peakKw: 3, kwh: 6 },
+    reason: "charged from the grid at INR 4.00 per kWh, ahead of the INR 10.00 per kWh peak",
+    state: "PROPOSED",
+    decidedAt: null,
+    decidedBy: null,
+    decisionNote: null,
+    result: null,
+    safety: { ok: true, checks: [{ check: "device power limit", ok: true, detail: "3 kW against the battery's own 5 kW." }] },
+    can: { approve: yes, reject: yes, withdraw: no("Only an approved move that has not started can be withdrawn."), rollback: no("Only an applied move, or an approved one that has started, can be rolled back.") },
+    ...over,
+  };
+}
+
+export function control(over: Partial<Control> = {}): Control {
+  const modes = [
+    { mode: "OBSERVE" as const, label: "Observe", meaning: "AVISHKAR watches and explains. It proposes no moves.", available: true, unavailableReason: null },
+    { mode: "RECOMMEND" as const, label: "Recommend", meaning: "AVISHKAR shows the moves the plan would make as advice.", available: true, unavailableReason: null },
+    { mode: "APPROVE" as const, label: "Approve", meaning: "Each move waits for your decision.", available: true, unavailableReason: null },
+    { mode: "AUTOMATE" as const, label: "Automate", meaning: "Moves inside your safety limits are made without asking.", available: false, unavailableReason: "No device is connected to AVISHKAR, so there is nothing for it to act on." },
+  ];
+  return {
+    mode: "APPROVE",
+    modeMeaning: "Each move waits for your decision.",
+    limits: { maxChargeKw: null, maxDischargeKw: null, minSocPercent: null },
+    automateUntil: null,
+    updatedAt: null,
+    executor: { name: "none", available: false, message: "No device is connected to AVISHKAR, so there is nothing for it to act on." },
+    modes,
+    proposals: [proposal()],
+    ...over,
+  };
+}
+
+export function adminOverview(over: Partial<AdminOverview> = {}): AdminOverview {
+  return {
+    generatedAt: "2026-10-08T10:00:00.000Z",
+    users: { total: 12, admins: 1, joinedLast7Days: 3 },
+    properties: { total: 20, demo: 4, withMeterData: 9, withTariff: 11, withSolar: 6, withBattery: 3 },
+    dataHealth: { meterDataStale: 2, forecastsAwaitingScore: 5, forecastsScored: 30, forecastsNotScorable: 4, propertiesOnExpiredTariff: 2 },
+    catalogue: {
+      tariffs: [
+        { id: "a1000000-0000-4000-8000-000000000001", name: "UPPCL LMV-1 FY2025-26", state: "UP", discom: "UPPCL", category: "LMV-1 urban domestic", validity: "EXPIRED", validityMessage: "The source covers the period to 2026-03-31.", verifiedAt: "2026-10-07T00:00:00.000Z", source: "UPERC tariff order", sourceUrl: "https://example.org/order", propertiesUsing: 2 },
+        { id: "a1000000-0000-4000-8000-000000000002", name: "Rajasthan NDS 2025", state: "RJ", discom: null, category: "NDS", validity: "OPEN_ENDED", validityMessage: "In force from 2025-10-01.", verifiedAt: null, source: "RERC schedule", sourceUrl: null, propertiesUsing: 0 },
+      ],
+      policyRules: [{ id: "b1000000-0000-4000-8000-000000000001", program: "PM_SURYA_GHAR", ruleKey: "residential_cfa", region: "IN", appliesTo: "RESIDENTIAL", source: "National Portal for Rooftop Solar", sourceUrl: null, verifiedAt: "2026-10-07T00:00:00.000Z", effectiveFrom: null, effectiveTo: null }],
+    },
+    models: {
+      engine: { state: "healthy", version: "0.1.0", solver: "HiGHS 1.9", error: null },
+      forecastRuns: [{ kind: "LOAD", model: "same_hour_of_week", engineVersion: "0.1.0", runs: 17 }],
+      planRunsByEngineVersion: { "0.1.0": 41 },
+    },
+    usageLast7Days: { "plan.create": 41, "copilot.ask": 12 },
+    providers: [
+      { provider: "open-meteo", state: "healthy", calls: 30, failures: 0, p95Ms: 420, lastError: null },
+      { provider: "overpass", state: "degraded", calls: 6, failures: 2, p95Ms: 9000, lastError: "overpass answered HTTP 504" },
+    ],
+    ...over,
+  };
+}
+
+export function adminJobs(over: Partial<AdminJobs> = {}): AdminJobs {
+  const run = { id: "d1000000-0000-4000-8000-000000000001", job: "weather-refresh", trigger: "SCHEDULE" as const, startedAt: "2026-10-08T09:00:00.000Z", finishedAt: "2026-10-08T09:00:04.000Z", status: "OK" as const, seconds: 4, summary: { places: 3, ok: 3, failed: 0 }, error: null };
+  return {
+    schedulerEnabled: true,
+    jobs: [
+      { name: "weather-refresh", description: "Fetches the weather forecast for each place with a saved property.", everyMinutes: 60, retryMinutes: 15, dueInSeconds: 1800, recent: [run] },
+      { name: "tariff-validity", description: "Counts the tariff plans whose published period has ended.", everyMinutes: 1440, retryMinutes: 60, dueInSeconds: 0, recent: [] },
+    ],
+    ...over,
+  };
+}
+
+export function adminAudit(over: Partial<AdminAudit> = {}): AdminAudit {
+  return {
+    entries: [
+      { id: "212", createdAt: "2026-10-08T09:30:00.000Z", action: "admin.audit.read", user: "admin@example.com", entityType: null, entityId: null, requestId: "req-1", ip: "10.0.0.1", detail: { action: null } },
+      { id: "211", createdAt: "2026-10-08T09:20:00.000Z", action: "plan.create", user: "someone@example.com", entityType: "property", entityId: "p1", requestId: "req-2", ip: "10.0.0.2", detail: null },
+    ],
+    next: "211",
+    ...over,
+  };
+}
+
+export function today(over: Partial<Today> = {}): Today {
+  const f = (dataType: string, status: "FORECAST" | "ESTIMATED" | "SIMULATED" = "FORECAST", notes: string[] = []) => provenance({ status, provider: "avishkar-today", dataType, notes });
+  return {
+    label: "TODAY",
+    propertyId: PROPERTY_ID,
+    madeAt: "2026-10-08T10:00:00.000Z",
+    localDate: "2026-10-08",
+    generation: { value: { kwh: 21.4, hoursCovered: 24, forecastIssuedAt: "2026-10-08T05:00:00.000Z" }, unit: "kWh", provenance: f("solar_energy_today") },
+    consumption: { value: { kwh: 28.2, hoursCovered: 24, basis: "FORECAST" }, unit: "kWh", provenance: f("load_energy_today") },
+    surplus: { value: { kwh: 9.6, note: "Over the 24 hours of today for which both the solar forecast and the use are known." }, unit: "kWh", provenance: f("solar_surplus_today") },
+    weatherRisk: { value: { level: "MEDIUM", meanCloudPercent: 52, maxRainMmPerHour: 0, hours: 9, rule: "Over the next 12 hours of daylight: LOW when the mean cloud cover is under 40%." }, provenance: provenance({ status: "FORECAST", provider: "open-meteo", dataType: "weather_risk" }) },
+    resilience: { value: { hours: 9.5, atLeast: false, score: 40 }, unit: "h", provenance: provenance({ status: "SIMULATED", provider: "avishkar-resilience", dataType: "resilience" }) },
+    plan: {
+      value: { planId: "44444444-4444-4444-8444-444444444444", madeAt: "2026-10-08T09:00:00.000Z", stale: false, savingsInr: 40.4, baselineNetCostInr: 150.2, netCostInr: 109.8, importKwh: 12.5, autonomyScore: 81 },
+      unit: "INR",
+      provenance: f("plan_summary", "SIMULATED", ["An outcome expected from forecasts, not a measurement."]),
+    },
+    recommendation: plan().recommendation!,
+    achieved: { expectedSavingsInr: 40.4, basis: "What the latest plan is expected to save against the same hours with no control. A forecast, not a measurement: AVISHKAR has no device feed to measure what actually happened.", carbon: { status: "UNAVAILABLE", reason: "No emission-factor table has been read from a source, so no carbon figure is stated." } },
+    next: [],
     ...over,
   };
 }

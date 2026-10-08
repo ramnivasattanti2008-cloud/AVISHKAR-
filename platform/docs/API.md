@@ -178,6 +178,8 @@ The plan: when to charge, discharge, import, export and run flexible loads, chec
 | POST | `/api/properties/{id}/plan` | Plan the next day or two |
 | GET | `/api/properties/{id}/plans` | Plans made for a property, newest first |
 | GET | `/api/properties/{id}/plans/{planId}` | One plan as it was shown |
+| GET | `/api/properties/{id}/resilience` | How long the critical load would last if the grid failed, and how autonomous the plan is |
+| GET | `/api/properties/{id}/today` | Today: generation, use, surplus, weather risk, backup, autonomy, expected value, and what to do next |
 
 ### scenarios
 
@@ -201,6 +203,28 @@ Ask about a property: answers are worded from backend tools, with the supporting
 | GET | `/api/copilot/tools` | What the Copilot can look at, and the questions it can answer |
 | POST | `/api/properties/{id}/copilot/ask` | Ask about this property |
 | POST | `/api/properties/{id}/copilot/tools/{tool}` | Call one tool directly and inspect what it returns |
+
+### admin
+
+For administrators: the health of data, catalogue, models and providers, the background jobs and the audit log
+
+| Method | Path | What it does |
+|---|---|---|
+| GET | `/api/admin/audit` | The audit log, newest first |
+| GET | `/api/admin/jobs` | The background jobs, when each is next due and what it did lately |
+| POST | `/api/admin/jobs/{name}/run` | Run one background job now |
+| GET | `/api/admin/overview` | Health of the data, the catalogue, the models and the providers: counts, and no one's readings |
+
+### control
+
+Human control: Observe, Recommend, Approve, Automate; safety limits; the moves waiting for a decision, every decision audited
+
+| Method | Path | What it does |
+|---|---|---|
+| GET | `/api/properties/{id}/control` | How much AVISHKAR may do for this property, its safety limits and the moves waiting for a decision |
+| PUT | `/api/properties/{id}/control` | Choose the mode and the safety limits |
+| POST | `/api/properties/{id}/control/proposals` | Turn the latest plan's moves into proposals, each put through your safety limits |
+| POST | `/api/properties/{id}/control/proposals/{proposalId}/{action}` | Approve, reject, withdraw or roll back one proposed move |
 
 ### demo
 

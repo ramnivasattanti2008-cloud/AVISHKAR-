@@ -142,6 +142,13 @@ describeBoth("the demo world through the real engine", () => {
     const kept = [...JSON.stringify(plan).matchAll(/"provider":"([^"]+)","[^}]*?"status":"([A-Z]+)"/g)].map((m) => `${m[1]}:${m[2]}`);
     for (const k of kept) if (!k.startsWith("open-meteo") && !k.startsWith("nasa-power")) expect(k).toMatch(/:(DEMO|REFERENCE|UNAVAILABLE)$/);
 
+    // the Today view: what is computed from the invented readings says DEMO; the weather at the real place keeps its own label
+    const td = (await call("GET", `/api/properties/${home}/today`)).json();
+    expect(td.plan.provenance.status).toBe("DEMO");
+    expect(td.generation.provenance.status).toBe("DEMO");
+    expect(td.weatherRisk.provenance.status).toBe("FORECAST");
+    expect(td.weatherRisk.provenance.provider).toBe("open-meteo");
+
     const answer = (await call("POST", `/api/properties/${home}/copilot/ask`, { question: "which tariff am I on" })).json();
     expect(answer.paragraphs[0]).toMatch(/^DEMO DATA: this is a demo property/);
 

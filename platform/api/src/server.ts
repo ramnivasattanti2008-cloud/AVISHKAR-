@@ -3,6 +3,7 @@ import { loadConfig } from "./config.js";
 import { createDb } from "./db.js";
 import { AnthropicAdapter } from "./copilot/llm.js";
 import { buildEngine } from "./engine/index.js";
+import { JobRunner, startScheduler } from "./jobs/runner.js";
 import { DbCache } from "./providers/cache.js";
 import { buildProviders } from "./providers/index.js";
 import { DbRecorder } from "./providers/recorder.js";
@@ -15,10 +16,14 @@ async function main(): Promise<void> {
   const providers = buildProviders(config, { cache, recorder, db });
   const engine = buildEngine(config);
   const llm = config.ANTHROPIC_API_KEY ? new AnthropicAdapter({ apiKey: config.ANTHROPIC_API_KEY, model: config.COPILOT_MODEL }) : null;
-  const app = await buildApp({ config, db, providers, engine, llm, now: () => new Date() });
+  const jobs = new JobRunner({ db, providers, now: () => new Date() });
+  const app = await buildApp({ config, db, providers, engine, llm, jobs, now: () => new Date() });
+  const scheduler = config.JOBS_ENABLED ? startScheduler(jobs) : null;
+  if (scheduler) app.log.info("background jobs are on: checking what is due once a minute");
 
   const stop = async (signal: string) => {
     app.log.info({ signal }, "shutting down");
+    scheduler?.stop();
     await app.close();
     await db.$disconnect();
     process.exit(0);

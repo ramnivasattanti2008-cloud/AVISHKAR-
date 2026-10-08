@@ -95,6 +95,9 @@ model User {
   properties  Property[]
   auditLogs   AuditLog[]
   tariffPlans TariffPlan[]
+  jobRuns     JobRun[]
+  controlSettings ControlSetting[]
+  controlDecisions ControlProposal[]
 
   @@map("users")
 }
@@ -150,6 +153,8 @@ model Property {
   forecastRuns ForecastRun[]
   optimizationRuns OptimizationRun[]
   scenarios  Scenario[]
+  controlSetting ControlSetting?
+  controlProposals ControlProposal[]
 
   @@index([ownerId])
   @@index([tariffPlanId])
@@ -722,6 +727,7 @@ model OptimizationRun {
   plan       Json
 
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  controlProposals ControlProposal[]
 
   @@index([propertyId, createdAt])
   @@map("optimization_runs")
@@ -746,4 +752,114 @@ model Scenario {
 
   @@index([propertyId, createdAt])
   @@map("scenarios")
+}
+
+/// Background work and its history (spec sections 69 and 71): one row for each time a job started, so the admin page can say what
+/// ran, when, how long it took and what it found, and the runner can tell whether a job is due.
+enum JobTrigger {
+  SCHEDULE
+  MANUAL
+}
+
+enum JobStatus {
+  RUNNING
+  OK
+  FAILED
+  SKIPPED
+}
+
+model JobRun {
+  id          String     @id @default(uuid()) @db.Uuid
+  job         String
+  trigger     JobTrigger
+  startedAt   DateTime   @map("started_at") @db.Timestamptz(3)
+  finishedAt  DateTime?  @map("finished_at") @db.Timestamptz(3)
+  status      JobStatus
+  /// What the job found or did, in numbers: properties visited, forecasts scored, scenes stored.
+  summary     Json?
+  error       String?
+  /// The administrator who asked for a manual run.
+  requestedBy String?    @map("requested_by") @db.Uuid
+
+  requester User? @relation(fields: [requestedBy], references: [id], onDelete: SetNull)
+
+  @@index([job, startedAt(sort: Desc)])
+  @@map("job_runs")
+}
+
+/// Human control (spec section 46). How much AVISHKAR may do for a property, and the limits it must keep to. AVISHKAR has no device
+/// connection today, so no mode changes anything outside the platform; the mode decides what a person is asked and what is recorded.
+enum ControlMode {
+  OBSERVE
+  RECOMMEND
+  APPROVE
+  AUTOMATE
+}
+
+model ControlSetting {
+  propertyId     String      @id @map("property_id") @db.Uuid
+  mode           ControlMode @default(RECOMMEND)
+  /// Safety limits the owner sets. Null means only the device's own limit applies.
+  maxChargeKw    Float?      @map("max_charge_kw")
+  maxDischargeKw Float?      @map("max_discharge_kw")
+  /// The lowest charge the battery may be taken to, as a share of its capacity.
+  minSocPercent  Float?      @map("min_soc_percent")
+  /// AUTOMATE only: when the owner's authorization ends. Never open-ended.
+  automateUntil  DateTime?   @map("automate_until") @db.Timestamptz(3)
+  updatedAt      DateTime    @map("updated_at") @db.Timestamptz(3)
+  updatedBy      String?     @map("updated_by") @db.Uuid
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@map("control_settings")
+}
+
+enum ProposalKind {
+  BATTERY_CHARGE
+  BATTERY_DISCHARGE
+  APPLIANCE_RUN
+  EV_CHARGE
+}
+
+enum ProposalState {
+  PROPOSED
+  APPROVED
+  REJECTED
+  WITHDRAWN
+  EXPIRED
+  APPLIED
+  FAILED
+  ROLLED_BACK
+  BLOCKED
+}
+
+/// One move the plan wants made, waiting for (or recording) a person's decision.
+model ControlProposal {
+  id           String        @id @default(uuid()) @db.Uuid
+  propertyId   String        @map("property_id") @db.Uuid
+  /// The plan it came from. Cleared if the plan is deleted; the proposal keeps its own reason and command.
+  planId       String?       @map("plan_id") @db.Uuid
+  createdAt    DateTime      @map("created_at") @db.Timestamptz(3)
+  kind         ProposalKind
+  startsAt     DateTime      @map("starts_at") @db.Timestamptz(3)
+  endsAt       DateTime      @map("ends_at") @db.Timestamptz(3)
+  command      Json
+  reason       String
+  state        ProposalState
+  decidedAt    DateTime?     @map("decided_at") @db.Timestamptz(3)
+  /// Who decided. Null when the system did, under an AUTOMATE authorization, or when the decision was made by time passing.
+  decidedBy    String?       @map("decided_by") @db.Uuid
+  decisionNote String?       @map("decision_note")
+  /// What the device executor answered, as it answered.
+  result       Json?
+  /// The safety checks the move was put through, each with what it compared.
+  safety       Json
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  plan     OptimizationRun? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  decider  User?    @relation(fields: [decidedBy], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, createdAt])
+  @@map("control_proposals")
 }

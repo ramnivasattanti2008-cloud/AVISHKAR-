@@ -148,6 +148,20 @@ The hook never mutates (provider results are cached and shared). Reports and Cop
 community view leaves demo properties out. A cloud front is a scenario the person sets, never an observation (there is no
 nowcast source); it is two plans of the same day, so every figure is the planner's.
 
+**D21. Human control is a recorded workflow in front of a seam, not a device integration (§46).** The four modes decide what a
+person is asked and what is written down: Observe proposes nothing, Recommend shows moves as advice, Approve asks for a decision
+on each, Automate (a time-limited, explicit authorization inside the owner's safety limits) acts without asking. A plan's moves
+become proposals, each checked against those limits before it can be approved; a move that breaks one is BLOCKED and the
+database refuses to store it as approved. What would change a device is behind `DeviceExecutor`; the only one shipped declines
+and says nothing was changed, so Automate cannot be chosen and an approval is only a record. Time decides moves nobody decided:
+they expire instead of running later. Every decision is audited.
+
+**D22. Background jobs are a database-checked in-process scheduler, and administrators see aggregates (§71, §92).** Each job
+(forecast scoring, weather and satellite refresh, tariff checks) is due by when it last started; a failure retries sooner; the
+check-and-insert of a run happens under a short advisory lock, so two processes cannot run one job at once, and a run that died
+stops blocking after 30 minutes. The administrator role is granted only from the command line. The admin API shows counts and
+aggregates and nothing that belongs to one person, and every admin read and action is itself audited.
+
 ## 3. Target architecture
 
 ```

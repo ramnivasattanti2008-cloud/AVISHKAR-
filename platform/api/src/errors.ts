@@ -23,6 +23,10 @@ export const ERROR_CODES = {
   PLAN_INPUTS_MISSING: 422,
   /** The engine returned a plan its own independent check rejected. It is never shown as a plan. */
   PLAN_INVALID: 502,
+  /** What the human-control mode, or the state of a proposed move, does not allow right now. The message says which and why. */
+  CONTROL_MODE: 409,
+  /** A control mode that needs a device AVISHKAR is not connected to (Automate). */
+  CONTROL_UNAVAILABLE: 409,
   INTERNAL: 500,
 } as const;
 

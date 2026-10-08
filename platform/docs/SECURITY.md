@@ -37,8 +37,11 @@ These are real gaps. None is hidden by the code; several are the owner's decisio
   does not leak this (same message and same cost for an unknown email), but registration does.
 - **No account lockout.** Brute force is slowed only by the per-client rate limit (10 a minute on login) and argon2's cost.
   Behind a proxy, `TRUST_PROXY=true` must be set or every client shares one address.
-- **No admin interface.** The `ADMIN` role exists in the schema and `requireAdmin` exists as a guard, but nothing uses it
-  yet: no route is admin-only. Do not describe any part of the platform as having an admin role in production use.
+- **The administrator role is granted from the command line only** (`pnpm -C platform/api db:make-admin <email>`, audited as
+  `admin.grant`): no route can make an administrator, and a registration always makes an ordinary user (both tested). The
+  admin routes (`/api/admin/*`) answer 403 to anyone else. An administrator sees counts and aggregates, never another person's
+  readings, equipment or plans, but the audit log they can read does carry email addresses and IP addresses. There is one
+  administrator role with no finer permissions, no second-person approval for anything, and no two-factor sign-in for it.
 - **`/api/system/health` is public** and shows provider names, call counts, latencies and the last error text of each public
   provider. It contains no secrets, but it is information about the deployment; restrict it at the proxy if that matters.
 - **No dependency or container scanning in CI**, and no signed releases. `pnpm audit` and `pip-audit` have not been run as a gate.

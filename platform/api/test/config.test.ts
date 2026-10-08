@@ -16,6 +16,12 @@ describe("loadConfig", () => {
     expect(c.cookieSecure).toBe(false);
   });
 
+  it("keeps the background jobs off unless they are switched on, and accepts only true or false", () => {
+    expect(loadConfig({ ...valid }).JOBS_ENABLED).toBe(false);
+    expect(loadConfig({ ...valid, JOBS_ENABLED: "true" }).JOBS_ENABLED).toBe(true);
+    expect(() => loadConfig({ ...valid, JOBS_ENABLED: "yes" })).toThrow(ConfigError);
+  });
+
   it("makes cookies Secure in production unless explicitly overridden", () => {
     expect(loadConfig({ ...valid, NODE_ENV: "production" }).cookieSecure).toBe(true);
     expect(loadConfig({ ...valid, NODE_ENV: "production", COOKIE_SECURE: "false" }).cookieSecure).toBe(false);

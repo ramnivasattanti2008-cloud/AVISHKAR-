@@ -81,6 +81,16 @@ const Env = z.object({
   /** Lets a language model word the Copilot's answers (its wording is checked against the tools' results). Without it the answers are written from templates. */
   ANTHROPIC_API_KEY: z.string().min(20, "ANTHROPIC_API_KEY looks too short").optional(),
   COPILOT_MODEL: z.string().min(3).default("claude-sonnet-5-5"),
+
+  /**
+   * Run the background jobs (forecast scoring, weather and satellite refresh, tariff checks) inside this process, checking once a
+   * minute what is due. Off by default: a deployment with several API processes switches it on for one, and the database keeps two
+   * from running the same job at once.
+   */
+  JOBS_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
 }).superRefine((v, ctx) => {
   if (v.NODE_ENV === "production" && v.ENGINE_URL && !v.ENGINE_API_KEY) {
     ctx.addIssue({ code: "custom", path: ["ENGINE_API_KEY"], message: "ENGINE_API_KEY is required in production when ENGINE_URL is set" });

@@ -34,7 +34,7 @@ export function istIso(ms: number): string {
 }
 
 /** The start of the local day containing `ms`. */
-const localMidnight = (ms: number): number => Math.floor((ms + OFFSET_MS) / DAY_MS) * DAY_MS - OFFSET_MS;
+export const localMidnight = (ms: number): number => Math.floor((ms + OFFSET_MS) / DAY_MS) * DAY_MS - OFFSET_MS;
 
 export interface StepWindow {
   startStep: number;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HomeProperties } from "@/components/HomeProperties";
 
 const PRINCIPLES = [
   { title: "Real data or nothing", text: "Weather, solar resource, building outlines and satellite scenes come from real sources. When a source is down, AVISHKAR says so and shows its age; it never fills the gap with a made-up number." },
@@ -22,6 +23,7 @@ export default function Home() {
           See system status
         </Link>
       </div>
+      <HomeProperties />
       <ul className="mt-14 grid gap-4 sm:grid-cols-3">
         {PRINCIPLES.map((p) => (
           <li key={p.title} className="card p-5">

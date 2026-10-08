@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import type { FastifyInstance } from "fastify";
 import { type AppDeps, buildApp } from "../src/app.js";
 import { type Config, loadConfig } from "../src/config.js";
+import type { DeviceExecutor } from "../src/control/executor.js";
 import { type Db, createDb } from "../src/db.js";
 import type { EngineClient } from "../src/engine/client.js";
 import { MemoryCache } from "../src/providers/cache.js";
@@ -47,7 +48,7 @@ export interface TestApp {
 }
 
 /** An app wired to the real test database, with a fake network (no outbound calls) and a controllable clock. */
-export async function makeApp(over: Record<string, string> = {}, extra: { engine?: EngineClient | null } = {}): Promise<TestApp> {
+export async function makeApp(over: Record<string, string> = {}, extra: { engine?: EngineClient | null; executor?: DeviceExecutor | null } = {}): Promise<TestApp> {
   const config = testConfig(over);
   const fetched: URL[] = [];
   let handler: (url: URL) => Response | Promise<Response> = () => new Response(JSON.stringify([]), { status: 200, headers: { "content-type": "application/json" } });
@@ -61,7 +62,7 @@ export async function makeApp(over: Record<string, string> = {}, extra: { engine
   const recorder = new DbRecorder(db());
   const providers = buildProviders(config, { cache: new MemoryCache(), recorder, db: db(), fetchImpl });
   // geocoding spacing would slow tests down; the unit tests cover it
-  const deps: AppDeps = { config, db: db(), providers, engine: extra.engine ?? null, now: () => clock.now };
+  const deps: AppDeps = { config, db: db(), providers, engine: extra.engine ?? null, executor: extra.executor ?? null, now: () => clock.now };
   const app = await buildApp(deps);
   return { app, deps, fetched, setFetch: (h) => void (handler = h), clock };
 }

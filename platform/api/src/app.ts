@@ -16,14 +16,18 @@ import { registerAuth } from "./auth/hooks.js";
 import type { Config } from "./config.js";
 import type { Db } from "./db.js";
 import type { LlmAdapter } from "./copilot/llm.js";
+import type { DeviceExecutor } from "./control/executor.js";
+import type { JobRunner } from "./jobs/runner.js";
 import type { EngineClient } from "./engine/client.js";
 import { relabelDemo } from "./demo/relabel.js";
 import { AppError } from "./errors.js";
 import type { Providers } from "./providers/index.js";
 import { accountRoutes } from "./routes/account.js";
+import { adminRoutes } from "./routes/admin.js";
 import { assetRoutes } from "./routes/assets.js";
 import { cloudFrontRoutes } from "./routes/cloudfront.js";
 import { communityRoutes } from "./routes/community.js";
+import { controlRoutes } from "./routes/control.js";
 import { copilotRoutes } from "./routes/copilot.js";
 import { demoRoutes } from "./routes/demo.js";
 import { authRoutes } from "./routes/auth.js";
@@ -36,8 +40,10 @@ import { planRoutes } from "./routes/plan.js";
 import { policyRoutes } from "./routes/policy.js";
 import { propertyRoutes } from "./routes/properties.js";
 import { reportRoutes } from "./routes/report.js";
+import { resilienceRoutes } from "./routes/resilience.js";
 import { scenarioRoutes } from "./routes/scenarios.js";
 import { tariffRoutes } from "./routes/tariffs.js";
+import { todayRoutes } from "./routes/today.js";
 import { twinRoutes } from "./routes/twin.js";
 import { weatherRoutes } from "./routes/weather.js";
 
@@ -49,6 +55,10 @@ export interface AppDeps {
   engine: EngineClient | null;
   /** Words the Copilot's answers when a key is configured; null or absent means answers come from templates. */
   llm?: LlmAdapter | null;
+  /** What can change a real device. Absent means none is connected, which is what AVISHKAR has today. */
+  executor?: DeviceExecutor | null;
+  /** Runs the background jobs. The admin routes use it to show and start them; absent, they make their own. */
+  jobs?: JobRunner | null;
   /** Injected so tests control time; production uses the wall clock. */
   now: () => Date;
 }
@@ -106,6 +116,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         { name: "plan", description: "The plan: when to charge, discharge, import, export and run flexible loads, checked from scratch before it is shown" },
         { name: "scenarios", description: "What-if: today's setup against added solar, a battery or another tariff over a typical year, with payback and net present value" },
         { name: "copilot", description: "Ask about a property: answers are worded from backend tools, with the supporting data to inspect" },
+        { name: "admin", description: "For administrators: the health of data, catalogue, models and providers, the background jobs and the audit log" },
+        { name: "control", description: "Human control: Observe, Recommend, Approve, Automate; safety limits; the moves waiting for a decision, every decision audited" },
         { name: "demo", description: "The demo world: invented properties in real places, labelled DEMO DATA, for trying everything before you have a meter file" },
         { name: "community", description: "Your properties together, and a simulated virtual power plant of synthetic homes (always labelled a simulation)" },
         { name: "assets", description: "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs" },
@@ -186,6 +198,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(planRoutes, { deps });
   await app.register(scenarioRoutes, { deps });
   await app.register(cloudFrontRoutes, { deps });
+  await app.register(resilienceRoutes, { deps });
+  await app.register(controlRoutes, { deps });
+  await app.register(todayRoutes, { deps });
+  await app.register(adminRoutes, { deps, runner: deps.jobs ?? undefined });
   await app.register(opportunityRoutes, { deps });
   await app.register(copilotRoutes, { deps });
   await app.register(reportRoutes, { deps });

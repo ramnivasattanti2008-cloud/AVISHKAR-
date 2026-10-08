@@ -101,6 +101,84 @@ describeBoth("plans, through the API and the real engine", () => {
     }
   });
 
+  describe("the recommendation (spec section 45)", () => {
+    it("says what to do in the next hours, why, from what, worth how much, and how steady it is, with the planner's own reasons", async () => {
+      await withTariff();
+      await withMeter();
+      await withSolar();
+      await withBattery();
+      const p = await make({ mode: "SAVE_MONEY" });
+      const r = p.recommendation!;
+      expect(r).toBeDefined();
+      expect(["CHARGE_BATTERY", "USE_BATTERY", "HOLD"]).toContain(r.kind);
+      expect(r.headline.length).toBeGreaterThan(20);
+
+      // the advice is read from the plan's own first three hours
+      const moves = [0, 1, 2].map((i) => (p.schedule.batteryChargeKw[i]! > 0.05 ? "charge" : p.schedule.batteryDischargeKw[i]! > 0.05 ? "discharge" : "idle"));
+      expect(r.confidence.scenarios[0]!.moves).toEqual(moves);
+      if (r.kind === "CHARGE_BATTERY") expect(moves).toContain("charge");
+      if (r.kind === "USE_BATTERY") expect(moves).toContain("discharge");
+      if (r.kind === "HOLD") expect(moves.every((m) => m === "idle")).toBe(true);
+      expect(r.why.length).toBeGreaterThan(0);
+      const reasons = p.decisions.map((d) => d.reason);
+      for (const w of r.why) {
+        if (w === "The plan does not move the battery at all in this period.") continue;
+        const bare = w.replace(/^The battery's next move is at \d\d:\d\d: /, "").replace(/\.$/, "");
+        expect(reasons, `"${bare}" is not one of the planner's own reasons`).toContain(bare);
+      }
+
+      // what it was built from, and what it assumed
+      expect(r.dataUsed.join(" ")).toContain("Tariff: Test ToD");
+      expect(r.dataUsed.join(" ")).toContain("Battery: 9 kWh usable, starting at");
+      expect(r.dataUsed.join(" ")).toContain("assumed");
+      expect(r.assumptions).toEqual(p.assumptions);
+      expect(r.expectedBenefit.savingsInr).toBe(p.result.value!.savingsInr);
+      expect(r.expectedBenefit.basis).toContain("not this move alone");
+    });
+
+    it("tests how steady the advice is against the forecast bands, and says exactly what it tested", async () => {
+      await withTariff();
+      await withMeter();
+      await withSolar();
+      await withBattery();
+      const c = (await make()).recommendation!.confidence;
+      // the central forecast, plus whichever band ends the forecasts measured: every row says how the advice differs
+      expect(c.scenarios[0]!.label).toContain("central estimate");
+      expect(c.scenarios[0]!.agrees).toBe(true);
+      if (c.assessed) {
+        expect(c.total).toBe(c.scenarios.filter((s) => s.agrees !== null).length);
+        expect(c.agreeing).toBe(c.scenarios.filter((s) => s.agrees === true).length);
+        expect(c.agreeing).toBeGreaterThanOrEqual(1);
+        expect(c.statement).toMatch(/forecasts tried/);
+        expect(c.statement).not.toMatch(/%|probab/i); // it is a count of forecasts, never a made-up percentage
+        for (const s of c.scenarios.slice(1)) expect(s.label).toMatch(/percentile/);
+      } else {
+        expect(c.statement).toMatch(/^Not assessed: /);
+      }
+    });
+
+    it("is not assessed, and says so, for a home with no battery: there is no battery move to test", async () => {
+      await withTariff();
+      await withMeter();
+      await withSolar();
+      const r = (await make()).recommendation!;
+      expect(r.kind).toBe("NO_BATTERY_MOVE");
+      expect(r.confidence).toMatchObject({ assessed: false, total: 0 });
+      expect(r.confidence.statement).toContain("there is no battery");
+      expect(r.dataUsed.join(" ")).toContain("Battery: none");
+    });
+
+    it("is kept with the plan: a plan fetched later carries the same recommendation", async () => {
+      await withTariff();
+      await withMeter();
+      await withSolar();
+      await withBattery();
+      const p = await make();
+      const again = (await call("GET", `/api/properties/${pid}/plans/${p.id}`)).json();
+      expect(again.recommendation).toEqual(p.recommendation);
+    });
+  });
+
   it("says what it assumed: the battery's start, the export rate, the load basis, and that nothing is certain", async () => {
     await withTariff();
     await withMeter();

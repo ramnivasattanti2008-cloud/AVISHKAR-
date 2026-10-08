@@ -2,12 +2,15 @@ import Link from "next/link";
 
 /** Only features that exist are listed. More appear here as their backend lands (platform/STATUS.md). */
 const TABS = [
+  { href: "/today", label: "Today" },
   { href: "", label: "Energy Twin" },
   { href: "/forecast", label: "Forecast" },
   { href: "/tariff", label: "Tariff" },
   { href: "/meter-data", label: "Meter data" },
   { href: "/assets", label: "Assets" },
   { href: "/plan", label: "Plan" },
+  { href: "/resilience", label: "Resilience" },
+  { href: "/control", label: "Control" },
   { href: "/what-if", label: "What if" },
   { href: "/ask", label: "Ask" },
 ] as const;

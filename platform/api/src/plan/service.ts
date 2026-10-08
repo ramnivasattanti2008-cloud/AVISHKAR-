@@ -11,6 +11,7 @@ import { simulated } from "../provenance/index.js";
 import { getProperty } from "../properties/service.js";
 import { getTariff, type TariffPlanDto } from "../tariff/service.js";
 import { HOUR_MS, departureStep, istIso, local, planStart, resample, windowInHorizon } from "./horizon.js";
+import { type ScenarioResult, batteryMoves, confidence, headline, scenarioSpecs, windowKwh } from "./explain.js";
 import type { PlanDto, PlanRequest } from "./schemas.js";
 
 interface Ctx {
@@ -176,6 +177,9 @@ export function appliancePlan(rows: Appliance[], startMs: number, steps: number)
 
 interface LoadForPlan {
   kw: number[];
+  /** The 10th and 90th percentile of the same forecast, or null when the load is a typical day, which has no band. */
+  lowKw: number[] | null;
+  highKw: number[] | null;
   basis: "FORECAST" | "TYPICAL_DAY";
   note: string;
   monthlyKwh: number | null;
@@ -197,7 +201,11 @@ async function planLoad(deps: ForecastDeps, userId: string, propertyId: string, 
         const resampled = resample(f.hours.value.map((h) => ({ time: h.time, value: h.p50Kw })), "start", startMs, steps);
         if (resampled.every((v): v is number => v !== null)) {
           const kw = resampled.map((v) => round(v, 4));
-          return { kw, basis: "FORECAST", note: `The load forecast from your meter readings (method: ${f.model?.selectedMethod ?? "unknown"}).`, monthlyKwh: round((kw.reduce((a, b) => a + b, 0) / steps) * 730, 1) };
+          const band = (pick: (h: NonNullable<typeof f.hours.value>[number]) => number): number[] | null => {
+            const r = resample(f.hours.value!.map((h) => ({ time: h.time, value: pick(h) })), "start", startMs, steps);
+            return r.every((v): v is number => v !== null) ? r.map((v) => round(v, 4)) : null;
+          };
+          return { kw, lowKw: band((h) => h.p10Kw), highKw: band((h) => h.p90Kw), basis: "FORECAST", note: `The load forecast from your meter readings (method: ${f.model?.selectedMethod ?? "unknown"}).`, monthlyKwh: round((kw.reduce((a, b) => a + b, 0) / steps) * 730, 1) };
         }
         why = "The load forecast did not reach all the hours of the plan.";
       } else why = f.hours.provenance.notes[0] ?? "A load forecast could not be made.";
@@ -213,6 +221,8 @@ async function planLoad(deps: ForecastDeps, userId: string, propertyId: string, 
   });
   return {
     kw,
+    lowKw: null,
+    highKw: null,
     basis: "TYPICAL_DAY",
     note: `${why} The load is your typical day from your Energy DNA (${dna.completeDays} complete days), for each day of the week: a pattern, not a forecast.`,
     monthlyKwh: round(dna.meanDailyKwh * 30.4, 1),
@@ -262,11 +272,20 @@ export async function buildPlanInputs(deps: ForecastDeps, userId: string, proper
   // solar: the forecast's central estimate; hours the forecast does not reach are taken as no sun
   const solar = await solarForecast(deps, userId, propertyId, { days: 3, requestId: ctx.requestId });
   let pv: number[] = new Array<number>(steps).fill(0);
+  let pvLow: number[] | null = null;
+  let pvHigh: number[] | null = null;
   let solarNote = solar.hours.value ? "The solar forecast's central estimate, resampled to local hours." : "No solar system is entered, so the plan covers the grid and the battery only.";
   if (solar.hours.value) {
     const r = resample(solar.hours.value.map((h) => ({ time: h.time, value: h.p50Kw })), "end", startMs, steps);
     const unknown = r.filter((v) => v === null).length;
     pv = r.map((v) => round(v ?? 0, 4));
+    const hours = solar.hours.value;
+    const band = (pick: (h: (typeof hours)[number]) => number | null): number[] | null => {
+      if (hours.some((h) => pick(h) === null)) return null; // a band the forecast could not measure is not invented
+      return resample(hours.map((h) => ({ time: h.time, value: pick(h)! })), "end", startMs, steps).map((v) => round(v ?? 0, 4));
+    };
+    pvLow = band((h) => h.p10Kw);
+    pvHigh = band((h) => h.p90Kw);
     if (unknown > 0) solarNote += ` The forecast does not reach the last ${unknown} hour(s); no sun is assumed there.`;
     assumptions.push("Solar output is the forecast's central estimate. The provider's hours are half an hour off the local clock, so each local hour averages the two it overlaps.");
     assumptions.push(exportBasisNote(tariff));
@@ -300,13 +319,13 @@ export async function buildPlanInputs(deps: ForecastDeps, userId: string, proper
     mode: req.mode,
   };
 
-  return { at, property, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, battery, ev, apps, assumptions, request };
+  return { at, property, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, bands: { pvLow, pvHigh, loadLow: load.lowKw, loadHigh: load.highKw }, battery, ev, apps, assumptions, request };
 }
 
 export async function createPlan(deps: ForecastDeps, userId: string, propertyId: string, req: PlanRequest, ctx: Ctx = {}): Promise<PlanDto> {
   const { db } = deps;
   const engine = requireEngine(deps.engine);
-  const { at, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, battery, ev, apps, assumptions, request } = await buildPlanInputs(deps, userId, propertyId, req, ctx);
+  const { at, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, bands, battery, ev, apps, assumptions, request } = await buildPlanInputs(deps, userId, propertyId, req, ctx);
 
   const out: OptimiseResponse = await engine.optimise(request, { requestId: ctx.requestId });
 
@@ -383,6 +402,8 @@ export async function createPlan(deps: ForecastDeps, userId: string, propertyId:
     notes: out.notes,
   };
 
+  dto.recommendation = await recommend(engine, { request, pv, load, bands, battery, tariff, solarNote, startMs, steps, sch, dto, savings }, ctx);
+
   const saved = await db.optimizationRun.create({
     data: {
       propertyId,
@@ -399,6 +420,62 @@ export async function createPlan(deps: ForecastDeps, userId: string, propertyId:
     },
   });
   return { ...dto, id: saved.id };
+}
+
+/**
+ * The recommendation (spec section 45): the plan's next move, why, from what, worth how much, and how steady it is. Steadiness is
+ * tested by planning the day again with the sun and the demand at the low and high ends of their forecast bands.
+ */
+async function recommend(
+  engine: ReturnType<typeof requireEngine>,
+  c: {
+    request: OptimiseRequest;
+    pv: number[];
+    load: LoadForPlan;
+    bands: { pvLow: number[] | null; pvHigh: number[] | null; loadLow: number[] | null; loadHigh: number[] | null };
+    battery: BatteryPlan | null;
+    tariff: TariffPlanDto;
+    solarNote: string;
+    startMs: number;
+    steps: number;
+    sch: NonNullable<OptimiseResponse["schedule"]>;
+    dto: PlanDto;
+    savings: number;
+  },
+  ctx: Ctx,
+): Promise<NonNullable<PlanDto["recommendation"]>> {
+  const { sch, dto } = c;
+  const hl = headline(c.battery !== null, c.startMs, sch.batteryChargeKw, sch.batteryDischargeKw, dto.decisions);
+  const central = { moves: batteryMoves(sch.batteryChargeKw, sch.batteryDischargeKw), ...windowKwh(sch.batteryChargeKw, sch.batteryDischargeKw) };
+
+  const specs = c.battery ? scenarioSpecs(c.pv, c.load.kw, c.bands) : [];
+  const results: ScenarioResult[] = await Promise.all(
+    specs.map(async (sc): Promise<ScenarioResult> => {
+      try {
+        const o = await engine.optimise({ ...c.request, pvKw: sc.pvKw, loadKw: sc.loadKw, timeLimitS: 10 }, { requestId: ctx.requestId });
+        if (o.solver.status !== "optimal" || !o.schedule || !o.validation.valid) return { key: sc.key, label: sc.label, usable: false, moves: [], chargeKwh: 0, dischargeKwh: 0 };
+        return { key: sc.key, label: sc.label, usable: true, moves: batteryMoves(o.schedule.batteryChargeKw, o.schedule.batteryDischargeKw), ...windowKwh(o.schedule.batteryChargeKw, o.schedule.batteryDischargeKw) };
+      } catch {
+        return { key: sc.key, label: sc.label, usable: false, moves: [], chargeKwh: 0, dischargeKwh: 0 };
+      }
+    }),
+  );
+
+  const b = c.battery;
+  return {
+    headline: hl.text,
+    kind: hl.kind,
+    why: hl.why,
+    dataUsed: [
+      `Tariff: ${c.tariff.name} (${({ WITHIN: "in force", OPEN_ENDED: "in force, no end date", EXPIRED: "its order has expired", NOT_YET_EFFECTIVE: "not yet in force", UNKNOWN: "validity not known" } as const)[c.tariff.validity.status]})`,
+      `Load: ${c.load.note}`,
+      `Sun: ${c.solarNote}`,
+      b ? `Battery: ${round(b.usableKwh, 1)} kWh usable, starting at ${round(b.input.initialSocKwh, 1)} kWh (${b.startBasis === "USER_ENTERED" ? "as you entered" : "assumed"})` : "Battery: none",
+    ],
+    assumptions: dto.assumptions,
+    expectedBenefit: { savingsInr: c.savings, basis: `The whole ${c.steps}-hour plan against the same hours with no control, not this move alone. A forecast, not a promise.` },
+    confidence: confidence(central, results, b !== null),
+  };
 }
 
 /** Plans of a property, newest first, without their schedules. */

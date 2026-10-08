@@ -41,6 +41,7 @@ export default function MapExplorer() {
   return (
     <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(340px,420px)_1fr]">
       <aside className="order-2 flex min-h-0 flex-col gap-4 overflow-y-auto border-line bg-surface p-4 lg:order-1 lg:border-r" aria-label="Search and details">
+        <h1 className="sr-only">Map: find a place and see its sun, weather and what it could save</h1>
         <SearchBox onPick={(p) => choose(p, true)} />
         {place ? (
           <PreviewPanel place={place} onSaved={(p) => setProperties((cur) => [p, ...cur.filter((x) => x.id !== p.id)])} />

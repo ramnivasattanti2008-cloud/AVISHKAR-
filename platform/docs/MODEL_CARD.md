@@ -17,6 +17,8 @@ check, not a promise about your property.
 | VPP and community simulation | Seeded random draws around the owner's pattern | Nothing |
 | Copilot routing | Fixed patterns | Nothing |
 | Copilot wording | Templates; optionally a language model that only rewords | The language model is the provider's; it is not trained or fine-tuned here |
+| Recommendation confidence | A count of re-plans (solar and load at the 10th and 90th percentile of their bands) that give the same battery advice | Nothing: it uses the forecasts' own bands |
+| Resilience (backup hours, reserve) and autonomy | Hour-by-hour arithmetic on the battery and the forecast sun; a share of the plan's energy | Nothing |
 | Appliance-level disaggregation (NILM) | Not implemented | The interface exists and always declines |
 
 ---

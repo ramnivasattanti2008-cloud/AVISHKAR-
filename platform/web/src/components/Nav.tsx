@@ -17,6 +17,8 @@ export function Nav() {
   const path = usePathname();
   const router = useRouter();
   const { user, loading, logout } = useAuth();
+  // The Admin page is linked only for an administrator; the API refuses everyone else anyway.
+  const links = user?.role === "ADMIN" ? [...LINKS, { href: "/admin", label: "Admin" }] : LINKS;
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
       <nav aria-label="Main" className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 sm:h-14 sm:flex-nowrap sm:py-0">
@@ -26,7 +28,7 @@ export function Nav() {
         </Link>
         {/* On a phone the links take their own row under the brand and the account buttons. */}
         <ul className="order-last -mx-2 flex w-full items-center gap-1 sm:order-none sm:mx-0 sm:ml-2 sm:w-auto">
-          {LINKS.map((l) => {
+          {links.map((l) => {
             const active = path === l.href || path.startsWith(`${l.href}/`);
             return (
               <li key={l.href}>

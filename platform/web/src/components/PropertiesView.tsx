@@ -10,7 +10,7 @@ import type { DemoWorld, Property } from "@/lib/types";
 
 function PropertyCard({ p }: { p: Property }) {
   return (
-    <Link href={`/property/${p.id}`} className="card block p-4 hover:border-accent">
+    <Link href={`/property/${p.id}/today`} className="card block p-4 hover:border-accent">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="flex items-center gap-2 font-semibold">
           {p.name}

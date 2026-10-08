@@ -10,6 +10,7 @@ import { ProvenanceDetails, StatusBadge } from "../Provenance";
 import { PropertyTabs } from "../property/PropertyTabs";
 import { usePropertyData } from "../property/usePropertyData";
 import { CloudFrontPanel } from "./CloudFrontPanel";
+import { RecommendationCard } from "./RecommendationCard";
 import { BatteryChart, PriceChart, SERIES, SourcesChart } from "./PlanCharts";
 
 export const MODES = [
@@ -214,6 +215,7 @@ export function PlanView({ id }: { id: string }) {
 
       {plan && r && (
         <>
+          <RecommendationCard plan={plan} />
           <section className="card mt-4 p-4" aria-label="Plan outcome">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-lg font-semibold">
