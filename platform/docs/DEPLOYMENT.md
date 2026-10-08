@@ -1,0 +1,81 @@
+# Deployment
+
+**State on 2026-10-08: nothing has been deployed.** There is no hosted instance, no Dockerfile for the platform, no compose
+file, no infrastructure-as-code and no tested backup. The repository's root `Dockerfile` belongs to the vendored upstream
+EMHASS project, not to the platform. What follows is the procedure that matches how the three services run on the
+development machine (each step below was run there), plus what the owner must supply and decide.
+
+## The pieces
+
+| Service | Runs as | Needs | Port |
+|---|---|---|---|
+| Database | PostgreSQL 16 with PostGIS 3.4 | The `postgis` extension (the first migration runs `CREATE EXTENSION`: use a role that may, or enable it once from the host's console) | 5432 |
+| Engine | Python 3.12, `uvicorn avishkar_engine.app:create_app --factory` | The packages in `requirements-lock.txt` plus `platform/engine/requirements.txt`; `ENGINE_API_KEY` | 8090 |
+| API | Node 24, `node dist/server.js` after `pnpm -C platform/api build` | The database, the engine, outbound HTTPS to the providers in DATA_SOURCES.md | 8080 |
+| Web | Next 16, `output: "standalone"` | The API's address | 3000 |
+
+The browser talks only to the web origin. The web app proxies `/api/*` to the API, so the session cookie is first-party and the
+API needs no CORS configuration. The API and the engine should not be reachable from the internet directly: put the API behind
+the web origin (or a reverse proxy) and the engine on a private network.
+
+## Order of steps
+
+1. **Database.** Create a database and a role. Set `DATABASE_URL`. Run `pnpm -C platform/api db:migrate` (this is
+   `prisma migrate deploy`: it applies the committed migrations and never resets anything), then `pnpm -C platform/api db:seed`
+   to load the sourced tariffs and policy rules (idempotent).
+2. **Engine.** Install the Python packages. Set `ENGINE_API_KEY` (16 characters or more; generate one). Start it with
+   `python -m uvicorn avishkar_engine.app:create_app --factory --host 127.0.0.1 --port 8090`. It refuses to start without a key
+   unless `ENGINE_INSECURE_DEV=1`, which must never be set in production.
+3. **API.** Set the environment (below), then `pnpm -C platform/api build` and `node dist/server.js`.
+4. **Web.** Set `API_URL` to the API's address **before building**: the proxy rewrite is read when the app is built, not at
+   start. Then `pnpm -C platform/web build` and run the standalone server.
+5. **Check.** `GET /api/health` answers 200 when the process is up. `GET /api/system/health` reports the database, PostGIS, the
+   engine and each provider from real recent calls; `unknown` means no recent traffic, not healthy.
+
+## Environment (API)
+
+The full list with comments is `platform/api/.env.example`. Values that must be set for a real deployment:
+
+| Variable | Rule |
+|---|---|
+| `NODE_ENV` | `production`: turns on `Secure` cookies and the engine-key requirement |
+| `SESSION_SECRET` | 32 characters or more, random (for example `openssl rand -base64 48`). Changing it signs everyone out |
+| `DATABASE_URL` | The production database. Keep it out of the repository |
+| `ENGINE_URL`, `ENGINE_API_KEY` | Where the engine is, and the key it was started with. Without `ENGINE_URL` plans and model forecasts are `UNAVAILABLE` and say so |
+| `TRUST_PROXY` | `true` only behind a proxy you control, otherwise every client shares one rate-limit bucket (or can forge its address) |
+| `PROVIDER_USER_AGENT` | Must identify the service with a real contact; Nominatim's policy requires it |
+| `ANTHROPIC_API_KEY` | Optional; the Copilot works from templates without it |
+
+`.env` files are git-ignored. Never put a real secret in `.env.example`, the repository or the CI file.
+
+## What the owner has to decide or supply
+
+- **Hosting** and the account that pays for it. Nothing here chooses or creates one.
+- **A map tile provider and key.** The default tile servers (OpenStreetMap, Esri, OpenTopoMap) do not allow production
+  traffic. The map layer is abstracted in `web/src/lib/basemaps.ts`; a Content-Security-Policy should be written once the
+  provider is known.
+- **Commercial or self-hosted geocoding, weather and footprint services** if more than light use is expected: the public
+  Nominatim, Overpass and Open-Meteo endpoints have usage policies, and the code is built to be polite (caching, spacing,
+  back-off) rather than to carry load.
+- **TLS and a domain**, terminated at the proxy.
+- **An email provider**, if password reset or verification is wanted (not built).
+- **A backup plan for the database.** None is defined or tested. The meter data an owner imports is theirs and cannot be
+  re-fetched.
+- **Privacy notice, consent and retention** for personal data (see SECURITY.md).
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push: the Python EMS (lint, tests, README check), the platform API against a real
+PostGIS service and the real engine (typecheck, lint, tests, build), the engine (lint, tests, committed OpenAPI) and the web
+(typecheck, lint, tests, build). It does not deploy anything, scan dependencies or build images. The live-provider tests
+(`pnpm -C platform/api test:live`) are run by hand, never in CI.
+
+## Not done
+
+- Dockerfiles and a compose file for the four services (the Docker engine cannot run on the development machine, so none could
+  be tested; an untested image would not be evidence).
+- Infrastructure as code, a staging environment, a rollback procedure, zero-downtime migrations.
+- A job runner: scheduled forecast scoring, weather refresh and report generation do not run on a schedule. The learning loop
+  scores stored forecasts after each meter import and on request only.
+- Structured metrics, tracing and alerting beyond the provider-health endpoint and request-id'd logs.
+- A load test or any systematic timing measurement. The speed targets in the specification (§77) are not verified.

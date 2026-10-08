@@ -8,6 +8,16 @@ describe("OpenAPI contract", () => {
     expect(generated).toBe(readFileSync("openapi.json", "utf8").replace(/\r\n/g, "\n"));
   });
 
+  it("is listed in docs/API.md, operation by operation, with nothing listed that does not exist", async () => {
+    const doc = (await buildOpenApi()) as { paths: Record<string, Record<string, unknown>> };
+    const page = readFileSync("../docs/API.md", "utf8");
+    const listed = new Set([...page.matchAll(/^\| (GET|POST|PUT|PATCH|DELETE) \| `([^`]+)` \|/gm)].map((m) => `${m[1]} ${m[2]}`));
+    const real = new Set<string>();
+    for (const [path, methods] of Object.entries(doc.paths)) for (const method of Object.keys(methods)) real.add(`${method.toUpperCase()} ${path}`);
+    expect([...real].filter((o) => !listed.has(o)), "operations missing from platform/docs/API.md").toEqual([]);
+    expect([...listed].filter((o) => !real.has(o)), "operations in platform/docs/API.md that no longer exist").toEqual([]);
+  });
+
   it("documents every route with a summary, tags and an error response", async () => {
     const doc = (await buildOpenApi()) as { paths: Record<string, Record<string, { summary?: string; tags?: string[]; responses: Record<string, unknown> }>> };
     for (const [path, methods] of Object.entries(doc.paths)) {

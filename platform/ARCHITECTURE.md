@@ -130,6 +130,14 @@ owner enters: there is no price list and no emission-factor table, because none 
 makes the money UNAVAILABLE with the reason while the saving is still shown. A published subsidy is shown beside the investment,
 never netted off it, and never for an addition to an existing system.
 
+**D19. Community and fleet results are simulations of synthetic or self-owned homes, never of other people (§47, §48, §81).**
+The community view reads only the signed-in owner's own properties; a fleet is drawn (seeded, so a run repeats) around one of
+those properties with shares and sizes the owner states, and every default is an assumption that is returned with the result.
+Nothing here trades or moves electricity, and the label says so (`COMMUNITY ENERGY SIMULATION`, `VIRTUAL POWER PLANT
+SIMULATION`, values `SIMULATED`). Coordination may only help: shiftable load moves inside a power cap no lower than what the
+uncoordinated fleet already draws, so the coordinated bill can never be higher. No neighbour, other account or real
+per-building consumption is read or shown; a city map would need aggregated or simulated data and stays unbuilt until that exists.
+
 ## 3. Target architecture
 
 ```

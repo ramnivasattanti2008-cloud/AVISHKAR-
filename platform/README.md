@@ -5,6 +5,15 @@ simulate. Defined by [SPEC.md](SPEC.md); decisions in [ARCHITECTURE.md](ARCHITEC
 in [STATUS.md](STATUS.md); chronological notes in [../docs/WORKLOG.md](../docs/WORKLOG.md). The pre-existing Python energy
 management system (`../src/avishkar_ems`) is reused as the numerical engine and keeps working untouched.
 
+## Documentation
+
+Start with [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) (what it does not do), then:
+[docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) (where every number comes from), [docs/API.md](docs/API.md) (conventions and every
+operation), [docs/MODEL_CARD.md](docs/MODEL_CARD.md) (each model: input, data, metrics, failure cases),
+[docs/OPTIMIZATION.md](docs/OPTIMIZATION.md) (the planner), [docs/SECURITY.md](docs/SECURITY.md),
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (nothing is deployed yet), [docs/PATENT_DISCOVERY.md](docs/PATENT_DISCOVERY.md)
+(notes for patent counsel, not a claim). Architecture is [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Layout
 
 | Path | What it is |

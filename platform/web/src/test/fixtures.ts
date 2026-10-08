@@ -1,4 +1,4 @@
-import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, CopilotAnswer, CopilotTools, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
+import type { Appliance, Battery, Bill, Community, EnergyDna, EnergyImport, CopilotAnswer, CopilotTools, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan, VppSimulation } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -379,6 +379,43 @@ export function forecastAccuracy(over: Partial<ForecastAccuracy> = {}): Forecast
       summary: { value: { scored: 2, meanMaeKw: 0.18, meanBiasKw: -0.07, meanCoverage80: 0.79, meanSkillVsLastWeek: 0.4 }, provenance: p },
     },
     solar: { available: false, reason: "Solar forecasts are scored against the weather model's analysis, not against generation: there is no generation meter in the data to score them against." },
+    notes: [],
+    ...over,
+  };
+}
+
+export function community(over: Partial<Community> = {}): Community {
+  const sim = provenance({ status: "SIMULATED", provider: "avishkar-community", dataType: "community_simulation", notes: ["Simulated result, not a measurement."] });
+  return {
+    label: "COMMUNITY ENERGY SIMULATION",
+    month: 10,
+    dayType: "weekday",
+    members: [
+      { propertyId: PROPERTY_ID, name: "Sunny", latitude: 12.97, longitude: 77.59, status: "SURPLUS", reason: null, loadKwhPerDay: 20, solarKwhPerDay: 21.6, surplusKwhPerDay: 14.2, deficitKwhPerDay: 12.6, solarKwp: 5, batteryUsableKwh: 9, shiftableKw: 0, vehicleChargerKw: 0 },
+      { propertyId: "99999999-9999-4999-8999-999999999999", name: "Shady", latitude: 12.98, longitude: 77.6, status: "DEFICIT", reason: null, loadKwhPerDay: 20, solarKwhPerDay: 0, surplusKwhPerDay: 0, deficitKwhPerDay: 20, solarKwp: 0, batteryUsableKwh: 0, shiftableKw: 2, vehicleChargerKw: 0 },
+      { propertyId: "88888888-8888-4888-8888-888888888881", name: "Blank", latitude: 12.99, longitude: 77.61, status: "NO_DATA", reason: "No meter readings have been imported for this property, so its daily pattern is not known.", loadKwhPerDay: null, solarKwhPerDay: 0, surplusKwhPerDay: null, deficitKwhPerDay: null, solarKwp: 0, batteryUsableKwh: 0, shiftableKw: 0, vehicleChargerKw: 0 },
+    ],
+    totals: { value: { properties: 2, loadKwhPerDay: 40, solarKwhPerDay: 21.6, surplusKwhPerDay: 14.2, deficitKwhPerDay: 32.6, shareableKwhPerDay: 6.3, storageUsableKwh: 9, shiftableKw: 2, vehicleChargerKw: 0 }, provenance: sim },
+    hourly: { hours: Array.from({ length: 24 }, (_, h) => h), loadKw: Array.from({ length: 24 }, () => 1.7), solarKw: Array.from({ length: 24 }, (_, h) => (h >= 6 && h < 18 ? 3.2 : 0)), shareableKw: Array.from({ length: 24 }, (_, h) => (h >= 6 && h < 18 ? 0.5 : 0)) },
+    notes: ["This is a simulation over properties you own. AVISHKAR does not move electricity between properties and says nothing about whether that is allowed.", "Only properties your account owns appear here. Nothing about anyone else's is shown."],
+    ...over,
+  };
+}
+
+export function vppSimulation(over: Partial<VppSimulation> = {}): VppSimulation {
+  return {
+    label: "VIRTUAL POWER PLANT SIMULATION",
+    request: { homes: 100 },
+    month: 10,
+    dayType: "weekday",
+    archetype: { propertyId: PROPERTY_ID, name: "Home", tariff: "Test ToD" },
+    fleet: { homes: 100, withSolar: 31, withBattery: 3, withVehicle: 4, solarKwp: 93.4, batteryKwh: 15.2, evChargerKw: 13.2, shiftableKwhPerDay: 300 },
+    result: {
+      value: { solarKwhPerDay: 402.6, loadKwhPerDay: 2038.1, peakImportBeforeKw: 262.4, peakImportBeforeHour: 18, peakImportAfterKw: 223.1, peakImportAfterHour: 19, peakReductionPercent: 15, peakExportBeforeKw: 41.5, peakExportAfterKw: 38, importKwhBefore: 1790, importKwhAfter: 1795, solarUsedLocallyBefore: 0.7, solarUsedLocallyAfter: 0.74, solarCurtailedKwhAfter: 0, selfSufficiencyBefore: 0.12, selfSufficiencyAfter: 0.12, costBeforeInr: 16_100, costAfterInr: 15_050, savingsInr: 1050, batteryCycles: 0.9 },
+      provenance: provenance({ status: "SIMULATED", provider: "avishkar-vpp", dataType: "vpp_simulation", notes: ["A simulation of synthetic homes, not a measurement of any real ones."] }),
+    },
+    hourly: { hours: Array.from({ length: 24 }, (_, h) => h), loadKw: Array.from({ length: 24 }, () => 85), solarKw: Array.from({ length: 24 }, (_, h) => (h >= 6 && h < 18 ? 40 : 0)), importBeforeKw: Array.from({ length: 24 }, () => 75), importAfterKw: Array.from({ length: 24 }, () => 72), batteryKwh: Array.from({ length: 24 }, () => 8) },
+    assumptions: ["Every home is synthetic. Each is a draw from the shares and sizes you chose (the defaults are assumptions, not data).", "This is a simulation of a fleet. AVISHKAR does not coordinate real homes."],
     notes: [],
     ...over,
   };

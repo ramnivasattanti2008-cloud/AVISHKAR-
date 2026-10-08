@@ -1240,6 +1240,451 @@
         ],
         "type": "object"
       },
+      "CommunitySimulation": {
+        "additionalProperties": false,
+        "properties": {
+          "dayType": {
+            "enum": [
+              "weekday",
+              "weekend"
+            ],
+            "type": "string"
+          },
+          "hourly": {
+            "additionalProperties": false,
+            "properties": {
+              "hours": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "loadKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "shareableKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "solarKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "hours",
+              "loadKw",
+              "solarKw",
+              "shareableKw"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "COMMUNITY ENERGY SIMULATION",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "batteryUsableKwh": {
+                  "type": "number"
+                },
+                "deficitKwhPerDay": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "latitude": {
+                  "type": "number"
+                },
+                "loadKwhPerDay": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "longitude": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "propertyId": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "shiftableKw": {
+                  "type": "number"
+                },
+                "solarKwhPerDay": {
+                  "type": "number"
+                },
+                "solarKwp": {
+                  "type": "number"
+                },
+                "status": {
+                  "enum": [
+                    "SURPLUS",
+                    "DEFICIT",
+                    "BALANCED",
+                    "NO_DATA"
+                  ],
+                  "type": "string"
+                },
+                "surplusKwhPerDay": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "vehicleChargerKw": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "propertyId",
+                "name",
+                "latitude",
+                "longitude",
+                "status",
+                "reason",
+                "loadKwhPerDay",
+                "solarKwhPerDay",
+                "surplusKwhPerDay",
+                "deficitKwhPerDay",
+                "solarKwp",
+                "batteryUsableKwh",
+                "shiftableKw",
+                "vehicleChargerKw"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "month": {
+            "type": "number"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "deficitKwhPerDay": {
+                        "type": "number"
+                      },
+                      "loadKwhPerDay": {
+                        "type": "number"
+                      },
+                      "properties": {
+                        "type": "number"
+                      },
+                      "shareableKwhPerDay": {
+                        "type": "number"
+                      },
+                      "shiftableKw": {
+                        "type": "number"
+                      },
+                      "solarKwhPerDay": {
+                        "type": "number"
+                      },
+                      "storageUsableKwh": {
+                        "type": "number"
+                      },
+                      "surplusKwhPerDay": {
+                        "type": "number"
+                      },
+                      "vehicleChargerKw": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "properties",
+                      "loadKwhPerDay",
+                      "solarKwhPerDay",
+                      "surplusKwhPerDay",
+                      "deficitKwhPerDay",
+                      "shareableKwhPerDay",
+                      "storageUsableKwh",
+                      "shiftableKw",
+                      "vehicleChargerKw"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "month",
+          "dayType",
+          "members",
+          "totals",
+          "hourly",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "CommunitySimulationInput": {
+        "properties": {
+          "dayType": {
+            "enum": [
+              "weekday",
+              "weekend"
+            ],
+            "type": "string"
+          },
+          "hourly": {
+            "properties": {
+              "hours": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "loadKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "shareableKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "solarKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "hours",
+              "loadKw",
+              "solarKw",
+              "shareableKw"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "COMMUNITY ENERGY SIMULATION",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "properties": {
+                "batteryUsableKwh": {
+                  "type": "number"
+                },
+                "deficitKwhPerDay": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "latitude": {
+                  "type": "number"
+                },
+                "loadKwhPerDay": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "longitude": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "propertyId": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "shiftableKw": {
+                  "type": "number"
+                },
+                "solarKwhPerDay": {
+                  "type": "number"
+                },
+                "solarKwp": {
+                  "type": "number"
+                },
+                "status": {
+                  "enum": [
+                    "SURPLUS",
+                    "DEFICIT",
+                    "BALANCED",
+                    "NO_DATA"
+                  ],
+                  "type": "string"
+                },
+                "surplusKwhPerDay": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "vehicleChargerKw": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "propertyId",
+                "name",
+                "latitude",
+                "longitude",
+                "status",
+                "reason",
+                "loadKwhPerDay",
+                "solarKwhPerDay",
+                "surplusKwhPerDay",
+                "deficitKwhPerDay",
+                "solarKwp",
+                "batteryUsableKwh",
+                "shiftableKw",
+                "vehicleChargerKw"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "month": {
+            "type": "number"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "deficitKwhPerDay": {
+                        "type": "number"
+                      },
+                      "loadKwhPerDay": {
+                        "type": "number"
+                      },
+                      "properties": {
+                        "type": "number"
+                      },
+                      "shareableKwhPerDay": {
+                        "type": "number"
+                      },
+                      "shiftableKw": {
+                        "type": "number"
+                      },
+                      "solarKwhPerDay": {
+                        "type": "number"
+                      },
+                      "storageUsableKwh": {
+                        "type": "number"
+                      },
+                      "surplusKwhPerDay": {
+                        "type": "number"
+                      },
+                      "vehicleChargerKw": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "properties",
+                      "loadKwhPerDay",
+                      "solarKwhPerDay",
+                      "surplusKwhPerDay",
+                      "deficitKwhPerDay",
+                      "shareableKwhPerDay",
+                      "storageUsableKwh",
+                      "shiftableKw",
+                      "vehicleChargerKw"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "month",
+          "dayType",
+          "members",
+          "totals",
+          "hourly",
+          "notes"
+        ],
+        "type": "object"
+      },
       "CopilotAnswer": {
         "additionalProperties": false,
         "properties": {
@@ -11529,6 +11974,839 @@
           "displayName"
         ],
         "type": "object"
+      },
+      "VppRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "archetypePropertyId": {
+            "description": "One of your properties, whose own daily pattern, tariff and place every simulated home is a variation of.",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "batteryKwhMean": {
+            "default": 5,
+            "exclusiveMinimum": 0,
+            "maximum": 200,
+            "type": "number"
+          },
+          "batterySharePercent": {
+            "default": 10,
+            "description": "Share of the homes with solar that also have a battery.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "dayType": {
+            "default": "weekday",
+            "enum": [
+              "weekday",
+              "weekend"
+            ],
+            "type": "string"
+          },
+          "evChargerKw": {
+            "default": 3.3,
+            "exclusiveMinimum": 0,
+            "maximum": 50,
+            "type": "number"
+          },
+          "evKwhPerDay": {
+            "default": 8,
+            "description": "Energy a vehicle takes from the grid in a day.",
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "type": "number"
+          },
+          "evSharePercent": {
+            "default": 5,
+            "description": "Share of homes with an electric vehicle.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "flexibleSharePercent": {
+            "default": 15,
+            "description": "Share of each home's load that can be moved within the day.",
+            "maximum": 60,
+            "minimum": 0,
+            "type": "number"
+          },
+          "homes": {
+            "anyOf": [
+              {
+                "const": 10,
+                "type": "number"
+              },
+              {
+                "const": 100,
+                "type": "number"
+              },
+              {
+                "const": 1000,
+                "type": "number"
+              },
+              {
+                "const": 10000,
+                "type": "number"
+              }
+            ]
+          },
+          "loadCv": {
+            "default": 0.35,
+            "description": "How much homes differ in how much they use.",
+            "maximum": 1.5,
+            "minimum": 0,
+            "type": "number"
+          },
+          "month": {
+            "description": "Month of the typical day. Default: this month.",
+            "maximum": 12,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pvKwpCv": {
+            "default": 0.3,
+            "description": "Spread of those sizes (coefficient of variation).",
+            "maximum": 2,
+            "minimum": 0,
+            "type": "number"
+          },
+          "pvKwpMean": {
+            "default": 3,
+            "description": "Mean size of a home's solar, kWp.",
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "type": "number"
+          },
+          "pvSharePercent": {
+            "default": 30,
+            "description": "Share of homes with solar. An assumption, not data: change it.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "seed": {
+            "default": 1,
+            "description": "The same seed describes the same homes.",
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "archetypePropertyId",
+          "homes",
+          "pvSharePercent",
+          "pvKwpMean",
+          "pvKwpCv",
+          "batterySharePercent",
+          "batteryKwhMean",
+          "evSharePercent",
+          "evKwhPerDay",
+          "evChargerKw",
+          "flexibleSharePercent",
+          "loadCv",
+          "dayType",
+          "seed"
+        ],
+        "type": "object"
+      },
+      "VppRequestInput": {
+        "properties": {
+          "archetypePropertyId": {
+            "description": "One of your properties, whose own daily pattern, tariff and place every simulated home is a variation of.",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "batteryKwhMean": {
+            "default": 5,
+            "exclusiveMinimum": 0,
+            "maximum": 200,
+            "type": "number"
+          },
+          "batterySharePercent": {
+            "default": 10,
+            "description": "Share of the homes with solar that also have a battery.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "dayType": {
+            "default": "weekday",
+            "enum": [
+              "weekday",
+              "weekend"
+            ],
+            "type": "string"
+          },
+          "evChargerKw": {
+            "default": 3.3,
+            "exclusiveMinimum": 0,
+            "maximum": 50,
+            "type": "number"
+          },
+          "evKwhPerDay": {
+            "default": 8,
+            "description": "Energy a vehicle takes from the grid in a day.",
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "type": "number"
+          },
+          "evSharePercent": {
+            "default": 5,
+            "description": "Share of homes with an electric vehicle.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "flexibleSharePercent": {
+            "default": 15,
+            "description": "Share of each home's load that can be moved within the day.",
+            "maximum": 60,
+            "minimum": 0,
+            "type": "number"
+          },
+          "homes": {
+            "anyOf": [
+              {
+                "const": 10,
+                "type": "number"
+              },
+              {
+                "const": 100,
+                "type": "number"
+              },
+              {
+                "const": 1000,
+                "type": "number"
+              },
+              {
+                "const": 10000,
+                "type": "number"
+              }
+            ]
+          },
+          "loadCv": {
+            "default": 0.35,
+            "description": "How much homes differ in how much they use.",
+            "maximum": 1.5,
+            "minimum": 0,
+            "type": "number"
+          },
+          "month": {
+            "description": "Month of the typical day. Default: this month.",
+            "maximum": 12,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pvKwpCv": {
+            "default": 0.3,
+            "description": "Spread of those sizes (coefficient of variation).",
+            "maximum": 2,
+            "minimum": 0,
+            "type": "number"
+          },
+          "pvKwpMean": {
+            "default": 3,
+            "description": "Mean size of a home's solar, kWp.",
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "type": "number"
+          },
+          "pvSharePercent": {
+            "default": 30,
+            "description": "Share of homes with solar. An assumption, not data: change it.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "seed": {
+            "default": 1,
+            "description": "The same seed describes the same homes.",
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "archetypePropertyId",
+          "homes"
+        ],
+        "type": "object"
+      },
+      "VppSimulation": {
+        "additionalProperties": false,
+        "properties": {
+          "archetype": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "propertyId": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              "tariff": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "propertyId",
+              "name",
+              "tariff"
+            ],
+            "type": "object"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "dayType": {
+            "enum": [
+              "weekday",
+              "weekend"
+            ],
+            "type": "string"
+          },
+          "fleet": {
+            "additionalProperties": false,
+            "properties": {
+              "batteryKwh": {
+                "type": "number"
+              },
+              "evChargerKw": {
+                "type": "number"
+              },
+              "homes": {
+                "type": "number"
+              },
+              "shiftableKwhPerDay": {
+                "type": "number"
+              },
+              "solarKwp": {
+                "type": "number"
+              },
+              "withBattery": {
+                "type": "number"
+              },
+              "withSolar": {
+                "type": "number"
+              },
+              "withVehicle": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "homes",
+              "withSolar",
+              "withBattery",
+              "withVehicle",
+              "solarKwp",
+              "batteryKwh",
+              "evChargerKw",
+              "shiftableKwhPerDay"
+            ],
+            "type": "object"
+          },
+          "hourly": {
+            "additionalProperties": false,
+            "properties": {
+              "batteryKwh": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "hours": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "importAfterKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "importBeforeKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "loadKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "solarKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "hours",
+              "loadKw",
+              "solarKw",
+              "importBeforeKw",
+              "importAfterKw",
+              "batteryKwh"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "VIRTUAL POWER PLANT SIMULATION",
+            "type": "string"
+          },
+          "month": {
+            "type": "number"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "request": {
+            "additionalProperties": {},
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "result": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "batteryCycles": {
+                        "type": "number"
+                      },
+                      "costAfterInr": {
+                        "type": "number"
+                      },
+                      "costBeforeInr": {
+                        "type": "number"
+                      },
+                      "importKwhAfter": {
+                        "type": "number"
+                      },
+                      "importKwhBefore": {
+                        "type": "number"
+                      },
+                      "loadKwhPerDay": {
+                        "type": "number"
+                      },
+                      "peakExportAfterKw": {
+                        "type": "number"
+                      },
+                      "peakExportBeforeKw": {
+                        "type": "number"
+                      },
+                      "peakImportAfterHour": {
+                        "type": "number"
+                      },
+                      "peakImportAfterKw": {
+                        "type": "number"
+                      },
+                      "peakImportBeforeHour": {
+                        "type": "number"
+                      },
+                      "peakImportBeforeKw": {
+                        "type": "number"
+                      },
+                      "peakReductionPercent": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "savingsInr": {
+                        "type": "number"
+                      },
+                      "selfSufficiencyAfter": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "selfSufficiencyBefore": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "solarCurtailedKwhAfter": {
+                        "type": "number"
+                      },
+                      "solarKwhPerDay": {
+                        "type": "number"
+                      },
+                      "solarUsedLocallyAfter": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "solarUsedLocallyBefore": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "solarKwhPerDay",
+                      "loadKwhPerDay",
+                      "peakImportBeforeKw",
+                      "peakImportBeforeHour",
+                      "peakImportAfterKw",
+                      "peakImportAfterHour",
+                      "peakReductionPercent",
+                      "peakExportBeforeKw",
+                      "peakExportAfterKw",
+                      "importKwhBefore",
+                      "importKwhAfter",
+                      "solarUsedLocallyBefore",
+                      "solarUsedLocallyAfter",
+                      "solarCurtailedKwhAfter",
+                      "selfSufficiencyBefore",
+                      "selfSufficiencyAfter",
+                      "costBeforeInr",
+                      "costAfterInr",
+                      "savingsInr",
+                      "batteryCycles"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "request",
+          "month",
+          "dayType",
+          "archetype",
+          "fleet",
+          "result",
+          "hourly",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "VppSimulationInput": {
+        "properties": {
+          "archetype": {
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "propertyId": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              "tariff": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "propertyId",
+              "name",
+              "tariff"
+            ],
+            "type": "object"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "dayType": {
+            "enum": [
+              "weekday",
+              "weekend"
+            ],
+            "type": "string"
+          },
+          "fleet": {
+            "properties": {
+              "batteryKwh": {
+                "type": "number"
+              },
+              "evChargerKw": {
+                "type": "number"
+              },
+              "homes": {
+                "type": "number"
+              },
+              "shiftableKwhPerDay": {
+                "type": "number"
+              },
+              "solarKwp": {
+                "type": "number"
+              },
+              "withBattery": {
+                "type": "number"
+              },
+              "withSolar": {
+                "type": "number"
+              },
+              "withVehicle": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "homes",
+              "withSolar",
+              "withBattery",
+              "withVehicle",
+              "solarKwp",
+              "batteryKwh",
+              "evChargerKw",
+              "shiftableKwhPerDay"
+            ],
+            "type": "object"
+          },
+          "hourly": {
+            "properties": {
+              "batteryKwh": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "hours": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "importAfterKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "importBeforeKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "loadKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "solarKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "hours",
+              "loadKw",
+              "solarKw",
+              "importBeforeKw",
+              "importAfterKw",
+              "batteryKwh"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "VIRTUAL POWER PLANT SIMULATION",
+            "type": "string"
+          },
+          "month": {
+            "type": "number"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "request": {
+            "additionalProperties": {},
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "result": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "batteryCycles": {
+                        "type": "number"
+                      },
+                      "costAfterInr": {
+                        "type": "number"
+                      },
+                      "costBeforeInr": {
+                        "type": "number"
+                      },
+                      "importKwhAfter": {
+                        "type": "number"
+                      },
+                      "importKwhBefore": {
+                        "type": "number"
+                      },
+                      "loadKwhPerDay": {
+                        "type": "number"
+                      },
+                      "peakExportAfterKw": {
+                        "type": "number"
+                      },
+                      "peakExportBeforeKw": {
+                        "type": "number"
+                      },
+                      "peakImportAfterHour": {
+                        "type": "number"
+                      },
+                      "peakImportAfterKw": {
+                        "type": "number"
+                      },
+                      "peakImportBeforeHour": {
+                        "type": "number"
+                      },
+                      "peakImportBeforeKw": {
+                        "type": "number"
+                      },
+                      "peakReductionPercent": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "savingsInr": {
+                        "type": "number"
+                      },
+                      "selfSufficiencyAfter": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "selfSufficiencyBefore": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "solarCurtailedKwhAfter": {
+                        "type": "number"
+                      },
+                      "solarKwhPerDay": {
+                        "type": "number"
+                      },
+                      "solarUsedLocallyAfter": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "solarUsedLocallyBefore": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "solarKwhPerDay",
+                      "loadKwhPerDay",
+                      "peakImportBeforeKw",
+                      "peakImportBeforeHour",
+                      "peakImportAfterKw",
+                      "peakImportAfterHour",
+                      "peakReductionPercent",
+                      "peakExportBeforeKw",
+                      "peakExportAfterKw",
+                      "importKwhBefore",
+                      "importKwhAfter",
+                      "solarUsedLocallyBefore",
+                      "solarUsedLocallyAfter",
+                      "solarCurtailedKwhAfter",
+                      "selfSufficiencyBefore",
+                      "selfSufficiencyAfter",
+                      "costBeforeInr",
+                      "costAfterInr",
+                      "savingsInr",
+                      "batteryCycles"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "request",
+          "month",
+          "dayType",
+          "archetype",
+          "fleet",
+          "result",
+          "hourly",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
       }
     }
   },
@@ -12038,6 +13316,97 @@
         "summary": "Cloud movement nowcast (UNAVAILABLE unless sub-hourly satellite data exists)",
         "tags": [
           "twin"
+        ]
+      }
+    },
+    "/api/community": {
+      "get": {
+        "description": "COMMUNITY ENERGY SIMULATION over the properties your account owns, for a typical day of this month: each one's own pattern and solar, where it has a surplus or a deficit, and how much of one's surplus could meet another's deficit in the same hour. It makes no claim that electricity may be shared or sold between properties. Only your own properties appear.",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunitySimulation"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Your properties together: surplus, deficit, storage and shiftable load on a typical day",
+        "tags": [
+          "community"
         ]
       }
     },
@@ -20443,6 +21812,107 @@
         ]
       }
     },
+    "/api/vpp/simulate": {
+      "post": {
+        "description": "A separate, synthetic mode: the homes are drawn from shares and sizes you choose (the defaults are assumptions, not data), each a variation of one of your properties' own daily pattern, with solar from the sun at its place. The fleet is dispatched by the planner as one aggregate battery, shiftable demand and vehicle charging, and the response compares the evening peak, the use of solar and the bill with and without that coordination. Always SIMULATED; the same seed describes the same homes.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VppRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VppSimulation"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Simulate a virtual power plant of 10, 100, 1,000 or 10,000 homes",
+        "tags": [
+          "community"
+        ]
+      }
+    },
     "/api/weather": {
       "get": {
         "parameters": [
@@ -20722,6 +22192,10 @@
     {
       "description": "Ask about a property: answers are worded from backend tools, with the supporting data to inspect",
       "name": "copilot"
+    },
+    {
+      "description": "Your properties together, and a simulated virtual power plant of synthetic homes (always labelled a simulation)",
+      "name": "community"
     },
     {
       "description": "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs",

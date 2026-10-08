@@ -21,6 +21,7 @@ import { AppError } from "./errors.js";
 import type { Providers } from "./providers/index.js";
 import { accountRoutes } from "./routes/account.js";
 import { assetRoutes } from "./routes/assets.js";
+import { communityRoutes } from "./routes/community.js";
 import { copilotRoutes } from "./routes/copilot.js";
 import { authRoutes } from "./routes/auth.js";
 import { energyRoutes } from "./routes/energy.js";
@@ -94,6 +95,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         { name: "plan", description: "The plan: when to charge, discharge, import, export and run flexible loads, checked from scratch before it is shown" },
         { name: "scenarios", description: "What-if: today's setup against added solar, a battery or another tariff over a typical year, with payback and net present value" },
         { name: "copilot", description: "Ask about a property: answers are worded from backend tools, with the supporting data to inspect" },
+        { name: "community", description: "Your properties together, and a simulated virtual power plant of synthetic homes (always labelled a simulation)" },
         { name: "assets", description: "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs" },
         { name: "policy", description: "Subsidy and net-metering rules as sourced configuration, and the eligibility calculator" },
         { name: "system", description: "Health" },
@@ -164,5 +166,6 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(opportunityRoutes, { deps });
   await app.register(copilotRoutes, { deps });
   await app.register(reportRoutes, { deps });
+  await app.register(communityRoutes, { deps });
   return app;
 }

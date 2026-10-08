@@ -427,6 +427,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/community": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Your properties together: surplus, deficit, storage and shiftable load on a typical day
+         * @description COMMUNITY ENERGY SIMULATION over the properties your account owns, for a typical day of this month: each one's own pattern and solar, where it has a surplus or a deficit, and how much of one's surplus could meet another's deficit in the same hour. It makes no claim that electricity may be shared or sold between properties. Only your own properties appear.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CommunitySimulation"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/copilot/tools": {
         parameters: {
             query?: never;
@@ -5965,6 +6067,112 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/vpp/simulate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulate a virtual power plant of 10, 100, 1,000 or 10,000 homes
+         * @description A separate, synthetic mode: the homes are drawn from shares and sizes you choose (the defaults are assumptions, not data), each a variation of one of your properties' own daily pattern, with solar from the sun at its place. The fleet is dispatched by the planner as one aggregate battery, shiftable demand and vehicle charging, and the response compares the evening peak, the use of solar and the bill with and without that coordination. Always SIMULATED; the same seed describes the same homes.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["VppRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VppSimulation"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/weather": {
         parameters: {
             query?: never;
@@ -6338,6 +6546,100 @@ export interface components {
             updatedAt: string;
             /** @description Capacity between the minimum and maximum charge. */
             usableKwh: number;
+        };
+        CommunitySimulation: {
+            /** @enum {string} */
+            dayType: "weekday" | "weekend";
+            hourly: {
+                hours: number[];
+                loadKw: number[];
+                shareableKw: number[];
+                solarKw: number[];
+            };
+            /** @constant */
+            label: "COMMUNITY ENERGY SIMULATION";
+            members: {
+                batteryUsableKwh: number;
+                deficitKwhPerDay: number | null;
+                latitude: number;
+                loadKwhPerDay: number | null;
+                longitude: number;
+                name: string;
+                /** Format: uuid */
+                propertyId: string;
+                reason: string | null;
+                shiftableKw: number;
+                solarKwhPerDay: number;
+                solarKwp: number;
+                /** @enum {string} */
+                status: "SURPLUS" | "DEFICIT" | "BALANCED" | "NO_DATA";
+                surplusKwhPerDay: number | null;
+                vehicleChargerKw: number;
+            }[];
+            month: number;
+            notes: string[];
+            totals: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    deficitKwhPerDay: number;
+                    loadKwhPerDay: number;
+                    properties: number;
+                    shareableKwhPerDay: number;
+                    shiftableKw: number;
+                    solarKwhPerDay: number;
+                    storageUsableKwh: number;
+                    surplusKwhPerDay: number;
+                    vehicleChargerKw: number;
+                } | null;
+            };
+        };
+        CommunitySimulationInput: {
+            /** @enum {string} */
+            dayType: "weekday" | "weekend";
+            hourly: {
+                hours: number[];
+                loadKw: number[];
+                shareableKw: number[];
+                solarKw: number[];
+            };
+            /** @constant */
+            label: "COMMUNITY ENERGY SIMULATION";
+            members: {
+                batteryUsableKwh: number;
+                deficitKwhPerDay: number | null;
+                latitude: number;
+                loadKwhPerDay: number | null;
+                longitude: number;
+                name: string;
+                /** Format: uuid */
+                propertyId: string;
+                reason: string | null;
+                shiftableKw: number;
+                solarKwhPerDay: number;
+                solarKwp: number;
+                /** @enum {string} */
+                status: "SURPLUS" | "DEFICIT" | "BALANCED" | "NO_DATA";
+                surplusKwhPerDay: number | null;
+                vehicleChargerKw: number;
+            }[];
+            month: number;
+            notes: string[];
+            totals: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    deficitKwhPerDay: number;
+                    loadKwhPerDay: number;
+                    properties: number;
+                    shareableKwhPerDay: number;
+                    shiftableKw: number;
+                    solarKwhPerDay: number;
+                    storageUsableKwh: number;
+                    surplusKwhPerDay: number;
+                    vehicleChargerKw: number;
+                } | null;
+            };
         };
         CopilotAnswer: {
             citations: {
@@ -8630,6 +8932,258 @@ export interface components {
             id: string;
             /** @enum {string} */
             role: "USER" | "ADMIN";
+        };
+        VppRequest: {
+            /**
+             * Format: uuid
+             * @description One of your properties, whose own daily pattern, tariff and place every simulated home is a variation of.
+             */
+            archetypePropertyId: string;
+            /** @default 5 */
+            batteryKwhMean: number;
+            /**
+             * @description Share of the homes with solar that also have a battery.
+             * @default 10
+             */
+            batterySharePercent: number;
+            /**
+             * @default weekday
+             * @enum {string}
+             */
+            dayType: "weekday" | "weekend";
+            /** @default 3.3 */
+            evChargerKw: number;
+            /**
+             * @description Energy a vehicle takes from the grid in a day.
+             * @default 8
+             */
+            evKwhPerDay: number;
+            /**
+             * @description Share of homes with an electric vehicle.
+             * @default 5
+             */
+            evSharePercent: number;
+            /**
+             * @description Share of each home's load that can be moved within the day.
+             * @default 15
+             */
+            flexibleSharePercent: number;
+            homes: 10 | 100 | 1000 | 10000;
+            /**
+             * @description How much homes differ in how much they use.
+             * @default 0.35
+             */
+            loadCv: number;
+            /** @description Month of the typical day. Default: this month. */
+            month?: number;
+            /**
+             * @description Spread of those sizes (coefficient of variation).
+             * @default 0.3
+             */
+            pvKwpCv: number;
+            /**
+             * @description Mean size of a home's solar, kWp.
+             * @default 3
+             */
+            pvKwpMean: number;
+            /**
+             * @description Share of homes with solar. An assumption, not data: change it.
+             * @default 30
+             */
+            pvSharePercent: number;
+            /**
+             * @description The same seed describes the same homes.
+             * @default 1
+             */
+            seed: number;
+        };
+        VppRequestInput: {
+            /**
+             * Format: uuid
+             * @description One of your properties, whose own daily pattern, tariff and place every simulated home is a variation of.
+             */
+            archetypePropertyId: string;
+            /** @default 5 */
+            batteryKwhMean: number;
+            /**
+             * @description Share of the homes with solar that also have a battery.
+             * @default 10
+             */
+            batterySharePercent: number;
+            /**
+             * @default weekday
+             * @enum {string}
+             */
+            dayType: "weekday" | "weekend";
+            /** @default 3.3 */
+            evChargerKw: number;
+            /**
+             * @description Energy a vehicle takes from the grid in a day.
+             * @default 8
+             */
+            evKwhPerDay: number;
+            /**
+             * @description Share of homes with an electric vehicle.
+             * @default 5
+             */
+            evSharePercent: number;
+            /**
+             * @description Share of each home's load that can be moved within the day.
+             * @default 15
+             */
+            flexibleSharePercent: number;
+            homes: 10 | 100 | 1000 | 10000;
+            /**
+             * @description How much homes differ in how much they use.
+             * @default 0.35
+             */
+            loadCv: number;
+            /** @description Month of the typical day. Default: this month. */
+            month?: number;
+            /**
+             * @description Spread of those sizes (coefficient of variation).
+             * @default 0.3
+             */
+            pvKwpCv: number;
+            /**
+             * @description Mean size of a home's solar, kWp.
+             * @default 3
+             */
+            pvKwpMean: number;
+            /**
+             * @description Share of homes with solar. An assumption, not data: change it.
+             * @default 30
+             */
+            pvSharePercent: number;
+            /**
+             * @description The same seed describes the same homes.
+             * @default 1
+             */
+            seed: number;
+        };
+        VppSimulation: {
+            archetype: {
+                name: string;
+                /** Format: uuid */
+                propertyId: string;
+                tariff: string;
+            };
+            assumptions: string[];
+            /** @enum {string} */
+            dayType: "weekday" | "weekend";
+            fleet: {
+                batteryKwh: number;
+                evChargerKw: number;
+                homes: number;
+                shiftableKwhPerDay: number;
+                solarKwp: number;
+                withBattery: number;
+                withSolar: number;
+                withVehicle: number;
+            };
+            hourly: {
+                batteryKwh: number[];
+                hours: number[];
+                importAfterKw: number[];
+                importBeforeKw: number[];
+                loadKw: number[];
+                solarKw: number[];
+            };
+            /** @constant */
+            label: "VIRTUAL POWER PLANT SIMULATION";
+            month: number;
+            notes: string[];
+            request: {
+                [key: string]: unknown;
+            };
+            result: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    batteryCycles: number;
+                    costAfterInr: number;
+                    costBeforeInr: number;
+                    importKwhAfter: number;
+                    importKwhBefore: number;
+                    loadKwhPerDay: number;
+                    peakExportAfterKw: number;
+                    peakExportBeforeKw: number;
+                    peakImportAfterHour: number;
+                    peakImportAfterKw: number;
+                    peakImportBeforeHour: number;
+                    peakImportBeforeKw: number;
+                    peakReductionPercent: number | null;
+                    savingsInr: number;
+                    selfSufficiencyAfter: number | null;
+                    selfSufficiencyBefore: number | null;
+                    solarCurtailedKwhAfter: number;
+                    solarKwhPerDay: number;
+                    solarUsedLocallyAfter: number | null;
+                    solarUsedLocallyBefore: number | null;
+                } | null;
+            };
+        };
+        VppSimulationInput: {
+            archetype: {
+                name: string;
+                /** Format: uuid */
+                propertyId: string;
+                tariff: string;
+            };
+            assumptions: string[];
+            /** @enum {string} */
+            dayType: "weekday" | "weekend";
+            fleet: {
+                batteryKwh: number;
+                evChargerKw: number;
+                homes: number;
+                shiftableKwhPerDay: number;
+                solarKwp: number;
+                withBattery: number;
+                withSolar: number;
+                withVehicle: number;
+            };
+            hourly: {
+                batteryKwh: number[];
+                hours: number[];
+                importAfterKw: number[];
+                importBeforeKw: number[];
+                loadKw: number[];
+                solarKw: number[];
+            };
+            /** @constant */
+            label: "VIRTUAL POWER PLANT SIMULATION";
+            month: number;
+            notes: string[];
+            request: {
+                [key: string]: unknown;
+            };
+            result: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    batteryCycles: number;
+                    costAfterInr: number;
+                    costBeforeInr: number;
+                    importKwhAfter: number;
+                    importKwhBefore: number;
+                    loadKwhPerDay: number;
+                    peakExportAfterKw: number;
+                    peakExportBeforeKw: number;
+                    peakImportAfterHour: number;
+                    peakImportAfterKw: number;
+                    peakImportBeforeHour: number;
+                    peakImportBeforeKw: number;
+                    peakReductionPercent: number | null;
+                    savingsInr: number;
+                    selfSufficiencyAfter: number | null;
+                    selfSufficiencyBefore: number | null;
+                    solarCurtailedKwhAfter: number;
+                    solarKwhPerDay: number;
+                    solarUsedLocallyAfter: number | null;
+                    solarUsedLocallyBefore: number | null;
+                } | null;
+            };
         };
     };
     responses: never;

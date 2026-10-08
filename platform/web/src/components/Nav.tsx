@@ -9,6 +9,7 @@ import { ThemeToggle } from "./ThemeToggle";
 const LINKS = [
   { href: "/map", label: "Map" },
   { href: "/properties", label: "Properties" },
+  { href: "/community", label: "Community" },
   { href: "/system", label: "System" },
 ];
 
