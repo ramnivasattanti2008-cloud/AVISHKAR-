@@ -231,9 +231,12 @@ export function costsShown(net: number, baseline: number): { netCostInr: number;
   return { netCostInr, baselineNetCostInr, savingsInr: round(baselineNetCostInr - netCostInr, 2) };
 }
 
-export async function createPlan(deps: ForecastDeps, userId: string, propertyId: string, req: PlanRequest, ctx: Ctx = {}): Promise<PlanDto> {
+/**
+ * Everything a plan needs, gathered and checked: the property, its tariff, the load, the sun, the equipment, and the optimiser's
+ * request built from them. Shared by the plan itself and by the what-if scenarios that re-plan on a changed sky (cloud front).
+ */
+export async function buildPlanInputs(deps: ForecastDeps, userId: string, propertyId: string, req: PlanRequest, ctx: Ctx = {}) {
   const { db, now } = deps;
-  const engine = requireEngine(deps.engine);
   const at = now();
   const property = await getProperty(db, userId, propertyId, deps.policy);
   const startMs = planStart(at);
@@ -296,6 +299,15 @@ export async function createPlan(deps: ForecastDeps, userId: string, propertyId:
     appliances: apps.input,
     mode: req.mode,
   };
+
+  return { at, property, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, battery, ev, apps, assumptions, request };
+}
+
+export async function createPlan(deps: ForecastDeps, userId: string, propertyId: string, req: PlanRequest, ctx: Ctx = {}): Promise<PlanDto> {
+  const { db } = deps;
+  const engine = requireEngine(deps.engine);
+  const { at, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, battery, ev, apps, assumptions, request } = await buildPlanInputs(deps, userId, propertyId, req, ctx);
+
   const out: OptimiseResponse = await engine.optimise(request, { requestId: ctx.requestId });
 
   if (out.solver.status !== "optimal" || !out.schedule || !out.totals || !out.baseline) {

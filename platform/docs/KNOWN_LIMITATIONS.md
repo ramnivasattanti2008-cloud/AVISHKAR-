@@ -58,8 +58,12 @@ What the platform does not do, does only partly, or does with a caveat the user 
 - **Community and VPP results are simulations.** The community view covers only the signed-in owner's own properties. The
   VPP simulator draws synthetic homes with shares and sizes that are assumptions, not survey data. AVISHKAR does not trade or
   move electricity between properties, and no sourced rule says whether sharing across meters is allowed.
-- **No city energy map, no demo world, no neighbour or cross-account view.** No real per-building consumption may be shown, and
-  none exists here.
+- **No city energy map and no neighbour or cross-account view.** No real per-building consumption may be shown, and none exists
+  here.
+- **The demo world is invented.** Its readings, equipment and the Bengaluru tariff are made up (the places, the weather and the
+  three catalogue tariffs are real); everything computed from it is labelled DEMO and it is never added up with real properties.
+- **A cloud front is a scenario, not an observation:** there is no cloud-nowcast source. The cloud-front page plans the day twice
+  on the forecast sky and on a sky with a front you describe; it acts on whole hours and compares the plan with no control.
 
 ## Copilot
 

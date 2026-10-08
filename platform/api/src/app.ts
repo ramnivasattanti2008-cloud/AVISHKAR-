@@ -17,12 +17,15 @@ import type { Config } from "./config.js";
 import type { Db } from "./db.js";
 import type { LlmAdapter } from "./copilot/llm.js";
 import type { EngineClient } from "./engine/client.js";
+import { relabelDemo } from "./demo/relabel.js";
 import { AppError } from "./errors.js";
 import type { Providers } from "./providers/index.js";
 import { accountRoutes } from "./routes/account.js";
 import { assetRoutes } from "./routes/assets.js";
+import { cloudFrontRoutes } from "./routes/cloudfront.js";
 import { communityRoutes } from "./routes/community.js";
 import { copilotRoutes } from "./routes/copilot.js";
+import { demoRoutes } from "./routes/demo.js";
 import { authRoutes } from "./routes/auth.js";
 import { energyRoutes } from "./routes/energy.js";
 import { forecastRoutes } from "./routes/forecast.js";
@@ -51,6 +54,14 @@ export interface AppDeps {
 }
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{1,64}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+declare module "fastify" {
+  interface FastifyRequest {
+    /** True when the route is about one of the caller's demo properties. */
+    demoProperty: boolean;
+  }
+}
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const { config } = deps;
@@ -95,6 +106,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         { name: "plan", description: "The plan: when to charge, discharge, import, export and run flexible loads, checked from scratch before it is shown" },
         { name: "scenarios", description: "What-if: today's setup against added solar, a battery or another tariff over a typical year, with payback and net present value" },
         { name: "copilot", description: "Ask about a property: answers are worded from backend tools, with the supporting data to inspect" },
+        { name: "demo", description: "The demo world: invented properties in real places, labelled DEMO DATA, for trying everything before you have a meter file" },
         { name: "community", description: "Your properties together, and a simulated virtual power plant of synthetic homes (always labelled a simulation)" },
         { name: "assets", description: "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs" },
         { name: "policy", description: "Subsidy and net-metering rules as sourced configuration, and the eligibility calculator" },
@@ -110,6 +122,16 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   });
 
   registerAuth(app, { config, db: deps.db, now: deps.now });
+
+  // A request about a demo property gets every computed value labelled DEMO (spec sections 74 and 76); see demo/relabel.ts.
+  app.decorateRequest("demoProperty", false);
+  app.addHook("preHandler", async (req) => {
+    const id = (req.params as { id?: unknown } | undefined)?.id;
+    if (!req.user || typeof id !== "string" || !UUID.test(id) || !req.url.startsWith("/api/properties/")) return;
+    const p = await deps.db.property.findFirst({ where: { id, ownerId: req.user.id, deletedAt: null }, select: { isDemo: true } });
+    req.demoProperty = Boolean(p?.isDemo);
+  });
+  app.addHook("preSerialization", async (req, _reply, payload) => relabelDemo(payload, req.demoProperty));
 
   app.setNotFoundHandler((req, reply) => {
     reply.code(404).send({ error: { code: "NOT_FOUND", message: `No route ${req.method} ${req.url.split("?")[0]}.`, requestId: req.id } });
@@ -163,9 +185,11 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(forecastRoutes, { deps });
   await app.register(planRoutes, { deps });
   await app.register(scenarioRoutes, { deps });
+  await app.register(cloudFrontRoutes, { deps });
   await app.register(opportunityRoutes, { deps });
   await app.register(copilotRoutes, { deps });
   await app.register(reportRoutes, { deps });
   await app.register(communityRoutes, { deps });
+  await app.register(demoRoutes, { deps });
   return app;
 }

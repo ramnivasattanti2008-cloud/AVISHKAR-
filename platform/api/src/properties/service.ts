@@ -23,6 +23,7 @@ export interface PropertyDto {
   latitude: number;
   longitude: number;
   address: string | null;
+  isDemo: boolean;
   position: { source: PositionSource; label: string; note: string; accuracyM: number | null; description: string };
   geometry: { status: "AVAILABLE" | "UNAVAILABLE"; message: string | null; items: GeometryDto[] };
   tariffPlanId: string | null;
@@ -51,6 +52,7 @@ function toDto(p: Property, geometries: GeometryDto[], policy: PropertyPolicy): 
   const label = chk.ok ? chk.info.label : p.positionSource;
   const note = chk.ok ? chk.info.note : "Source is no longer recognised by this server.";
   const warnings: string[] = [];
+  if (p.isDemo) warnings.push("DEMO DATA: an invented property in a real place. Its readings and equipment are made up, and everything computed from them is labelled DEMO.");
   if (!isNearIndia(p.latitude, p.longitude)) warnings.push("This location is outside India; Indian tariffs and schemes will not apply.");
   return {
     id: p.id,
@@ -58,6 +60,7 @@ function toDto(p: Property, geometries: GeometryDto[], policy: PropertyPolicy): 
     latitude: p.latitude,
     longitude: p.longitude,
     address: p.address,
+    isDemo: p.isDemo,
     position: {
       source: src,
       label,
@@ -118,9 +121,9 @@ export async function createProperty(db: Db, ownerId: string, input: CreatePrope
   return toDto(p, [], policy);
 }
 
-/** Properties the user owns. Not-yours and demo properties are indistinguishable from missing ones. */
+/** Properties the user owns, demo ones included (they carry `isDemo`). Not-yours is indistinguishable from missing. */
 async function findOwned(db: Db, userId: string, id: string): Promise<Property> {
-  const p = await db.property.findFirst({ where: { id, ownerId: userId, deletedAt: null, isDemo: false } });
+  const p = await db.property.findFirst({ where: { id, ownerId: userId, deletedAt: null } });
   if (!p) throw new AppError("NOT_FOUND", "Property not found.");
   return p;
 }
@@ -133,8 +136,8 @@ export async function getProperty(db: Db, userId: string, id: string, policy: Pr
 
 export async function listProperties(db: Db, userId: string, policy: PropertyPolicy, limit = 100): Promise<PropertyDto[]> {
   const rows = await db.property.findMany({
-    where: { ownerId: userId, deletedAt: null, isDemo: false },
-    orderBy: { createdAt: "desc" },
+    where: { ownerId: userId, deletedAt: null },
+    orderBy: [{ isDemo: "asc" }, { createdAt: "desc" }],
     take: Math.min(Math.max(limit, 1), 200),
   });
   const g = await geometriesFor(db, rows.map((r) => r.id));

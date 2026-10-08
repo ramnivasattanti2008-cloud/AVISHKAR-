@@ -9,6 +9,7 @@ import { useAuth } from "../AuthProvider";
 import { ProvenanceDetails, StatusBadge } from "../Provenance";
 import { PropertyTabs } from "../property/PropertyTabs";
 import { usePropertyData } from "../property/usePropertyData";
+import { CloudFrontPanel } from "./CloudFrontPanel";
 import { BatteryChart, PriceChart, SERIES, SourcesChart } from "./PlanCharts";
 
 export const MODES = [
@@ -144,7 +145,7 @@ export function PlanView({ id }: { id: string }) {
         <p className="text-sm text-muted">Plan for the next day or two</p>
       </header>
       <div className="mt-4">
-        <PropertyTabs id={id} current="/plan" />
+        <PropertyTabs id={id} current="/plan" demo={property?.isDemo} />
       </div>
 
       <section className="card mt-4 p-4" aria-label="Make a plan">
@@ -363,6 +364,8 @@ export function PlanView({ id }: { id: string }) {
           </section>
         </>
       )}
+
+      <CloudFrontPanel id={id} />
 
       {history.length > 1 && (
         <section className="card mt-4 p-4" aria-label="Earlier plans">

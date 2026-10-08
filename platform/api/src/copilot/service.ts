@@ -69,5 +69,9 @@ export async function ask(ctx: ToolContext, question: string, llm: LlmAdapter | 
       notes.push(`The language model could not be reached (${e instanceof AppError ? e.message : "error"}). This is the template answer.`);
     }
   }
+  const property = await ctx.deps.db.property.findFirst({ where: { id: ctx.propertyId, ownerId: ctx.userId }, select: { isDemo: true } });
+  if (property?.isDemo) {
+    paragraphs = ["DEMO DATA: this is a demo property. Its readings and equipment are invented, so the answer below describes the demo, not a real home or business.", ...paragraphs];
+  }
   return { question, intent: r.intent, status: rendered.status, paragraphs, citations, toolResults: results, generatedBy, notes, suggestions: [] };
 }

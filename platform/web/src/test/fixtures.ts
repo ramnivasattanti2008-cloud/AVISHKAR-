@@ -1,4 +1,4 @@
-import type { Appliance, Battery, Bill, Community, EnergyDna, EnergyImport, CopilotAnswer, CopilotTools, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan, VppSimulation } from "@/lib/types";
+import type { Appliance, Battery, Bill, CloudFront, Community, DemoWorld, EnergyDna, EnergyImport, CopilotAnswer, CopilotTools, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan, VppSimulation } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -54,6 +54,7 @@ export function property(over: Partial<Property> = {}): Property {
     latitude: 12.9784,
     longitude: 77.6408,
     address: null,
+    isDemo: false,
     position: { source: "manual", label: "Entered coordinates", note: "", accuracyM: null, description: "POSITION SOURCE: Entered coordinates, accuracy not reported" },
     geometry: { status: "UNAVAILABLE", message: "BUILDING GEOMETRY UNAVAILABLE: analysis uses the point location.", items: [] },
     tariffPlanId: null,
@@ -405,6 +406,7 @@ export function community(over: Partial<Community> = {}): Community {
 export function vppSimulation(over: Partial<VppSimulation> = {}): VppSimulation {
   return {
     label: "VIRTUAL POWER PLANT SIMULATION",
+    isDemo: false,
     request: { homes: 100 },
     month: 10,
     dayType: "weekday",
@@ -517,4 +519,65 @@ export function scenarioSummary(over: Partial<ScenarioSummary> = {}): ScenarioSu
 
 export function planSummary(over: Partial<PlanSummary> = {}): PlanSummary {
   return { id: "44444444-4444-4444-8444-444444444444", createdAt: "2026-10-07T10:10:00.000Z", mode: "BALANCED", startsAt: "2026-10-07T10:30:00.000Z", steps: 24, netCostInr: 41.2, baselineNetCostInr: 52.9, savingsInr: 11.7, ...over };
+}
+
+export function demoWorld(over: Partial<DemoWorld> = {}): DemoWorld {
+  const site = (key: string, name: string, city: string, propertyId: string | null, tariff: string | null) => ({ key, name, city, latitude: 20, longitude: 77, story: `${name} story.`, propertyId, tariff });
+  return {
+    label: "DEMO DATA",
+    loaded: false,
+    sites: [
+      site("bengaluru-home", "Demo home, Bengaluru", "Bengaluru", null, null),
+      site("pune-shop", "Demo shop, Pune", "Pune", null, null),
+      site("jaipur-clinic", "Demo clinic, Jaipur", "Jaipur", null, null),
+      site("mathura-home", "Demo home, Mathura", "Mathura", null, null),
+    ],
+    notes: ["DEMO DATA: the meter readings, the equipment and the Bengaluru tariff are invented."],
+    ...over,
+  };
+}
+
+export function cloudFront(over: Partial<CloudFront> = {}): CloudFront {
+  const times = Array.from({ length: 24 }, (_, i) => new Date(Date.parse("2026-10-07T10:30:00Z") + i * 3_600_000).toISOString());
+  const sun = (i: number) => (i < 2 ? [2.4, 0.8][i]! : 0);
+  return {
+    label: "CLOUD FRONT SCENARIO",
+    request: { arrivalMinutes: 38, reductionPercent: 22, durationHours: 3, mode: "BALANCED" },
+    madeAt: "2026-10-07T10:10:00.000Z",
+    horizon: { start: times[0]!, stepHours: 1, steps: 24 },
+    hourly: {
+      times,
+      solarKw: times.map((_, i) => sun(i)),
+      solarWithFrontKw: times.map((_, i) => sun(i) * (i === 0 ? 0.846 : 0.78)),
+      loadKw: times.map(() => 1),
+      batteryChargeKw: times.map((_, i) => (i < 2 ? 1.5 : 0)),
+      batteryChargeUnawareKw: times.map(() => 0),
+      batterySocKwh: times.map(() => 4),
+      gridImportKw: times.map(() => 0.9),
+      gridImportUnawareKw: times.map(() => 0.8),
+    },
+    result: {
+      value: {
+        solarNowKw: 5.4,
+        frontArrivesAt: "2026-10-07T16:18:00+05:30",
+        frontEndsAt: "2026-10-07T19:18:00+05:30",
+        reductionPercent: 22,
+        solarLostKwh: 0.55,
+        solarLostPercentOfDay: 17.2,
+        batteryNowPercent: 42,
+        batteryNowBasis: "ASSUMPTION",
+        eveningDemand: { level: "HIGH", eveningMeanKw: 2.5, meanKw: 0.9, ratio: 2.78, rule: "HIGH at 1.25 times the daily mean or more, LOW below 0.9." },
+        advice: { code: "CHARGE_NOW", text: "Charge the battery now: knowing the front is coming, the plan stores 3 kWh more before and during it than it would otherwise.", extraChargeKwh: 3, extraHeldKwh: 0 },
+        without: { importKwh: 21.5, netCostInr: 160.5 },
+        with: { importKwh: 22.2, netCostInr: 140.25 },
+        difference: { importKwh: -0.7, savingsInr: 20.25 },
+        onForecastSky: { withoutNetCostInr: 156.4, withNetCostInr: 139.05 },
+        frontCost: { withoutAvishkarInr: 4.1, withAvishkarInr: 1.2 },
+      },
+      provenance: provenance({ status: "SIMULATED", provider: "avishkar-engine", dataType: "cloud_front_scenario", notes: ["A scenario: the front is assumed, and the sun now is the forecast's value for this hour, not a measurement. The real day will differ."] }),
+    },
+    assumptions: ["The front is a scenario you set, not an observation: AVISHKAR has no cloud-nowcast source (a satellite that returns every few days cannot see a front minutes away).", "Another assumption."],
+    notes: [],
+    ...over,
+  };
 }

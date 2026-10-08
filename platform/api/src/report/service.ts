@@ -28,7 +28,11 @@ export async function buildReport(deps: ForecastDeps, userId: string, propertyId
   const h = (t: string) => L.push("", `## ${t}`, "");
   const gap = (what: string, why: string) => L.push(`*${what}: not available. ${why}*`);
 
-  L.push(`# AVISHKAR report: ${p.name}`, "", `Made ${at.toISOString().slice(0, 16).replace("T", " ")} UTC from what AVISHKAR holds for this property. Nothing in it was recomputed for the report, and nothing was added: where something is missing it says so.`);
+  L.push(`# AVISHKAR report: ${p.name}`, "");
+  if (p.isDemo) {
+    L.push("**DEMO DATA.** This is a demo property: its readings and equipment are invented. Every figure computed from them below is demonstration data, whatever its label says (read FORECAST, ESTIMATED or SIMULATED as DEMO). Only the weather, the sun and the sourced tariff are real.", "");
+  }
+  L.push(`Made${at.toISOString().slice(0, 16).replace("T", " ")} UTC from what AVISHKAR holds for this property. Nothing in it was recomputed for the report, and nothing was added: where something is missing it says so.`);
 
   h("The property");
   L.push(`- Location: ${p.latitude.toFixed(5)}, ${p.longitude.toFixed(5)}${p.address ? ` (${p.address})` : ""}.`, `- How the position was obtained: ${p.position.label}${p.position.accuracyM ? `, accurate to about ${Math.round(p.position.accuracyM)} m` : ""}. ${p.position.note}`);

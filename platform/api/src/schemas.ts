@@ -64,6 +64,7 @@ export const PropertySchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   address: z.string().nullable(),
+  isDemo: z.boolean().describe("True for a demo-world property (DEMO DATA): its readings and equipment are invented."),
   position: PositionSchema,
   geometry: z.object({
     status: z.enum(["AVAILABLE", "UNAVAILABLE"]),

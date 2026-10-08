@@ -62,4 +62,6 @@ export type Opportunity = components["schemas"]["Opportunity"];
 export type CopilotAnswer = components["schemas"]["CopilotAnswer"];
 export type Community = components["schemas"]["CommunitySimulation"];
 export type VppSimulation = components["schemas"]["VppSimulation"];
+export type CloudFront = components["schemas"]["CloudFrontScenario"];
+export type DemoWorld = components["schemas"]["DemoWorld"];
 export type CopilotTools = Resp<"/api/copilot/tools", "get", 200>;

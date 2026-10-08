@@ -6,7 +6,7 @@ import type { Plan } from "@/lib/types";
 
 const HOUR = 3_600_000;
 const clock = new Intl.DateTimeFormat("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
-const when = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
+export const when = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
 const dayName = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric" });
 
 /** A tick every three local hours: "06:00", and the day at each midnight, because a plan runs across one. */
@@ -22,12 +22,12 @@ export function hourAxis(from: number, to: number): { ticks: number[]; label: (t
   return { ticks, label: (t) => (new Date(t).getHours() === 0 ? dayName.format(t) : clock.format(t)) };
 }
 
-interface Row {
+export interface Row {
   t: number;
   [k: string]: number;
 }
 
-function Frame({ rows, label, height = "h-56", unit, children, domain }: { rows: Row[]; label: string; height?: string; unit: string; children: React.ReactNode; domain?: [number, number] }) {
+export function Frame({ rows, label, height = "h-56", unit, children, domain }: { rows: Row[]; label: string; height?: string; unit: string; children: React.ReactNode; domain?: [number, number] }) {
   const { ticks, label: tick } = hourAxis(rows[0]!.t, rows[rows.length - 1]!.t + HOUR);
   return (
     <div className={`${height} w-full`} role="img" aria-label={`${label}, in ${unit}, hour by hour from ${when.format(rows[0]!.t)} to ${when.format(rows[rows.length - 1]!.t + HOUR)}`}>
@@ -43,9 +43,9 @@ function Frame({ rows, label, height = "h-56", unit, children, domain }: { rows:
   );
 }
 
-const SOLAR = "var(--tone-updated-fg)";
-const BATTERY = "var(--tone-estimated-fg)";
-const GRID = "var(--tone-forecast-fg)";
+export const SOLAR = "var(--tone-updated-fg)";
+export const BATTERY = "var(--tone-estimated-fg)";
+export const GRID = "var(--tone-forecast-fg)";
 
 export const SERIES = [
   { key: "pvUsed", label: "Solar used now", color: SOLAR },

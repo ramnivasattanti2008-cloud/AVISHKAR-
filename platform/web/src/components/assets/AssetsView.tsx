@@ -68,7 +68,7 @@ export function AssetsView({ id }: { id: string }) {
         <p className="text-sm text-muted">Batteries, solar, vehicles and appliances</p>
       </header>
       <div className="mt-4">
-        <PropertyTabs id={id} current="/assets" />
+        <PropertyTabs id={id} current="/assets" demo={property?.isDemo} />
       </div>
       <p className="mt-3 text-sm text-muted">
         What you enter here is what you say it is: AVISHKAR does not check it against the equipment. Anything you leave blank uses a labelled default, shown on the card. The Energy Twin records these the next time you analyze the property.

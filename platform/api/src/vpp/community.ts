@@ -41,6 +41,7 @@ export async function communityView(deps: ForecastDeps, userId: string, ctx: { r
   const month = local.getUTCMonth() + 1;
   const dayType: "weekday" | "weekend" = (local.getUTCDay() + 6) % 7 >= 5 ? "weekend" : "weekday";
   const props = await db.property.findMany({ where: { ownerId: userId, deletedAt: null, isDemo: false }, orderBy: { createdAt: "asc" }, take: 100 });
+  const demoCount = await db.property.count({ where: { ownerId: userId, deletedAt: null, isDemo: true } });
 
   const members: CommunityMember[] = [];
   const poolLoad = new Array<number>(24).fill(0);
@@ -142,6 +143,7 @@ export async function communityView(deps: ForecastDeps, userId: string, ctx: { r
       "This is a simulation over properties you own. AVISHKAR does not move electricity between properties and says nothing about whether that is allowed: sharing or selling electricity between properties depends on the law and the utility where they are.",
       `A typical ${dayType} of the month ${month}: each property's own average pattern and its own solar (NASA POWER's mean day for its place). Properties without readings are listed and left out of the totals.`,
       "Only properties your account owns appear here. Nothing about anyone else's is shown.",
+      ...(demoCount ? [`Your ${demoCount} demo propert${demoCount === 1 ? "y is" : "ies are"} left out: demo data is never added up with real data.`] : []),
     ],
   };
 }

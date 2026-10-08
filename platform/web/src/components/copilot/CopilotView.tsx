@@ -142,7 +142,7 @@ export function CopilotView({ id }: { id: string }) {
         <p className="text-sm text-muted">Ask about your energy</p>
       </header>
       <div className="mt-4">
-        <PropertyTabs id={id} current="/ask" />
+        <PropertyTabs id={id} current="/ask" demo={property?.isDemo} />
       </div>
 
       <section className="card mt-4 p-4" aria-label="How this works">

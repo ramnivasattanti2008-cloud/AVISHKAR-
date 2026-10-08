@@ -1240,6 +1240,924 @@
         ],
         "type": "object"
       },
+      "CloudFrontRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "arrivalMinutes": {
+            "default": 38,
+            "description": "Minutes from now until the front's leading edge reaches the property. The default is an example, not a prediction.",
+            "maximum": 720,
+            "minimum": 1,
+            "type": "number"
+          },
+          "durationHours": {
+            "default": 3,
+            "description": "How long the front takes to pass.",
+            "maximum": 12,
+            "minimum": 0.5,
+            "type": "number"
+          },
+          "mode": {
+            "default": "BALANCED",
+            "description": "What the plan favours, as for any plan.",
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "type": "string"
+          },
+          "reductionPercent": {
+            "default": 22,
+            "description": "Share of the sun lost while the front is overhead. The default is an example, not a prediction.",
+            "maximum": 95,
+            "minimum": 1,
+            "type": "number"
+          },
+          "startSocPercent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The battery's charge now, if you know it."
+          }
+        },
+        "required": [
+          "arrivalMinutes",
+          "reductionPercent",
+          "durationHours",
+          "mode"
+        ],
+        "type": "object"
+      },
+      "CloudFrontRequestInput": {
+        "properties": {
+          "arrivalMinutes": {
+            "default": 38,
+            "description": "Minutes from now until the front's leading edge reaches the property. The default is an example, not a prediction.",
+            "maximum": 720,
+            "minimum": 1,
+            "type": "number"
+          },
+          "durationHours": {
+            "default": 3,
+            "description": "How long the front takes to pass.",
+            "maximum": 12,
+            "minimum": 0.5,
+            "type": "number"
+          },
+          "mode": {
+            "default": "BALANCED",
+            "description": "What the plan favours, as for any plan.",
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "type": "string"
+          },
+          "reductionPercent": {
+            "default": 22,
+            "description": "Share of the sun lost while the front is overhead. The default is an example, not a prediction.",
+            "maximum": 95,
+            "minimum": 1,
+            "type": "number"
+          },
+          "startSocPercent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The battery's charge now, if you know it."
+          }
+        },
+        "type": "object"
+      },
+      "CloudFrontScenario": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "horizon": {
+            "additionalProperties": false,
+            "properties": {
+              "start": {
+                "type": "string"
+              },
+              "stepHours": {
+                "type": "number"
+              },
+              "steps": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "start",
+              "stepHours",
+              "steps"
+            ],
+            "type": "object"
+          },
+          "hourly": {
+            "additionalProperties": false,
+            "properties": {
+              "batteryChargeKw": {
+                "description": "The plan that knows about the front.",
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "batteryChargeUnawareKw": {
+                "description": "The plan made on the forecast sky, without the front.",
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "batterySocKwh": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "gridImportKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "gridImportUnawareKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "loadKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "solarKw": {
+                "description": "The solar forecast on the forecast sky.",
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "solarWithFrontKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "times": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "times",
+              "solarKw",
+              "solarWithFrontKw",
+              "loadKw",
+              "batteryChargeKw",
+              "batteryChargeUnawareKw",
+              "batterySocKwh",
+              "gridImportKw",
+              "gridImportUnawareKw"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "CLOUD FRONT SCENARIO",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "request": {
+            "additionalProperties": false,
+            "properties": {
+              "arrivalMinutes": {
+                "type": "number"
+              },
+              "durationHours": {
+                "type": "number"
+              },
+              "mode": {
+                "enum": [
+                  "SAVE_MONEY",
+                  "INDEPENDENCE",
+                  "RESILIENCE",
+                  "GREEN",
+                  "REVENUE",
+                  "BALANCED"
+                ],
+                "type": "string"
+              },
+              "reductionPercent": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "arrivalMinutes",
+              "reductionPercent",
+              "durationHours",
+              "mode"
+            ],
+            "type": "object"
+          },
+          "result": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "advice": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "code": {
+                            "enum": [
+                              "CHARGE_NOW",
+                              "HOLD_CHARGE",
+                              "NO_CHANGE",
+                              "NO_BATTERY"
+                            ],
+                            "type": "string"
+                          },
+                          "extraChargeKwh": {
+                            "type": "number"
+                          },
+                          "extraHeldKwh": {
+                            "type": "number"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "text",
+                          "extraChargeKwh",
+                          "extraHeldKwh"
+                        ],
+                        "type": "object"
+                      },
+                      "batteryNowBasis": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "USER_ENTERED",
+                              "ASSUMPTION"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "batteryNowPercent": {
+                        "description": "The battery's charge at the start of the plan, as a share of its capacity; null with no battery.",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "difference": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "importKwh": {
+                            "description": "Grid energy without AVISHKAR less with it. Negative when the plan buys more, for example to store cheap night energy that replaces dear evening energy.",
+                            "type": "number"
+                          },
+                          "savingsInr": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "importKwh",
+                          "savingsInr"
+                        ],
+                        "type": "object"
+                      },
+                      "eveningDemand": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "eveningMeanKw": {
+                                "type": "number"
+                              },
+                              "level": {
+                                "enum": [
+                                  "HIGH",
+                                  "NORMAL",
+                                  "LOW"
+                                ],
+                                "type": "string"
+                              },
+                              "meanKw": {
+                                "type": "number"
+                              },
+                              "ratio": {
+                                "type": "number"
+                              },
+                              "rule": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "eveningMeanKw",
+                              "meanKw",
+                              "ratio",
+                              "rule"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "frontArrivesAt": {
+                        "type": "string"
+                      },
+                      "frontCost": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "withAvishkarInr": {
+                            "description": "What the front adds to the plan's bill: the plan's cost knowing the front less the plan's cost on the forecast sky. It can exceed the no-control figure, because the plan had more to lose from the lost sun.",
+                            "type": "number"
+                          },
+                          "withoutAvishkarInr": {
+                            "description": "What the front adds to the no-control bill: the no-control cost under the front less the no-control cost under the forecast sky.",
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "withoutAvishkarInr",
+                          "withAvishkarInr"
+                        ],
+                        "type": "object"
+                      },
+                      "frontEndsAt": {
+                        "type": "string"
+                      },
+                      "onForecastSky": {
+                        "additionalProperties": false,
+                        "description": "The same 24 hours with no front: the no-control cost and the plan's cost on the forecast sky, for comparison.",
+                        "properties": {
+                          "withNetCostInr": {
+                            "type": "number"
+                          },
+                          "withoutNetCostInr": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "withoutNetCostInr",
+                          "withNetCostInr"
+                        ],
+                        "type": "object"
+                      },
+                      "reductionPercent": {
+                        "type": "number"
+                      },
+                      "solarLostKwh": {
+                        "description": "Sun the front takes from the planned day, in kWh of solar output.",
+                        "type": "number"
+                      },
+                      "solarLostPercentOfDay": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "solarNowKw": {
+                        "description": "The solar forecast's output for the current hour. Null when the forecast does not cover it.",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "with": {
+                        "additionalProperties": false,
+                        "description": "With AVISHKAR: the plan made knowing the front is coming; the same sky.",
+                        "properties": {
+                          "importKwh": {
+                            "type": "number"
+                          },
+                          "netCostInr": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "importKwh",
+                          "netCostInr"
+                        ],
+                        "type": "object"
+                      },
+                      "without": {
+                        "additionalProperties": false,
+                        "description": "Without AVISHKAR: no battery control, no shifting; the sky with the front.",
+                        "properties": {
+                          "importKwh": {
+                            "type": "number"
+                          },
+                          "netCostInr": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "importKwh",
+                          "netCostInr"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "solarNowKw",
+                      "frontArrivesAt",
+                      "frontEndsAt",
+                      "reductionPercent",
+                      "solarLostKwh",
+                      "solarLostPercentOfDay",
+                      "batteryNowPercent",
+                      "batteryNowBasis",
+                      "eveningDemand",
+                      "advice",
+                      "without",
+                      "with",
+                      "difference",
+                      "onForecastSky",
+                      "frontCost"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "request",
+          "madeAt",
+          "horizon",
+          "hourly",
+          "result",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "CloudFrontScenarioInput": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "horizon": {
+            "properties": {
+              "start": {
+                "type": "string"
+              },
+              "stepHours": {
+                "type": "number"
+              },
+              "steps": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "start",
+              "stepHours",
+              "steps"
+            ],
+            "type": "object"
+          },
+          "hourly": {
+            "properties": {
+              "batteryChargeKw": {
+                "description": "The plan that knows about the front.",
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "batteryChargeUnawareKw": {
+                "description": "The plan made on the forecast sky, without the front.",
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "batterySocKwh": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "gridImportKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "gridImportUnawareKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "loadKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "solarKw": {
+                "description": "The solar forecast on the forecast sky.",
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "solarWithFrontKw": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "times": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "times",
+              "solarKw",
+              "solarWithFrontKw",
+              "loadKw",
+              "batteryChargeKw",
+              "batteryChargeUnawareKw",
+              "batterySocKwh",
+              "gridImportKw",
+              "gridImportUnawareKw"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "CLOUD FRONT SCENARIO",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "request": {
+            "properties": {
+              "arrivalMinutes": {
+                "type": "number"
+              },
+              "durationHours": {
+                "type": "number"
+              },
+              "mode": {
+                "enum": [
+                  "SAVE_MONEY",
+                  "INDEPENDENCE",
+                  "RESILIENCE",
+                  "GREEN",
+                  "REVENUE",
+                  "BALANCED"
+                ],
+                "type": "string"
+              },
+              "reductionPercent": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "arrivalMinutes",
+              "reductionPercent",
+              "durationHours",
+              "mode"
+            ],
+            "type": "object"
+          },
+          "result": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "advice": {
+                        "properties": {
+                          "code": {
+                            "enum": [
+                              "CHARGE_NOW",
+                              "HOLD_CHARGE",
+                              "NO_CHANGE",
+                              "NO_BATTERY"
+                            ],
+                            "type": "string"
+                          },
+                          "extraChargeKwh": {
+                            "type": "number"
+                          },
+                          "extraHeldKwh": {
+                            "type": "number"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "text",
+                          "extraChargeKwh",
+                          "extraHeldKwh"
+                        ],
+                        "type": "object"
+                      },
+                      "batteryNowBasis": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "USER_ENTERED",
+                              "ASSUMPTION"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "batteryNowPercent": {
+                        "description": "The battery's charge at the start of the plan, as a share of its capacity; null with no battery.",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "difference": {
+                        "properties": {
+                          "importKwh": {
+                            "description": "Grid energy without AVISHKAR less with it. Negative when the plan buys more, for example to store cheap night energy that replaces dear evening energy.",
+                            "type": "number"
+                          },
+                          "savingsInr": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "importKwh",
+                          "savingsInr"
+                        ],
+                        "type": "object"
+                      },
+                      "eveningDemand": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "eveningMeanKw": {
+                                "type": "number"
+                              },
+                              "level": {
+                                "enum": [
+                                  "HIGH",
+                                  "NORMAL",
+                                  "LOW"
+                                ],
+                                "type": "string"
+                              },
+                              "meanKw": {
+                                "type": "number"
+                              },
+                              "ratio": {
+                                "type": "number"
+                              },
+                              "rule": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "level",
+                              "eveningMeanKw",
+                              "meanKw",
+                              "ratio",
+                              "rule"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "frontArrivesAt": {
+                        "type": "string"
+                      },
+                      "frontCost": {
+                        "properties": {
+                          "withAvishkarInr": {
+                            "description": "What the front adds to the plan's bill: the plan's cost knowing the front less the plan's cost on the forecast sky. It can exceed the no-control figure, because the plan had more to lose from the lost sun.",
+                            "type": "number"
+                          },
+                          "withoutAvishkarInr": {
+                            "description": "What the front adds to the no-control bill: the no-control cost under the front less the no-control cost under the forecast sky.",
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "withoutAvishkarInr",
+                          "withAvishkarInr"
+                        ],
+                        "type": "object"
+                      },
+                      "frontEndsAt": {
+                        "type": "string"
+                      },
+                      "onForecastSky": {
+                        "description": "The same 24 hours with no front: the no-control cost and the plan's cost on the forecast sky, for comparison.",
+                        "properties": {
+                          "withNetCostInr": {
+                            "type": "number"
+                          },
+                          "withoutNetCostInr": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "withoutNetCostInr",
+                          "withNetCostInr"
+                        ],
+                        "type": "object"
+                      },
+                      "reductionPercent": {
+                        "type": "number"
+                      },
+                      "solarLostKwh": {
+                        "description": "Sun the front takes from the planned day, in kWh of solar output.",
+                        "type": "number"
+                      },
+                      "solarLostPercentOfDay": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "solarNowKw": {
+                        "description": "The solar forecast's output for the current hour. Null when the forecast does not cover it.",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "with": {
+                        "description": "With AVISHKAR: the plan made knowing the front is coming; the same sky.",
+                        "properties": {
+                          "importKwh": {
+                            "type": "number"
+                          },
+                          "netCostInr": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "importKwh",
+                          "netCostInr"
+                        ],
+                        "type": "object"
+                      },
+                      "without": {
+                        "description": "Without AVISHKAR: no battery control, no shifting; the sky with the front.",
+                        "properties": {
+                          "importKwh": {
+                            "type": "number"
+                          },
+                          "netCostInr": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "importKwh",
+                          "netCostInr"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "solarNowKw",
+                      "frontArrivesAt",
+                      "frontEndsAt",
+                      "reductionPercent",
+                      "solarLostKwh",
+                      "solarLostPercentOfDay",
+                      "batteryNowPercent",
+                      "batteryNowBasis",
+                      "eveningDemand",
+                      "advice",
+                      "without",
+                      "with",
+                      "difference",
+                      "onForecastSky",
+                      "frontCost"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "request",
+          "madeAt",
+          "horizon",
+          "hourly",
+          "result",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
       "CommunitySimulation": {
         "additionalProperties": false,
         "properties": {
@@ -1985,6 +2903,168 @@
           "generatedBy",
           "notes",
           "suggestions"
+        ],
+        "type": "object"
+      },
+      "DemoWorld": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "const": "DEMO DATA",
+            "type": "string"
+          },
+          "loaded": {
+            "description": "True when all four demo properties are in your account.",
+            "type": "boolean"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "sites": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "city": {
+                  "type": "string"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "latitude": {
+                  "type": "number"
+                },
+                "longitude": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "propertyId": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The demo property in your account, or null when it is not loaded."
+                },
+                "story": {
+                  "type": "string"
+                },
+                "tariff": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "name",
+                "city",
+                "latitude",
+                "longitude",
+                "story",
+                "propertyId",
+                "tariff"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "loaded",
+          "sites",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "DemoWorldInput": {
+        "properties": {
+          "label": {
+            "const": "DEMO DATA",
+            "type": "string"
+          },
+          "loaded": {
+            "description": "True when all four demo properties are in your account.",
+            "type": "boolean"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "sites": {
+            "items": {
+              "properties": {
+                "city": {
+                  "type": "string"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "latitude": {
+                  "type": "number"
+                },
+                "longitude": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "propertyId": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The demo property in your account, or null when it is not loaded."
+                },
+                "story": {
+                  "type": "string"
+                },
+                "tariff": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "name",
+                "city",
+                "latitude",
+                "longitude",
+                "story",
+                "propertyId",
+                "tariff"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "loaded",
+          "sites",
+          "notes"
         ],
         "type": "object"
       },
@@ -7952,6 +9032,10 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "type": "string"
           },
+          "isDemo": {
+            "description": "True for a demo-world property (DEMO DATA): its readings and equipment are invented.",
+            "type": "boolean"
+          },
           "latitude": {
             "type": "number"
           },
@@ -8021,6 +9105,7 @@
           "latitude",
           "longitude",
           "address",
+          "isDemo",
           "position",
           "geometry",
           "tariffPlanId",
@@ -8103,6 +9188,10 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "type": "string"
           },
+          "isDemo": {
+            "description": "True for a demo-world property (DEMO DATA): its readings and equipment are invented.",
+            "type": "boolean"
+          },
           "latitude": {
             "type": "number"
           },
@@ -8171,6 +9260,7 @@
           "latitude",
           "longitude",
           "address",
+          "isDemo",
           "position",
           "geometry",
           "tariffPlanId",
@@ -12364,6 +13454,10 @@
             ],
             "type": "object"
           },
+          "isDemo": {
+            "description": "True when the pattern property is a demo property: every value is then labelled DEMO.",
+            "type": "boolean"
+          },
           "label": {
             "const": "VIRTUAL POWER PLANT SIMULATION",
             "type": "string"
@@ -12513,6 +13607,7 @@
         },
         "required": [
           "label",
+          "isDemo",
           "request",
           "month",
           "dayType",
@@ -12648,6 +13743,10 @@
               "batteryKwh"
             ],
             "type": "object"
+          },
+          "isDemo": {
+            "description": "True when the pattern property is a demo property: every value is then labelled DEMO.",
+            "type": "boolean"
           },
           "label": {
             "const": "VIRTUAL POWER PLANT SIMULATION",
@@ -12796,6 +13895,7 @@
         },
         "required": [
           "label",
+          "isDemo",
           "request",
           "month",
           "dayType",
@@ -13496,6 +14596,179 @@
         "summary": "What the Copilot can look at, and the questions it can answer",
         "tags": [
           "copilot"
+        ]
+      }
+    },
+    "/api/demo/world": {
+      "delete": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "removed": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "removed"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Remove the demo properties and everything computed from them",
+        "tags": [
+          "demo"
+        ]
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoWorld"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "The demo world: four invented properties, and whether they are in your account",
+        "tags": [
+          "demo"
+        ]
+      },
+      "post": {
+        "description": "Bengaluru, Pune, Jaipur and Mathura: invented readings (hourly, 120 days, generated deterministically), invented equipment, and the sourced catalogue tariff where one exists. Every value computed from them is labelled DEMO and they are never added up with your own properties.",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "created": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "world": {
+                      "$ref": "#/components/schemas/DemoWorld"
+                    }
+                  },
+                  "required": [
+                    "created",
+                    "world"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Add the demo properties to your account (labelled DEMO DATA; loading twice changes nothing)",
+        "tags": [
+          "demo"
         ]
       }
     },
@@ -16944,6 +18217,119 @@
         "summary": "Change a battery",
         "tags": [
           "assets"
+        ]
+      }
+    },
+    "/api/properties/{id}/cloud-front": {
+      "post": {
+        "description": "CLOUD FRONT SCENARIO. The front is one you set (when it arrives, how much sun it takes, how long it lasts): AVISHKAR has no cloud-nowcast source, so a front is never observed. The same day is planned twice by the planner, on the forecast sky and on the sky with the front. The answer says what the plan does differently, and the grid energy and cost with and without AVISHKAR. Nothing is stored.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudFrontRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloudFrontScenario"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "What a cloud front crossing the sky would do to the next 24 hours, with and without AVISHKAR",
+        "tags": [
+          "scenarios"
         ]
       }
     },
@@ -22192,6 +23578,10 @@
     {
       "description": "Ask about a property: answers are worded from backend tools, with the supporting data to inspect",
       "name": "copilot"
+    },
+    {
+      "description": "The demo world: invented properties in real places, labelled DEMO DATA, for trying everything before you have a meter file",
+      "name": "demo"
     },
     {
       "description": "Your properties together, and a simulated virtual power plant of synthetic homes (always labelled a simulation)",

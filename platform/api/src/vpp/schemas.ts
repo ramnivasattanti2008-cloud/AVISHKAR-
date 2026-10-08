@@ -4,6 +4,7 @@ import { measured } from "../schemas.js";
 export const VppSchema = z
   .object({
     label: z.literal("VIRTUAL POWER PLANT SIMULATION"),
+    isDemo: z.boolean().describe("True when the pattern property is a demo property: every value is then labelled DEMO."),
     request: z.record(z.string(), z.unknown()),
     month: z.number(),
     dayType: z.enum(["weekday", "weekend"]),

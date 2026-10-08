@@ -122,7 +122,7 @@ export function TariffView({ id }: { id: string }) {
         <p className="text-sm text-muted">Electricity tariff and subsidy rules</p>
       </header>
       <div className="mt-4">
-        <PropertyTabs id={id} current="/tariff" />
+        <PropertyTabs id={id} current="/tariff" demo={property?.isDemo} />
       </div>
 
       <div aria-live="polite" className="mt-3 min-h-6">

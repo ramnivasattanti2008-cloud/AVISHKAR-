@@ -14,7 +14,7 @@ Two efforts live here. (1) The **Python EMS** above, finished and documented in 
 Read order for a new session: this file, then **`docs/WORKLOG.md`** (what was done and what was NOT done, newest last;
 append to it before you stop), then `docs/KNOWN_ISSUES.md` (Python EMS drawbacks), then `README.md` (results,
 "How it works", limitations). For the platform: `platform/STATUS.md` (honest ledger per spec section),
-`platform/ARCHITECTURE.md` (decisions D1..D19), `platform/SPEC.md` (the owner's requirements). `docs/DEMO_GUIDE.md` is the
+`platform/ARCHITECTURE.md` (decisions D1..D20), `platform/SPEC.md` (the owner's requirements). `docs/DEMO_GUIDE.md` is the
 demo-video script, `docs/RESEARCH.md` the competitor/rules notes.
 
 ## Commands
@@ -97,7 +97,8 @@ and `platform/web` shows them (map, property page, forecast charts, system healt
 calculator (milestone 3a, WORKLOG entry 8), assets, meter-data import and Energy DNA (milestone 3b, entry 9), and the Python
 engine with solar and load forecasts and the planner (milestone 4, entry 10) are built, and so are the engines on top of them
 (learning loop, yearly what-if and economics, opportunities, Copilot and report, community view and VPP simulator; entry 10).
-Not built: the city map, demo world, human-control modes, the job runner, admin, deployment files.
+The demo world (`api/src/demo`, DEMO relabelling hook) and the cloud-front scenario (`api/src/cloudfront`) are built too. Not built: the city map,
+human-control modes, the job runner, admin, deployment files.
 
 ```bash
 pnpm -C platform install                      # also generates the Prisma client

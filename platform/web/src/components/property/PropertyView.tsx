@@ -103,7 +103,7 @@ export function PropertyView({ id }: { id: string }) {
       </header>
 
       <div className="mt-4">
-        <PropertyTabs id={id} current="" />
+        <PropertyTabs id={id} current="" demo={p.isDemo} />
       </div>
 
       <div aria-live="polite" className="mt-3 min-h-6">

@@ -586,6 +586,171 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/demo/world": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The demo world: four invented properties, and whether they are in your account */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DemoWorld"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Add the demo properties to your account (labelled DEMO DATA; loading twice changes nothing)
+         * @description Bengaluru, Pune, Jaipur and Mathura: invented readings (hourly, 120 days, generated deterministically), invented equipment, and the sourced catalogue tariff where one exists. Every value computed from them is labelled DEMO and they are never added up with your own properties.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            created: number;
+                            world: components["schemas"]["DemoWorld"];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        /** Remove the demo properties and everything computed from them */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            removed: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/eligibility": {
         parameters: {
             query?: never;
@@ -2603,6 +2768,114 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/properties/{id}/cloud-front": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * What a cloud front crossing the sky would do to the next 24 hours, with and without AVISHKAR
+         * @description CLOUD FRONT SCENARIO. The front is one you set (when it arrives, how much sun it takes, how long it lasts): AVISHKAR has no cloud-nowcast source, so a front is never observed. The same day is planned twice by the planner, on the forecast sky and on the sky with the front. The answer says what the plan does differently, and the grid energy and cost with and without AVISHKAR. Nothing is stored.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CloudFrontRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CloudFrontScenario"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/properties/{id}/cloud-nowcast": {
@@ -6547,6 +6820,238 @@ export interface components {
             /** @description Capacity between the minimum and maximum charge. */
             usableKwh: number;
         };
+        CloudFrontRequest: {
+            /**
+             * @description Minutes from now until the front's leading edge reaches the property. The default is an example, not a prediction.
+             * @default 38
+             */
+            arrivalMinutes: number;
+            /**
+             * @description How long the front takes to pass.
+             * @default 3
+             */
+            durationHours: number;
+            /**
+             * @description What the plan favours, as for any plan.
+             * @default BALANCED
+             * @enum {string}
+             */
+            mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            /**
+             * @description Share of the sun lost while the front is overhead. The default is an example, not a prediction.
+             * @default 22
+             */
+            reductionPercent: number;
+            /** @description The battery's charge now, if you know it. */
+            startSocPercent?: number | null;
+        };
+        CloudFrontRequestInput: {
+            /**
+             * @description Minutes from now until the front's leading edge reaches the property. The default is an example, not a prediction.
+             * @default 38
+             */
+            arrivalMinutes: number;
+            /**
+             * @description How long the front takes to pass.
+             * @default 3
+             */
+            durationHours: number;
+            /**
+             * @description What the plan favours, as for any plan.
+             * @default BALANCED
+             * @enum {string}
+             */
+            mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            /**
+             * @description Share of the sun lost while the front is overhead. The default is an example, not a prediction.
+             * @default 22
+             */
+            reductionPercent: number;
+            /** @description The battery's charge now, if you know it. */
+            startSocPercent?: number | null;
+        };
+        CloudFrontScenario: {
+            assumptions: string[];
+            horizon: {
+                start: string;
+                stepHours: number;
+                steps: number;
+            };
+            hourly: {
+                /** @description The plan that knows about the front. */
+                batteryChargeKw: number[];
+                /** @description The plan made on the forecast sky, without the front. */
+                batteryChargeUnawareKw: number[];
+                batterySocKwh: number[];
+                gridImportKw: number[];
+                gridImportUnawareKw: number[];
+                loadKw: number[];
+                /** @description The solar forecast on the forecast sky. */
+                solarKw: number[];
+                solarWithFrontKw: number[];
+                times: string[];
+            };
+            /** @constant */
+            label: "CLOUD FRONT SCENARIO";
+            madeAt: string;
+            notes: string[];
+            request: {
+                arrivalMinutes: number;
+                durationHours: number;
+                /** @enum {string} */
+                mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+                reductionPercent: number;
+            };
+            result: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    advice: {
+                        /** @enum {string} */
+                        code: "CHARGE_NOW" | "HOLD_CHARGE" | "NO_CHANGE" | "NO_BATTERY";
+                        extraChargeKwh: number;
+                        extraHeldKwh: number;
+                        text: string;
+                    };
+                    batteryNowBasis: ("USER_ENTERED" | "ASSUMPTION") | null;
+                    /** @description The battery's charge at the start of the plan, as a share of its capacity; null with no battery. */
+                    batteryNowPercent: number | null;
+                    difference: {
+                        /** @description Grid energy without AVISHKAR less with it. Negative when the plan buys more, for example to store cheap night energy that replaces dear evening energy. */
+                        importKwh: number;
+                        savingsInr: number;
+                    };
+                    eveningDemand: {
+                        eveningMeanKw: number;
+                        /** @enum {string} */
+                        level: "HIGH" | "NORMAL" | "LOW";
+                        meanKw: number;
+                        ratio: number;
+                        rule: string;
+                    } | null;
+                    frontArrivesAt: string;
+                    frontCost: {
+                        /** @description What the front adds to the plan's bill: the plan's cost knowing the front less the plan's cost on the forecast sky. It can exceed the no-control figure, because the plan had more to lose from the lost sun. */
+                        withAvishkarInr: number;
+                        /** @description What the front adds to the no-control bill: the no-control cost under the front less the no-control cost under the forecast sky. */
+                        withoutAvishkarInr: number;
+                    };
+                    frontEndsAt: string;
+                    /** @description The same 24 hours with no front: the no-control cost and the plan's cost on the forecast sky, for comparison. */
+                    onForecastSky: {
+                        withNetCostInr: number;
+                        withoutNetCostInr: number;
+                    };
+                    reductionPercent: number;
+                    /** @description Sun the front takes from the planned day, in kWh of solar output. */
+                    solarLostKwh: number;
+                    solarLostPercentOfDay: number | null;
+                    /** @description The solar forecast's output for the current hour. Null when the forecast does not cover it. */
+                    solarNowKw: number | null;
+                    /** @description With AVISHKAR: the plan made knowing the front is coming; the same sky. */
+                    with: {
+                        importKwh: number;
+                        netCostInr: number;
+                    };
+                    /** @description Without AVISHKAR: no battery control, no shifting; the sky with the front. */
+                    without: {
+                        importKwh: number;
+                        netCostInr: number;
+                    };
+                } | null;
+            };
+        };
+        CloudFrontScenarioInput: {
+            assumptions: string[];
+            horizon: {
+                start: string;
+                stepHours: number;
+                steps: number;
+            };
+            hourly: {
+                /** @description The plan that knows about the front. */
+                batteryChargeKw: number[];
+                /** @description The plan made on the forecast sky, without the front. */
+                batteryChargeUnawareKw: number[];
+                batterySocKwh: number[];
+                gridImportKw: number[];
+                gridImportUnawareKw: number[];
+                loadKw: number[];
+                /** @description The solar forecast on the forecast sky. */
+                solarKw: number[];
+                solarWithFrontKw: number[];
+                times: string[];
+            };
+            /** @constant */
+            label: "CLOUD FRONT SCENARIO";
+            madeAt: string;
+            notes: string[];
+            request: {
+                arrivalMinutes: number;
+                durationHours: number;
+                /** @enum {string} */
+                mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+                reductionPercent: number;
+            };
+            result: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    advice: {
+                        /** @enum {string} */
+                        code: "CHARGE_NOW" | "HOLD_CHARGE" | "NO_CHANGE" | "NO_BATTERY";
+                        extraChargeKwh: number;
+                        extraHeldKwh: number;
+                        text: string;
+                    };
+                    batteryNowBasis: ("USER_ENTERED" | "ASSUMPTION") | null;
+                    /** @description The battery's charge at the start of the plan, as a share of its capacity; null with no battery. */
+                    batteryNowPercent: number | null;
+                    difference: {
+                        /** @description Grid energy without AVISHKAR less with it. Negative when the plan buys more, for example to store cheap night energy that replaces dear evening energy. */
+                        importKwh: number;
+                        savingsInr: number;
+                    };
+                    eveningDemand: {
+                        eveningMeanKw: number;
+                        /** @enum {string} */
+                        level: "HIGH" | "NORMAL" | "LOW";
+                        meanKw: number;
+                        ratio: number;
+                        rule: string;
+                    } | null;
+                    frontArrivesAt: string;
+                    frontCost: {
+                        /** @description What the front adds to the plan's bill: the plan's cost knowing the front less the plan's cost on the forecast sky. It can exceed the no-control figure, because the plan had more to lose from the lost sun. */
+                        withAvishkarInr: number;
+                        /** @description What the front adds to the no-control bill: the no-control cost under the front less the no-control cost under the forecast sky. */
+                        withoutAvishkarInr: number;
+                    };
+                    frontEndsAt: string;
+                    /** @description The same 24 hours with no front: the no-control cost and the plan's cost on the forecast sky, for comparison. */
+                    onForecastSky: {
+                        withNetCostInr: number;
+                        withoutNetCostInr: number;
+                    };
+                    reductionPercent: number;
+                    /** @description Sun the front takes from the planned day, in kWh of solar output. */
+                    solarLostKwh: number;
+                    solarLostPercentOfDay: number | null;
+                    /** @description The solar forecast's output for the current hour. Null when the forecast does not cover it. */
+                    solarNowKw: number | null;
+                    /** @description With AVISHKAR: the plan made knowing the front is coming; the same sky. */
+                    with: {
+                        importKwh: number;
+                        netCostInr: number;
+                    };
+                    /** @description Without AVISHKAR: no battery control, no shifting; the sky with the front. */
+                    without: {
+                        importKwh: number;
+                        netCostInr: number;
+                    };
+                } | null;
+            };
+        };
         CommunitySimulation: {
             /** @enum {string} */
             dayType: "weekday" | "weekend";
@@ -6699,6 +7204,42 @@ export interface components {
                 /** @enum {string} */
                 tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
                 unavailableReason: string | null;
+            }[];
+        };
+        DemoWorld: {
+            /** @constant */
+            label: "DEMO DATA";
+            /** @description True when all four demo properties are in your account. */
+            loaded: boolean;
+            notes: string[];
+            sites: {
+                city: string;
+                key: string;
+                latitude: number;
+                longitude: number;
+                name: string;
+                /** @description The demo property in your account, or null when it is not loaded. */
+                propertyId: string | null;
+                story: string;
+                tariff: string | null;
+            }[];
+        };
+        DemoWorldInput: {
+            /** @constant */
+            label: "DEMO DATA";
+            /** @description True when all four demo properties are in your account. */
+            loaded: boolean;
+            notes: string[];
+            sites: {
+                city: string;
+                key: string;
+                latitude: number;
+                longitude: number;
+                name: string;
+                /** @description The demo property in your account, or null when it is not loaded. */
+                propertyId: string | null;
+                story: string;
+                tariff: string | null;
             }[];
         };
         EnergyDna: {
@@ -8022,6 +8563,8 @@ export interface components {
             };
             /** Format: uuid */
             id: string;
+            /** @description True for a demo-world property (DEMO DATA): its readings and equipment are invented. */
+            isDemo: boolean;
             latitude: number;
             longitude: number;
             name: string;
@@ -8056,6 +8599,8 @@ export interface components {
             };
             /** Format: uuid */
             id: string;
+            /** @description True for a demo-world property (DEMO DATA): its readings and equipment are invented. */
+            isDemo: boolean;
             latitude: number;
             longitude: number;
             name: string;
@@ -9089,6 +9634,8 @@ export interface components {
                 loadKw: number[];
                 solarKw: number[];
             };
+            /** @description True when the pattern property is a demo property: every value is then labelled DEMO. */
+            isDemo: boolean;
             /** @constant */
             label: "VIRTUAL POWER PLANT SIMULATION";
             month: number;
@@ -9151,6 +9698,8 @@ export interface components {
                 loadKw: number[];
                 solarKw: number[];
             };
+            /** @description True when the pattern property is a demo property: every value is then labelled DEMO. */
+            isDemo: boolean;
             /** @constant */
             label: "VIRTUAL POWER PLANT SIMULATION";
             month: number;

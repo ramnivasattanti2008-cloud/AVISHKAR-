@@ -63,7 +63,7 @@ export function MeterDataView({ id }: { id: string }) {
         <p className="text-sm text-muted">Meter data and Energy DNA</p>
       </header>
       <div className="mt-4">
-        <PropertyTabs id={id} current="/meter-data" />
+        <PropertyTabs id={id} current="/meter-data" demo={property?.isDemo} />
       </div>
 
       <div aria-live="polite" className="mt-3 min-h-6">

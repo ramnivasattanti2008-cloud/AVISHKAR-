@@ -185,6 +185,7 @@ What-if: today's setup against added solar, a battery or another tariff over a t
 
 | Method | Path | What it does |
 |---|---|---|
+| POST | `/api/properties/{id}/cloud-front` | What a cloud front crossing the sky would do to the next 24 hours, with and without AVISHKAR |
 | POST | `/api/properties/{id}/opportunities` | What is worth doing at this property |
 | GET | `/api/properties/{id}/scenarios` | Scenarios run for a property, newest first |
 | POST | `/api/properties/{id}/scenarios` | What would adding solar, a battery or a different tariff do over a year |
@@ -200,6 +201,16 @@ Ask about a property: answers are worded from backend tools, with the supporting
 | GET | `/api/copilot/tools` | What the Copilot can look at, and the questions it can answer |
 | POST | `/api/properties/{id}/copilot/ask` | Ask about this property |
 | POST | `/api/properties/{id}/copilot/tools/{tool}` | Call one tool directly and inspect what it returns |
+
+### demo
+
+The demo world: invented properties in real places, labelled DEMO DATA, for trying everything before you have a meter file
+
+| Method | Path | What it does |
+|---|---|---|
+| DELETE | `/api/demo/world` | Remove the demo properties and everything computed from them |
+| GET | `/api/demo/world` | The demo world: four invented properties, and whether they are in your account |
+| POST | `/api/demo/world` | Add the demo properties to your account (labelled DEMO DATA; loading twice changes nothing) |
 
 ### community
 

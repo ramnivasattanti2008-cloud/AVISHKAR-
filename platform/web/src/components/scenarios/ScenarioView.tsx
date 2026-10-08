@@ -190,7 +190,7 @@ export function ScenarioView({ id }: { id: string }) {
         <p className="text-sm text-muted">What if: a year of difference</p>
       </header>
       <div className="mt-4">
-        <PropertyTabs id={id} current="/what-if" />
+        <PropertyTabs id={id} current="/what-if" demo={property?.isDemo} />
       </div>
 
       <section className="card mt-4 p-4" aria-label="What could be worth doing">

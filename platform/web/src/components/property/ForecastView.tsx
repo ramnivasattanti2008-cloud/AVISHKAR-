@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, describeError } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
-import type { WeatherReport } from "@/lib/types";
+import type { Property, WeatherReport } from "@/lib/types";
 import { useAuth } from "../AuthProvider";
 import { ProvenanceDetails, StatusBadge } from "../Provenance";
 import { HourlyChart } from "./HourlyChart";
@@ -24,6 +24,7 @@ export function ForecastView({ id }: { id: string }) {
   const { user, loading } = useAuth();
   const [report, setReport] = useState<WeatherReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [demo, setDemo] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -31,6 +32,10 @@ export function ForecastView({ id }: { id: string }) {
     api<WeatherReport>(`/api/properties/${id}/weather`, { query: { days: 3 } })
       .then((r) => live && setReport(r))
       .catch((e) => live && setError(describeError(e)));
+    // only to show the demo banner; the forecast does not depend on it
+    api<Property>(`/api/properties/${id}`)
+      .then((p) => live && setDemo(p.isDemo))
+      .catch(() => undefined);
     return () => {
       live = false;
     };
@@ -48,7 +53,7 @@ export function ForecastView({ id }: { id: string }) {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6">
       <h1 className="text-2xl font-bold">Forecast</h1>
-      <div className="mt-3"><PropertyTabs id={id} current="/forecast" /></div>
+      <div className="mt-3"><PropertyTabs id={id} current="/forecast" demo={demo} /></div>
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
         <SolarForecastPanel id={id} />
         <LoadForecastPanel id={id} />

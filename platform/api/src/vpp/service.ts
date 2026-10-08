@@ -181,9 +181,11 @@ export async function simulateVpp(deps: ForecastDeps, userId: string, input: Vpp
   ];
   if (evStrandedKwh > 1e-6) assumptions.push(`Even uncoordinated, ${round(evStrandedKwh)} kWh of vehicle charging could not finish before midnight at the charger power given; it is left out of both sides.`);
   const notes = [...out.notes];
+  if (property.isDemo) notes.unshift("DEMO DATA: the pattern property is a demo property, so every figure here is built on invented readings and equipment.");
 
   return {
     label: "VIRTUAL POWER PLANT SIMULATION" as const,
+    isDemo: property.isDemo,
     request: input,
     month,
     dayType: input.dayType,
