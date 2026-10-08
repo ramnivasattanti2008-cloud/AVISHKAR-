@@ -25,6 +25,7 @@ import { energyRoutes } from "./routes/energy.js";
 import { forecastRoutes } from "./routes/forecast.js";
 import { geocodeRoutes } from "./routes/geocode.js";
 import { healthRoutes } from "./routes/health.js";
+import { opportunityRoutes } from "./routes/opportunities.js";
 import { planRoutes } from "./routes/plan.js";
 import { policyRoutes } from "./routes/policy.js";
 import { propertyRoutes } from "./routes/properties.js";
@@ -154,5 +155,6 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(forecastRoutes, { deps });
   await app.register(planRoutes, { deps });
   await app.register(scenarioRoutes, { deps });
+  await app.register(opportunityRoutes, { deps });
   return app;
 }

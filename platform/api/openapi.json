@@ -5172,6 +5172,321 @@
         ],
         "type": "object"
       },
+      "Opportunities": {
+        "additionalProperties": false,
+        "properties": {
+          "checked": {
+            "description": "Changes that were tried and did not save enough to list, with what they would save (it can be negative).",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "annualSavingsInr": {
+                  "type": "number"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title",
+                "annualSavingsInr"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Opportunity"
+            },
+            "type": "array"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "propertyId",
+          "generatedAt",
+          "items",
+          "checked",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "OpportunitiesInput": {
+        "properties": {
+          "checked": {
+            "description": "Changes that were tried and did not save enough to list, with what they would save (it can be negative).",
+            "items": {
+              "properties": {
+                "annualSavingsInr": {
+                  "type": "number"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title",
+                "annualSavingsInr"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OpportunityInput"
+            },
+            "type": "array"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "propertyId",
+          "generatedAt",
+          "items",
+          "checked",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "Opportunity": {
+        "additionalProperties": false,
+        "properties": {
+          "annualSavingsInr": {
+            "description": "A typical year's saving; null for a suggestion about data.",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "breakEven": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "basis": {
+                    "type": "string"
+                  },
+                  "perUnitInr": {
+                    "type": "number"
+                  },
+                  "totalInr": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "totalInr",
+                  "perUnitInr",
+                  "unit",
+                  "basis"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The most it could cost and still repay itself over its life. Compare it with a quote; AVISHKAR has no price list."
+          },
+          "detail": {
+            "type": "string"
+          },
+          "href": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ADD_SOLAR",
+              "ADD_BATTERY",
+              "CHANGE_TARIFF",
+              "PROVIDE_DATA"
+            ],
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "addBatteryKwh": {
+                    "type": "number"
+                  },
+                  "addSolarKwp": {
+                    "type": "number"
+                  },
+                  "tariffPlanId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "detail",
+          "annualSavingsInr",
+          "breakEven",
+          "provenance",
+          "scenario",
+          "href"
+        ],
+        "type": "object"
+      },
+      "OpportunityInput": {
+        "properties": {
+          "annualSavingsInr": {
+            "description": "A typical year's saving; null for a suggestion about data.",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "breakEven": {
+            "anyOf": [
+              {
+                "properties": {
+                  "basis": {
+                    "type": "string"
+                  },
+                  "perUnitInr": {
+                    "type": "number"
+                  },
+                  "totalInr": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "totalInr",
+                  "perUnitInr",
+                  "unit",
+                  "basis"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The most it could cost and still repay itself over its life. Compare it with a quote; AVISHKAR has no price list."
+          },
+          "detail": {
+            "type": "string"
+          },
+          "href": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ADD_SOLAR",
+              "ADD_BATTERY",
+              "CHANGE_TARIFF",
+              "PROVIDE_DATA"
+            ],
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/ProvenanceInput"
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "properties": {
+                  "addBatteryKwh": {
+                    "type": "number"
+                  },
+                  "addSolarKwp": {
+                    "type": "number"
+                  },
+                  "tariffPlanId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "detail",
+          "annualSavingsInr",
+          "breakEven",
+          "provenance",
+          "scenario",
+          "href"
+        ],
+        "type": "object"
+      },
       "Plan": {
         "additionalProperties": false,
         "properties": {
@@ -16424,6 +16739,109 @@
         "summary": "Forecast the property's electricity use from its own meter readings",
         "tags": [
           "forecast"
+        ]
+      }
+    },
+    "/api/properties/{id}/opportunities": {
+      "post": {
+        "description": "Tries a few example changes on the property's typical year (solar, a battery, another tariff it could really be on) and looks at what its records lack. A money suggestion carries the yearly saving and the most it could cost and still repay itself; there is no price list, so none is guessed. Changes that would not save enough are listed under `checked` with what they would save. Takes several seconds. Nothing is stored.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Opportunities"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "What is worth doing at this property",
+        "tags": [
+          "scenarios"
         ]
       }
     },

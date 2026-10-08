@@ -57,3 +57,5 @@ export type ForecastAccuracy = components["schemas"]["ForecastAccuracy"];
 export type Scenario = components["schemas"]["Scenario"];
 export type ScenarioSummary = components["schemas"]["ScenarioSummary"];
 export type ScenarioRequest = components["schemas"]["ScenarioRequestInput"];
+export type Opportunities = components["schemas"]["Opportunities"];
+export type Opportunity = components["schemas"]["Opportunity"];

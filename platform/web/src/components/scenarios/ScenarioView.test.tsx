@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PROPERTY_ID, fakeApi, json, property, scenario, scenarioSummary, tariffPlan } from "@/test/fixtures";
+import { PROPERTY_ID, fakeApi, json, opportunities, property, scenario, scenarioSummary, tariffPlan } from "@/test/fixtures";
 import { ScenarioView } from "./ScenarioView";
 
 const auth = vi.hoisted(() => ({ user: { id: "u1", email: "me@example.com", role: "USER", displayName: null } as { id: string; email: string; role: string; displayName: string | null } | null }));
@@ -9,7 +9,7 @@ vi.mock("../AuthProvider", () => ({ useAuth: () => ({ user: auth.user, loading: 
 
 const NO_TWIN = { error: { code: "NOT_FOUND", message: "No Energy Twin yet." } };
 
-function world(over: { post?: (body: unknown) => Response; history?: unknown[] } = {}) {
+function world(over: { post?: (body: unknown) => Response; history?: unknown[]; opps?: () => Response } = {}) {
   const api = fakeApi([
     ["GET", `/api/properties/${PROPERTY_ID}`, () => json(property())],
     ["GET", `/api/properties/${PROPERTY_ID}/twin`, () => json(NO_TWIN, 404)],
@@ -17,6 +17,7 @@ function world(over: { post?: (body: unknown) => Response; history?: unknown[] }
     ["GET", `/api/properties/${PROPERTY_ID}/scenarios`, () => json({ scenarios: over.history ?? [] })],
     ["GET", /\/scenarios\/[0-9a-f-]{36}$/, () => json(scenario({ id: "99999999-9999-4999-8999-999999999999", name: "An older one" }))],
     ["DELETE", /\/scenarios\/[0-9a-f-]{36}$/, () => new Response(null, { status: 204 })],
+    ["POST", `/api/properties/${PROPERTY_ID}/opportunities`, () => (over.opps ? over.opps() : json(opportunities()))],
     ["POST", `/api/properties/${PROPERTY_ID}/scenarios`, ({ body }) => (over.post ? over.post(body) : json(scenario(), 201))],
   ]);
   vi.stubGlobal("fetch", api.fetch);
@@ -154,6 +155,48 @@ describe("ScenarioView", () => {
     await screen.findByRole("form", { name: "Describe the change" });
     const select = within(form()).getByLabelText("Tariff");
     await waitFor(() => expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual(["Keep my current tariff", "Flat 7"]));
+  });
+
+  it("finds opportunities: money ones with the most they could cost, a data one with where to fix it, and what was tried and dropped", async () => {
+    world();
+    render(<ScenarioView id={PROPERTY_ID} />);
+    await screen.findByRole("form", { name: "Describe the change" });
+    await userEvent.click(screen.getByRole("button", { name: "Find opportunities" }));
+    const list = await screen.findByRole("list", { name: "Opportunities" });
+    const cards = within(list).getAllByRole("listitem");
+    expect(cards).toHaveLength(3);
+    expect(within(cards[0]!).getByText("Install a 10 kWh battery")).toBeInTheDocument();
+    expect(within(cards[0]!).getByText("about ₹10,900 a year")).toBeInTheDocument();
+    expect(within(cards[0]!).getByText(/Worth it if a quote is below/)).toHaveTextContent("₹10,300 per kWh (₹1,03,000 in all)");
+    expect(within(cards[0]!).getByText("ESTIMATED")).toBeInTheDocument();
+    expect(within(cards[2]!).getByRole("link", { name: "Go there" })).toHaveAttribute("href", `/property/${PROPERTY_ID}/assets`);
+    expect(within(cards[2]!).queryByText(/a year/)).not.toBeInTheDocument(); // a data suggestion has no money figure
+    const dropped = screen.getByText(/Also tried, and not worth listing \(2\)/);
+    await userEvent.click(dropped);
+    expect(screen.getByText("Switch to Flat 14: costs ₹4,200 a year more")).toBeInTheDocument();
+    expect(screen.getByText("Add a 5 kWh battery: saves only ₹60 a year")).toBeInTheDocument();
+    expect(screen.getByText(/a few example sizes, not a recommendation/)).toBeInTheDocument();
+  });
+
+  it("puts an opportunity's change into the form so the owner's own prices can be added", async () => {
+    world();
+    render(<ScenarioView id={PROPERTY_ID} />);
+    await screen.findByRole("form", { name: "Describe the change" });
+    await userEvent.click(screen.getByRole("button", { name: "Find opportunities" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Try this in the form: Install 3 kWp of solar" }));
+    expect(within(form()).getByLabelText(/Capacity to add, kWp/)).toHaveValue("3");
+    expect(within(form()).getByLabelText(/Capacity to add, kWh/)).toHaveValue("");
+    await userEvent.click(await screen.findByRole("button", { name: "Try this in the form: Install a 10 kWh battery" }));
+    expect(within(form()).getByLabelText(/Capacity to add, kWp/)).toHaveValue("");
+    expect(within(form()).getByLabelText(/Capacity to add, kWh/)).toHaveValue("10");
+  });
+
+  it("says why when opportunities cannot be found", async () => {
+    world({ opps: () => json({ error: { code: "ENGINE_UNAVAILABLE", message: "The planning engine is not answering, so plans and model forecasts are unavailable right now." } }, 503) });
+    render(<ScenarioView id={PROPERTY_ID} />);
+    await screen.findByRole("form", { name: "Describe the change" });
+    await userEvent.click(screen.getByRole("button", { name: "Find opportunities" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("planning engine is not answering");
   });
 
   it("asks you to sign in when you are not", async () => {

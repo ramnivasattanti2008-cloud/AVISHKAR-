@@ -1,4 +1,4 @@
-import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
+import type { Appliance, Battery, Bill, EnergyDna, EnergyImport, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -380,6 +380,22 @@ export function forecastAccuracy(over: Partial<ForecastAccuracy> = {}): Forecast
     },
     solar: { available: false, reason: "Solar forecasts are scored against the weather model's analysis, not against generation: there is no generation meter in the data to score them against." },
     notes: [],
+    ...over,
+  };
+}
+
+export function opportunities(over: Partial<Opportunities> = {}): Opportunities {
+  const p = provenance({ status: "ESTIMATED", provider: "avishkar-opportunities", dataType: "opportunity", notes: [] });
+  return {
+    propertyId: PROPERTY_ID,
+    generatedAt: "2026-10-08T10:00:00.000Z",
+    items: [
+      { id: "battery-10", kind: "ADD_BATTERY", title: "Install a 10 kWh battery", detail: "Saves about ₹10,900 a year by moving cheap or free energy into the dear hours.", annualSavingsInr: 10_900, breakEven: { totalInr: 103_000, perUnitInr: 10_300, unit: "kWh", basis: "the present value of the saving over 20 years at 8% a year" }, provenance: p, scenario: { addBatteryKwh: 10 }, href: "/what-if" },
+      { id: "solar-3", kind: "ADD_SOLAR", title: "Install 3 kWp of solar", detail: "Saves about ₹14,300 a year.", annualSavingsInr: 14_300, breakEven: { totalInr: 135_600, perUnitInr: 45_200, unit: "kWp", basis: "x" }, provenance: p, scenario: { addSolarKwp: 3 }, href: "/what-if" },
+      { id: "data-battery-charge", kind: "PROVIDE_DATA", title: "Enter your battery's charge", detail: "The plan assumes the battery starts at its reserve level when it does not know its charge.", annualSavingsInr: null, breakEven: null, provenance: provenance({ status: "REFERENCE", notes: [] }), scenario: null, href: "/assets" },
+    ],
+    checked: [{ title: "Switch to Flat 14", annualSavingsInr: -4_200 }, { title: "Add a 5 kWh battery", annualSavingsInr: 60 }],
+    notes: ["These are a few example sizes, not a recommendation: AVISHKAR has no price list."],
     ...over,
   };
 }

@@ -10,7 +10,7 @@ import { aggregateBatteries, exportBasisNote } from "../plan/service.js";
 import { evaluateEligibility } from "../policy/service.js";
 import { getProperty } from "../properties/service.js";
 import { type Measured, estimated, reference, unavailable } from "../provenance/index.js";
-import { getTariff } from "../tariff/service.js";
+import { type TariffPlanDto, getTariff } from "../tariff/service.js";
 import { type AnnualResult, type Config, type LoadModel, type PvSystemSpec, type YearContext, simulateYear } from "./annual.js";
 import { nextYearDays } from "./calendar.js";
 import { type Economics, economics } from "./economics.js";
@@ -87,12 +87,24 @@ const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "Ju
 
 // --------------------------------------------------------------------------------------- the run
 
-export async function runScenario(deps: ForecastDeps, userId: string, propertyId: string, req: ScenarioRequest, ctx: Ctx = {}): Promise<ScenarioDto> {
+export interface Prepared {
+  at: Date;
+  property: Awaited<ReturnType<typeof getProperty>>;
+  baseTariff: TariffPlanDto;
+  baseCfg: Config;
+  solarRows: SolarSystem[];
+  batteryRows: Battery[];
+  yctx: YearContext;
+  /** Things worth saying about the inputs themselves (a month with no readings of its own). */
+  notes: string[];
+}
+
+/** Everything a yearly estimate needs about the property, gathered once: its tariff, its own load pattern, its place's sun, its equipment. */
+export async function prepareYear(deps: ForecastDeps, userId: string, propertyId: string, ctx: Ctx): Promise<Prepared> {
   const { db, now } = deps;
   const engine = requireEngine(deps.engine);
   const at = now();
   const property = await getProperty(db, userId, propertyId, deps.policy);
-
   const row = await db.property.findUniqueOrThrow({ where: { id: propertyId }, select: { tariffPlanId: true } });
   const missing: { what: string; why: string }[] = [];
   const baseTariff = row.tariffPlanId ? await getTariff(db, userId, row.tariffPlanId, at) : null;
@@ -100,38 +112,49 @@ export async function runScenario(deps: ForecastDeps, userId: string, propertyId
   const dna = await latestDna(db, propertyId);
   if (!dna) missing.push({ what: "load", why: "Import at least a week of meter readings on the Meter data tab: the estimate needs to know when and how much you use." });
   if (missing.length > 0 || !baseTariff || !dna) throw new AppError("PLAN_INPUTS_MISSING", `A yearly estimate cannot be made yet: ${missing.map((m) => m.why).join(" ")}`, { missing });
-  const scenarioTariff = req.tariffPlanId ? await getTariff(db, userId, req.tariffPlanId, at) : baseTariff;
 
   const resource = await deps.providers.solarResource.climatology(property.latitude, property.longitude, { requestId: ctx.requestId, now });
   if (!resource.value) {
     throw new AppError("PLAN_INPUTS_MISSING", "The solar resource for this place could not be read, so a year of solar output cannot be estimated.", { missing: [{ what: "solar_resource", why: resource.provenance.notes[0] ?? "Unavailable." }] });
   }
-
   const [solarRows, batteryRows] = await Promise.all([db.solarSystem.findMany({ where: { propertyId, status: "EXISTING" }, orderBy: { createdAt: "asc" } }), db.battery.findMany({ where: { propertyId, status: "EXISTING" }, orderBy: { createdAt: "asc" } })]);
-  const assumptions: string[] = [];
+  const load = loadModel(dna);
+  const notes: string[] = [];
+  if (load.filledMonths.length > 0) notes.push(`Your readings have fewer than seven complete days in ${load.filledMonths.map((m) => MONTH_NAMES[m - 1]).join(", ")}, so those months use your average month.`);
+  const yctx: YearContext = { engine, latitude: property.latitude, longitude: property.longitude, elevationM: resource.value.elevationM, climate: resource.value.months, load, days: nextYearDays(at), requestId: ctx.requestId, profiles: new Map() };
+  return { at, property, baseTariff, baseCfg: { solar: solarRows.map(solarSpec), battery: dayBattery(batteryRows, at), tariff: baseTariff }, solarRows, batteryRows, yctx, notes };
+}
 
-  const baseCfg: Config = { solar: solarRows.map(solarSpec), battery: dayBattery(batteryRows, at), tariff: baseTariff };
-  const scenCfg: Config = { solar: [...baseCfg.solar], battery: baseCfg.battery, tariff: scenarioTariff };
+/** Today's setup with the change made to it. What had to be decided for the owner is added to `assumptions`. */
+export function applyChange(p: Prepared, propertyId: string, req: Pick<ScenarioRequest, "addSolarKwp" | "solarTiltDeg" | "solarAzimuthDeg" | "addBatteryKwh" | "batteryPowerKw">, tariff: TariffPlanDto, assumptions: string[]): Config {
+  const cfg: Config = { solar: [...p.baseCfg.solar], battery: p.baseCfg.battery, tariff };
   if (req.addSolarKwp) {
-    const tilt = req.solarTiltDeg ?? Math.min(40, Math.max(5, Math.round(Math.abs(property.latitude))));
+    const tilt = req.solarTiltDeg ?? Math.min(40, Math.max(5, Math.round(Math.abs(p.property.latitude))));
     const azimuth = req.solarAzimuthDeg ?? 180;
-    scenCfg.solar.push({ capacityKwp: req.addSolarKwp, tiltDeg: tilt, azimuthDeg: azimuth, lossFraction: DEFAULTS.solar.lossFraction.value, inverterKw: null });
+    cfg.solar.push({ capacityKwp: req.addSolarKwp, tiltDeg: tilt, azimuthDeg: azimuth, lossFraction: DEFAULTS.solar.lossFraction.value, inverterKw: null });
     if (req.solarTiltDeg === undefined) assumptions.push(`The added panels are tilted ${tilt} degrees, the latitude, a common rule for a fixed array; you did not give a tilt.`);
     if (req.solarAzimuthDeg === undefined) assumptions.push("The added panels face south (180 degrees); you did not give a direction.");
     assumptions.push(`The added panels lose ${round(DEFAULTS.solar.lossFraction.value * 100, 1)}% to wiring, mismatch and soiling: the default of the AVISHKAR Python EMS.`);
   }
   if (req.addBatteryKwh) {
     const kw = req.batteryPowerKw ?? req.addBatteryKwh / 2;
-    scenCfg.battery = dayBattery([...batteryRows, virtualBattery(propertyId, req.addBatteryKwh, kw, at)], at);
+    cfg.battery = dayBattery([...p.batteryRows, virtualBattery(propertyId, req.addBatteryKwh, kw, p.at)], p.at);
     if (req.batteryPowerKw === undefined) assumptions.push(`The added battery charges and discharges at up to ${round(kw, 2)} kW, half its capacity per hour; you did not give a power.`);
     assumptions.push("Battery efficiency, usable range and wear cost use the documented defaults.");
   }
-  if (scenarioTariff.id !== baseTariff.id) assumptions.push(`The changed tariff is ${scenarioTariff.name}.`);
+  return cfg;
+}
 
-  const load = loadModel(dna);
-  if (load.filledMonths.length > 0) assumptions.push(`Your readings have fewer than seven complete days in ${load.filledMonths.map((m) => MONTH_NAMES[m - 1]).join(", ")}, so those months use your average month.`);
-  const profiles = new Map<string, Promise<number[][]>>();
-  const yctx: YearContext = { engine, latitude: property.latitude, longitude: property.longitude, elevationM: resource.value.elevationM, climate: resource.value.months, load, days: nextYearDays(at), requestId: ctx.requestId, profiles };
+export async function runScenario(deps: ForecastDeps, userId: string, propertyId: string, req: ScenarioRequest, ctx: Ctx = {}): Promise<ScenarioDto> {
+  const { db } = deps;
+  const engine = requireEngine(deps.engine);
+  const prepared = await prepareYear(deps, userId, propertyId, ctx);
+  const { at, property, baseTariff, baseCfg, solarRows, yctx } = prepared;
+  const scenarioTariff = req.tariffPlanId ? await getTariff(db, userId, req.tariffPlanId, at) : baseTariff;
+  const assumptions: string[] = [];
+  const scenCfg = applyChange(prepared, propertyId, req, scenarioTariff, assumptions);
+  if (scenarioTariff.id !== baseTariff.id) assumptions.push(`The changed tariff is ${scenarioTariff.name}.`);
+  assumptions.push(...prepared.notes);
   const [base, scenario] = await Promise.all([simulateYear(yctx, baseCfg), simulateYear(yctx, scenCfg)]);
 
   assumptions.push(

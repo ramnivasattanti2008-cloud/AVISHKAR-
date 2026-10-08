@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, api, describeError } from "@/lib/api";
 import { formatDateTime, formatInr, formatNumber, formatPercent } from "@/lib/format";
-import type { Scenario, ScenarioRequest, ScenarioSummary, TariffList } from "@/lib/types";
+import type { Opportunities, Opportunity, Scenario, ScenarioRequest, ScenarioSummary, TariffList } from "@/lib/types";
 import { useAuth } from "../AuthProvider";
 import { Field, SelectField, num } from "../assets/fields";
 import { ProvenanceDetails, StatusBadge } from "../Provenance";
@@ -60,6 +60,9 @@ export function ScenarioView({ id }: { id: string }) {
   const [history, setHistory] = useState<ScenarioSummary[]>([]);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<{ message: string; missing: Missing[] } | null>(null);
+  const [opps, setOpps] = useState<Opportunities | null>(null);
+  const [oppBusy, setOppBusy] = useState(false);
+  const [oppError, setOppError] = useState<string | null>(null);
 
   const refresh = useCallback(() => api<{ scenarios: ScenarioSummary[] }>(`/api/properties/${id}/scenarios`).then((r) => setHistory(r.scenarios)).catch(() => setHistory([])), [id]);
 
@@ -136,6 +139,26 @@ export function ScenarioView({ id }: { id: string }) {
     }
   }
 
+  async function findOpportunities() {
+    setOppBusy(true);
+    setOppError(null);
+    try {
+      setOpps(await api<Opportunities>(`/api/properties/${id}/opportunities`, { method: "POST" }));
+    } catch (e) {
+      setOppError(describeError(e));
+    } finally {
+      setOppBusy(false);
+    }
+  }
+
+  /** Put an opportunity's change into the form, so its money can be worked out with the owner's own prices. */
+  function tryIt(o: Opportunity) {
+    setSolar(o.scenario?.addSolarKwp === undefined ? "" : String(o.scenario.addSolarKwp));
+    setBattery(o.scenario?.addBatteryKwh === undefined ? "" : String(o.scenario.addBatteryKwh));
+    setTariff(o.scenario?.tariffPlanId ?? "");
+    document.getElementById("whatif-form")?.scrollIntoView?.({ behavior: "smooth", block: "start" }); // absent in some test environments
+  }
+
   async function open(sid: string) {
     setFailure(null);
     try {
@@ -170,7 +193,58 @@ export function ScenarioView({ id }: { id: string }) {
         <PropertyTabs id={id} current="/what-if" />
       </div>
 
+      <section className="card mt-4 p-4" aria-label="What could be worth doing">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">What could be worth doing?</h2>
+          <button type="button" className="btn" disabled={oppBusy} onClick={() => void findOpportunities()}>{oppBusy ? "Looking…" : opps ? "Look again" : "Find opportunities"}</button>
+        </div>
+        <p className="mt-1 text-sm text-muted">Tries a few example changes on your typical year and looks at what your records lack. It takes several seconds. AVISHKAR has no price list, so for each it shows the most it could cost and still repay itself: compare that with a quote.</p>
+        {oppError && <p role="alert" className="mt-2 text-sm text-[color:var(--tone-unavailable-fg)]">{oppError}</p>}
+        {opps && (
+          <>
+            <ul className="mt-3 grid gap-3 md:grid-cols-2" aria-label="Opportunities">
+              {opps.items.map((o) => (
+                <li key={o.id} className="rounded-md border border-line p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold">{o.title}</h3>
+                    <StatusBadge status={o.provenance.status} />
+                  </div>
+                  {o.annualSavingsInr !== null && <p className="num mt-1 text-lg font-semibold">about {inr(o.annualSavingsInr)} a year</p>}
+                  <p className="mt-1 text-sm text-muted">{o.detail}</p>
+                  {o.breakEven && (
+                    <p className="mt-1 text-sm">
+                      Worth it if a quote is below <strong className="num">{inr(o.breakEven.perUnitInr)} per {o.breakEven.unit}</strong> (<span className="num">{inr(o.breakEven.totalInr)}</span> in all).
+                    </p>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {o.scenario && <button type="button" className="btn" onClick={() => tryIt(o)} aria-label={`Try this in the form: ${o.title}`}>Try it with my prices</button>}
+                    {o.kind === "PROVIDE_DATA" && o.href && <Link className="btn" href={`/property/${id}${o.href}`}>Go there</Link>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {opps.items.length === 0 && <p className="mt-3 text-sm text-muted">Nothing worth listing was found.</p>}
+            {opps.checked.length > 0 && (
+              <details className="mt-3 text-sm">
+                <summary className="cursor-pointer select-none font-medium">Also tried, and not worth listing ({opps.checked.length})</summary>
+                <ul className="mt-1 list-disc pl-5 text-muted">
+                  {opps.checked.map((c) => (
+                    <li key={c.title}>{c.title}: {c.annualSavingsInr >= 0 ? `saves only ${inr(c.annualSavingsInr)} a year` : `costs ${inr(-c.annualSavingsInr)} a year more`}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+            <ul className="mt-2 list-disc pl-5 text-xs text-muted">
+              {opps.notes.map((n) => (
+                <li key={n}>{n}</li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+
       <form
+        id="whatif-form"
         className="card mt-4 p-4"
         aria-label="Describe the change"
         onSubmit={(ev) => {

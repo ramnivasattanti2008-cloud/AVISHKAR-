@@ -3630,6 +3630,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/opportunities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * What is worth doing at this property
+         * @description Tries a few example changes on the property's typical year (solar, a battery, another tariff it could really be on) and looks at what its records lack. A money suggestion carries the yearly saving and the most it could cost and still repay itself; there is no price list, so none is guessed. Changes that would not save enough are listed under `checked` with what they would save. Takes several seconds. Nothing is stored.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Opportunities"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/plan": {
         parameters: {
             query?: never;
@@ -6742,6 +6846,78 @@ export interface components {
             peakProbability: number;
             /** @description Start of the hour, UTC. */
             time: string;
+        };
+        Opportunities: {
+            /** @description Changes that were tried and did not save enough to list, with what they would save (it can be negative). */
+            checked: {
+                annualSavingsInr: number;
+                title: string;
+            }[];
+            generatedAt: string;
+            items: components["schemas"]["Opportunity"][];
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+        };
+        OpportunitiesInput: {
+            /** @description Changes that were tried and did not save enough to list, with what they would save (it can be negative). */
+            checked: {
+                annualSavingsInr: number;
+                title: string;
+            }[];
+            generatedAt: string;
+            items: components["schemas"]["OpportunityInput"][];
+            notes: string[];
+            /** Format: uuid */
+            propertyId: string;
+        };
+        Opportunity: {
+            /** @description A typical year's saving; null for a suggestion about data. */
+            annualSavingsInr: number | null;
+            /** @description The most it could cost and still repay itself over its life. Compare it with a quote; AVISHKAR has no price list. */
+            breakEven: {
+                basis: string;
+                perUnitInr: number;
+                totalInr: number;
+                unit: string;
+            } | null;
+            detail: string;
+            href: string | null;
+            id: string;
+            /** @enum {string} */
+            kind: "ADD_SOLAR" | "ADD_BATTERY" | "CHANGE_TARIFF" | "PROVIDE_DATA";
+            provenance: components["schemas"]["Provenance"];
+            scenario: {
+                addBatteryKwh?: number;
+                addSolarKwp?: number;
+                /** Format: uuid */
+                tariffPlanId?: string;
+            } | null;
+            title: string;
+        };
+        OpportunityInput: {
+            /** @description A typical year's saving; null for a suggestion about data. */
+            annualSavingsInr: number | null;
+            /** @description The most it could cost and still repay itself over its life. Compare it with a quote; AVISHKAR has no price list. */
+            breakEven: {
+                basis: string;
+                perUnitInr: number;
+                totalInr: number;
+                unit: string;
+            } | null;
+            detail: string;
+            href: string | null;
+            id: string;
+            /** @enum {string} */
+            kind: "ADD_SOLAR" | "ADD_BATTERY" | "CHANGE_TARIFF" | "PROVIDE_DATA";
+            provenance: components["schemas"]["ProvenanceInput"];
+            scenario: {
+                addBatteryKwh?: number;
+                addSolarKwp?: number;
+                /** Format: uuid */
+                tariffPlanId?: string;
+            } | null;
+            title: string;
         };
         Plan: {
             appliances: {
