@@ -76,6 +76,7 @@ and each is labelled as what it is.
 | `cd platform/engine && python -m pytest tests -q` | 407 passed; `ruff check platform/engine` clean |
 | `pnpm -C platform/web smoke` against a production build | All checks pass (pages, the map's worker files, the security headers, a real 404) |
 | Migrations | `prisma migrate deploy` applies; drift check against `schema.prisma` is empty |
+| Dependency audit | Run by hand: `pnpm audit` gives six advisories, all inside the pinned Prisma CLI's own tree (Studio's chart library, its MySQL driver, its config loader) and none reachable from the built server; `pip-audit` on both Python requirement sets finds nothing. See `SECURITY.md` |
 | Security checks | argon2id passwords, hashed session tokens, HttpOnly SameSite cookies, CSRF header, rate limits, helmet, zod validation, ownership isolation, append-only audit log, a Content-Security-Policy and the other headers, export and real deletion of an account. No independent review and no dependency audit: see `SECURITY.md` |
 | Deployment | Dockerfiles and a compose file exist but have **never been built or run** (the Docker engine does not start on this machine). See `DEPLOYMENT.md` |
 

@@ -47,7 +47,26 @@ These are real gaps. None is hidden by the code; several are the owner's decisio
   administrator role with no finer permissions, no second-person approval for anything, and no two-factor sign-in for it.
 - **`/api/system/health` is public** and shows provider names, call counts, latencies and the last error text of each public
   provider. It contains no secrets, but it is information about the deployment; restrict it at the proxy if that matters.
-- **No dependency or container scanning in CI**, and no signed releases. `pnpm audit` and `pip-audit` have not been run as a gate.
+- **No dependency or container scanning in CI**, and no signed releases. Both audits were run by hand on 2026-10-09, and the
+  results are below; neither is a CI gate, because the only findings have no fixed version available in the pinned toolchain today
+  and a permanently red gate teaches people to ignore it. **Run them again before deploying**, and read the result rather than the
+  exit code:
+
+  ```bash
+  pnpm -C platform audit                                            # six advisories, all in the Prisma CLI's own tree
+  .venv/Scripts/python.exe -m pip_audit -r requirements-lock.txt    # no known vulnerabilities
+  .venv/Scripts/python.exe -m pip_audit -r platform/engine/requirements-runtime.txt   # no known vulnerabilities
+  ```
+
+  | Package | Severity | Where it comes from | Why it is not in the running service |
+  |---|---|---|---|
+  | `lodash` (3 advisories) | high, moderate, moderate | Prisma Studio's chart library (`prisma` > `@prisma/studio-core` > `@visx/*`) | `prisma` is a devDependency used for `generate` and `migrate`; Studio is never started. No fixed version exists: the advisories ask for `>=4.18.1`, which is not published |
+  | `mysql2` (2 advisories) | high, moderate | The MySQL driver the `prisma` CLI bundles | This project is PostgreSQL through `@prisma/adapter-pg`; `mysql2` is never loaded |
+  | `deepmerge-ts` | high | `prisma` > `@prisma/config` | Used by the CLI while reading `prisma.config.ts`, not by the API |
+
+  The built API imports only Fastify, its plugins, zod and the Prisma client runtime (`@prisma/client` depends on
+  `@prisma/client-runtime-utils` alone), so none of the six is on a path the server can reach. The Prisma CLI is pinned at 7.10
+  deliberately (`latest` resolves to an 8.0 release candidate), so these will clear when that pin can move.
 - **No backup or restore procedure** is defined or tested (see DEPLOYMENT.md).
 - **The audit log is append-only inside the application's database.** An operator with database superuser rights can still
   alter it; it is not shipped to an external, write-once store.

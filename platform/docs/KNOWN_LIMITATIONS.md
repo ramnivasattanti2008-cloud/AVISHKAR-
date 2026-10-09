@@ -49,6 +49,10 @@ What the platform does not do, does only partly, or does with a caveat the user 
 - The learning loop reports how forecasts did; it does not retrain or switch methods on its own, and runs only after a meter
   import or on request (no scheduled job).
 
+- **Energy health and waste describe one simulated day**, the latest plan, not measured operation: there is no device feed, so
+  there is no measured generation, battery history or appliance record. There is no overall health score, because adding the metrics
+  would need weights nobody has measured. The avoidable cost for a month is an average month taken from a typical year, not this month.
+
 ## Today and speed
 
 - The Today view reads the latest stored forecasts and plan and recomputes nothing: a figure is as old as the forecast or plan it came from, and
@@ -80,8 +84,15 @@ What the platform does not do, does only partly, or does with a caveat the user 
 - **Community and VPP results are simulations.** The community view covers only the signed-in owner's own properties. The
   VPP simulator draws synthetic homes with shares and sizes that are assumptions, not survey data. AVISHKAR does not trade or
   move electricity between properties, and no sourced rule says whether sharing across meters is allowed.
-- **No city energy map and no neighbour or cross-account view.** No real per-building consumption may be shown, and none exists
-  here.
+- **The city energy map shows the sun and your own properties, and nothing else.** A city's demand, storage, vehicles, flexibility
+  and energy risk are UNAVAILABLE on it, each with its reason: no source for any of them is connected. The solar resource comes from
+  a provider whose grid is coarser than a city, so neighbouring cells often return the same value; the page counts the distinct
+  values and says so rather than drawing a pattern that is not there. No neighbour or cross-account view exists: no other
+  household's data is in the system.
+- **The futures are not predictions and carry no probability.** Sunny, heavy cloud and high demand are the ends of bands measured
+  from the place's own past forecast errors; rain, a dead battery and an outage are figures you set or questions you ask. Each day is
+  planned knowing what it will be, so it shows how well the equipment could do on that day, not how a plan made on the expected day
+  would hold up. There are no tariff or vehicle futures and no cloud-cover series.
 - **The demo world is invented.** Its readings, equipment and the Bengaluru tariff are made up (the places, the weather and the
   three catalogue tariffs are real); everything computed from it is labelled DEMO and it is never added up with real properties.
 - **A cloud front is a scenario, not an observation:** there is no cloud-nowcast source. The cloud-front page plans the day twice
@@ -89,14 +100,15 @@ What the platform does not do, does only partly, or does with a caveat the user 
 
 ## Copilot
 
-- Answers come from fixed patterns for twelve kinds of question, in English, without conversation memory or follow-ups. Every
-  number in an answer is one a backend tool returned (tested). The optional language-model path **has not been run against the
+- Answers come from fixed patterns for sixteen kinds of question, in English, without conversation memory or follow-ups. Every
+  number in an answer is one of the eighteen backend tools' (tested). The optional language-model path **has not been run against the
   real service**. The Copilot cannot change settings.
 
 ## Product and operations
 
-- **Not deployed.** No hosted instance, Dockerfile, compose file, infrastructure code, backup, alerting or load test (see
-  DEPLOYMENT.md). Background jobs (forecast scoring, weather and satellite refresh, tariff checks) run from one in-process
+- **Not deployed.** No hosted instance, infrastructure code, backup, alerting or load test. There are Dockerfiles and a compose
+  file, but **no image has ever been built and no stack ever run**: the Docker engine does not start on the development machine, so
+  each file says UNTESTED and DEPLOYMENT.md lists what was checked without it. Background jobs (forecast scoring, weather and satellite refresh, tariff checks) run from one in-process
   scheduler with a database check, off unless `JOBS_ENABLED=true`; re-planning and opportunity recalculation are not scheduled.
 - **The admin page is read-mostly.** It shows health, the catalogue, the models, the jobs and the audit log, and can run a job; it
   does not edit tariffs or policy (files with sources), disable accounts or change roles. One administrator role, no finer
@@ -108,8 +120,9 @@ What the platform does not do, does only partly, or does with a caveat the user 
   deletion, but there is no consent screen, retention schedule or backup policy (those are the operator's). The export holds equipment,
   tariffs entered, meter-file records and counts of what is stored, not the readings themselves or each plan. The web app's Content-Security-Policy allows inline scripts (see SECURITY.md).
 - **Interface:** English only (the Python dashboard has Hindi). No screen-reader or axe pass has been done on the platform's
-  pages; no browser end-to-end suite exists, only component tests with a stubbed API plus manual checks in a real browser.
-  The manual roof-drawing tool has not been exercised in a browser.
+  pages; no browser end-to-end suite exists, only component tests with a stubbed API, a smoke test of a production build, and
+  manual walks in a real browser (the latest is written down step by step in ACCEPTANCE.md). The manual roof-drawing tool has not
+  been exercised in a browser.
 - **Maps:** the production tile provider is the owner's to choose and pay for.
 
 ## The Python EMS (the first deliverable)
