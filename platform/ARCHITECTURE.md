@@ -91,7 +91,7 @@ entry.
 by live queries; every value derived from them carries `status = DEMO`. The existing real-data sites (Mathura home with
 CEEW meter, regulator-order tariffs) are *real inputs with modelled generation* and are labelled accordingly.
 
-**D14. AI Copilot (§44, §90, §91):** a tool-calling layer in the API; the model may only call the fourteen tools in §91 and
+**D14. AI Copilot (§44, §90, §91):** a tool-calling layer in the API; the model may only call the tools of the registry (the fourteen of §91 and four more: the latest plan, forecast accuracy, energy health and energy waste) and
 every number in its answer must be traceable to a tool result id. The tool layer ships and is tested first and works
 without any LLM (a deterministic "explain" renderer). An LLM adapter (Anthropic API, key from env) is optional and added
 after the tool layer, with a post-check that rejects answers containing numbers absent from tool results.

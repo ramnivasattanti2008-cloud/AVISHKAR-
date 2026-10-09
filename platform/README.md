@@ -21,13 +21,14 @@ acceptance walk, step by step, with what it found), [docs/PATENT_DISCOVERY.md](d
 |---|---|
 | `api/` | Fastify + TypeScript + Prisma API: auth, properties, geocoding, health, provenance, providers (`pnpm`) |
 | `api/prisma/` | Schema and SQL migrations (PostgreSQL + PostGIS) |
-| `web/` | Next.js app (map first): map with search / click / coordinates / location, property page with the Energy Twin, forecast charts, system health |
+| `web/` | Next.js app (map first): the map, the city energy map, a property's Today, Energy Twin, forecast, tariff, meter data, assets, plan, resilience, health, control, what-if, futures and Copilot tabs, the community view, the admin page and the account page |
+| `docker/` | Dockerfiles for the engine, the API and the web app. **Never built or run**: see `docs/DEPLOYMENT.md` |
 | `engine/` | Python FastAPI service (internal, keyed): the optimiser (LP/MILP with an independent validity check), the solar forecast (pvlib) and the load forecast, each with calibrated bands |
 
 ## Local development
 
-Prerequisites: Node 20+, pnpm, PostgreSQL 15+ **with PostGIS** (Docker: `docker compose up -d db` once the compose file lands;
-or any local install).
+Prerequisites: Node 20+, pnpm, PostgreSQL 15+ **with PostGIS** (`docker compose up -d db` with the compose file in this folder,
+though no part of it has ever been run; or any local install).
 
 ```bash
 cd platform
