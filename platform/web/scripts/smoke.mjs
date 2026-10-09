@@ -29,7 +29,7 @@ async function check(what, fn) {
   }
 }
 
-for (const path of ["/", "/map", "/login", "/register", "/system", "/properties", "/community", "/account"]) {
+for (const path of ["/", "/map", "/login", "/register", "/system", "/properties", "/community", "/city", "/account"]) {
   await check(`GET ${path} answers 200 with a page`, async () => {
     const { res, body } = await get(path);
     if (res.status !== 200) return `HTTP ${res.status}`;

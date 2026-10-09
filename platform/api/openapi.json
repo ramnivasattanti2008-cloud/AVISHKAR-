@@ -2422,6 +2422,1006 @@
         ],
         "type": "object"
       },
+      "CityEnergyMap": {
+        "additionalProperties": false,
+        "properties": {
+          "cells": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "bounds": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "east": {
+                      "type": "number"
+                    },
+                    "north": {
+                      "type": "number"
+                    },
+                    "south": {
+                      "type": "number"
+                    },
+                    "west": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "west",
+                    "south",
+                    "east",
+                    "north"
+                  ],
+                  "type": "object"
+                },
+                "centre": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "latitude",
+                    "longitude"
+                  ],
+                  "type": "object"
+                },
+                "col": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "geojson": {
+                  "description": "The cell as a GeoJSON polygon, for the map."
+                },
+                "id": {
+                  "type": "string"
+                },
+                "row": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "solar": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "provenance": {
+                      "$ref": "#/components/schemas/Provenance"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "annualGhiKwhM2Day": {
+                              "description": "Average daily global horizontal irradiation over the year, kWh/m² per day.",
+                              "type": "number"
+                            },
+                            "bestMonth": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "ghiKwhM2Day": {
+                                  "type": "number"
+                                },
+                                "month": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "month",
+                                "ghiKwhM2Day"
+                              ],
+                              "type": "object"
+                            },
+                            "period": {
+                              "description": "The climatological period, as the provider states it.",
+                              "type": "string"
+                            },
+                            "worstMonth": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "ghiKwhM2Day": {
+                                  "type": "number"
+                                },
+                                "month": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "month",
+                                "ghiKwhM2Day"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "annualGhiKwhM2Day",
+                            "bestMonth",
+                            "worstMonth",
+                            "period"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "provenance"
+                  ],
+                  "type": "object"
+                },
+                "yours": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "batteryKwh": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "evs": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "flexibleKw": {
+                          "description": "Rated power of the appliances you marked flexible.",
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "meanDailyKwh": {
+                          "description": "From the Energy DNA of those properties that have one; null when none has meter readings.",
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "names": {
+                          "description": "Your own properties in this cell. Only yours: no one else's property is known to this map.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "properties": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "solarKwp": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "properties",
+                        "names",
+                        "solarKwp",
+                        "batteryKwh",
+                        "evs",
+                        "flexibleKw",
+                        "meanDailyKwh"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Null when none of your properties is in this cell."
+                }
+              },
+              "required": [
+                "id",
+                "row",
+                "col",
+                "centre",
+                "bounds",
+                "geojson",
+                "solar",
+                "yours"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "cityWide": {
+            "additionalProperties": false,
+            "description": "What a city energy map would also show, and why AVISHKAR states none of it.",
+            "properties": {
+              "demand": {
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "energyRisk": {
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "evs": {
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "flexibility": {
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "storage": {
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "demand",
+              "storage",
+              "evs",
+              "flexibility",
+              "energyRisk"
+            ],
+            "type": "object"
+          },
+          "grid": {
+            "additionalProperties": false,
+            "properties": {
+              "cellKm": {
+                "type": "number"
+              },
+              "cellsPerSide": {
+                "type": "number"
+              },
+              "centre": {
+                "additionalProperties": false,
+                "properties": {
+                  "latitude": {
+                    "type": "number"
+                  },
+                  "longitude": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "latitude",
+                  "longitude"
+                ],
+                "type": "object"
+              },
+              "spanKm": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "centre",
+              "spanKm",
+              "cellsPerSide",
+              "cellKm"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "CITY ENERGY MAP",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "solarSpread": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "distinctValues": {
+                    "description": "How many different annual values the cells got. One means the provider cannot tell these cells apart.",
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "highest": {
+                    "type": "number"
+                  },
+                  "lowest": {
+                    "type": "number"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "distinctValues",
+                  "lowest",
+                  "highest",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when no cell got a value."
+          },
+          "yourTotals": {
+            "additionalProperties": false,
+            "description": "Your own properties inside the square, added up.",
+            "properties": {
+              "batteryKwh": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "evs": {
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "flexibleKw": {
+                "description": "Rated power of the appliances you marked flexible.",
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "meanDailyKwh": {
+                "description": "From the Energy DNA of those properties that have one; null when none has meter readings.",
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "names": {
+                "description": "Your own properties in this cell. Only yours: no one else's property is known to this map.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "properties": {
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "solarKwp": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "properties",
+              "names",
+              "solarKwp",
+              "batteryKwh",
+              "evs",
+              "flexibleKw",
+              "meanDailyKwh"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "madeAt",
+          "grid",
+          "cells",
+          "solarSpread",
+          "yourTotals",
+          "cityWide",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "CityEnergyMapInput": {
+        "properties": {
+          "cells": {
+            "items": {
+              "properties": {
+                "bounds": {
+                  "properties": {
+                    "east": {
+                      "type": "number"
+                    },
+                    "north": {
+                      "type": "number"
+                    },
+                    "south": {
+                      "type": "number"
+                    },
+                    "west": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "west",
+                    "south",
+                    "east",
+                    "north"
+                  ],
+                  "type": "object"
+                },
+                "centre": {
+                  "properties": {
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "latitude",
+                    "longitude"
+                  ],
+                  "type": "object"
+                },
+                "col": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "geojson": {
+                  "description": "The cell as a GeoJSON polygon, for the map."
+                },
+                "id": {
+                  "type": "string"
+                },
+                "row": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "solar": {
+                  "properties": {
+                    "provenance": {
+                      "$ref": "#/components/schemas/ProvenanceInput"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "annualGhiKwhM2Day": {
+                              "description": "Average daily global horizontal irradiation over the year, kWh/m² per day.",
+                              "type": "number"
+                            },
+                            "bestMonth": {
+                              "properties": {
+                                "ghiKwhM2Day": {
+                                  "type": "number"
+                                },
+                                "month": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "month",
+                                "ghiKwhM2Day"
+                              ],
+                              "type": "object"
+                            },
+                            "period": {
+                              "description": "The climatological period, as the provider states it.",
+                              "type": "string"
+                            },
+                            "worstMonth": {
+                              "properties": {
+                                "ghiKwhM2Day": {
+                                  "type": "number"
+                                },
+                                "month": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "month",
+                                "ghiKwhM2Day"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "annualGhiKwhM2Day",
+                            "bestMonth",
+                            "worstMonth",
+                            "period"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "provenance"
+                  ],
+                  "type": "object"
+                },
+                "yours": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "batteryKwh": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "evs": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "flexibleKw": {
+                          "description": "Rated power of the appliances you marked flexible.",
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "meanDailyKwh": {
+                          "description": "From the Energy DNA of those properties that have one; null when none has meter readings.",
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "names": {
+                          "description": "Your own properties in this cell. Only yours: no one else's property is known to this map.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "properties": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "solarKwp": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "properties",
+                        "names",
+                        "solarKwp",
+                        "batteryKwh",
+                        "evs",
+                        "flexibleKw",
+                        "meanDailyKwh"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Null when none of your properties is in this cell."
+                }
+              },
+              "required": [
+                "id",
+                "row",
+                "col",
+                "centre",
+                "bounds",
+                "geojson",
+                "solar",
+                "yours"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "cityWide": {
+            "description": "What a city energy map would also show, and why AVISHKAR states none of it.",
+            "properties": {
+              "demand": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "energyRisk": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "evs": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "flexibility": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "storage": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "UNAVAILABLE",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "demand",
+              "storage",
+              "evs",
+              "flexibility",
+              "energyRisk"
+            ],
+            "type": "object"
+          },
+          "grid": {
+            "properties": {
+              "cellKm": {
+                "type": "number"
+              },
+              "cellsPerSide": {
+                "type": "number"
+              },
+              "centre": {
+                "properties": {
+                  "latitude": {
+                    "type": "number"
+                  },
+                  "longitude": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "latitude",
+                  "longitude"
+                ],
+                "type": "object"
+              },
+              "spanKm": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "centre",
+              "spanKm",
+              "cellsPerSide",
+              "cellKm"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "CITY ENERGY MAP",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "solarSpread": {
+            "anyOf": [
+              {
+                "properties": {
+                  "distinctValues": {
+                    "description": "How many different annual values the cells got. One means the provider cannot tell these cells apart.",
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "highest": {
+                    "type": "number"
+                  },
+                  "lowest": {
+                    "type": "number"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "distinctValues",
+                  "lowest",
+                  "highest",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when no cell got a value."
+          },
+          "yourTotals": {
+            "description": "Your own properties inside the square, added up.",
+            "properties": {
+              "batteryKwh": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "evs": {
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "flexibleKw": {
+                "description": "Rated power of the appliances you marked flexible.",
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "meanDailyKwh": {
+                "description": "From the Energy DNA of those properties that have one; null when none has meter readings.",
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "names": {
+                "description": "Your own properties in this cell. Only yours: no one else's property is known to this map.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "properties": {
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "solarKwp": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "properties",
+              "names",
+              "solarKwp",
+              "batteryKwh",
+              "evs",
+              "flexibleKw",
+              "meanDailyKwh"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "madeAt",
+          "grid",
+          "cells",
+          "solarSpread",
+          "yourTotals",
+          "cityWide",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "CityRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "cellsPerSide": {
+            "default": 4,
+            "description": "Cells along each side. More cells do not mean more detail: the solar provider's grid is coarser than a city.",
+            "maximum": 5,
+            "minimum": 2,
+            "type": "integer"
+          },
+          "latitude": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          },
+          "spanKm": {
+            "default": 12,
+            "description": "How wide the square is, in kilometres.",
+            "maximum": 60,
+            "minimum": 4,
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude",
+          "spanKm",
+          "cellsPerSide"
+        ],
+        "type": "object"
+      },
+      "CityRequestInput": {
+        "properties": {
+          "cellsPerSide": {
+            "default": 4,
+            "description": "Cells along each side. More cells do not mean more detail: the solar provider's grid is coarser than a city.",
+            "maximum": 5,
+            "minimum": 2,
+            "type": "integer"
+          },
+          "latitude": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          },
+          "spanKm": {
+            "default": 12,
+            "description": "How wide the square is, in kilometres.",
+            "maximum": 60,
+            "minimum": 4,
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "type": "object"
+      },
       "CloudFrontRequest": {
         "additionalProperties": false,
         "properties": {
@@ -20445,6 +21445,87 @@
         ]
       }
     },
+    "/api/city": {
+      "post": {
+        "description": "CITY ENERGY MAP. The solar resource is a 20-year climatology at each cell's centre (REFERENCE), and the response says how much the cells really differ, because the provider's grid is coarser than a city. Only your own properties appear. A city's demand, storage, vehicles, flexibility and outage risk are UNAVAILABLE with the reason: no source for them is connected, and inventing them would be fabrication.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CityRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CityEnergyMap"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "A square of cells over a place: the solar resource in each, and your own properties",
+        "tags": [
+          "map"
+        ]
+      }
+    },
     "/api/cloud-nowcast": {
       "get": {
         "parameters": [
@@ -30627,6 +31708,10 @@
     {
       "description": "Subsidy and net-metering rules as sourced configuration, and the eligibility calculator",
       "name": "policy"
+    },
+    {
+      "description": "The city energy map: the solar resource over a square of a real place, and your own properties in it",
+      "name": "map"
     },
     {
       "description": "Health",

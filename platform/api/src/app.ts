@@ -28,6 +28,7 @@ import { assetRoutes } from "./routes/assets.js";
 import { cloudFrontRoutes } from "./routes/cloudfront.js";
 import { futuresRoutes } from "./routes/futures.js";
 import { communityRoutes } from "./routes/community.js";
+import { cityRoutes } from "./routes/city.js";
 import { controlRoutes } from "./routes/control.js";
 import { copilotRoutes } from "./routes/copilot.js";
 import { demoRoutes } from "./routes/demo.js";
@@ -124,6 +125,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         { name: "community", description: "Your properties together, and a simulated virtual power plant of synthetic homes (always labelled a simulation)" },
         { name: "assets", description: "What a property has: batteries, solar systems, electric vehicles, appliances and their logged runs" },
         { name: "policy", description: "Subsidy and net-metering rules as sourced configuration, and the eligibility calculator" },
+        { name: "map", description: "The city energy map: the solar resource over a square of a real place, and your own properties in it" },
         { name: "system", description: "Health" },
       ],
     },
@@ -201,6 +203,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(scenarioRoutes, { deps });
   await app.register(cloudFrontRoutes, { deps });
   await app.register(futuresRoutes, { deps });
+  await app.register(cityRoutes, { deps });
   await app.register(resilienceRoutes, { deps });
   await app.register(controlRoutes, { deps });
   await app.register(todayRoutes, { deps });

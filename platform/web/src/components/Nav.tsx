@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/map", label: "Map" },
   { href: "/properties", label: "Properties" },
   { href: "/community", label: "Community" },
+  { href: "/city", label: "City" },
   { href: "/system", label: "System" },
 ];
 

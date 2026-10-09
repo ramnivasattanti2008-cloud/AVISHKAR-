@@ -99,6 +99,12 @@ Saved properties
 | POST | `/api/properties/{id}/geometry` | Attach a roof or plot outline you drew |
 | GET | `/api/properties/{id}/report` | Download a report of everything held for the property (Markdown) |
 
+### map
+
+| Method | Path | Summary |
+|---|---|---|
+| POST | `/api/city` | A square of cells over a place: the solar resource in each, and your own properties |
+
 ### geocoding
 
 Address and place search

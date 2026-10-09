@@ -712,6 +712,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/city": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A square of cells over a place: the solar resource in each, and your own properties
+         * @description CITY ENERGY MAP. The solar resource is a 20-year climatology at each cell's centre (REFERENCE), and the response says how much the cells really differ, because the provider's grid is coarser than a city. Only your own properties appear. A city's demand, storage, vehicles, flexibility and outage risk are UNAVAILABLE with the reason: no source for them is connected, and inventing them would be fabrication.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CityRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CityEnergyMap"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cloud-nowcast": {
         parameters: {
             query?: never;
@@ -8262,6 +8350,258 @@ export interface components {
             updatedAt: string;
             /** @description Capacity between the minimum and maximum charge. */
             usableKwh: number;
+        };
+        CityEnergyMap: {
+            cells: {
+                bounds: {
+                    east: number;
+                    north: number;
+                    south: number;
+                    west: number;
+                };
+                centre: {
+                    latitude: number;
+                    longitude: number;
+                };
+                col: number;
+                /** @description The cell as a GeoJSON polygon, for the map. */
+                geojson: unknown;
+                id: string;
+                row: number;
+                solar: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: {
+                        /** @description Average daily global horizontal irradiation over the year, kWh/m² per day. */
+                        annualGhiKwhM2Day: number;
+                        bestMonth: {
+                            ghiKwhM2Day: number;
+                            month: number;
+                        };
+                        /** @description The climatological period, as the provider states it. */
+                        period: string;
+                        worstMonth: {
+                            ghiKwhM2Day: number;
+                            month: number;
+                        };
+                    } | null;
+                };
+                /** @description Null when none of your properties is in this cell. */
+                yours: {
+                    batteryKwh: number | null;
+                    evs: number;
+                    /** @description Rated power of the appliances you marked flexible. */
+                    flexibleKw: number | null;
+                    /** @description From the Energy DNA of those properties that have one; null when none has meter readings. */
+                    meanDailyKwh: number | null;
+                    /** @description Your own properties in this cell. Only yours: no one else's property is known to this map. */
+                    names: string[];
+                    properties: number;
+                    solarKwp: number | null;
+                } | null;
+            }[];
+            /** @description What a city energy map would also show, and why AVISHKAR states none of it. */
+            cityWide: {
+                demand: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+                energyRisk: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+                evs: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+                flexibility: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+                storage: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+            };
+            grid: {
+                cellKm: number;
+                cellsPerSide: number;
+                centre: {
+                    latitude: number;
+                    longitude: number;
+                };
+                spanKm: number;
+            };
+            /** @constant */
+            label: "CITY ENERGY MAP";
+            madeAt: string;
+            notes: string[];
+            /** @description Null when no cell got a value. */
+            solarSpread: {
+                /** @description How many different annual values the cells got. One means the provider cannot tell these cells apart. */
+                distinctValues: number;
+                highest: number;
+                lowest: number;
+                note: string;
+            } | null;
+            /** @description Your own properties inside the square, added up. */
+            yourTotals: {
+                batteryKwh: number | null;
+                evs: number;
+                /** @description Rated power of the appliances you marked flexible. */
+                flexibleKw: number | null;
+                /** @description From the Energy DNA of those properties that have one; null when none has meter readings. */
+                meanDailyKwh: number | null;
+                /** @description Your own properties in this cell. Only yours: no one else's property is known to this map. */
+                names: string[];
+                properties: number;
+                solarKwp: number | null;
+            };
+        };
+        CityEnergyMapInput: {
+            cells: {
+                bounds: {
+                    east: number;
+                    north: number;
+                    south: number;
+                    west: number;
+                };
+                centre: {
+                    latitude: number;
+                    longitude: number;
+                };
+                col: number;
+                /** @description The cell as a GeoJSON polygon, for the map. */
+                geojson: unknown;
+                id: string;
+                row: number;
+                solar: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: {
+                        /** @description Average daily global horizontal irradiation over the year, kWh/m² per day. */
+                        annualGhiKwhM2Day: number;
+                        bestMonth: {
+                            ghiKwhM2Day: number;
+                            month: number;
+                        };
+                        /** @description The climatological period, as the provider states it. */
+                        period: string;
+                        worstMonth: {
+                            ghiKwhM2Day: number;
+                            month: number;
+                        };
+                    } | null;
+                };
+                /** @description Null when none of your properties is in this cell. */
+                yours: {
+                    batteryKwh: number | null;
+                    evs: number;
+                    /** @description Rated power of the appliances you marked flexible. */
+                    flexibleKw: number | null;
+                    /** @description From the Energy DNA of those properties that have one; null when none has meter readings. */
+                    meanDailyKwh: number | null;
+                    /** @description Your own properties in this cell. Only yours: no one else's property is known to this map. */
+                    names: string[];
+                    properties: number;
+                    solarKwp: number | null;
+                } | null;
+            }[];
+            /** @description What a city energy map would also show, and why AVISHKAR states none of it. */
+            cityWide: {
+                demand: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+                energyRisk: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+                evs: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+                flexibility: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+                storage: {
+                    reason: string;
+                    /** @constant */
+                    status: "UNAVAILABLE";
+                };
+            };
+            grid: {
+                cellKm: number;
+                cellsPerSide: number;
+                centre: {
+                    latitude: number;
+                    longitude: number;
+                };
+                spanKm: number;
+            };
+            /** @constant */
+            label: "CITY ENERGY MAP";
+            madeAt: string;
+            notes: string[];
+            /** @description Null when no cell got a value. */
+            solarSpread: {
+                /** @description How many different annual values the cells got. One means the provider cannot tell these cells apart. */
+                distinctValues: number;
+                highest: number;
+                lowest: number;
+                note: string;
+            } | null;
+            /** @description Your own properties inside the square, added up. */
+            yourTotals: {
+                batteryKwh: number | null;
+                evs: number;
+                /** @description Rated power of the appliances you marked flexible. */
+                flexibleKw: number | null;
+                /** @description From the Energy DNA of those properties that have one; null when none has meter readings. */
+                meanDailyKwh: number | null;
+                /** @description Your own properties in this cell. Only yours: no one else's property is known to this map. */
+                names: string[];
+                properties: number;
+                solarKwp: number | null;
+            };
+        };
+        CityRequest: {
+            /**
+             * @description Cells along each side. More cells do not mean more detail: the solar provider's grid is coarser than a city.
+             * @default 4
+             */
+            cellsPerSide: number;
+            latitude: number;
+            longitude: number;
+            /**
+             * @description How wide the square is, in kilometres.
+             * @default 12
+             */
+            spanKm: number;
+        };
+        CityRequestInput: {
+            /**
+             * @description Cells along each side. More cells do not mean more detail: the solar provider's grid is coarser than a city.
+             * @default 4
+             */
+            cellsPerSide: number;
+            latitude: number;
+            longitude: number;
+            /**
+             * @description How wide the square is, in kilometres.
+             * @default 12
+             */
+            spanKm: number;
         };
         CloudFrontRequest: {
             /**

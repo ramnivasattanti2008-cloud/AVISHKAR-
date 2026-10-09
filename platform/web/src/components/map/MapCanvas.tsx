@@ -22,6 +22,8 @@ export interface MapCanvasProps {
   /** Real markers only: stored properties of the signed-in user. Never decorative. */
   markers?: MapMarker[];
   outlines?: { id: string; geojson: unknown }[];
+  /** Coloured cells under everything else (the city energy map). `fill` is a CSS colour the caller chose from real values. */
+  cells?: { id: string; geojson: unknown; fill: string; label?: string }[];
   flyTo?: { latitude: number; longitude: number; zoom?: number; key: number } | null;
   onSelect?: (p: { latitude: number; longitude: number }) => void;
   onMarkerClick?: (id: string) => void;
@@ -76,6 +78,10 @@ export default function MapCanvas(props: MapCanvasProps) {
 
     map.on("load", () => {
       loaded.current = true;
+      // cells sit under the outlines: a city grid is a backdrop, a roof outline is the subject
+      map.addSource("cells", { type: "geojson", data: EMPTY as never });
+      map.addLayer({ id: "cells-fill", type: "fill", source: "cells", paint: { "fill-color": ["get", "fill"], "fill-opacity": 0.45 } });
+      map.addLayer({ id: "cells-line", type: "line", source: "cells", paint: { "line-color": "#ffffff", "line-width": 1, "line-opacity": 0.7 } });
       map.addSource("outlines", { type: "geojson", data: EMPTY as never });
       map.addLayer({ id: "outlines-fill", type: "fill", source: "outlines", paint: { "fill-color": "#0b6b57", "fill-opacity": 0.28 } });
       map.addLayer({ id: "outlines-line", type: "line", source: "outlines", paint: { "line-color": "#0b6b57", "line-width": 2.5 } });
@@ -83,6 +89,7 @@ export default function MapCanvas(props: MapCanvasProps) {
       map.addLayer({ id: "draft-line", type: "line", source: "draft", paint: { "line-color": "#d9480f", "line-width": 2.5, "line-dasharray": [2, 1] } });
       map.addLayer({ id: "draft-pts", type: "circle", source: "draft", filter: ["==", "$type", "Point"], paint: { "circle-radius": 5, "circle-color": "#d9480f", "circle-stroke-color": "#fff", "circle-stroke-width": 2 } });
       if (cb.current.outlines) syncOutlines(map, cb.current.outlines);
+      if (cb.current.cells) syncCells(map, cb.current.cells);
     });
 
     const onClick = (e: MapMouseEvent) => {
@@ -180,6 +187,11 @@ export default function MapCanvas(props: MapCanvasProps) {
   }, [props.outlines]);
 
   useEffect(() => {
+    const map = mapRef.current;
+    if (map && loaded.current && props.cells) syncCells(map, props.cells);
+  }, [props.cells]);
+
+  useEffect(() => {
     const f = props.flyTo;
     if (f && mapRef.current) mapRef.current.flyTo({ center: [f.longitude, f.latitude], zoom: f.zoom ?? 15, essential: true });
   }, [props.flyTo]);
@@ -202,6 +214,11 @@ export default function MapCanvas(props: MapCanvasProps) {
 function syncOutlines(map: MapLibreMap, outlines: { id: string; geojson: unknown }[]) {
   const src = map.getSource("outlines") as GeoJSONSource | undefined;
   src?.setData({ type: "FeatureCollection", features: outlines.map((o) => ({ type: "Feature", id: o.id, properties: { id: o.id }, geometry: o.geojson })) } as never);
+}
+
+function syncCells(map: MapLibreMap, cells: NonNullable<MapCanvasProps["cells"]>) {
+  const src = map.getSource("cells") as GeoJSONSource | undefined;
+  src?.setData({ type: "FeatureCollection", features: cells.map((c) => ({ type: "Feature", id: c.id, properties: { id: c.id, fill: c.fill, label: c.label ?? "" }, geometry: c.geojson })) } as never);
 }
 
 function drawDraft(map: MapLibreMap, pts: [number, number][]) {

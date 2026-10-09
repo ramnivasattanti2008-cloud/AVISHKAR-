@@ -73,5 +73,6 @@ export type Today = components["schemas"]["Today"];
 export type EnergyHealth = components["schemas"]["EnergyHealth"];
 export type EnergyWaste = components["schemas"]["EnergyWaste"];
 export type EnergyFutures = components["schemas"]["EnergyFutures"];
+export type CityEnergyMap = components["schemas"]["CityEnergyMap"];
 export type DemoWorld = components["schemas"]["DemoWorld"];
 export type CopilotTools = Resp<"/api/copilot/tools", "get", 200>;

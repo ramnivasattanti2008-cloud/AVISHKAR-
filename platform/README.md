@@ -11,7 +11,8 @@ Start with [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) (what it does 
 [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) (where every number comes from), [docs/API.md](docs/API.md) (conventions and every
 operation), [docs/MODEL_CARD.md](docs/MODEL_CARD.md) (each model: input, data, metrics, failure cases),
 [docs/OPTIMIZATION.md](docs/OPTIMIZATION.md) (the planner), [docs/SECURITY.md](docs/SECURITY.md),
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (nothing is deployed yet), [docs/PATENT_DISCOVERY.md](docs/PATENT_DISCOVERY.md)
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (nothing is deployed yet), [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) (the spec's final
+acceptance walk, step by step, with what it found), [docs/PATENT_DISCOVERY.md](docs/PATENT_DISCOVERY.md)
 (notes for patent counsel, not a claim). Architecture is [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Layout
