@@ -70,5 +70,7 @@ export type AdminOverview = components["schemas"]["AdminOverview"];
 export type AdminJobs = components["schemas"]["AdminJobs"];
 export type AdminAudit = components["schemas"]["AdminAudit"];
 export type Today = components["schemas"]["Today"];
+export type EnergyHealth = components["schemas"]["EnergyHealth"];
+export type EnergyWaste = components["schemas"]["EnergyWaste"];
 export type DemoWorld = components["schemas"]["DemoWorld"];
 export type CopilotTools = Resp<"/api/copilot/tools", "get", 200>;

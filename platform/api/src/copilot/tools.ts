@@ -8,6 +8,7 @@ import { z } from "zod";
 import { DEFAULTS } from "../assets/defaults.js";
 import { toBatteryDto } from "../assets/service.js";
 import { AppError } from "../errors.js";
+import { energyHealth, energyWaste } from "../insight/service.js";
 import { findOpportunities } from "../opportunities/service.js";
 import { type ForecastDeps, forecastAccuracy, loadForecast, solarForecast } from "../forecast/service.js";
 import { createPlan, getPlan } from "../plan/service.js";
@@ -38,6 +39,8 @@ export const TOOL_NAMES = [
   "getCounterfactual",
   "getLatestPlan",
   "getForecastAccuracy",
+  "getEnergyHealth",
+  "getEnergyWaste",
 ] as const;
 export type ToolName = (typeof TOOL_NAMES)[number];
 
@@ -374,6 +377,47 @@ export const TOOLS: Record<ToolName, ToolDef> = {
     async run(c) {
       const a = await forecastAccuracy(c.deps, c.userId, c.propertyId);
       return { output: { summary: a.load.summary.value, scoredRuns: a.load.runs.filter((r) => r.status === "SCORED").length, waitingRuns: a.load.runs.filter((r) => r.status === "WAITING").length, solar: a.solar.reason }, dataStatus: a.load.summary.provenance.status };
+    },
+  },
+
+  getEnergyHealth: {
+    description: "The property's energy health: efficiency, solar utilisation, peak management, storage utilisation, resilience, grid dependence and flexibility, each worked out from the latest plan. No overall score exists.",
+    writes: false,
+    input: none,
+    async run(c) {
+      const h = await energyHealth(c.deps, c.userId, c.propertyId, { requestId: c.requestId });
+      if (!h.basedOn) throw new AppError("DATA_UNAVAILABLE", "No plan has been made yet, and energy health is worked out from the latest plan. Ask me to make a plan.");
+      return {
+        output: {
+          planMadeAt: h.basedOn.madeAt,
+          stale: h.basedOn.stale,
+          metrics: h.metrics.map((m) => ({ key: m.key, label: m.label, value: m.result.value, unit: m.result.unit ?? "%", higherIsBetter: m.direction === "HIGHER_IS_BETTER", reason: m.result.value === null ? m.detail : null })),
+          note: "Each metric is a ratio that means what its formula says, worked out from a simulated day: a plan, not a measurement. They are not added into one score, because that would need invented weights.",
+        },
+        dataStatus: "SIMULATED",
+      };
+    },
+  },
+
+  getEnergyWaste: {
+    description: "Where the latest plan shows energy thrown away or bought dear: solar thrown away, surplus sold, energy sold then bought back dearer, energy bought in the dearest hours, and the avoidable cost per day (and per average month where a what-if run gives a year).",
+    writes: false,
+    input: none,
+    async run(c) {
+      const w = await energyWaste(c.deps, c.userId, c.propertyId);
+      if (!w.basedOn) throw new AppError("DATA_UNAVAILABLE", "No plan has been made yet, and waste is worked out from the latest plan. Ask me to make a plan.");
+      return {
+        output: {
+          planMadeAt: w.basedOn.madeAt,
+          stale: w.basedOn.stale,
+          findings: w.findings.map((f) => ({ key: f.key, label: f.label, state: f.state, kwh: f.amount.value?.kwh ?? null, valueInr: f.amount.value?.valueInr ?? null, explanation: f.explanation })),
+          avoidablePerDayInr: w.avoidable.perDay.value,
+          avoidableAverageMonthInr: w.avoidable.averageMonth.value,
+          avoidableAverageMonthReason: w.avoidable.averageMonth.value === null ? (w.avoidable.averageMonth.provenance.notes.at(-1) ?? null) : null,
+          note: w.note,
+        },
+        dataStatus: "SIMULATED",
+      };
     },
   },
 };

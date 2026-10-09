@@ -4805,7 +4805,9 @@
                     "getResilience",
                     "getCounterfactual",
                     "getLatestPlan",
-                    "getForecastAccuracy"
+                    "getForecastAccuracy",
+                    "getEnergyHealth",
+                    "getEnergyWaste"
                   ],
                   "type": "string"
                 },
@@ -4955,7 +4957,9 @@
                     "getResilience",
                     "getCounterfactual",
                     "getLatestPlan",
-                    "getForecastAccuracy"
+                    "getForecastAccuracy",
+                    "getEnergyHealth",
+                    "getEnergyWaste"
                   ],
                   "type": "string"
                 },
@@ -5702,6 +5706,317 @@
           "baseline",
           "patterns",
           "unavailable"
+        ],
+        "type": "object"
+      },
+      "EnergyHealth": {
+        "additionalProperties": false,
+        "properties": {
+          "basedOn": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "madeAt": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "planId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  },
+                  "stale": {
+                    "description": "True when the plan is more than a day old.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "planId",
+                  "madeAt",
+                  "stale",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "label": {
+            "const": "ENERGY HEALTH",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "metrics": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "detail": {
+                  "description": "The figures that went into it, or the reason there is no value.",
+                  "type": "string"
+                },
+                "direction": {
+                  "enum": [
+                    "HIGHER_IS_BETTER",
+                    "LOWER_IS_BETTER"
+                  ],
+                  "type": "string"
+                },
+                "formula": {
+                  "description": "How the value is worked out, in words.",
+                  "type": "string"
+                },
+                "key": {
+                  "enum": [
+                    "efficiency",
+                    "solarUtilisation",
+                    "peakManagement",
+                    "storageUtilisation",
+                    "resilience",
+                    "gridDependence",
+                    "flexibility"
+                  ],
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "result": {
+                  "additionalProperties": false,
+                  "description": "A percentage, except resilience, which is hours. Null, with a reason, when it does not exist for this property.",
+                  "properties": {
+                    "provenance": {
+                      "$ref": "#/components/schemas/Provenance"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "provenance"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "direction",
+                "formula",
+                "detail",
+                "result"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "next": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "href": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "href",
+                "why"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "noOverallScore": {
+            "description": "Why the metrics are not added into one number.",
+            "type": "string"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "propertyId",
+          "madeAt",
+          "basedOn",
+          "metrics",
+          "noOverallScore",
+          "next"
+        ],
+        "type": "object"
+      },
+      "EnergyHealthInput": {
+        "properties": {
+          "basedOn": {
+            "anyOf": [
+              {
+                "properties": {
+                  "madeAt": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "planId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  },
+                  "stale": {
+                    "description": "True when the plan is more than a day old.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "planId",
+                  "madeAt",
+                  "stale",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "label": {
+            "const": "ENERGY HEALTH",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "metrics": {
+            "items": {
+              "properties": {
+                "detail": {
+                  "description": "The figures that went into it, or the reason there is no value.",
+                  "type": "string"
+                },
+                "direction": {
+                  "enum": [
+                    "HIGHER_IS_BETTER",
+                    "LOWER_IS_BETTER"
+                  ],
+                  "type": "string"
+                },
+                "formula": {
+                  "description": "How the value is worked out, in words.",
+                  "type": "string"
+                },
+                "key": {
+                  "enum": [
+                    "efficiency",
+                    "solarUtilisation",
+                    "peakManagement",
+                    "storageUtilisation",
+                    "resilience",
+                    "gridDependence",
+                    "flexibility"
+                  ],
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "result": {
+                  "description": "A percentage, except resilience, which is hours. Null, with a reason, when it does not exist for this property.",
+                  "properties": {
+                    "provenance": {
+                      "$ref": "#/components/schemas/ProvenanceInput"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "provenance"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "direction",
+                "formula",
+                "detail",
+                "result"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "next": {
+            "items": {
+              "properties": {
+                "href": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "href",
+                "why"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "noOverallScore": {
+            "description": "Why the metrics are not added into one number.",
+            "type": "string"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "propertyId",
+          "madeAt",
+          "basedOn",
+          "metrics",
+          "noOverallScore",
+          "next"
         ],
         "type": "object"
       },
@@ -7743,6 +8058,467 @@
         ],
         "type": "object"
       },
+      "EnergyWaste": {
+        "additionalProperties": false,
+        "properties": {
+          "avoidable": {
+            "additionalProperties": false,
+            "properties": {
+              "averageMonth": {
+                "additionalProperties": false,
+                "description": "Potential avoidable cost in an average month, only when a what-if run gives a year to take it from; otherwise UNAVAILABLE with what to do.",
+                "properties": {
+                  "provenance": {
+                    "$ref": "#/components/schemas/Provenance"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "provenance"
+                ],
+                "type": "object"
+              },
+              "perDay": {
+                "additionalProperties": false,
+                "description": "What the latest plan saves over the same day with no control: the cost a controlled day would not have had (INR).",
+                "properties": {
+                  "provenance": {
+                    "$ref": "#/components/schemas/Provenance"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "provenance"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "perDay",
+              "averageMonth"
+            ],
+            "type": "object"
+          },
+          "basedOn": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "madeAt": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "planId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  },
+                  "stale": {
+                    "description": "True when the plan is more than a day old.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "planId",
+                  "madeAt",
+                  "stale",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "findings": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "amount": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "provenance": {
+                      "$ref": "#/components/schemas/Provenance"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "kwh": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "valueInr": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kwh",
+                            "valueInr"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "provenance"
+                  ],
+                  "type": "object"
+                },
+                "explanation": {
+                  "type": "string"
+                },
+                "how": {
+                  "description": "The method, so the figure can be checked.",
+                  "type": "string"
+                },
+                "key": {
+                  "enum": [
+                    "solarCurtailment",
+                    "surplusSold",
+                    "soldThenBoughtBack",
+                    "dearHoursImport",
+                    "applianceSchedule",
+                    "batteryOpportunity"
+                  ],
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "state": {
+                  "enum": [
+                    "FOUND",
+                    "NONE",
+                    "UNAVAILABLE"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "state",
+                "explanation",
+                "how",
+                "amount"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "label": {
+            "const": "ENERGY WASTE",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "next": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "href": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "href",
+                "why"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "type": "string"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "propertyId",
+          "madeAt",
+          "basedOn",
+          "findings",
+          "avoidable",
+          "note",
+          "next"
+        ],
+        "type": "object"
+      },
+      "EnergyWasteInput": {
+        "properties": {
+          "avoidable": {
+            "properties": {
+              "averageMonth": {
+                "description": "Potential avoidable cost in an average month, only when a what-if run gives a year to take it from; otherwise UNAVAILABLE with what to do.",
+                "properties": {
+                  "provenance": {
+                    "$ref": "#/components/schemas/ProvenanceInput"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "provenance"
+                ],
+                "type": "object"
+              },
+              "perDay": {
+                "description": "What the latest plan saves over the same day with no control: the cost a controlled day would not have had (INR).",
+                "properties": {
+                  "provenance": {
+                    "$ref": "#/components/schemas/ProvenanceInput"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "provenance"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "perDay",
+              "averageMonth"
+            ],
+            "type": "object"
+          },
+          "basedOn": {
+            "anyOf": [
+              {
+                "properties": {
+                  "madeAt": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "planId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  },
+                  "stale": {
+                    "description": "True when the plan is more than a day old.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "planId",
+                  "madeAt",
+                  "stale",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "findings": {
+            "items": {
+              "properties": {
+                "amount": {
+                  "properties": {
+                    "provenance": {
+                      "$ref": "#/components/schemas/ProvenanceInput"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "kwh": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "valueInr": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kwh",
+                            "valueInr"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "provenance"
+                  ],
+                  "type": "object"
+                },
+                "explanation": {
+                  "type": "string"
+                },
+                "how": {
+                  "description": "The method, so the figure can be checked.",
+                  "type": "string"
+                },
+                "key": {
+                  "enum": [
+                    "solarCurtailment",
+                    "surplusSold",
+                    "soldThenBoughtBack",
+                    "dearHoursImport",
+                    "applianceSchedule",
+                    "batteryOpportunity"
+                  ],
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "state": {
+                  "enum": [
+                    "FOUND",
+                    "NONE",
+                    "UNAVAILABLE"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "state",
+                "explanation",
+                "how",
+                "amount"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "label": {
+            "const": "ENERGY WASTE",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "next": {
+            "items": {
+              "properties": {
+                "href": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "href",
+                "why"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "type": "string"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "propertyId",
+          "madeAt",
+          "basedOn",
+          "findings",
+          "avoidable",
+          "note",
+          "next"
+        ],
+        "type": "object"
+      },
       "ErrorResponse": {
         "additionalProperties": false,
         "properties": {
@@ -9744,6 +10520,7 @@
                         "type": "number"
                       },
                       "selfConsumptionRatio": {
+                        "description": "Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar.",
                         "type": [
                           "number",
                           "null"
@@ -10294,6 +11071,7 @@
                         "type": "number"
                       },
                       "selfConsumptionRatio": {
+                        "description": "Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar.",
                         "type": [
                           "number",
                           "null"
@@ -12739,6 +13517,7 @@
                 "type": "number"
               },
               "selfConsumptionRatio": {
+                "description": "Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar.",
                 "type": [
                   "number",
                   "null"
@@ -13263,6 +14042,7 @@
                 "type": "number"
               },
               "selfConsumptionRatio": {
+                "description": "Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar.",
                 "type": [
                   "number",
                   "null"
@@ -13415,6 +14195,7 @@
                 "type": "number"
               },
               "selfConsumptionRatio": {
+                "description": "Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar.",
                 "type": [
                   "number",
                   "null"
@@ -13921,6 +14702,7 @@
                 "type": "number"
               },
               "selfConsumptionRatio": {
+                "description": "Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar.",
                 "type": [
                   "number",
                   "null"
@@ -19094,7 +19876,9 @@
                               "getResilience",
                               "getCounterfactual",
                               "getLatestPlan",
-                              "getForecastAccuracy"
+                              "getForecastAccuracy",
+                              "getEnergyHealth",
+                              "getEnergyWaste"
                             ],
                             "type": "string"
                           },
@@ -23581,7 +24365,9 @@
                 "getResilience",
                 "getCounterfactual",
                 "getLatestPlan",
-                "getForecastAccuracy"
+                "getForecastAccuracy",
+                "getEnergyHealth",
+                "getEnergyWaste"
               ],
               "type": "string"
             }
@@ -23649,7 +24435,9 @@
                         "getResilience",
                         "getCounterfactual",
                         "getLatestPlan",
-                        "getForecastAccuracy"
+                        "getForecastAccuracy",
+                        "getEnergyHealth",
+                        "getEnergyWaste"
                       ],
                       "type": "string"
                     },
@@ -25094,6 +25882,79 @@
         "summary": "Attach a roof or plot outline you drew",
         "tags": [
           "properties"
+        ]
+      }
+    },
+    "/api/properties/{id}/health": {
+      "get": {
+        "description": "Each metric is a ratio that means what its formula says, worked out from the latest stored plan's hour-by-hour flows (SIMULATED: a plan is a simulation of a day). A metric that does not exist for the property (no solar, no battery) is UNAVAILABLE with the reason. There is no overall score: it would need invented weights.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergyHealth"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Energy health: efficiency, solar utilisation, peak management, storage utilisation, resilience, grid dependence and flexibility",
+        "tags": [
+          "plan"
         ]
       }
     },
@@ -27196,6 +28057,79 @@
         "summary": "Every Energy Twin version, newest first",
         "tags": [
           "twin"
+        ]
+      }
+    },
+    "/api/properties/{id}/waste": {
+      "get": {
+        "description": "Read from the latest stored plan; recomputes nothing. A finding that the data cannot support (the appliance schedule, the battery's lost opportunity) is UNAVAILABLE with the reason. The avoidable cost per day is the plan's saving over no control; the average month's figure appears only when a what-if run has worked out a year.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergyWaste"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Energy waste: solar thrown away, surplus sold, energy sold then bought back dearer, energy bought in the dearest hours, and the avoidable cost",
+        "tags": [
+          "plan"
         ]
       }
     },

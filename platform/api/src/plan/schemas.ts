@@ -27,7 +27,7 @@ const Totals = z.object({
   batteryCycles: z.number(),
   unservedKwh: z.number(),
   evShortfallKwh: z.number(),
-  selfConsumptionRatio: z.number().nullable(),
+  selfConsumptionRatio: z.number().nullable().describe("Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar."),
   selfSufficiencyRatio: z.number().nullable(),
 });
 

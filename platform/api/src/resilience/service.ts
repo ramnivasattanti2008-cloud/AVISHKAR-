@@ -4,7 +4,7 @@
  * Autonomy is the share of the plan's energy that did not come from the grid, shown with how it is worked out.
  */
 import { appliancePlan, aggregateBatteries } from "../plan/service.js";
-import { planStart, resample } from "../plan/horizon.js";
+import { HOUR_MS, planStart, resample } from "../plan/horizon.js";
 import type { PlanDto } from "../plan/schemas.js";
 import { AppError } from "../errors.js";
 import { type ForecastDeps, solarForecast } from "../forecast/service.js";
@@ -147,6 +147,22 @@ async function autonomy(deps: ForecastDeps, propertyId: string, coverageHours: n
   const row = await deps.db.optimizationRun.findFirst({ where: { propertyId }, orderBy: { createdAt: "desc" } });
   if (!row) return unavailable("No plan has been made yet, and autonomy is read from a plan. Make one on the Plan tab.", { ...src, dataType: "autonomy" });
   return autonomyOf(row, coverageHours, src);
+}
+
+/**
+ * The backup report read from a stored solar forecast, so it needs no engine call: what the Today view and the health metrics both
+ * show. `points` are the stored forecast's hours (null when none is stored, and then only the battery is counted).
+ */
+export async function resilienceOnStoredSun(
+  deps: ForecastDeps,
+  userId: string,
+  propertyId: string,
+  points: { time: string; value: number }[] | null,
+  ctx: { requestId?: string } = {},
+): Promise<ResilienceDto> {
+  const at = deps.now();
+  const pv = points ? resample(points, "end", Math.ceil((at.getTime() + 330 * 60_000) / HOUR_MS) * HOUR_MS - 330 * 60_000, 48).map((v) => v ?? 0) : new Array<number>(48).fill(0);
+  return resilienceReport(deps, userId, propertyId, { targetHours: 4, startSocPercent: null }, ctx, { pv, solarNote: points ? null : "No solar forecast is stored, so only the battery is counted." });
 }
 
 /** Autonomy from one stored plan: the share of its energy use that was not bought from the grid, with its parts. */

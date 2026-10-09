@@ -121,7 +121,7 @@ describeBoth("the Copilot, through the API, the real tools and the real engine",
     await call("POST", `/api/properties/${pid}/plan`, { mode: "BALANCED", hours: 24 });
     await call("POST", `/api/properties/${pid}/scenarios`, { addSolarKwp: 2 });
     const asked: Record<string, string> = {};
-    for (const q of ["What will my solar make tomorrow?", "How much electricity will I use tomorrow?", "Which tariff am I on?", "How charged is my battery?", "What would this cost without the plan?", "What would the subsidy be for 3 kWp of solar?", "How have the forecasts done?", "What is the weather like?"]) {
+    for (const q of ["What will my solar make tomorrow?", "How much electricity will I use tomorrow?", "Which tariff am I on?", "How charged is my battery?", "What would this cost without the plan?", "What would the subsidy be for 3 kWp of solar?", "How have the forecasts done?", "What is the weather like?", "How healthy is my energy use?", "Where am I wasting energy?"]) {
       const a = await ask(q);
       expect(a.status, `${q}: ${text(a)}`).toBe("ANSWERED");
       expect(a.citations.length, q).toBeGreaterThan(0);
@@ -136,6 +136,11 @@ describeBoth("the Copilot, through the API, the real tools and the real engine",
     expect(asked["What would the subsidy be for 3 kWp of solar?"]).toContain("₹78,000");
     expect(asked["What would this cost without the plan?"]).toContain("with no solar and no battery");
     expect(asked["What will my solar make tomorrow?"]).toMatch(/kWh over the next \d+ days/); // the fake weather service returns two days
+    expect(asked["How healthy is my energy use?"]).toMatch(/Grid dependence: [\d.]+% \(lower is better\)/);
+    expect(asked["How healthy is my energy use?"]).toContain("not added into one score");
+    expect(asked["Where am I wasting energy?"]).toMatch(/The same day with no control would cost ₹[\d.,]+ more|changes nothing that costs money|This plan costs/);
+    expect(asked["Where am I wasting energy?"]).toMatch(/In an average month that comes to about ₹[\d.,]+ \(from your latest what-if run/); // the +2 kWp what-if above worked out a year of today's setup
+    expect(asked["Where am I wasting energy?"]).toContain("I cannot tell. AVISHKAR has no record of what the battery actually did");
   });
 
   it("works out how long the batteries could carry the critical loads, by hand-checkable arithmetic", async () => {

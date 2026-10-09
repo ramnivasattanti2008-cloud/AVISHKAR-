@@ -216,7 +216,10 @@ class Totals(Wire):
     ev_delivered_kwh: float
     ev_shortfall_kwh: float
     unserved_kwh: float
-    self_consumption_ratio: float | None = Field(description="Share of PV generation used on site (None when there is no PV).")
+    self_consumption_ratio: float | None = Field(
+        description="Share of PV generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; "
+        "it is not the share consumed on site (None when there is no PV)."
+    )
     self_sufficiency_ratio: float | None = Field(description="Share of the load met without the grid (None when there is no load).")
 
 

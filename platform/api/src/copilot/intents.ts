@@ -7,7 +7,7 @@
 import { local } from "../plan/horizon.js";
 import type { ToolName, ToolResult } from "./tools.js";
 
-export const INTENTS = ["MAKE_PLAN", "WHY_DECISION", "WHAT_IF", "SAVINGS", "COUNTERFACTUAL", "OUTAGE", "SUBSIDY", "OPPORTUNITIES", "SOLAR", "LOAD", "TARIFF", "BATTERY", "WEATHER", "ACCURACY"] as const;
+export const INTENTS = ["MAKE_PLAN", "WHY_DECISION", "WHAT_IF", "SAVINGS", "COUNTERFACTUAL", "OUTAGE", "SUBSIDY", "OPPORTUNITIES", "SOLAR", "LOAD", "TARIFF", "BATTERY", "WEATHER", "ACCURACY", "HEALTH", "WASTE"] as const;
 export type Intent = (typeof INTENTS)[number];
 
 export interface Route {
@@ -28,6 +28,8 @@ export const SUGGESTIONS = [
   "Which tariff am I on?",
   "How charged is my battery?",
   "How have the forecasts done?",
+  "How healthy is my energy use?",
+  "Where am I wasting energy?",
 ];
 
 const has = (q: string, re: RegExp) => re.test(q);
@@ -81,6 +83,8 @@ export function route(question: string): Route | null {
   if (has(q, /\b(without|no control|do nothing|counterfactual|compared (to|with)|if i had not|if i hadn't)\b/)) return { intent: "COUNTERFACTUAL", calls: [{ tool: "getCounterfactual", input: {} }] };
   if (has(q, /\b(outage|blackout|power cut|load ?shedding|backup|critical)\b/)) return { intent: "OUTAGE", calls: [{ tool: "getResilience", input: {} }] };
   if (has(q, /\baccura|\bhow (good|well)\b|\bforecasts? (done|do)\b|\berror/)) return { intent: "ACCURACY", calls: [{ tool: "getForecastAccuracy", input: {} }] };
+  if (has(q, /\b(wast\w*|thrown away|avoidable|curtail\w*)\b/)) return { intent: "WASTE", calls: [{ tool: "getEnergyWaste", input: {} }] };
+  if (has(q, /\b(health\w*|efficien\w*)\b/)) return { intent: "HEALTH", calls: [{ tool: "getEnergyHealth", input: {} }] };
   if (has(q, /\b(save|saving|savings|how much (will|would|did|do) i)\b/)) return { intent: "SAVINGS", calls: [{ tool: "getLatestPlan", input: {} }] };
   if (has(q, /\b(what should i|what can i|improve|opportunit|worth (doing|it)|recommend|advice)\b/)) return { intent: "OPPORTUNITIES", calls: [{ tool: "getEnergyOpportunities", input: {} }] };
   if (has(q, /\b(solar|panel|sun|generat)/) && !has(q, /\b(weather|cloud)/)) return { intent: "SOLAR", calls: [{ tool: "getSolarForecast", input: { days: 3 } }] };
@@ -283,6 +287,32 @@ export function render(intent: Intent, question: string, results: ToolResult[]):
       if (s) w.p(`${s.scored} stored forecast(s) have been scored against the readings that followed them: typical error ${num(s.meanMaeKw, 2)} kW, with the 10 to 90% band holding on ${num(s.meanCoverage80 * 100, 0)}% of hours ${c}.`);
       else w.p(`No stored forecast has been scored yet ${c}; ${o.waitingRuns} are waiting for newer readings.`);
       w.p(String(o.solar));
+      break;
+    }
+    case "HEALTH": {
+      const metrics = o.metrics as Out[];
+      w.p(`Worked out from the plan made ${new Date(String(o.planMadeAt)).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}${o.stale ? " (more than a day old)" : ""} ${c}:`);
+      for (const m of metrics) {
+        if (m.value === null) w.p(`${m.label}: not worked out. ${sentence(String(m.reason))}`);
+        else w.p(`${m.label}: ${num(m.value, 1)}${m.unit === "h" ? " hours" : "%"} (${m.higherIsBetter ? "higher is better" : "lower is better"}).`);
+      }
+      w.p(String(o.note));
+      break;
+    }
+    case "WASTE": {
+      const found = (o.findings as Out[]).filter((f) => f.state === "FOUND");
+      w.p(`Read from the plan made ${new Date(String(o.planMadeAt)).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}${o.stale ? " (more than a day old)" : ""} ${c}:`);
+      if (found.length === 0) w.p("It shows no solar thrown away and nothing bought at the dearest price.");
+      for (const f of found) w.p(`${f.label}: ${sentence(String(f.explanation))}`);
+      for (const f of (o.findings as Out[]).filter((x) => x.state === "UNAVAILABLE").slice(0, 2)) w.p(`${f.label}: I cannot tell. ${sentence(String(f.explanation))}`);
+      if (o.avoidablePerDayInr !== null) {
+        if (o.avoidablePerDayInr > 0.005) w.p(`The same day with no control would cost ${inr(o.avoidablePerDayInr)} more.`);
+        else if (o.avoidablePerDayInr < -0.005) w.p(`This plan costs ${inr(-o.avoidablePerDayInr)} more than the same day with no control: it favours something other than the lowest bill.`);
+        else w.p("The same day with no control would cost the same: the plan changes nothing that costs money.");
+      }
+      if (o.avoidableAverageMonthInr !== null) w.p(`In an average month that comes to about ${inr(o.avoidableAverageMonthInr)} (from your latest what-if run's typical year).`);
+      else if (o.avoidableAverageMonthReason) w.p(`I do not state a figure for a month: ${sentence(String(o.avoidableAverageMonthReason))}`);
+      w.p(String(o.note));
       break;
     }
   }

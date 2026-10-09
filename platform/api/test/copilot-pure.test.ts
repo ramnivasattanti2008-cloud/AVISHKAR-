@@ -23,6 +23,10 @@ describe("route: a question goes to the tools that hold its answer, or nowhere",
     ["How have the forecasts done?", "ACCURACY", "getForecastAccuracy"],
     ["Make a plan to save money", "MAKE_PLAN", "runOptimization"],
     ["What is the weather like?", "WEATHER", "getWeather"],
+    ["How healthy is my energy use?", "HEALTH", "getEnergyHealth"],
+    ["How efficient is my system?", "HEALTH", "getEnergyHealth"],
+    ["Where am I wasting energy?", "WASTE", "getEnergyWaste"],
+    ["How much solar is being thrown away?", "WASTE", "getEnergyWaste"],
   ];
   for (const [q, intent, tool] of cases) {
     it(`${q} -> ${intent}`, () => {
@@ -175,6 +179,72 @@ describe("render: the template wording", () => {
     const r = render("SUBSIDY", "subsidy", [result("getEligibility", { consumerType: "RESIDENTIAL", systemKwp: 3, pmSuryaGhar: { outcome: "NO_SOURCED_RULE", subsidyInr: null, caveats: [] }, netMetering: { outcome: "NO_SOURCED_RULE", caveat: "No sourced net-metering rule is loaded." } })]);
     expect(r.paragraphs[0]).toContain("I cannot state a subsidy for 3 kWp");
     expect(r.paragraphs.join(" ")).toContain("No sourced net-metering rule is loaded.");
+  });
+
+  const health = result("getEnergyHealth", {
+    planMadeAt: "2026-10-08T09:00:00.000Z",
+    stale: false,
+    metrics: [
+      { key: "efficiency", label: "Efficiency", value: 98, unit: "%", higherIsBetter: true, reason: null },
+      { key: "storageUtilisation", label: "Storage utilisation", value: null, unit: "%", higherIsBetter: true, reason: "There is no battery in this plan." },
+      { key: "resilience", label: "Resilience", value: 9.5, unit: "h", higherIsBetter: true, reason: null },
+      { key: "gridDependence", label: "Grid dependence", value: 44.3, unit: "%", higherIsBetter: false, reason: null },
+    ],
+    note: "Each metric is a ratio that means what its formula says, worked out from a simulated day: a plan, not a measurement.",
+  });
+  const waste = (over: Record<string, unknown> = {}) =>
+    result("getEnergyWaste", {
+      planMadeAt: "2026-10-08T09:00:00.000Z",
+      stale: false,
+      findings: [
+        { key: "solarCurtailment", label: "Solar thrown away", state: "FOUND", kwh: 0.8, valueInr: 2.4, explanation: "0.8 kWh of solar could be neither used, stored nor sold, worth ₹2.40 at the export price." },
+        { key: "surplusSold", label: "Surplus sold to the grid", state: "NONE", kwh: 0, valueInr: 0, explanation: "Nothing was sold." },
+        { key: "batteryOpportunity", label: "Battery opportunity lost", state: "UNAVAILABLE", kwh: null, valueInr: null, explanation: "AVISHKAR has no record of what the battery actually did (no device feed)." },
+      ],
+      avoidablePerDayInr: 40.4,
+      avoidableAverageMonthInr: null,
+      avoidableAverageMonthReason: "No what-if run has worked out a year for this property, and a month's figure needs one.",
+      note: "A plan is a simulation of a day on forecasts: these are what that day shows, not what was measured.",
+      ...over,
+    });
+
+  it("gives each health metric as a ratio in its own unit, says which way is better, and says plainly when one cannot be worked out", () => {
+    const r = render("HEALTH", "how healthy is my energy use", [health]);
+    const t = r.paragraphs.join(" ");
+    expect(t).toContain("Efficiency: 98% (higher is better).");
+    expect(t).toContain("Resilience: 9.5 hours (higher is better).");
+    expect(t).toContain("Grid dependence: 44.3% (lower is better).");
+    expect(t).toContain("Storage utilisation: not worked out. There is no battery in this plan.");
+    expect(t).toContain("not a measurement");
+    expect(t).not.toMatch(/overall score of|out of 100/);
+    expect(ungroundedNumbers(t, [health.output])).toEqual([]);
+  });
+
+  it("reports waste only where it was found, says what it cannot tell, and refuses a month's figure it was not given", () => {
+    const r = render("WASTE", "where am I wasting energy", [waste()]);
+    const t = r.paragraphs.join(" ");
+    expect(t).toContain("Solar thrown away: 0.8 kWh of solar could be neither used, stored nor sold, worth ₹2.40 at the export price.");
+    expect(t).not.toContain("Nothing was sold"); // a finding of none is not listed as waste
+    expect(t).toContain("Battery opportunity lost: I cannot tell.");
+    expect(t).toContain("The same day with no control would cost ₹40.40 more.");
+    expect(t).toContain("I do not state a figure for a month: No what-if run has worked out a year");
+    expect(ungroundedNumbers(t, [waste().output])).toEqual([]);
+  });
+
+  it("states a month's avoidable cost only when it was given, and does not say a plan that costs more saves", () => {
+    const withMonth = render("WASTE", "avoidable", [waste({ avoidableAverageMonthInr: 612.5, avoidableAverageMonthReason: null })]);
+    expect(withMonth.paragraphs.join(" ")).toContain("In an average month that comes to about ₹612.50");
+    const dearer = render("WASTE", "waste", [waste({ avoidablePerDayInr: -5 })]);
+    expect(dearer.paragraphs.join(" ")).toContain("This plan costs ₹5 more than the same day with no control");
+    const same = render("WASTE", "waste", [waste({ avoidablePerDayInr: 0 })]);
+    expect(same.paragraphs.join(" ")).toContain("would cost the same");
+  });
+
+  it("without a plan, says so with the tool's reason and does not make up a figure", () => {
+    const none = result("getEnergyHealth", null, { status: "UNAVAILABLE", unavailableReason: "No plan has been made yet, and energy health is worked out from the latest plan. Ask me to make a plan.", dataStatus: "UNAVAILABLE" });
+    const r = render("HEALTH", "how healthy", [none]);
+    expect(r.status).toBe("UNAVAILABLE");
+    expect(r.paragraphs[0]).toContain("No plan has been made yet");
   });
 
   it("does not claim a battery charge it was not given", () => {

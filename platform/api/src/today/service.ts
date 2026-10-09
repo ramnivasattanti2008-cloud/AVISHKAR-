@@ -7,11 +7,11 @@
 import { AppError } from "../errors.js";
 import { latestDna } from "../energy/service.js";
 import type { ForecastDeps } from "../forecast/service.js";
-import { HOUR_MS, local, localMidnight, resample } from "../plan/horizon.js";
+import { HOUR_MS, local, localMidnight } from "../plan/horizon.js";
 import type { PlanDto } from "../plan/schemas.js";
 import { getProperty } from "../properties/service.js";
 import { estimated, forecast as forecastOf, simulated, unavailable } from "../provenance/index.js";
-import { autonomyOf, resilienceReport } from "../resilience/service.js";
+import { autonomyOf, resilienceOnStoredSun } from "../resilience/service.js";
 import { type Point, RISK_RULE, dayEnergy, hours24, surplus, weatherRisk } from "./calc.js";
 import type { TodayDto } from "./schemas.js";
 
@@ -145,8 +145,7 @@ export async function today(deps: ForecastDeps, userId: string, propertyId: stri
   // ---- resilience, from the stored solar forecast so it needs no engine call
   let resilience: TodayDto["resilience"];
   try {
-    const pv = solarRun ? resample(solarPts, "end", Math.ceil((at.getTime() + 330 * 60_000) / HOUR_MS) * HOUR_MS - 330 * 60_000, 48).map((v) => v ?? 0) : new Array<number>(48).fill(0);
-    const rep = await resilienceReport(deps, userId, propertyId, { targetHours: 4, startSocPercent: null }, ctx, { pv, solarNote: solarRun ? null : "No solar forecast is stored, so only the battery is counted." });
+    const rep = await resilienceOnStoredSun(deps, userId, propertyId, solarRun ? solarPts : null, ctx);
     const v = rep.resilience.value;
     resilience = v ? { value: { hours: v.backupHours.withForecastSun, atLeast: v.backupHours.atLeast, score: v.score, chargeAssumed: v.battery?.startSocBasis === "ASSUMPTION" }, unit: "h", provenance: rep.resilience.provenance } : unavailable("No resilience figure could be made.", { ...base, dataType: "resilience" });
   } catch (e) {

@@ -925,7 +925,7 @@ export interface paths {
                             tools: {
                                 description: string;
                                 /** @enum {string} */
-                                name: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
+                                name: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste";
                                 writes: boolean;
                             }[];
                         };
@@ -3844,7 +3844,7 @@ export interface paths {
                 header?: never;
                 path: {
                     id: string;
-                    tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
+                    tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste";
                 };
                 cookie?: never;
             };
@@ -3872,7 +3872,7 @@ export interface paths {
                             /** @enum {string} */
                             status: "OK" | "UNAVAILABLE";
                             /** @enum {string} */
-                            tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
+                            tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste";
                             unavailableReason: string | null;
                         };
                     };
@@ -4933,6 +4933,83 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Energy health: efficiency, solar utilisation, peak management, storage utilisation, resilience, grid dependence and flexibility
+         * @description Each metric is a ratio that means what its formula says, worked out from the latest stored plan's hour-by-hour flows (SIMULATED: a plan is a simulation of a day). A metric that does not exist for the property (no solar, no battery) is UNAVAILABLE with the reason. There is no overall score: it would need invented weights.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EnergyHealth"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6688,6 +6765,83 @@ export interface paths {
                 };
                 /** @description Default Response */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/waste": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Energy waste: solar thrown away, surplus sold, energy sold then bought back dearer, energy bought in the dearest hours, and the avoidable cost
+         * @description Read from the latest stored plan; recomputes nothing. A finding that the data cannot support (the appliance schedule, the battery's lost opportunity) is UNAVAILABLE with the reason. The avoidable cost per day is the plan's saving over no control; the average month's figure appears only when a what-if run has worked out a year.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EnergyWaste"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -8543,7 +8697,7 @@ export interface components {
                 /** @enum {string} */
                 status: "OK" | "UNAVAILABLE";
                 /** @enum {string} */
-                tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
+                tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste";
                 unavailableReason: string | null;
             }[];
         };
@@ -8573,7 +8727,7 @@ export interface components {
                 /** @enum {string} */
                 status: "OK" | "UNAVAILABLE";
                 /** @enum {string} */
-                tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy";
+                tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste";
                 unavailableReason: string | null;
             }[];
         };
@@ -8726,6 +8880,84 @@ export interface components {
                 what: string;
             }[];
             version: number;
+        };
+        EnergyHealth: {
+            basedOn: {
+                madeAt: string;
+                note: string;
+                /** Format: uuid */
+                planId: string;
+                /** @description True when the plan is more than a day old. */
+                stale: boolean;
+            } | null;
+            /** @constant */
+            label: "ENERGY HEALTH";
+            madeAt: string;
+            metrics: {
+                /** @description The figures that went into it, or the reason there is no value. */
+                detail: string;
+                /** @enum {string} */
+                direction: "HIGHER_IS_BETTER" | "LOWER_IS_BETTER";
+                /** @description How the value is worked out, in words. */
+                formula: string;
+                /** @enum {string} */
+                key: "efficiency" | "solarUtilisation" | "peakManagement" | "storageUtilisation" | "resilience" | "gridDependence" | "flexibility";
+                label: string;
+                /** @description A percentage, except resilience, which is hours. Null, with a reason, when it does not exist for this property. */
+                result: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: number | null;
+                };
+            }[];
+            next: {
+                href: string;
+                label: string;
+                why: string;
+            }[];
+            /** @description Why the metrics are not added into one number. */
+            noOverallScore: string;
+            /** Format: uuid */
+            propertyId: string;
+        };
+        EnergyHealthInput: {
+            basedOn: {
+                madeAt: string;
+                note: string;
+                /** Format: uuid */
+                planId: string;
+                /** @description True when the plan is more than a day old. */
+                stale: boolean;
+            } | null;
+            /** @constant */
+            label: "ENERGY HEALTH";
+            madeAt: string;
+            metrics: {
+                /** @description The figures that went into it, or the reason there is no value. */
+                detail: string;
+                /** @enum {string} */
+                direction: "HIGHER_IS_BETTER" | "LOWER_IS_BETTER";
+                /** @description How the value is worked out, in words. */
+                formula: string;
+                /** @enum {string} */
+                key: "efficiency" | "solarUtilisation" | "peakManagement" | "storageUtilisation" | "resilience" | "gridDependence" | "flexibility";
+                label: string;
+                /** @description A percentage, except resilience, which is hours. Null, with a reason, when it does not exist for this property. */
+                result: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: number | null;
+                };
+            }[];
+            next: {
+                href: string;
+                label: string;
+                why: string;
+            }[];
+            /** @description Why the metrics are not added into one number. */
+            noOverallScore: string;
+            /** Format: uuid */
+            propertyId: string;
         };
         EnergyImport: {
             /** @description Readings stored. */
@@ -9174,6 +9406,112 @@ export interface components {
             }[];
             version: number;
             warnings: string[];
+        };
+        EnergyWaste: {
+            avoidable: {
+                /** @description Potential avoidable cost in an average month, only when a what-if run gives a year to take it from; otherwise UNAVAILABLE with what to do. */
+                averageMonth: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: number | null;
+                };
+                /** @description What the latest plan saves over the same day with no control: the cost a controlled day would not have had (INR). */
+                perDay: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: number | null;
+                };
+            };
+            basedOn: {
+                madeAt: string;
+                note: string;
+                /** Format: uuid */
+                planId: string;
+                /** @description True when the plan is more than a day old. */
+                stale: boolean;
+            } | null;
+            findings: {
+                amount: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: {
+                        kwh: number | null;
+                        valueInr: number | null;
+                    } | null;
+                };
+                explanation: string;
+                /** @description The method, so the figure can be checked. */
+                how: string;
+                /** @enum {string} */
+                key: "solarCurtailment" | "surplusSold" | "soldThenBoughtBack" | "dearHoursImport" | "applianceSchedule" | "batteryOpportunity";
+                label: string;
+                /** @enum {string} */
+                state: "FOUND" | "NONE" | "UNAVAILABLE";
+            }[];
+            /** @constant */
+            label: "ENERGY WASTE";
+            madeAt: string;
+            next: {
+                href: string;
+                label: string;
+                why: string;
+            }[];
+            note: string;
+            /** Format: uuid */
+            propertyId: string;
+        };
+        EnergyWasteInput: {
+            avoidable: {
+                /** @description Potential avoidable cost in an average month, only when a what-if run gives a year to take it from; otherwise UNAVAILABLE with what to do. */
+                averageMonth: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: number | null;
+                };
+                /** @description What the latest plan saves over the same day with no control: the cost a controlled day would not have had (INR). */
+                perDay: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: number | null;
+                };
+            };
+            basedOn: {
+                madeAt: string;
+                note: string;
+                /** Format: uuid */
+                planId: string;
+                /** @description True when the plan is more than a day old. */
+                stale: boolean;
+            } | null;
+            findings: {
+                amount: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: {
+                        kwh: number | null;
+                        valueInr: number | null;
+                    } | null;
+                };
+                explanation: string;
+                /** @description The method, so the figure can be checked. */
+                how: string;
+                /** @enum {string} */
+                key: "solarCurtailment" | "surplusSold" | "soldThenBoughtBack" | "dearHoursImport" | "applianceSchedule" | "batteryOpportunity";
+                label: string;
+                /** @enum {string} */
+                state: "FOUND" | "NONE" | "UNAVAILABLE";
+            }[];
+            /** @constant */
+            label: "ENERGY WASTE";
+            madeAt: string;
+            next: {
+                href: string;
+                label: string;
+                why: string;
+            }[];
+            note: string;
+            /** Format: uuid */
+            propertyId: string;
         };
         ErrorResponse: {
             error: {
@@ -9634,6 +9972,7 @@ export interface components {
                     pvKwh: number;
                     pvUsedKwh: number;
                     savingsInr: number;
+                    /** @description Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar. */
                     selfConsumptionRatio: number | null;
                     selfSufficiencyRatio: number | null;
                     unservedKwh: number;
@@ -9752,6 +10091,7 @@ export interface components {
                     pvKwh: number;
                     pvUsedKwh: number;
                     savingsInr: number;
+                    /** @description Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar. */
                     selfConsumptionRatio: number | null;
                     selfSufficiencyRatio: number | null;
                     unservedKwh: number;
@@ -10329,6 +10669,7 @@ export interface components {
                 netCostInr: number;
                 pvKwh: number;
                 pvUsedKwh: number;
+                /** @description Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar. */
                 selfConsumptionRatio: number | null;
                 selfSufficiencyRatio: number | null;
                 /** @description The same equipment with no control: battery idle, solar used as it falls. */
@@ -10444,6 +10785,7 @@ export interface components {
                 netCostInr: number;
                 pvKwh: number;
                 pvUsedKwh: number;
+                /** @description Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar. */
                 selfConsumptionRatio: number | null;
                 selfSufficiencyRatio: number | null;
                 /** @description The same equipment with no control: battery idle, solar used as it falls. */
@@ -10478,6 +10820,7 @@ export interface components {
                 netCostInr: number;
                 pvKwh: number;
                 pvUsedKwh: number;
+                /** @description Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar. */
                 selfConsumptionRatio: number | null;
                 selfSufficiencyRatio: number | null;
                 /** @description The same equipment with no control: battery idle, solar used as it falls. */
@@ -10593,6 +10936,7 @@ export interface components {
                 netCostInr: number;
                 pvKwh: number;
                 pvUsedKwh: number;
+                /** @description Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar. */
                 selfConsumptionRatio: number | null;
                 selfSufficiencyRatio: number | null;
                 /** @description The same equipment with no control: battery idle, solar used as it falls. */

@@ -44,6 +44,7 @@ import { resilienceRoutes } from "./routes/resilience.js";
 import { scenarioRoutes } from "./routes/scenarios.js";
 import { tariffRoutes } from "./routes/tariffs.js";
 import { todayRoutes } from "./routes/today.js";
+import { insightRoutes } from "./routes/insight.js";
 import { twinRoutes } from "./routes/twin.js";
 import { weatherRoutes } from "./routes/weather.js";
 
@@ -201,6 +202,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(resilienceRoutes, { deps });
   await app.register(controlRoutes, { deps });
   await app.register(todayRoutes, { deps });
+  await app.register(insightRoutes, { deps });
   await app.register(adminRoutes, { deps, runner: deps.jobs ?? undefined });
   await app.register(opportunityRoutes, { deps });
   await app.register(copilotRoutes, { deps });

@@ -43,7 +43,7 @@ const Annual = z.object({
   loadKwh: z.number(),
   pvKwh: z.number(),
   pvUsedKwh: z.number(),
-  selfConsumptionRatio: z.number().nullable(),
+  selfConsumptionRatio: z.number().nullable().describe("Share of the solar generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site. Null when there is no solar."),
   selfSufficiencyRatio: z.number().nullable(),
   batteryCycles: z.number(),
   months: z.array(z.object({ month: z.number(), days: z.number(), netCostInr: z.number(), importKwh: z.number(), exportKwh: z.number(), pvKwh: z.number(), loadKwh: z.number() })),

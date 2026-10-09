@@ -180,6 +180,8 @@ The plan: when to charge, discharge, import, export and run flexible loads, chec
 | GET | `/api/properties/{id}/plans/{planId}` | One plan as it was shown |
 | GET | `/api/properties/{id}/resilience` | How long the critical load would last if the grid failed, and how autonomous the plan is |
 | GET | `/api/properties/{id}/today` | Today: generation, use, surplus, weather risk, backup, autonomy, expected value, and what to do next |
+| GET | `/api/properties/{id}/health` | Energy health: efficiency, solar utilisation, peak management, storage utilisation, resilience, grid dependence and flexibility |
+| GET | `/api/properties/{id}/waste` | Energy waste: solar thrown away, surplus sold, energy sold then bought back dearer, energy bought in the dearest hours, and the avoidable cost |
 
 ### scenarios
 
