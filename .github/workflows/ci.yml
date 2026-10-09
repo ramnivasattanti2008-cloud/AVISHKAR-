@@ -84,6 +84,29 @@ jobs:
         working-directory: platform
         run: pnpm -C api build
 
+      # The browser's path, not the API's: through the web origin and its /api proxy, with the session cookie and the CSRF
+      # token as a browser handles them. --no-providers stops before the steps that would call the public weather and solar
+      # services; this project does not call them from CI, and the script names what it skipped.
+      - name: End-to-end journey through the running web app
+        working-directory: platform
+        env:
+          API_URL: http://127.0.0.1:8080
+          ENGINE_API_KEY: ci-engine-key-0123456789abcdef
+          ENGINE_URL: http://127.0.0.1:8090
+          PROVIDER_USER_AGENT: "AVISHKAR CI (ci@example.invalid)"
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          pnpm -C api db:migrate
+          (cd engine && ENGINE_API_KEY=$ENGINE_API_KEY python -m uvicorn avishkar_engine.app:create_app --factory --host 127.0.0.1 --port 8090 --log-level warning &)
+          node api/dist/server.js &
+          pnpm -C web build
+          pnpm -C web start &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8080/api/health >/dev/null && curl -sf http://127.0.0.1:3000/login >/dev/null && break
+            sleep 2
+          done
+          pnpm -C web journey http://127.0.0.1:3000 --no-providers
+
   engine:
     runs-on: ubuntu-latest
     steps:

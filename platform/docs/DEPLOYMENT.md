@@ -71,8 +71,8 @@ The full list with comments is `platform/api/.env.example`. Values that must be 
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every push: the Python EMS (lint, tests, README check), the platform API against a real
-PostGIS service and the real engine (typecheck, lint, tests, build), the engine (lint, tests, committed OpenAPI) and the web
-(typecheck, lint, tests, build). It does not deploy anything, scan dependencies or build images. The live-provider tests
+PostGIS service and the real engine (typecheck, lint, tests, build, and an end-to-end journey over HTTP through the running web
+app and its proxy), the engine (lint, tests, committed OpenAPI) and the web (typecheck, lint, tests, build, smoke test). It does not deploy anything, scan dependencies or build images. The live-provider tests
 (`pnpm -C platform/api test:live`) are run by hand, never in CI.
 
 ## Containers

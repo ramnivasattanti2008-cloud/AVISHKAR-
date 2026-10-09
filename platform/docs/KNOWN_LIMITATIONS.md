@@ -120,8 +120,10 @@ What the platform does not do, does only partly, or does with a caveat the user 
   deletion, but there is no consent screen, retention schedule or backup policy (those are the operator's). The export holds equipment,
   tariffs entered, meter-file records and counts of what is stored, not the readings themselves or each plan. The web app's Content-Security-Policy allows inline scripts (see SECURITY.md).
 - **Interface:** English only (the Python dashboard has Hindi). No screen-reader or axe pass has been done on the platform's
-  pages; no browser end-to-end suite exists, only component tests with a stubbed API, a smoke test of a production build, and
-  manual walks in a real browser (the latest is written down step by step in ACCEPTANCE.md). The manual roof-drawing tool has not
+  pages; no *browser* end-to-end suite exists. What does run in CI is an end-to-end journey over HTTP through the running web app and
+  its proxy (`pnpm -C platform/web journey`), which covers the session cookie, the CSRF check, the real routes and the database but
+  not rendering or clicking; the steps that would call the public weather and solar services are skipped there and run by hand.
+  Component tests stub the API, a smoke test checks a production build, and the manual walks are written down in ACCEPTANCE.md. The manual roof-drawing tool has not
   been exercised in a browser.
 - **Maps:** the production tile provider is the owner's to choose and pay for.
 

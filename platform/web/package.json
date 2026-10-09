@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vitest run",
-    "gen:api": "openapi-typescript ../api/openapi.json -o src/lib/api-types.ts"
+    "gen:api": "openapi-typescript ../api/openapi.json -o src/lib/api-types.ts",
+    "journey": "node scripts/journey.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.12.0",
