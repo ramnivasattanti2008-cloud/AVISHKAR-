@@ -5709,6 +5709,668 @@
         ],
         "type": "object"
       },
+      "EnergyFutures": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "futures": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "basis": {
+                  "description": "REFERENCE: the day the forecasts expect. DATA: an end of a band the forecast measured from this place's own past errors. ASSUMPTION: a figure you set or a question you ask.",
+                  "enum": [
+                    "REFERENCE",
+                    "DATA",
+                    "ASSUMPTION"
+                  ],
+                  "type": "string"
+                },
+                "built": {
+                  "description": "What the day is built from, in words.",
+                  "type": "string"
+                },
+                "key": {
+                  "enum": [
+                    "expected",
+                    "sunny",
+                    "heavyCloud",
+                    "rain",
+                    "highDemand",
+                    "batteryOffline",
+                    "outage",
+                    "stress"
+                  ],
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "reason": {
+                  "description": "Why it was not run, when it was not.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "result": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "provenance": {
+                      "$ref": "#/components/schemas/Provenance"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "autonomyPercent": {
+                              "description": "100 × (1 − energy bought ÷ energy used).",
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "batteryCycles": {
+                              "type": "number"
+                            },
+                            "exportKwh": {
+                              "type": "number"
+                            },
+                            "importKwh": {
+                              "type": "number"
+                            },
+                            "loadKwh": {
+                              "type": "number"
+                            },
+                            "netCostInr": {
+                              "description": "What the day costs with the plan made for it.",
+                              "type": "number"
+                            },
+                            "noControlCostInr": {
+                              "description": "What the same day costs with no battery control, no shifting and no car scheduling.",
+                              "type": "number"
+                            },
+                            "savingsInr": {
+                              "type": "number"
+                            },
+                            "shedKwh": {
+                              "description": "Load switched off because the grid was down: everything above the critical load, hour by hour of the outage. Zero when there is no outage.",
+                              "type": "number"
+                            },
+                            "solarKwh": {
+                              "type": "number"
+                            },
+                            "unservedKwh": {
+                              "description": "Load that could not be served with the plan. Only in an outage is there any.",
+                              "type": "number"
+                            },
+                            "unservedNoControlKwh": {
+                              "description": "The same with no control.",
+                              "type": "number"
+                            },
+                            "vsExpectedInr": {
+                              "description": "This day's cost with the plan, less the expected day's. Positive is dearer. Null for a day with an outage: its bill is lower because load is switched off, not because the day is cheaper.",
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "netCostInr",
+                            "noControlCostInr",
+                            "savingsInr",
+                            "importKwh",
+                            "exportKwh",
+                            "solarKwh",
+                            "loadKwh",
+                            "unservedKwh",
+                            "unservedNoControlKwh",
+                            "batteryCycles",
+                            "autonomyPercent",
+                            "shedKwh",
+                            "vsExpectedInr"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "provenance"
+                  ],
+                  "type": "object"
+                },
+                "sameAsExpected": {
+                  "description": "True when this day's sun and demand are the expected day's to the last digit, so it can only give the same result: a band with no width, as when the readings are perfectly regular and the forecast has seen no error.",
+                  "type": "boolean"
+                },
+                "state": {
+                  "enum": [
+                    "RUN",
+                    "UNAVAILABLE"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "basis",
+                "built",
+                "sameAsExpected",
+                "state",
+                "reason",
+                "result"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "horizon": {
+            "additionalProperties": false,
+            "properties": {
+              "start": {
+                "type": "string"
+              },
+              "steps": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "start",
+              "steps"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "ENERGY FUTURES",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "request": {
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "enum": [
+                  "SAVE_MONEY",
+                  "INDEPENDENCE",
+                  "RESILIENCE",
+                  "GREEN",
+                  "REVENUE",
+                  "BALANCED"
+                ],
+                "type": "string"
+              },
+              "outage": {
+                "additionalProperties": false,
+                "properties": {
+                  "hours": {
+                    "type": "number"
+                  },
+                  "startHour": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "startHour",
+                  "hours"
+                ],
+                "type": "object"
+              },
+              "rainSolarPercent": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "mode",
+              "rainSolarPercent",
+              "outage"
+            ],
+            "type": "object"
+          },
+          "spread": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "cheapest": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "key": {
+                        "enum": [
+                          "expected",
+                          "sunny",
+                          "heavyCloud",
+                          "rain",
+                          "highDemand",
+                          "batteryOffline",
+                          "outage",
+                          "stress"
+                        ],
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "netCostInr": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "label",
+                      "netCostInr"
+                    ],
+                    "type": "object"
+                  },
+                  "dearest": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "key": {
+                        "enum": [
+                          "expected",
+                          "sunny",
+                          "heavyCloud",
+                          "rain",
+                          "highDemand",
+                          "batteryOffline",
+                          "outage",
+                          "stress"
+                        ],
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "netCostInr": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "label",
+                      "netCostInr"
+                    ],
+                    "type": "object"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "cheapest",
+                  "dearest",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The cheapest and dearest of the futures that were run, leaving out the days with an outage (load is switched off in them). Null when fewer than two were compared."
+          }
+        },
+        "required": [
+          "label",
+          "madeAt",
+          "horizon",
+          "request",
+          "futures",
+          "spread",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "EnergyFuturesInput": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "futures": {
+            "items": {
+              "properties": {
+                "basis": {
+                  "description": "REFERENCE: the day the forecasts expect. DATA: an end of a band the forecast measured from this place's own past errors. ASSUMPTION: a figure you set or a question you ask.",
+                  "enum": [
+                    "REFERENCE",
+                    "DATA",
+                    "ASSUMPTION"
+                  ],
+                  "type": "string"
+                },
+                "built": {
+                  "description": "What the day is built from, in words.",
+                  "type": "string"
+                },
+                "key": {
+                  "enum": [
+                    "expected",
+                    "sunny",
+                    "heavyCloud",
+                    "rain",
+                    "highDemand",
+                    "batteryOffline",
+                    "outage",
+                    "stress"
+                  ],
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "reason": {
+                  "description": "Why it was not run, when it was not.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "result": {
+                  "properties": {
+                    "provenance": {
+                      "$ref": "#/components/schemas/ProvenanceInput"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "autonomyPercent": {
+                              "description": "100 × (1 − energy bought ÷ energy used).",
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "batteryCycles": {
+                              "type": "number"
+                            },
+                            "exportKwh": {
+                              "type": "number"
+                            },
+                            "importKwh": {
+                              "type": "number"
+                            },
+                            "loadKwh": {
+                              "type": "number"
+                            },
+                            "netCostInr": {
+                              "description": "What the day costs with the plan made for it.",
+                              "type": "number"
+                            },
+                            "noControlCostInr": {
+                              "description": "What the same day costs with no battery control, no shifting and no car scheduling.",
+                              "type": "number"
+                            },
+                            "savingsInr": {
+                              "type": "number"
+                            },
+                            "shedKwh": {
+                              "description": "Load switched off because the grid was down: everything above the critical load, hour by hour of the outage. Zero when there is no outage.",
+                              "type": "number"
+                            },
+                            "solarKwh": {
+                              "type": "number"
+                            },
+                            "unservedKwh": {
+                              "description": "Load that could not be served with the plan. Only in an outage is there any.",
+                              "type": "number"
+                            },
+                            "unservedNoControlKwh": {
+                              "description": "The same with no control.",
+                              "type": "number"
+                            },
+                            "vsExpectedInr": {
+                              "description": "This day's cost with the plan, less the expected day's. Positive is dearer. Null for a day with an outage: its bill is lower because load is switched off, not because the day is cheaper.",
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "netCostInr",
+                            "noControlCostInr",
+                            "savingsInr",
+                            "importKwh",
+                            "exportKwh",
+                            "solarKwh",
+                            "loadKwh",
+                            "unservedKwh",
+                            "unservedNoControlKwh",
+                            "batteryCycles",
+                            "autonomyPercent",
+                            "shedKwh",
+                            "vsExpectedInr"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "provenance"
+                  ],
+                  "type": "object"
+                },
+                "sameAsExpected": {
+                  "description": "True when this day's sun and demand are the expected day's to the last digit, so it can only give the same result: a band with no width, as when the readings are perfectly regular and the forecast has seen no error.",
+                  "type": "boolean"
+                },
+                "state": {
+                  "enum": [
+                    "RUN",
+                    "UNAVAILABLE"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "basis",
+                "built",
+                "sameAsExpected",
+                "state",
+                "reason",
+                "result"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "horizon": {
+            "properties": {
+              "start": {
+                "type": "string"
+              },
+              "steps": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "start",
+              "steps"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "const": "ENERGY FUTURES",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "request": {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "SAVE_MONEY",
+                  "INDEPENDENCE",
+                  "RESILIENCE",
+                  "GREEN",
+                  "REVENUE",
+                  "BALANCED"
+                ],
+                "type": "string"
+              },
+              "outage": {
+                "properties": {
+                  "hours": {
+                    "type": "number"
+                  },
+                  "startHour": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "startHour",
+                  "hours"
+                ],
+                "type": "object"
+              },
+              "rainSolarPercent": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "mode",
+              "rainSolarPercent",
+              "outage"
+            ],
+            "type": "object"
+          },
+          "spread": {
+            "anyOf": [
+              {
+                "properties": {
+                  "cheapest": {
+                    "properties": {
+                      "key": {
+                        "enum": [
+                          "expected",
+                          "sunny",
+                          "heavyCloud",
+                          "rain",
+                          "highDemand",
+                          "batteryOffline",
+                          "outage",
+                          "stress"
+                        ],
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "netCostInr": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "label",
+                      "netCostInr"
+                    ],
+                    "type": "object"
+                  },
+                  "dearest": {
+                    "properties": {
+                      "key": {
+                        "enum": [
+                          "expected",
+                          "sunny",
+                          "heavyCloud",
+                          "rain",
+                          "highDemand",
+                          "batteryOffline",
+                          "outage",
+                          "stress"
+                        ],
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "netCostInr": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "label",
+                      "netCostInr"
+                    ],
+                    "type": "object"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "cheapest",
+                  "dearest",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The cheapest and dearest of the futures that were run, leaving out the days with an outage (load is switched off in them). Null when fewer than two were compared."
+          }
+        },
+        "required": [
+          "label",
+          "madeAt",
+          "horizon",
+          "request",
+          "futures",
+          "spread",
+          "assumptions",
+          "notes"
+        ],
+        "type": "object"
+      },
       "EnergyHealth": {
         "additionalProperties": false,
         "properties": {
@@ -9311,6 +9973,141 @@
           "solar",
           "notes"
         ],
+        "type": "object"
+      },
+      "FuturesRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "default": "BALANCED",
+            "description": "What the plan favours, as for any plan.",
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "type": "string"
+          },
+          "outage": {
+            "additionalProperties": false,
+            "default": {
+              "hours": 4,
+              "startHour": 18
+            },
+            "description": "A grid outage to ask about. A question, not a forecast: no outage data exists.",
+            "properties": {
+              "hours": {
+                "default": 4,
+                "description": "How many hours it lasts.",
+                "maximum": 12,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "startHour": {
+                "default": 18,
+                "description": "The local clock hour the outage starts.",
+                "maximum": 23,
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "startHour",
+              "hours"
+            ],
+            "type": "object"
+          },
+          "rainSolarPercent": {
+            "default": 20,
+            "description": "The share of the expected solar output that comes through on a rainy day. The default is an assumption, not a measurement: set your own.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "startSocPercent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The battery's charge now, if you know it."
+          }
+        },
+        "required": [
+          "mode",
+          "rainSolarPercent",
+          "outage"
+        ],
+        "type": "object"
+      },
+      "FuturesRequestInput": {
+        "properties": {
+          "mode": {
+            "default": "BALANCED",
+            "description": "What the plan favours, as for any plan.",
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "type": "string"
+          },
+          "outage": {
+            "default": {
+              "hours": 4,
+              "startHour": 18
+            },
+            "description": "A grid outage to ask about. A question, not a forecast: no outage data exists.",
+            "properties": {
+              "hours": {
+                "default": 4,
+                "description": "How many hours it lasts.",
+                "maximum": 12,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "startHour": {
+                "default": 18,
+                "description": "The local clock hour the outage starts.",
+                "maximum": 23,
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "rainSolarPercent": {
+            "default": 20,
+            "description": "The share of the expected solar output that comes through on a rainy day. The default is an assumption, not a measurement: set your own.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "startSocPercent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The battery's charge now, if you know it."
+          }
+        },
         "type": "object"
       },
       "GeoPoint": {
@@ -25775,6 +26572,119 @@
         "summary": "Score every stored forecast that the meter data now covers",
         "tags": [
           "forecast"
+        ]
+      }
+    },
+    "/api/properties/{id}/futures": {
+      "post": {
+        "description": "ENERGY FUTURES. Each day is built from the forecasts' central estimates, an end of a band the forecast measured from this place's own past errors, or a figure you set (the rain's share of the sun, an outage you ask about), and the response says which. They are not predictions and carry no probability. A day that cannot be built (no solar band yet, no battery, no critical load) is UNAVAILABLE with the reason. Nothing is stored.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuturesRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergyFutures"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "The next 24 hours planned on several different days: sunny, heavy cloud, rain, high demand, a dead battery, a grid outage",
+        "tags": [
+          "scenarios"
         ]
       }
     },

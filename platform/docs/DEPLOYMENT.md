@@ -1,9 +1,11 @@
 # Deployment
 
-**State on 2026-10-08: nothing has been deployed.** There is no hosted instance, no Dockerfile for the platform, no compose
-file, no infrastructure-as-code and no tested backup. The repository's root `Dockerfile` belongs to the vendored upstream
-EMHASS project, not to the platform. What follows is the procedure that matches how the three services run on the
-development machine (each step below was run there), plus what the owner must supply and decide.
+**State on 2026-10-09: nothing has been deployed.** There is no hosted instance, no infrastructure-as-code and no tested backup.
+There are Dockerfiles and a compose file for the platform (`platform/docker/`, `platform/docker-compose.yml`), but **they have
+never been built or run**: the Docker engine cannot start on the development machine, so each file says UNTESTED at its top.
+What was checked, outside Docker, is described under "What was and was not checked" below. The repository's root `Dockerfile`
+belongs to the vendored upstream EMHASS project, not to the platform. What follows is the procedure that matches how the
+services run on the development machine (each step below was run there), plus what the owner must supply and decide.
 
 ## The pieces
 
@@ -73,10 +75,27 @@ PostGIS service and the real engine (typecheck, lint, tests, build), the engine 
 (typecheck, lint, tests, build). It does not deploy anything, scan dependencies or build images. The live-provider tests
 (`pnpm -C platform/api test:live`) are run by hand, never in CI.
 
+## Containers
+
+`platform/docker/{engine,api,web}.Dockerfile` and `platform/docker-compose.yml` (database from `postgis/postgis:16-3.4`, engine,
+API, web; only the web port is published). Build context is `platform/`. Required variables are refused when missing
+(`docker compose config` shows which): `POSTGRES_PASSWORD`, `ENGINE_API_KEY`, `SESSION_SECRET`, `PROVIDER_USER_AGENT`. The one-off steps are
+`docker compose run --rm api pnpm db:migrate`, `... pnpm db:seed` and `... pnpm db:make-admin <email>`; the top of the compose file lists them.
+The API image keeps its development packages so that it can run those; the web image is the Next standalone output.
+
+### What was and was not checked
+
+| Piece | Checked | How |
+|---|---|---|
+| The engine's runtime packages | Yes | `platform/engine/requirements-runtime.txt` was installed alone into an empty virtual environment (plus pytest and httpx) and the engine's 407 tests passed there |
+| The web app's image layout | Yes, outside Docker | `next build` with `output: "standalone"`, the static files and `public/` (which holds the map's worker files) copied beside `server.js`, `node server.js`; `pnpm smoke` passed against it and `/api/health` answered through its proxy |
+| The compose file | Syntax and required variables | `docker compose config` (needs no engine) |
+| Any image build, `docker compose up`, the one-off commands in a container, a healthcheck, the API as a non-root user | **No** | The Docker engine would not start |
+| The API without its development packages | **No** | The image keeps them |
+
 ## Not done
 
-- Dockerfiles and a compose file for the four services (the Docker engine cannot run on the development machine, so none could
-  be tested; an untested image would not be evidence).
+- A built and run image of any service, and a tested compose stack (see above).
 - Infrastructure as code, a staging environment, a rollback procedure, zero-downtime migrations.
 - An external queue (pg-boss or similar): the jobs run from one in-process scheduler (`JOBS_ENABLED=true`), which is enough for
   four small jobs and not for work that must survive a restart or spread over machines.

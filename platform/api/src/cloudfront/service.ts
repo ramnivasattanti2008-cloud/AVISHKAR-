@@ -5,26 +5,16 @@
  */
 import type { ForecastDeps } from "../forecast/service.js";
 import { requireEngine } from "../engine/index.js";
-import type { OptimiseResponse } from "../engine/schemas.js";
 import { AppError } from "../errors.js";
 import { HOUR_MS, istIso, planStart, resample } from "../plan/horizon.js";
 import { buildPlanInputs, costsShown } from "../plan/service.js";
+import { usable } from "../plan/usable.js";
 import { simulated } from "../provenance/index.js";
 import type { CloudFrontDto, CloudFrontRequest } from "./schemas.js";
 import { EVENING, advise, eveningDemand, frontScale, stepsThroughFront } from "./front.js";
 
 const round = (v: number, d = 2): number => Math.round(v * 10 ** d) / 10 ** d;
 const iso = (ms: number): string => new Date(ms).toISOString();
-
-function usable(out: OptimiseResponse, what: string): NonNullable<OptimiseResponse["schedule"]> & { totals: NonNullable<OptimiseResponse["totals"]>; baseline: NonNullable<OptimiseResponse["baseline"]> } {
-  if (out.solver.status !== "optimal" || !out.schedule || !out.totals || !out.baseline) {
-    throw new AppError("PLAN_INVALID", `The planner found no usable plan for ${what} (${out.solver.status}): ${out.solver.message}`, { solver: out.solver });
-  }
-  if (!out.validation.valid) {
-    throw new AppError("PLAN_INVALID", `SIMULATION INVALID: the plan for ${what} failed the planner's independent check, so nothing is shown.`, { problems: out.validation.problems.slice(0, 10) });
-  }
-  return { ...out.schedule, totals: out.totals, baseline: out.baseline };
-}
 
 export async function runCloudFront(deps: ForecastDeps, userId: string, propertyId: string, req: CloudFrontRequest, ctx: { requestId?: string } = {}): Promise<CloudFrontDto> {
   const engine = requireEngine(deps.engine);

@@ -1,0 +1,80 @@
+# UNTESTED AS A RUNNING STACK: written on a machine whose Docker engine could not run, so `docker compose up` has never been run on
+# this file and the images it builds have never been built. `docker compose config` (which needs no engine) was run on it. See
+# docs/DEPLOYMENT.md for what was run outside Docker, and for what the owner has to supply (a host, TLS, a tile provider).
+#
+#   export POSTGRES_PASSWORD=...  ENGINE_API_KEY=...  SESSION_SECRET=...  PROVIDER_USER_AGENT="AVISHKAR (you@example.com)"
+#   docker compose up --build -d
+#   docker compose run --rm api pnpm db:migrate        # applies the committed migrations; never resets anything
+#   docker compose run --rm api pnpm db:seed           # the sourced tariffs and policy rules
+#   open http://localhost:3000
+#   docker compose run --rm api pnpm db:make-admin you@example.com   # after registering, to get the Admin page
+#
+# Only the web app is published. The API, the engine and the database stay on the private network; the browser reaches the API only
+# through the web app's /api proxy, so the session cookie is first-party. Put TLS in front of the web app before real use: the
+# cookie is `Secure` in production, which browsers only honour over https (or on localhost).
+name: avishkar
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: avishkar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: avishkar
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U avishkar -d avishkar"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  engine:
+    build:
+      context: .
+      dockerfile: docker/engine.Dockerfile
+    environment:
+      ENGINE_API_KEY: ${ENGINE_API_KEY:?set ENGINE_API_KEY, 16 characters or more}
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "8080"
+      DATABASE_URL: postgresql://avishkar:${POSTGRES_PASSWORD}@db:5432/avishkar
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET, 32 characters or more}
+      ENGINE_URL: http://engine:8090
+      ENGINE_API_KEY: ${ENGINE_API_KEY}
+      # the web app is the only thing that reaches the API, and it forwards the visitor's address
+      TRUST_PROXY: "true"
+      PROVIDER_USER_AGENT: ${PROVIDER_USER_AGENT:?set PROVIDER_USER_AGENT to something that identifies the service with a real contact}
+      # run the background jobs in exactly one API process
+      JOBS_ENABLED: "true"
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      engine:
+        condition: service_started
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        API_URL: http://api:8080
+        NEXT_PUBLIC_OSM_TILE_URL: ${NEXT_PUBLIC_OSM_TILE_URL:-}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  dbdata:

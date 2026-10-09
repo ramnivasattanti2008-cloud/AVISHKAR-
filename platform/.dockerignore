@@ -1,0 +1,14 @@
+# The build context of the platform images is this folder. Keep dependencies, build output and anything secret out of it.
+**/node_modules
+**/.next
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/coverage
+**/*.log
+.git
+docs

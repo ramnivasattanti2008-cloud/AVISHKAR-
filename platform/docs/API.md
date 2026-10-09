@@ -190,6 +190,7 @@ What-if: today's setup against added solar, a battery or another tariff over a t
 | Method | Path | What it does |
 |---|---|---|
 | POST | `/api/properties/{id}/cloud-front` | What a cloud front crossing the sky would do to the next 24 hours, with and without AVISHKAR |
+| POST | `/api/properties/{id}/futures` | The next 24 hours planned on several different days: sunny, heavy cloud, rain, high demand, a dead battery, a grid outage |
 | POST | `/api/properties/{id}/opportunities` | What is worth doing at this property |
 | GET | `/api/properties/{id}/scenarios` | Scenarios run for a property, newest first |
 | POST | `/api/properties/{id}/scenarios` | What would adding solar, a battery or a different tariff do over a year |

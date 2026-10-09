@@ -4855,6 +4855,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/futures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The next 24 hours planned on several different days: sunny, heavy cloud, rain, high demand, a dead battery, a grid outage
+         * @description ENERGY FUTURES. Each day is built from the forecasts' central estimates, an end of a band the forecast measured from this place's own past errors, or a figure you set (the rain's share of the sun, an outage you ask about), and the response says which. They are not predictions and carry no probability. A day that cannot be built (no solar band yet, no battery, no critical load) is UNAVAILABLE with the reason. Nothing is stored.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["FuturesRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EnergyFutures"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/geometry": {
         parameters: {
             query?: never;
@@ -8881,6 +8989,166 @@ export interface components {
             }[];
             version: number;
         };
+        EnergyFutures: {
+            assumptions: string[];
+            futures: {
+                /**
+                 * @description REFERENCE: the day the forecasts expect. DATA: an end of a band the forecast measured from this place's own past errors. ASSUMPTION: a figure you set or a question you ask.
+                 * @enum {string}
+                 */
+                basis: "REFERENCE" | "DATA" | "ASSUMPTION";
+                /** @description What the day is built from, in words. */
+                built: string;
+                /** @enum {string} */
+                key: "expected" | "sunny" | "heavyCloud" | "rain" | "highDemand" | "batteryOffline" | "outage" | "stress";
+                label: string;
+                /** @description Why it was not run, when it was not. */
+                reason: string | null;
+                result: {
+                    provenance: components["schemas"]["Provenance"];
+                    unit?: string;
+                    value: {
+                        /** @description 100 × (1 − energy bought ÷ energy used). */
+                        autonomyPercent: number | null;
+                        batteryCycles: number;
+                        exportKwh: number;
+                        importKwh: number;
+                        loadKwh: number;
+                        /** @description What the day costs with the plan made for it. */
+                        netCostInr: number;
+                        /** @description What the same day costs with no battery control, no shifting and no car scheduling. */
+                        noControlCostInr: number;
+                        savingsInr: number;
+                        /** @description Load switched off because the grid was down: everything above the critical load, hour by hour of the outage. Zero when there is no outage. */
+                        shedKwh: number;
+                        solarKwh: number;
+                        /** @description Load that could not be served with the plan. Only in an outage is there any. */
+                        unservedKwh: number;
+                        /** @description The same with no control. */
+                        unservedNoControlKwh: number;
+                        /** @description This day's cost with the plan, less the expected day's. Positive is dearer. Null for a day with an outage: its bill is lower because load is switched off, not because the day is cheaper. */
+                        vsExpectedInr: number | null;
+                    } | null;
+                };
+                /** @description True when this day's sun and demand are the expected day's to the last digit, so it can only give the same result: a band with no width, as when the readings are perfectly regular and the forecast has seen no error. */
+                sameAsExpected: boolean;
+                /** @enum {string} */
+                state: "RUN" | "UNAVAILABLE";
+            }[];
+            horizon: {
+                start: string;
+                steps: number;
+            };
+            /** @constant */
+            label: "ENERGY FUTURES";
+            madeAt: string;
+            notes: string[];
+            request: {
+                /** @enum {string} */
+                mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+                outage: {
+                    hours: number;
+                    startHour: number;
+                };
+                rainSolarPercent: number;
+            };
+            /** @description The cheapest and dearest of the futures that were run, leaving out the days with an outage (load is switched off in them). Null when fewer than two were compared. */
+            spread: {
+                cheapest: {
+                    /** @enum {string} */
+                    key: "expected" | "sunny" | "heavyCloud" | "rain" | "highDemand" | "batteryOffline" | "outage" | "stress";
+                    label: string;
+                    netCostInr: number;
+                };
+                dearest: {
+                    /** @enum {string} */
+                    key: "expected" | "sunny" | "heavyCloud" | "rain" | "highDemand" | "batteryOffline" | "outage" | "stress";
+                    label: string;
+                    netCostInr: number;
+                };
+                note: string;
+            } | null;
+        };
+        EnergyFuturesInput: {
+            assumptions: string[];
+            futures: {
+                /**
+                 * @description REFERENCE: the day the forecasts expect. DATA: an end of a band the forecast measured from this place's own past errors. ASSUMPTION: a figure you set or a question you ask.
+                 * @enum {string}
+                 */
+                basis: "REFERENCE" | "DATA" | "ASSUMPTION";
+                /** @description What the day is built from, in words. */
+                built: string;
+                /** @enum {string} */
+                key: "expected" | "sunny" | "heavyCloud" | "rain" | "highDemand" | "batteryOffline" | "outage" | "stress";
+                label: string;
+                /** @description Why it was not run, when it was not. */
+                reason: string | null;
+                result: {
+                    provenance: components["schemas"]["ProvenanceInput"];
+                    unit?: string;
+                    value: {
+                        /** @description 100 × (1 − energy bought ÷ energy used). */
+                        autonomyPercent: number | null;
+                        batteryCycles: number;
+                        exportKwh: number;
+                        importKwh: number;
+                        loadKwh: number;
+                        /** @description What the day costs with the plan made for it. */
+                        netCostInr: number;
+                        /** @description What the same day costs with no battery control, no shifting and no car scheduling. */
+                        noControlCostInr: number;
+                        savingsInr: number;
+                        /** @description Load switched off because the grid was down: everything above the critical load, hour by hour of the outage. Zero when there is no outage. */
+                        shedKwh: number;
+                        solarKwh: number;
+                        /** @description Load that could not be served with the plan. Only in an outage is there any. */
+                        unservedKwh: number;
+                        /** @description The same with no control. */
+                        unservedNoControlKwh: number;
+                        /** @description This day's cost with the plan, less the expected day's. Positive is dearer. Null for a day with an outage: its bill is lower because load is switched off, not because the day is cheaper. */
+                        vsExpectedInr: number | null;
+                    } | null;
+                };
+                /** @description True when this day's sun and demand are the expected day's to the last digit, so it can only give the same result: a band with no width, as when the readings are perfectly regular and the forecast has seen no error. */
+                sameAsExpected: boolean;
+                /** @enum {string} */
+                state: "RUN" | "UNAVAILABLE";
+            }[];
+            horizon: {
+                start: string;
+                steps: number;
+            };
+            /** @constant */
+            label: "ENERGY FUTURES";
+            madeAt: string;
+            notes: string[];
+            request: {
+                /** @enum {string} */
+                mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+                outage: {
+                    hours: number;
+                    startHour: number;
+                };
+                rainSolarPercent: number;
+            };
+            /** @description The cheapest and dearest of the futures that were run, leaving out the days with an outage (load is switched off in them). Null when fewer than two were compared. */
+            spread: {
+                cheapest: {
+                    /** @enum {string} */
+                    key: "expected" | "sunny" | "heavyCloud" | "rain" | "highDemand" | "batteryOffline" | "outage" | "stress";
+                    label: string;
+                    netCostInr: number;
+                };
+                dearest: {
+                    /** @enum {string} */
+                    key: "expected" | "sunny" | "heavyCloud" | "rain" | "highDemand" | "batteryOffline" | "outage" | "stress";
+                    label: string;
+                    netCostInr: number;
+                };
+                note: string;
+            } | null;
+        };
         EnergyHealth: {
             basedOn: {
                 madeAt: string;
@@ -9700,6 +9968,74 @@ export interface components {
                 available: boolean;
                 reason: string;
             };
+        };
+        FuturesRequest: {
+            /**
+             * @description What the plan favours, as for any plan.
+             * @default BALANCED
+             * @enum {string}
+             */
+            mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            /**
+             * @description A grid outage to ask about. A question, not a forecast: no outage data exists.
+             * @default {
+             *       "hours": 4,
+             *       "startHour": 18
+             *     }
+             */
+            outage: {
+                /**
+                 * @description How many hours it lasts.
+                 * @default 4
+                 */
+                hours: number;
+                /**
+                 * @description The local clock hour the outage starts.
+                 * @default 18
+                 */
+                startHour: number;
+            };
+            /**
+             * @description The share of the expected solar output that comes through on a rainy day. The default is an assumption, not a measurement: set your own.
+             * @default 20
+             */
+            rainSolarPercent: number;
+            /** @description The battery's charge now, if you know it. */
+            startSocPercent?: number | null;
+        };
+        FuturesRequestInput: {
+            /**
+             * @description What the plan favours, as for any plan.
+             * @default BALANCED
+             * @enum {string}
+             */
+            mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            /**
+             * @description A grid outage to ask about. A question, not a forecast: no outage data exists.
+             * @default {
+             *       "hours": 4,
+             *       "startHour": 18
+             *     }
+             */
+            outage: {
+                /**
+                 * @description How many hours it lasts.
+                 * @default 4
+                 */
+                hours: number;
+                /**
+                 * @description The local clock hour the outage starts.
+                 * @default 18
+                 */
+                startHour: number;
+            };
+            /**
+             * @description The share of the expected solar output that comes through on a rainy day. The default is an assumption, not a measurement: set your own.
+             * @default 20
+             */
+            rainSolarPercent: number;
+            /** @description The battery's charge now, if you know it. */
+            startSocPercent?: number | null;
         };
         GeoPoint: {
             latitude: number;

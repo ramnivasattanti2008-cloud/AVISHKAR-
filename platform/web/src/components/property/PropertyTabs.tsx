@@ -13,6 +13,7 @@ const TABS = [
   { href: "/health", label: "Health" },
   { href: "/control", label: "Control" },
   { href: "/what-if", label: "What if" },
+  { href: "/futures", label: "Futures" },
   { href: "/ask", label: "Ask" },
 ] as const;
 

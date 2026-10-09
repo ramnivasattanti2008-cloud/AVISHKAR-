@@ -26,6 +26,7 @@ import { accountRoutes } from "./routes/account.js";
 import { adminRoutes } from "./routes/admin.js";
 import { assetRoutes } from "./routes/assets.js";
 import { cloudFrontRoutes } from "./routes/cloudfront.js";
+import { futuresRoutes } from "./routes/futures.js";
 import { communityRoutes } from "./routes/community.js";
 import { controlRoutes } from "./routes/control.js";
 import { copilotRoutes } from "./routes/copilot.js";
@@ -199,6 +200,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(planRoutes, { deps });
   await app.register(scenarioRoutes, { deps });
   await app.register(cloudFrontRoutes, { deps });
+  await app.register(futuresRoutes, { deps });
   await app.register(resilienceRoutes, { deps });
   await app.register(controlRoutes, { deps });
   await app.register(todayRoutes, { deps });
