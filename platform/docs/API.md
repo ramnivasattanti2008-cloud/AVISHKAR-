@@ -188,6 +188,7 @@ The plan: when to charge, discharge, import, export and run flexible loads, chec
 | GET | `/api/properties/{id}/today` | Today: generation, use, surplus, weather risk, backup, autonomy, expected value, and what to do next |
 | GET | `/api/properties/{id}/health` | Energy health: efficiency, solar utilisation, peak management, storage utilisation, resilience, grid dependence and flexibility |
 | GET | `/api/properties/{id}/waste` | Energy waste: solar thrown away, surplus sold, energy sold then bought back dearer, energy bought in the dearest hours, and the avoidable cost |
+| GET | `/api/properties/{id}/allocation` | Where every kWh of the latest plan came from and went to, hour by hour |
 
 ### scenarios
 

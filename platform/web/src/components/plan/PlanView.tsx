@@ -9,6 +9,7 @@ import { useAuth } from "../AuthProvider";
 import { ProvenanceDetails, StatusBadge } from "../Provenance";
 import { PropertyTabs } from "../property/PropertyTabs";
 import { usePropertyData } from "../property/usePropertyData";
+import { AllocationPanel } from "./AllocationPanel";
 import { CloudFrontPanel } from "./CloudFrontPanel";
 import { RecommendationCard } from "./RecommendationCard";
 import { BatteryChart, PriceChart, SERIES, SourcesChart } from "./PlanCharts";
@@ -366,6 +367,8 @@ export function PlanView({ id }: { id: string }) {
           </section>
         </>
       )}
+
+      {plan && <AllocationPanel id={id} />}
 
       <CloudFrontPanel id={id} />
 

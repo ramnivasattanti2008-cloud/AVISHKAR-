@@ -6160,6 +6160,722 @@
         ],
         "type": "object"
       },
+      "EnergyAllocation": {
+        "additionalProperties": false,
+        "properties": {
+          "basedOn": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "madeAt": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "planId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  },
+                  "stale": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "planId",
+                  "madeAt",
+                  "stale",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "check": {
+            "additionalProperties": false,
+            "properties": {
+              "balanced": {
+                "type": "boolean"
+              },
+              "maxHourErrorKwh": {
+                "type": "number"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "balanced",
+              "maxHourErrorKwh",
+              "note"
+            ],
+            "type": "object"
+          },
+          "hours": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "batteryToDemandKwh": {
+                  "type": "number"
+                },
+                "batteryToGridKwh": {
+                  "type": "number"
+                },
+                "demandKwh": {
+                  "type": "number"
+                },
+                "exportPriceInr": {
+                  "type": "number"
+                },
+                "gridToBatteryKwh": {
+                  "type": "number"
+                },
+                "gridToDemandKwh": {
+                  "type": "number"
+                },
+                "importPriceInr": {
+                  "type": "number"
+                },
+                "servedKwh": {
+                  "description": "The part of the demand the plan could serve; below demandKwh only in an outage.",
+                  "type": "number"
+                },
+                "solarCurtailedKwh": {
+                  "type": "number"
+                },
+                "solarToBatteryKwh": {
+                  "type": "number"
+                },
+                "solarToDemandKwh": {
+                  "type": "number"
+                },
+                "solarToGridKwh": {
+                  "type": "number"
+                },
+                "time": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "time",
+                "demandKwh",
+                "servedKwh",
+                "solarToDemandKwh",
+                "batteryToDemandKwh",
+                "gridToDemandKwh",
+                "solarToBatteryKwh",
+                "gridToBatteryKwh",
+                "solarToGridKwh",
+                "batteryToGridKwh",
+                "solarCurtailedKwh",
+                "importPriceInr",
+                "exportPriceInr"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "label": {
+            "const": "WHERE EVERY kWh WENT",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "next": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "href": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "href",
+                "why"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "rule": {
+            "description": "The order the energy is attributed in. The optimiser does not record which kWh went where, so this is a convention, not a measurement.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "battery": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "inKwh": {
+                                "type": "number"
+                              },
+                              "levelChangeKwh": {
+                                "type": "number"
+                              },
+                              "lostKwh": {
+                                "type": "number"
+                              },
+                              "outFromGridKwh": {
+                                "type": "number"
+                              },
+                              "outFromSolarKwh": {
+                                "type": "number"
+                              },
+                              "outKwh": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "inKwh",
+                              "outKwh",
+                              "lostKwh",
+                              "levelChangeKwh",
+                              "outFromSolarKwh",
+                              "outFromGridKwh"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "What went in, what came out, what was lost between the two, and where what came out had come from. Null with no battery."
+                      },
+                      "demand": {
+                        "additionalProperties": false,
+                        "description": "The three sources add up to what was served.",
+                        "properties": {
+                          "fromBatteryKwh": {
+                            "type": "number"
+                          },
+                          "fromGridKwh": {
+                            "type": "number"
+                          },
+                          "fromSolarKwh": {
+                            "type": "number"
+                          },
+                          "kwh": {
+                            "type": "number"
+                          },
+                          "servedKwh": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "kwh",
+                          "servedKwh",
+                          "fromSolarKwh",
+                          "fromBatteryKwh",
+                          "fromGridKwh"
+                        ],
+                        "type": "object"
+                      },
+                      "grid": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "boughtKwh": {
+                            "type": "number"
+                          },
+                          "forBatteryKwh": {
+                            "type": "number"
+                          },
+                          "forDemandKwh": {
+                            "type": "number"
+                          },
+                          "soldKwh": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "boughtKwh",
+                          "forDemandKwh",
+                          "forBatteryKwh",
+                          "soldKwh"
+                        ],
+                        "type": "object"
+                      },
+                      "money": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "batteryDisplacedInr": {
+                            "description": "What the energy taken from the battery would have cost at the import price of the hour it was used.",
+                            "type": "number"
+                          },
+                          "boughtForBatteryInr": {
+                            "type": "number"
+                          },
+                          "boughtForDemandInr": {
+                            "type": "number"
+                          },
+                          "soldInr": {
+                            "type": "number"
+                          },
+                          "storedSolarDisplacedInr": {
+                            "description": "The same for the part that had come from the sun. Not a saving on its own: the plan's saving is what it is.",
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "boughtForDemandInr",
+                          "boughtForBatteryInr",
+                          "soldInr",
+                          "batteryDisplacedInr",
+                          "storedSolarDisplacedInr"
+                        ],
+                        "type": "object"
+                      },
+                      "solar": {
+                        "additionalProperties": false,
+                        "description": "The four destinations add up to everything the panels made.",
+                        "properties": {
+                          "madeKwh": {
+                            "type": "number"
+                          },
+                          "soldKwh": {
+                            "type": "number"
+                          },
+                          "thrownAwayKwh": {
+                            "type": "number"
+                          },
+                          "toBatteryKwh": {
+                            "type": "number"
+                          },
+                          "toDemandKwh": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "madeKwh",
+                          "toDemandKwh",
+                          "toBatteryKwh",
+                          "soldKwh",
+                          "thrownAwayKwh"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "solar",
+                      "demand",
+                      "battery",
+                      "grid",
+                      "money"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "propertyId",
+          "madeAt",
+          "basedOn",
+          "rule",
+          "hours",
+          "totals",
+          "check",
+          "next"
+        ],
+        "type": "object"
+      },
+      "EnergyAllocationInput": {
+        "properties": {
+          "basedOn": {
+            "anyOf": [
+              {
+                "properties": {
+                  "madeAt": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "planId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  },
+                  "stale": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "planId",
+                  "madeAt",
+                  "stale",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "check": {
+            "properties": {
+              "balanced": {
+                "type": "boolean"
+              },
+              "maxHourErrorKwh": {
+                "type": "number"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "balanced",
+              "maxHourErrorKwh",
+              "note"
+            ],
+            "type": "object"
+          },
+          "hours": {
+            "items": {
+              "properties": {
+                "batteryToDemandKwh": {
+                  "type": "number"
+                },
+                "batteryToGridKwh": {
+                  "type": "number"
+                },
+                "demandKwh": {
+                  "type": "number"
+                },
+                "exportPriceInr": {
+                  "type": "number"
+                },
+                "gridToBatteryKwh": {
+                  "type": "number"
+                },
+                "gridToDemandKwh": {
+                  "type": "number"
+                },
+                "importPriceInr": {
+                  "type": "number"
+                },
+                "servedKwh": {
+                  "description": "The part of the demand the plan could serve; below demandKwh only in an outage.",
+                  "type": "number"
+                },
+                "solarCurtailedKwh": {
+                  "type": "number"
+                },
+                "solarToBatteryKwh": {
+                  "type": "number"
+                },
+                "solarToDemandKwh": {
+                  "type": "number"
+                },
+                "solarToGridKwh": {
+                  "type": "number"
+                },
+                "time": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "time",
+                "demandKwh",
+                "servedKwh",
+                "solarToDemandKwh",
+                "batteryToDemandKwh",
+                "gridToDemandKwh",
+                "solarToBatteryKwh",
+                "gridToBatteryKwh",
+                "solarToGridKwh",
+                "batteryToGridKwh",
+                "solarCurtailedKwh",
+                "importPriceInr",
+                "exportPriceInr"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "label": {
+            "const": "WHERE EVERY kWh WENT",
+            "type": "string"
+          },
+          "madeAt": {
+            "type": "string"
+          },
+          "next": {
+            "items": {
+              "properties": {
+                "href": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "href",
+                "why"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "propertyId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "rule": {
+            "description": "The order the energy is attributed in. The optimiser does not record which kWh went where, so this is a convention, not a measurement.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "battery": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "inKwh": {
+                                "type": "number"
+                              },
+                              "levelChangeKwh": {
+                                "type": "number"
+                              },
+                              "lostKwh": {
+                                "type": "number"
+                              },
+                              "outFromGridKwh": {
+                                "type": "number"
+                              },
+                              "outFromSolarKwh": {
+                                "type": "number"
+                              },
+                              "outKwh": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "inKwh",
+                              "outKwh",
+                              "lostKwh",
+                              "levelChangeKwh",
+                              "outFromSolarKwh",
+                              "outFromGridKwh"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "What went in, what came out, what was lost between the two, and where what came out had come from. Null with no battery."
+                      },
+                      "demand": {
+                        "description": "The three sources add up to what was served.",
+                        "properties": {
+                          "fromBatteryKwh": {
+                            "type": "number"
+                          },
+                          "fromGridKwh": {
+                            "type": "number"
+                          },
+                          "fromSolarKwh": {
+                            "type": "number"
+                          },
+                          "kwh": {
+                            "type": "number"
+                          },
+                          "servedKwh": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "kwh",
+                          "servedKwh",
+                          "fromSolarKwh",
+                          "fromBatteryKwh",
+                          "fromGridKwh"
+                        ],
+                        "type": "object"
+                      },
+                      "grid": {
+                        "properties": {
+                          "boughtKwh": {
+                            "type": "number"
+                          },
+                          "forBatteryKwh": {
+                            "type": "number"
+                          },
+                          "forDemandKwh": {
+                            "type": "number"
+                          },
+                          "soldKwh": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "boughtKwh",
+                          "forDemandKwh",
+                          "forBatteryKwh",
+                          "soldKwh"
+                        ],
+                        "type": "object"
+                      },
+                      "money": {
+                        "properties": {
+                          "batteryDisplacedInr": {
+                            "description": "What the energy taken from the battery would have cost at the import price of the hour it was used.",
+                            "type": "number"
+                          },
+                          "boughtForBatteryInr": {
+                            "type": "number"
+                          },
+                          "boughtForDemandInr": {
+                            "type": "number"
+                          },
+                          "soldInr": {
+                            "type": "number"
+                          },
+                          "storedSolarDisplacedInr": {
+                            "description": "The same for the part that had come from the sun. Not a saving on its own: the plan's saving is what it is.",
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "boughtForDemandInr",
+                          "boughtForBatteryInr",
+                          "soldInr",
+                          "batteryDisplacedInr",
+                          "storedSolarDisplacedInr"
+                        ],
+                        "type": "object"
+                      },
+                      "solar": {
+                        "description": "The four destinations add up to everything the panels made.",
+                        "properties": {
+                          "madeKwh": {
+                            "type": "number"
+                          },
+                          "soldKwh": {
+                            "type": "number"
+                          },
+                          "thrownAwayKwh": {
+                            "type": "number"
+                          },
+                          "toBatteryKwh": {
+                            "type": "number"
+                          },
+                          "toDemandKwh": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "madeKwh",
+                          "toDemandKwh",
+                          "toBatteryKwh",
+                          "soldKwh",
+                          "thrownAwayKwh"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "solar",
+                      "demand",
+                      "battery",
+                      "grid",
+                      "money"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "label",
+          "propertyId",
+          "madeAt",
+          "basedOn",
+          "rule",
+          "hours",
+          "totals",
+          "check",
+          "next"
+        ],
+        "type": "object"
+      },
       "EnergyDna": {
         "additionalProperties": false,
         "properties": {
@@ -23316,6 +24032,79 @@
         "summary": "Rename or re-address a property",
         "tags": [
           "properties"
+        ]
+      }
+    },
+    "/api/properties/{id}/allocation": {
+      "get": {
+        "description": "Read from the latest stored plan; recomputes nothing. The optimiser does not record which kWh went where, so the split follows a stated order, which is returned with the answer, and every figure is SIMULATED. The response also carries a check that each hour's energy was put in exactly one place.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergyAllocation"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Where every kWh of the latest plan came from and went to, hour by hour",
+        "tags": [
+          "plan"
         ]
       }
     },

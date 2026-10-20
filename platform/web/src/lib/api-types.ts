@@ -2037,6 +2037,83 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/properties/{id}/allocation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where every kWh of the latest plan came from and went to, hour by hour
+         * @description Read from the latest stored plan; recomputes nothing. The optimiser does not record which kWh went where, so the split follows a stated order, which is returned with the answer, and every figure is SIMULATED. The response also carries a check that each hour's energy was put in exactly one place.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EnergyAllocation"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/analyze": {
         parameters: {
             query?: never;
@@ -9214,6 +9291,182 @@ export interface components {
                 story: string;
                 tariff: string | null;
             }[];
+        };
+        EnergyAllocation: {
+            basedOn: {
+                madeAt: string;
+                note: string;
+                /** Format: uuid */
+                planId: string;
+                stale: boolean;
+            } | null;
+            check: {
+                balanced: boolean;
+                maxHourErrorKwh: number;
+                note: string;
+            };
+            hours: {
+                batteryToDemandKwh: number;
+                batteryToGridKwh: number;
+                demandKwh: number;
+                exportPriceInr: number;
+                gridToBatteryKwh: number;
+                gridToDemandKwh: number;
+                importPriceInr: number;
+                /** @description The part of the demand the plan could serve; below demandKwh only in an outage. */
+                servedKwh: number;
+                solarCurtailedKwh: number;
+                solarToBatteryKwh: number;
+                solarToDemandKwh: number;
+                solarToGridKwh: number;
+                time: string;
+            }[];
+            /** @constant */
+            label: "WHERE EVERY kWh WENT";
+            madeAt: string;
+            next: {
+                href: string;
+                label: string;
+                why: string;
+            }[];
+            /** Format: uuid */
+            propertyId: string;
+            /** @description The order the energy is attributed in. The optimiser does not record which kWh went where, so this is a convention, not a measurement. */
+            rule: string[];
+            totals: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    /** @description What went in, what came out, what was lost between the two, and where what came out had come from. Null with no battery. */
+                    battery: {
+                        inKwh: number;
+                        levelChangeKwh: number;
+                        lostKwh: number;
+                        outFromGridKwh: number;
+                        outFromSolarKwh: number;
+                        outKwh: number;
+                    } | null;
+                    /** @description The three sources add up to what was served. */
+                    demand: {
+                        fromBatteryKwh: number;
+                        fromGridKwh: number;
+                        fromSolarKwh: number;
+                        kwh: number;
+                        servedKwh: number;
+                    };
+                    grid: {
+                        boughtKwh: number;
+                        forBatteryKwh: number;
+                        forDemandKwh: number;
+                        soldKwh: number;
+                    };
+                    money: {
+                        /** @description What the energy taken from the battery would have cost at the import price of the hour it was used. */
+                        batteryDisplacedInr: number;
+                        boughtForBatteryInr: number;
+                        boughtForDemandInr: number;
+                        soldInr: number;
+                        /** @description The same for the part that had come from the sun. Not a saving on its own: the plan's saving is what it is. */
+                        storedSolarDisplacedInr: number;
+                    };
+                    /** @description The four destinations add up to everything the panels made. */
+                    solar: {
+                        madeKwh: number;
+                        soldKwh: number;
+                        thrownAwayKwh: number;
+                        toBatteryKwh: number;
+                        toDemandKwh: number;
+                    };
+                } | null;
+            };
+        };
+        EnergyAllocationInput: {
+            basedOn: {
+                madeAt: string;
+                note: string;
+                /** Format: uuid */
+                planId: string;
+                stale: boolean;
+            } | null;
+            check: {
+                balanced: boolean;
+                maxHourErrorKwh: number;
+                note: string;
+            };
+            hours: {
+                batteryToDemandKwh: number;
+                batteryToGridKwh: number;
+                demandKwh: number;
+                exportPriceInr: number;
+                gridToBatteryKwh: number;
+                gridToDemandKwh: number;
+                importPriceInr: number;
+                /** @description The part of the demand the plan could serve; below demandKwh only in an outage. */
+                servedKwh: number;
+                solarCurtailedKwh: number;
+                solarToBatteryKwh: number;
+                solarToDemandKwh: number;
+                solarToGridKwh: number;
+                time: string;
+            }[];
+            /** @constant */
+            label: "WHERE EVERY kWh WENT";
+            madeAt: string;
+            next: {
+                href: string;
+                label: string;
+                why: string;
+            }[];
+            /** Format: uuid */
+            propertyId: string;
+            /** @description The order the energy is attributed in. The optimiser does not record which kWh went where, so this is a convention, not a measurement. */
+            rule: string[];
+            totals: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    /** @description What went in, what came out, what was lost between the two, and where what came out had come from. Null with no battery. */
+                    battery: {
+                        inKwh: number;
+                        levelChangeKwh: number;
+                        lostKwh: number;
+                        outFromGridKwh: number;
+                        outFromSolarKwh: number;
+                        outKwh: number;
+                    } | null;
+                    /** @description The three sources add up to what was served. */
+                    demand: {
+                        fromBatteryKwh: number;
+                        fromGridKwh: number;
+                        fromSolarKwh: number;
+                        kwh: number;
+                        servedKwh: number;
+                    };
+                    grid: {
+                        boughtKwh: number;
+                        forBatteryKwh: number;
+                        forDemandKwh: number;
+                        soldKwh: number;
+                    };
+                    money: {
+                        /** @description What the energy taken from the battery would have cost at the import price of the hour it was used. */
+                        batteryDisplacedInr: number;
+                        boughtForBatteryInr: number;
+                        boughtForDemandInr: number;
+                        soldInr: number;
+                        /** @description The same for the part that had come from the sun. Not a saving on its own: the plan's saving is what it is. */
+                        storedSolarDisplacedInr: number;
+                    };
+                    /** @description The four destinations add up to everything the panels made. */
+                    solar: {
+                        madeKwh: number;
+                        soldKwh: number;
+                        thrownAwayKwh: number;
+                        toBatteryKwh: number;
+                        toDemandKwh: number;
+                    };
+                } | null;
+            };
         };
         EnergyDna: {
             baseline: {

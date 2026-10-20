@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PROPERTY_ID, fakeApi, json, plan, planSummary, property } from "@/test/fixtures";
+import { PROPERTY_ID, fakeApi, json, plan, planSummary, property, provenance } from "@/test/fixtures";
 import { PlanView } from "./PlanView";
 
 const auth = vi.hoisted(() => ({ user: { id: "u1", email: "me@example.com", role: "USER", displayName: null } as { id: string; email: string; role: string; displayName: string | null } | null }));
@@ -18,6 +18,8 @@ function world(over: { latest?: Response | (() => Response); post?: (body: unkno
     ["GET", `/api/properties/${PROPERTY_ID}/plans`, () => json({ plans: over.plans ?? [] })],
     ["GET", /\/plans\/[0-9a-f-]{36}$/, () => json(plan({ id: "66666666-6666-4666-8666-666666666666", mode: "GREEN" }))],
     ["POST", `/api/properties/${PROPERTY_ID}/plan`, ({ body }) => (over.post ? over.post(body) : json(plan(), 201))],
+    // the ledger panel of the page; it has its own tests, and here it only has to not get in the way
+    ["GET", `/api/properties/${PROPERTY_ID}/allocation`, () => json({ label: "WHERE EVERY kWh WENT", propertyId: PROPERTY_ID, madeAt: "2026-10-20T10:00:00.000Z", basedOn: null, rule: [], hours: [], totals: { value: null, unit: "kWh", provenance: provenance({ status: "UNAVAILABLE", provider: "avishkar-allocation", dataType: "energy_allocation", notes: ["No plan has been made yet."] }) }, check: { balanced: true, maxHourErrorKwh: 0, note: "nothing to check" }, next: [] })],
   ]);
   vi.stubGlobal("fetch", api.fetch);
   return api;
