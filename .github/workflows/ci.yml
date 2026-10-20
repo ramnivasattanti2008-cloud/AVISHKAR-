@@ -87,7 +87,11 @@ jobs:
       # The browser's path, not the API's: through the web origin and its /api proxy, with the session cookie and the CSRF
       # token as a browser handles them. --no-providers stops before the steps that would call the public weather and solar
       # services; this project does not call them from CI, and the script names what it skipped.
-      - name: End-to-end journey through the running web app
+      - name: Chromium for the browser checks
+        working-directory: platform
+        run: pnpm -C web exec playwright install --with-deps chromium
+
+      - name: End-to-end journey and browser checks against the running web app
         working-directory: platform
         env:
           API_URL: http://127.0.0.1:8080
@@ -106,6 +110,7 @@ jobs:
             sleep 2
           done
           pnpm -C web journey http://127.0.0.1:3000 --no-providers
+          pnpm -C web browser http://127.0.0.1:3000
 
   engine:
     runs-on: ubuntu-latest

@@ -112,6 +112,7 @@ pnpm -C platform/web gen:api                  # regenerate web/src/lib/api-types
 pnpm -C platform/web typecheck && pnpm -C platform/web lint && pnpm -C platform/web test && pnpm -C platform/web build
 pnpm -C platform/web smoke [url]      # a RUNNING production build: pages, the map worker files, the security headers
 pnpm -C platform/web journey [url] [--no-providers]   # end-to-end over HTTP through a running stack; --no-providers is what CI runs
+pnpm -C platform/web browser [url]    # real Chromium (playwright): the map draws and pans, pages render, skip link, theme
 pnpm -C platform/web dev                      # web on :3000, proxies /api to API_URL (default http://127.0.0.1:8080)
 
 # the Python engine (platform/engine), same venv as the EMS; routes that need it answer 503 ENGINE_UNAVAILABLE without it

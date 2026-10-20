@@ -122,10 +122,12 @@ What the platform does not do, does only partly, or does with a caveat the user 
 - **Interface:** English only (the Python dashboard has Hindi). **No screen-reader pass has been done**: axe-core now runs over
   seven of the main views in the test suite (`src/components/a11y.test.tsx`) and finds nothing, but automated checking cannot tell
   whether a page makes sense read aloud or whether the order of focus is sensible, and jsdom cannot run the colour-contrast rule
-  (that is checked by hand in a real browser, in both themes); no *browser* end-to-end suite exists. What does run in CI is an end-to-end journey over HTTP through the running web app and
-  its proxy (`pnpm -C platform/web journey`), which covers the session cookie, the CSRF check, the real routes and the database but
-  not rendering or clicking; the steps that would call the public weather and solar services are skipped there and run by hand.
-  Component tests stub the API, a smoke test checks a production build, and the manual walks are written down in ACCEPTANCE.md. The manual roof-drawing tool has not
+  (that is checked by hand in a real browser, in both themes); CI runs three things against a real production build: an end-to-end journey over HTTP through the
+  running web app and its proxy (`journey`, the session cookie, the CSRF check, the real routes and the database), nine checks in a
+  real Chromium (`browser`: the map draws and changes when panned, each page renders, the skip link, the theme), and a smoke test of
+  the served files and headers. What none of them covers: a signed-in click-through of the whole product in a browser (the journey
+  signs in over HTTP, the browser checks only read), visual regression, and any browser but Chromium. The steps that would call the
+  public weather and solar services are skipped in CI and run by hand; the manual walks are written down in ACCEPTANCE.md. The manual roof-drawing tool has not
   been exercised in a browser.
 - **Maps:** the production tile provider is the owner's to choose and pay for.
 
