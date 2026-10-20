@@ -72,7 +72,7 @@ and each is labelled as what it is.
 | Check | Result |
 |---|---|
 | `pnpm -C platform/api typecheck && lint && test` | Clean; 849 tests in 54 files, against a real PostgreSQL 16 + PostGIS 3.4 and the real Python engine |
-| `pnpm -C platform/web typecheck && lint && test && build` | Clean; 323 tests in 36 files |
+| `pnpm -C platform/web typecheck && lint && test && build` | Clean; 332 tests in 37 files, nine of them axe-core checks over the main views |
 | `cd platform/engine && python -m pytest tests -q` | 407 passed; `ruff check platform/engine` clean |
 | `pnpm -C platform/web smoke` against a production build | All checks pass (pages, the map's worker files, the security headers, a real 404) |
 | Migrations | `prisma migrate deploy` applies; drift check against `schema.prisma` is empty |
@@ -83,6 +83,6 @@ and each is labelled as what it is.
 ## What would have to be true to call this finished
 
 Not claimed, and listed so nobody has to guess: an independent security review and a dependency audit; a browser end-to-end suite
-(only a smoke test exists); a screen-reader pass (axe finds nothing on the pages checked, which is not the same thing); a built and
+(only a smoke test exists); a screen-reader pass (axe now runs over the main views in the suite and finds nothing, which is not the same thing); a built and
 run container image; a hosted instance with TLS, a domain, a backup and a tile provider; tariff coverage beyond three states; and the
 language-model path of the Copilot exercised against the real service, which needs the owner's key.

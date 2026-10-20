@@ -119,8 +119,10 @@ What the platform does not do, does only partly, or does with a caveat the user 
   (`EMAIL_TAKEN`), which lets someone test whether an address has an account. The Account page states what is kept and what leaves, and offers export and
   deletion, but there is no consent screen, retention schedule or backup policy (those are the operator's). The export holds equipment,
   tariffs entered, meter-file records and counts of what is stored, not the readings themselves or each plan. The web app's Content-Security-Policy allows inline scripts (see SECURITY.md).
-- **Interface:** English only (the Python dashboard has Hindi). No screen-reader or axe pass has been done on the platform's
-  pages; no *browser* end-to-end suite exists. What does run in CI is an end-to-end journey over HTTP through the running web app and
+- **Interface:** English only (the Python dashboard has Hindi). **No screen-reader pass has been done**: axe-core now runs over
+  seven of the main views in the test suite (`src/components/a11y.test.tsx`) and finds nothing, but automated checking cannot tell
+  whether a page makes sense read aloud or whether the order of focus is sensible, and jsdom cannot run the colour-contrast rule
+  (that is checked by hand in a real browser, in both themes); no *browser* end-to-end suite exists. What does run in CI is an end-to-end journey over HTTP through the running web app and
   its proxy (`pnpm -C platform/web journey`), which covers the session cookie, the CSRF check, the real routes and the database but
   not rendering or clicking; the steps that would call the public weather and solar services are skipped there and run by hand.
   Component tests stub the API, a smoke test checks a production build, and the manual walks are written down in ACCEPTANCE.md. The manual roof-drawing tool has not
