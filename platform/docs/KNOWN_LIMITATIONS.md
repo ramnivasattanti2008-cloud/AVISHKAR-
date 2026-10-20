@@ -123,10 +123,11 @@ What the platform does not do, does only partly, or does with a caveat the user 
   seven of the main views in the test suite (`src/components/a11y.test.tsx`) and finds nothing, but automated checking cannot tell
   whether a page makes sense read aloud or whether the order of focus is sensible, and jsdom cannot run the colour-contrast rule
   (that is checked by hand in a real browser, in both themes); CI runs three things against a real production build: an end-to-end journey over HTTP through the
-  running web app and its proxy (`journey`, the session cookie, the CSRF check, the real routes and the database), nine checks in a
-  real Chromium (`browser`: the map draws and changes when panned, each page renders, the skip link, the theme), and a smoke test of
-  the served files and headers. What none of them covers: a signed-in click-through of the whole product in a browser (the journey
-  signs in over HTTP, the browser checks only read), visual regression, and any browser but Chromium. The steps that would call the
+  running web app and its proxy (`journey`, the session cookie, the CSRF check, the real routes and the database), fifteen checks in a
+  real Chromium (`browser`: the map draws and changes when panned, each public page renders, the skip link, the theme, and a
+  signed-in walk over the properties, meter, equipment, health and futures pages with a throwaway account that is deleted again),
+  and a smoke test of the served files and headers. What none of them covers: the pages that need the public weather and solar
+  services (they are skipped in CI and walked by hand), visual regression, and any browser but Chromium. The steps that would call the
   public weather and solar services are skipped in CI and run by hand; the manual walks are written down in ACCEPTANCE.md. The manual roof-drawing tool has not
   been exercised in a browser.
 - **Maps:** the production tile provider is the owner's to choose and pay for.

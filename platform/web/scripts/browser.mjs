@@ -8,7 +8,9 @@
  * It exists because a production build once served every page with HTTP 200 and still showed no map at all — the bundler had
  * renamed the file MapLibre starts its worker from, and only a browser would ever have noticed.
  *
- * It reads; it does not sign in or write anything, so it needs no account and leaves nothing behind.
+ * The first checks only read. The last ones make a throwaway account over HTTP (Playwright's request context shares the browser's
+ * cookies), walk the pages a person actually works on, and delete the account again, so nothing is left behind. None of it needs the
+ * public weather or solar services.
  */
 import { chromium } from "playwright";
 
@@ -124,6 +126,80 @@ await visit("/", "the theme switch changes the page, and the choice survives a r
   await page.waitForTimeout(400);
   if ((await page.evaluate(() => document.documentElement.dataset.theme)) !== chosen) throw new Error("the choice was forgotten on reload");
 });
+
+// ---------------------------------------------------------------- signed in
+//
+// The pages a person actually works on can only be reached with an account. Playwright's request context shares its cookies with
+// the browser, so the account is made over HTTP and then the browser walks the pages as that person. Nothing here needs the public
+// weather or solar services, so it runs in CI too; the account is deleted at the end.
+const api = context.request;
+const email = `browser-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.invalid`;
+const password = `b-${crypto.randomUUID()}-Aa1`;
+const csrf = async () => (await context.cookies()).find((c) => c.name === "avk_csrf")?.value ?? "";
+const post = async (path, data) => api.post(base + path, { data, headers: { "x-csrf-token": await csrf() } });
+
+let signedIn = false;
+let propertyId = "";
+try {
+  const reg = await api.post(`${base}/api/auth/register`, { data: { email, password, displayName: "Browser walk" } });
+  if (!reg.ok()) throw new Error(`register: HTTP ${reg.status()}`);
+  const prop = await post("/api/properties", { name: "Browser walk house", latitude: 12.9784, longitude: 77.6408, positionSource: "manual" });
+  if (!prop.ok()) throw new Error(`property: HTTP ${prop.status()}`);
+  propertyId = (await prop.json()).id;
+
+  // readings generated here, so the pages have something real of the owner's to draw
+  const p2 = (n) => String(n).padStart(2, "0");
+  const lines = ["timestamp,Energy (kWh)"];
+  const midnight = new Date(Date.now() + 5.5 * 3600e3);
+  midnight.setUTCHours(0, 0, 0, 0);
+  for (let d = 40; d >= 1; d--) {
+    for (let h = 0; h < 24; h++) {
+      const t = new Date(midnight.getTime() - d * 86400e3 + h * 3600e3);
+      lines.push(`${t.getUTCFullYear()}-${p2(t.getUTCMonth() + 1)}-${p2(t.getUTCDate())}T${p2(h)}:00:00+05:30,${(h >= 18 && h < 23 ? 1.4 : 0.4).toFixed(3)}`);
+    }
+  }
+  const imported = await post(`/api/properties/${propertyId}/energy/imports`, { csv: lines.join("\n"), filename: "browser-walk-generated.csv" });
+  if (!imported.ok()) throw new Error(`meter import: HTTP ${imported.status()}`);
+  const battery = await post(`/api/properties/${propertyId}/batteries`, { name: "Wall", capacityKwh: 8, maxChargeKw: 4, maxDischargeKw: 4 });
+  if (!battery.ok()) throw new Error(`battery: HTTP ${battery.status()}`);
+  signedIn = true;
+} catch (e) {
+  bad("prepare an account for the signed-in walk", e instanceof Error ? e.message : String(e));
+}
+
+if (signedIn) {
+  await visit("/properties", "signed in: your properties are listed", async (page) => {
+    await page.getByRole("link", { name: /Browser walk house/ }).first().waitFor({ state: "visible", timeout: 15_000 });
+  });
+
+  await visit(`/property/${propertyId}/meter-data`, "signed in: the meter page draws the readings and the Energy DNA", async (page) => {
+    await page.getByText(/960 readings/).first().waitFor({ state: "visible", timeout: 20_000 });
+    await page.getByText(/Energy DNA/).first().waitFor({ state: "visible", timeout: 15_000 });
+    const charts = await page.locator("main svg").count();
+    if (charts === 0) throw new Error("no chart was drawn for the readings");
+  });
+
+  await visit(`/property/${propertyId}/assets`, "signed in: the equipment page shows what was entered and what is a default", async (page) => {
+    await page.getByText("Wall").first().waitFor({ state: "visible", timeout: 15_000 });
+    if ((await page.getByText("DEFAULT").count()) === 0) throw new Error("nothing is marked as a default, so the page is not saying which numbers are assumed");
+  });
+
+  await visit(`/property/${propertyId}/health`, "signed in: energy health says there is no plan yet rather than showing a score", async (page) => {
+    await page.getByText(/There is no plan yet/).first().waitFor({ state: "visible", timeout: 20_000 });
+    const text = await page.locator("main").innerText();
+    if (/\d+\s*\/\s*100/.test(text)) throw new Error("a score out of 100 appeared where there is no plan to work one out from");
+  });
+
+  await visit(`/property/${propertyId}/futures`, "signed in: the futures page offers the days without claiming any", async (page) => {
+    await page.getByRole("button", { name: "Run the futures" }).waitFor({ state: "visible", timeout: 15_000 });
+    const text = await page.locator("main").innerText();
+    if (!/not\s+predictions/i.test(text)) throw new Error("the page does not say the days are not predictions");
+  });
+
+  const del = await api.delete(`${base}/api/account`, { data: { password }, headers: { "x-csrf-token": await csrf() } });
+  if (del.status() === 204) ok("signed in: the account and everything under it are deleted again");
+  else bad("signed in: delete the account again", `HTTP ${del.status()}`);
+}
 
 await context.close();
 await browser.close();

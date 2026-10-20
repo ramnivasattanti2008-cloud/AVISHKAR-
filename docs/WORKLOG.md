@@ -439,7 +439,21 @@ Next (in order): see the end of entry 10.
   Two things learned writing it. `readPixels` on the map canvas is useless: MapLibre does not preserve its drawing buffer, so a read outside the render loop is all zeros whether or not anything was drawn — comparing a screenshot before and after a pan is what tells the truth. And a check that cannot run on a machine (no WebGL at all) is now reported as `skip` with the reason and counted in the summary, never as a pass.
 - NOT DONE: still no signed-in click-through of the whole product in a browser (the journey signs in over HTTP; the browser checks only read), no visual-regression baseline, and no browser but Chromium.
 
-Next (in order): (5) the engines that depend on these: the PM Surya Ghar calculator once an installed cost is given, carbon
-(needs a sourced factor table), resilience, autonomy, health and waste scores, the city energy map, the demo world, Copilot
-LLM verification (needs the owner's key), human-control modes with audit and rollback; (6) admin, the job runner (pg-boss),
-observability, privacy and security review, Docker and hosting files, the documentation set.
+- DONE (2026-10-20, later): **the browser checks sign in now**, which was the gap the entry above left open. Playwright's request context shares the browser's cookies, so the script makes a throwaway account over HTTP, imports readings and a battery, and then the browser walks the pages a person actually works on: the properties list, the meter page (the readings are counted and a chart is drawn), the equipment page (what was entered, and what is a labelled default), energy health (which says "there is no plan yet" instead of a score, and the check fails if anything out of 100 appears), and the futures page (which must say the days are not predictions). Then the account is deleted again. Fifteen checks in all, none of them needing the public weather or solar services, so the whole thing runs in CI.
+
+**Where this list ends (2026-10-20).** Everything that was "next" above has been built: the eligibility calculator, resilience and
+autonomy, health and waste, the city energy map, the futures, the demo world, human control with its audit, the admin API and the
+job runner, the documentation set, the deployment files, the acceptance walk, and the tests around all of it. No row of
+`platform/STATUS.md` says NOT STARTED any longer.
+
+What is left is not work that can be done here, and each item says why in the ledger:
+
+- **Needs the owner.** Hosting, a domain and TLS, a production map-tile provider and key, a database backup, and an Anthropic API
+  key so the Copilot's optional language-model path can be exercised against the real service for the first time.
+- **Needs a machine that can run Docker.** The Dockerfiles and the compose file are written and reviewed but have never been built
+  or run; `platform/docs/DEPLOYMENT.md` lists what was checked without them.
+- **Needs a person, not a program.** A screen-reader pass (axe runs in the suite and finds nothing, which is not the same thing)
+  and an independent security review.
+- **Needs data that does not exist here.** A device to control, outage records, city-wide meter data, a sourced grid emission
+  factor, and tariff orders beyond the three states on file. Each of these is why some figure in the product is UNAVAILABLE rather
+  than estimated, and that is the right answer until the data arrives.
