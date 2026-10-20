@@ -75,5 +75,6 @@ export type EnergyWaste = components["schemas"]["EnergyWaste"];
 export type EnergyFutures = components["schemas"]["EnergyFutures"];
 export type CityEnergyMap = components["schemas"]["CityEnergyMap"];
 export type EnergyAllocation = components["schemas"]["EnergyAllocation"];
+export type PlanRobustness = components["schemas"]["PlanRobustness"];
 export type DemoWorld = components["schemas"]["DemoWorld"];
 export type CopilotTools = Resp<"/api/copilot/tools", "get", 200>;

@@ -20,6 +20,8 @@ function world(over: { latest?: Response | (() => Response); post?: (body: unkno
     ["POST", `/api/properties/${PROPERTY_ID}/plan`, ({ body }) => (over.post ? over.post(body) : json(plan(), 201))],
     // the ledger panel of the page; it has its own tests, and here it only has to not get in the way
     ["GET", `/api/properties/${PROPERTY_ID}/allocation`, () => json({ label: "WHERE EVERY kWh WENT", propertyId: PROPERTY_ID, madeAt: "2026-10-20T10:00:00.000Z", basedOn: null, rule: [], hours: [], totals: { value: null, unit: "kWh", provenance: provenance({ status: "UNAVAILABLE", provider: "avishkar-allocation", dataType: "energy_allocation", notes: ["No plan has been made yet."] }) }, check: { balanced: true, maxHourErrorKwh: 0, note: "nothing to check" }, next: [] })],
+    // the same for the panel that puts the plan under a worse day
+    ["GET", `/api/properties/${PROPERTY_ID}/robustness`, () => json({ label: "IF THE DAY TURNS OUT DIFFERENTLY", propertyId: PROPERTY_ID, madeAt: "2026-10-20T10:00:00.000Z", basedOn: null, scenarios: [], result: { value: null, unit: "INR", provenance: provenance({ status: "UNAVAILABLE", provider: "avishkar-robustness", dataType: "plan_robustness", notes: ["No plan has been made yet."] }) }, next: [] })],
   ]);
   vi.stubGlobal("fetch", api.fetch);
   return api;

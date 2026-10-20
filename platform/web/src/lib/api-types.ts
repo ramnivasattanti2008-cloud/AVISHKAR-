@@ -5948,6 +5948,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/robustness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * How the plan that was chosen holds up if the day turns out differently
+         * @description The latest plan replayed, with its own battery moves and appliance starts kept, against the ends of its forecasts' own bands: less sun, more demand, both together, more sun. It answers what happens to the plan you are following, where the futures page instead re-plans each day with the planner told what the day will be. No probability is attached to any of it, and a band that does not exist or does not cover the plan's hours is UNAVAILABLE with the reason.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanRobustness"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/scenarios": {
         parameters: {
             query?: never;
@@ -11085,6 +11162,162 @@ export interface components {
             mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
             /** @description The battery's charge now, if you know it. Otherwise the plan assumes it starts at its reserve (or minimum) level and says so. */
             startSocPercent?: number | null;
+        };
+        PlanRobustness: {
+            basedOn: {
+                madeAt: string;
+                note: string;
+                /** Format: uuid */
+                planId: string;
+                stale: boolean;
+            } | null;
+            /** @constant */
+            label: "IF THE DAY TURNS OUT DIFFERENTLY";
+            madeAt: string;
+            next: {
+                href: string;
+                label: string;
+                why: string;
+            }[];
+            /** Format: uuid */
+            propertyId: string;
+            result: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    /** @description The plan replayed against the day it was made for, by the same method as the others, so that the four can be compared. It reconstructs the battery's efficiency and wear from the plan's own totals, so it lands near the plan's own bill rather than exactly on it. */
+                    expected: {
+                        exportKwh: number;
+                        importKwh: number;
+                        netCostInr: number;
+                        /** @description This day's cost less the cost of the day the plan was made for. Positive is dearer. */
+                        vsExpectedInr: number;
+                    };
+                    scenarios: {
+                        /** @description What the day is built from, in words. */
+                        built: string;
+                        /** @enum {string} */
+                        key: "lowSun" | "highDemand" | "both" | "moreSun";
+                        label: string;
+                        reason: string | null;
+                        result: {
+                            exportKwh: number;
+                            importKwh: number;
+                            netCostInr: number;
+                            /** @description This day's cost less the cost of the day the plan was made for. Positive is dearer. */
+                            vsExpectedInr: number;
+                        } | null;
+                        /** @enum {string} */
+                        state: "RUN" | "UNAVAILABLE";
+                    }[];
+                    /** @description What the replay found, in a sentence. Never a probability. */
+                    statement: string;
+                    /** @description Why no scenario here can be infeasible: the plan's battery moves are followed whatever the day, and the grid makes up the difference. What changes is the bill. */
+                    whyNothingFails: string;
+                    worst: {
+                        /** @enum {string} */
+                        key: "lowSun" | "highDemand" | "both" | "moreSun";
+                        label: string;
+                        netCostInr: number;
+                        vsExpectedInr: number;
+                    } | null;
+                } | null;
+            };
+            scenarios: {
+                /** @description What the day is built from, in words. */
+                built: string;
+                /** @enum {string} */
+                key: "lowSun" | "highDemand" | "both" | "moreSun";
+                label: string;
+                reason: string | null;
+                result: {
+                    exportKwh: number;
+                    importKwh: number;
+                    netCostInr: number;
+                    /** @description This day's cost less the cost of the day the plan was made for. Positive is dearer. */
+                    vsExpectedInr: number;
+                } | null;
+                /** @enum {string} */
+                state: "RUN" | "UNAVAILABLE";
+            }[];
+        };
+        PlanRobustnessInput: {
+            basedOn: {
+                madeAt: string;
+                note: string;
+                /** Format: uuid */
+                planId: string;
+                stale: boolean;
+            } | null;
+            /** @constant */
+            label: "IF THE DAY TURNS OUT DIFFERENTLY";
+            madeAt: string;
+            next: {
+                href: string;
+                label: string;
+                why: string;
+            }[];
+            /** Format: uuid */
+            propertyId: string;
+            result: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    /** @description The plan replayed against the day it was made for, by the same method as the others, so that the four can be compared. It reconstructs the battery's efficiency and wear from the plan's own totals, so it lands near the plan's own bill rather than exactly on it. */
+                    expected: {
+                        exportKwh: number;
+                        importKwh: number;
+                        netCostInr: number;
+                        /** @description This day's cost less the cost of the day the plan was made for. Positive is dearer. */
+                        vsExpectedInr: number;
+                    };
+                    scenarios: {
+                        /** @description What the day is built from, in words. */
+                        built: string;
+                        /** @enum {string} */
+                        key: "lowSun" | "highDemand" | "both" | "moreSun";
+                        label: string;
+                        reason: string | null;
+                        result: {
+                            exportKwh: number;
+                            importKwh: number;
+                            netCostInr: number;
+                            /** @description This day's cost less the cost of the day the plan was made for. Positive is dearer. */
+                            vsExpectedInr: number;
+                        } | null;
+                        /** @enum {string} */
+                        state: "RUN" | "UNAVAILABLE";
+                    }[];
+                    /** @description What the replay found, in a sentence. Never a probability. */
+                    statement: string;
+                    /** @description Why no scenario here can be infeasible: the plan's battery moves are followed whatever the day, and the grid makes up the difference. What changes is the bill. */
+                    whyNothingFails: string;
+                    worst: {
+                        /** @enum {string} */
+                        key: "lowSun" | "highDemand" | "both" | "moreSun";
+                        label: string;
+                        netCostInr: number;
+                        vsExpectedInr: number;
+                    } | null;
+                } | null;
+            };
+            scenarios: {
+                /** @description What the day is built from, in words. */
+                built: string;
+                /** @enum {string} */
+                key: "lowSun" | "highDemand" | "both" | "moreSun";
+                label: string;
+                reason: string | null;
+                result: {
+                    exportKwh: number;
+                    importKwh: number;
+                    netCostInr: number;
+                    /** @description This day's cost less the cost of the day the plan was made for. Positive is dearer. */
+                    vsExpectedInr: number;
+                } | null;
+                /** @enum {string} */
+                state: "RUN" | "UNAVAILABLE";
+            }[];
         };
         PlanSummary: {
             baselineNetCostInr: number;
