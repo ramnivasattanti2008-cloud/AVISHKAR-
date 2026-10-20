@@ -7,7 +7,7 @@
 import { local } from "../plan/horizon.js";
 import type { ToolName, ToolResult } from "./tools.js";
 
-export const INTENTS = ["MAKE_PLAN", "WHY_DECISION", "WHAT_IF", "SAVINGS", "COUNTERFACTUAL", "OUTAGE", "SUBSIDY", "OPPORTUNITIES", "SOLAR", "LOAD", "TARIFF", "BATTERY", "WEATHER", "ACCURACY", "HEALTH", "WASTE"] as const;
+export const INTENTS = ["MAKE_PLAN", "WHY_DECISION", "WHAT_IF", "SAVINGS", "COUNTERFACTUAL", "OUTAGE", "SUBSIDY", "OPPORTUNITIES", "SOLAR", "LOAD", "TARIFF", "BATTERY", "WEATHER", "ACCURACY", "HEALTH", "WASTE", "ALLOCATION", "ROBUSTNESS"] as const;
 export type Intent = (typeof INTENTS)[number];
 
 export interface Route {
@@ -30,6 +30,8 @@ export const SUGGESTIONS = [
   "How have the forecasts done?",
   "How healthy is my energy use?",
   "Where am I wasting energy?",
+  "Where did every kWh go?",
+  "What happens to my plan if the day turns out worse?",
 ];
 
 const has = (q: string, re: RegExp) => re.test(q);
@@ -83,6 +85,9 @@ export function route(question: string): Route | null {
   if (has(q, /\b(without|no control|do nothing|counterfactual|compared (to|with)|if i had not|if i hadn't)\b/)) return { intent: "COUNTERFACTUAL", calls: [{ tool: "getCounterfactual", input: {} }] };
   if (has(q, /\b(outage|blackout|power cut|load ?shedding|backup|critical)\b/)) return { intent: "OUTAGE", calls: [{ tool: "getResilience", input: {} }] };
   if (has(q, /\baccura|\bhow (good|well)\b|\bforecasts? (done|do)\b|\berror/)) return { intent: "ACCURACY", calls: [{ tool: "getForecastAccuracy", input: {} }] };
+  // asked before the plan questions below, because each names a plan without being about its saving
+  if (has(q, /\b(where did|where does|where has)\b.*\bkwh|every kwh|allocation|where (did|does) (my|the) (energy|power|electricity) go/)) return { intent: "ALLOCATION", calls: [{ tool: "getEnergyAllocation", input: {} }] };
+  if (has(q, /\b(worse|robust|hold up|holds up|stand up|goes wrong|turns out|what if the (day|sun|weather))\b/)) return { intent: "ROBUSTNESS", calls: [{ tool: "getPlanRobustness", input: {} }] };
   if (has(q, /\b(wast\w*|thrown away|avoidable|curtail\w*)\b/)) return { intent: "WASTE", calls: [{ tool: "getEnergyWaste", input: {} }] };
   if (has(q, /\b(health\w*|efficien\w*)\b/)) return { intent: "HEALTH", calls: [{ tool: "getEnergyHealth", input: {} }] };
   if (has(q, /\b(save|saving|savings|how much (will|would|did|do) i)\b/)) return { intent: "SAVINGS", calls: [{ tool: "getLatestPlan", input: {} }] };
@@ -297,6 +302,24 @@ export function render(intent: Intent, question: string, results: ToolResult[]):
         else w.p(`${m.label}: ${num(m.value, 1)}${m.unit === "h" ? " hours" : "%"} (${m.higherIsBetter ? "higher is better" : "lower is better"}).`);
       }
       w.p(String(o.note));
+      break;
+    }
+    case "ALLOCATION": {
+      const sun = o.solar as Out;
+      const dem = o.demand as Out;
+      const bat = o.battery as Out | null;
+      w.p(`Of the ${num(sun.madeKwh, 1)} kWh your panels make in the plan made ${new Date(String(o.planMadeAt)).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}, ${num(sun.toDemandKwh, 1)} kWh is used as it is made, ${num(sun.toBatteryKwh, 1)} kWh is stored, ${num(sun.soldKwh, 1)} kWh is sold and ${num(sun.thrownAwayKwh, 1)} kWh is thrown away ${c}.`);
+      w.p(`Of the ${num(dem.servedKwh, 1)} kWh you use, ${num(dem.fromSolarKwh, 1)} kWh comes straight from the sun, ${num(dem.fromBatteryKwh, 1)} kWh from the battery and ${num(dem.fromGridKwh, 1)} kWh is bought, costing ${inr((o.money as Out).boughtForDemandInr)}.`);
+      if (bat) w.p(`The battery takes in ${num(bat.inKwh, 1)} kWh and gives back ${num(bat.outKwh, 1)} kWh, of which ${num(bat.outFromSolarKwh, 1)} kWh had come from the sun; ${num(bat.lostKwh, 2)} kWh is lost between the two.`);
+      w.p(String(o.note));
+      break;
+    }
+    case "ROBUSTNESS": {
+      const runnable = (o.scenarios as Out[]).filter((x) => x.state === "RUN");
+      w.p(`${sentence(String(o.statement))} ${c}`);
+      for (const x of runnable) w.p(`${x.label}: ${inr(x.netCostInr)}, ${Math.abs(x.vsExpectedInr) < 0.005 ? "the same as" : `${inr(Math.abs(x.vsExpectedInr))} ${x.vsExpectedInr > 0 ? "more than" : "less than"}`} the day it was made for.`);
+      for (const x of (o.scenarios as Out[]).filter((y) => y.state !== "RUN")) w.p(`${x.label}: not tried. ${sentence(String(x.reason))}`);
+      w.p(String(o.whyNothingFails));
       break;
     }
     case "WASTE": {

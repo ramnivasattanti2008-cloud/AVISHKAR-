@@ -8,7 +8,9 @@ import { z } from "zod";
 import { DEFAULTS } from "../assets/defaults.js";
 import { toBatteryDto } from "../assets/service.js";
 import { AppError } from "../errors.js";
+import { allocation } from "../allocation/service.js";
 import { energyHealth, energyWaste } from "../insight/service.js";
+import { robustness } from "../robustness/service.js";
 import { findOpportunities } from "../opportunities/service.js";
 import { type ForecastDeps, forecastAccuracy, loadForecast, solarForecast } from "../forecast/service.js";
 import { createPlan, getPlan } from "../plan/service.js";
@@ -41,6 +43,8 @@ export const TOOL_NAMES = [
   "getForecastAccuracy",
   "getEnergyHealth",
   "getEnergyWaste",
+  "getEnergyAllocation",
+  "getPlanRobustness",
 ] as const;
 export type ToolName = (typeof TOOL_NAMES)[number];
 
@@ -420,8 +424,55 @@ export const TOOLS: Record<ToolName, ToolDef> = {
       };
     },
   },
-};
+  getEnergyAllocation: {
+    description: "Where every kWh of the latest plan came from and went to: the sun split into used now, stored, sold and thrown away; the demand met by sun, battery or grid; and what came out of the battery traced to what went in.",
+    writes: false,
+    input: none,
+    async run(c) {
+      const a = await allocation(c.deps, c.userId, c.propertyId);
+      const t = a.totals.value;
+      if (!t) throw new AppError("DATA_UNAVAILABLE", a.totals.provenance.notes.at(-1) ?? "There is no plan to follow the energy of.");
+      return {
+        output: {
+          planMadeAt: a.basedOn?.madeAt ?? null,
+          stale: a.basedOn?.stale ?? false,
+          solar: t.solar,
+          demand: t.demand,
+          battery: t.battery,
+          grid: t.grid,
+          money: t.money,
+          balanced: a.check.balanced,
+          rule: a.rule,
+          note: a.check.note,
+        },
+        dataStatus: "SIMULATED",
+      };
+    },
+  },
 
+  getPlanRobustness: {
+    description: "How the latest plan holds up if the day turns out differently: the same plan replayed against the ends of its forecasts own bands, with what each day then costs. Not a probability.",
+    writes: false,
+    input: none,
+    async run(c) {
+      const r = await robustness(c.deps, c.userId, c.propertyId);
+      const v = r.result.value;
+      if (!v) throw new AppError("DATA_UNAVAILABLE", r.result.provenance.notes.at(-1) ?? "There is no plan to put under pressure.");
+      return {
+        output: {
+          planMadeAt: r.basedOn?.madeAt ?? null,
+          stale: r.basedOn?.stale ?? false,
+          expectedCostInr: v.expected.netCostInr,
+          scenarios: r.scenarios.map((s) => ({ key: s.key, label: s.label, state: s.state, reason: s.reason, netCostInr: s.result?.netCostInr ?? null, vsExpectedInr: s.result?.vsExpectedInr ?? null })),
+          worst: v.worst,
+          statement: v.statement,
+          whyNothingFails: v.whyNothingFails,
+        },
+        dataStatus: "SIMULATED",
+      };
+    },
+  },
+};
 type PlanLike = Awaited<ReturnType<typeof getPlan>>;
 function compactPlan(p: PlanLike, decisions = 12) {
   const r = p.result.value;

@@ -163,6 +163,7 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
 - Rules baked into the code: `LIVE` is derived from freshness (`src/provenance`), never chosen; provider failures give errors
   or stale-marked values, never invented data; estimates are `ESTIMATED` with their assumptions; unknowns are `UNAVAILABLE`
   with a reason; browser location is never labelled NavIC.
+- **Never run two API test commands at once.** Every test file shares `DATABASE_URL_TEST`, and each file's resetDb truncates the whole schema, so a single-file run started while the full suite is going will wipe the other one's data mid-test. The symptoms look like real bugs: HTTP 401 Sign in required on a session that was just made, or a plan that vanishes. Wait for the suite to finish.
 - The public Overpass server answers HTTP 504 about one request in three from here: mirrors and retries are required.
 - **Meter data is the owner's, and is never repaired.** `src/energy/parse.ts` refuses to guess a unit (kW against kWh differs
   four-fold at 15 minutes), counts every row as accepted, refused with a named reason, or duplicate, and leaves gaps as gaps.

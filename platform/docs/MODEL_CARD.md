@@ -108,7 +108,7 @@ the result; months without readings use the average month.
 
 ## 6. Copilot (`api/src/copilot`)
 
-- **Routing and wording:** fixed patterns for sixteen kinds of question over eighteen tools, and written templates, with `[n]`
+- **Routing and wording:** fixed patterns for eighteen kinds of question over twenty tools, and written templates, with `[n]`
   citations to the tool results. This is not a language model.
 - **The guard:** every number in an answer must match a number a backend tool returned, to the precision written (integers up to
   31 and years are exempt, as are the unit changes ×100 and ×1000). An answer that breaks this is refused. This is tested.

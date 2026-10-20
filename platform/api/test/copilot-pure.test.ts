@@ -27,6 +27,10 @@ describe("route: a question goes to the tools that hold its answer, or nowhere",
     ["How efficient is my system?", "HEALTH", "getEnergyHealth"],
     ["Where am I wasting energy?", "WASTE", "getEnergyWaste"],
     ["How much solar is being thrown away?", "WASTE", "getEnergyWaste"],
+    ["Where did every kWh go?", "ALLOCATION", "getEnergyAllocation"],
+    ["Where did my energy go?", "ALLOCATION", "getEnergyAllocation"],
+    ["What happens to my plan if the day turns out worse?", "ROBUSTNESS", "getPlanRobustness"],
+    ["Does the plan hold up if there is less sun?", "ROBUSTNESS", "getPlanRobustness"],
   ];
   for (const [q, intent, tool] of cases) {
     it(`${q} -> ${intent}`, () => {
@@ -238,6 +242,54 @@ describe("render: the template wording", () => {
     expect(dearer.paragraphs.join(" ")).toContain("This plan costs ₹5 more than the same day with no control");
     const same = render("WASTE", "waste", [waste({ avoidablePerDayInr: 0 })]);
     expect(same.paragraphs.join(" ")).toContain("would cost the same");
+  });
+
+  const allocation = result("getEnergyAllocation", {
+    planMadeAt: "2026-10-20T09:00:00.000Z",
+    stale: false,
+    solar: { madeKwh: 14.1, toDemandKwh: 6.4, toBatteryKwh: 5.2, soldKwh: 2.5, thrownAwayKwh: 0 },
+    demand: { kwh: 12.7, servedKwh: 12.7, fromSolarKwh: 6.4, fromBatteryKwh: 4.7, fromGridKwh: 1.6 },
+    battery: { inKwh: 5.2, outKwh: 4.7, lostKwh: 0.3, levelChangeKwh: 0.2, outFromSolarKwh: 4.5, outFromGridKwh: 0.2 },
+    grid: { boughtKwh: 1.6, forDemandKwh: 1.6, forBatteryKwh: 0, soldKwh: 2.5 },
+    money: { boughtForDemandInr: 12, boughtForBatteryInr: 0, soldInr: 8.75, batteryDisplacedInr: 44.65, storedSolarDisplacedInr: 42.75 },
+    balanced: true,
+    rule: ["The sun serves what the property is using now."],
+    note: "Every kWh of each hour is put in exactly one place, by the order this ledger states. The optimiser does not record which kWh went where, so this is an accounting convention, not a measurement.",
+  });
+
+  const robust = result("getPlanRobustness", {
+    planMadeAt: "2026-10-20T09:00:00.000Z",
+    stale: false,
+    expectedCostInr: 25.7,
+    scenarios: [
+      { key: "lowSun", label: "Less sun than expected", state: "RUN", reason: null, netCostInr: 41.2, vsExpectedInr: 15.5 },
+      { key: "highDemand", label: "More demand than expected", state: "UNAVAILABLE", reason: "The load forecast has no band that covers these hours.", netCostInr: null, vsExpectedInr: null },
+    ],
+    worst: { key: "lowSun", label: "Less sun than expected", netCostInr: 41.2, vsExpectedInr: 15.5 },
+    statement: "Of the days tried, the dearest costs INR 15.50 more than the day the plan was made for (less sun than expected).",
+    whyNothingFails: "No day here can defeat the plan: its battery moves are carried out whatever the weather, and the grid makes up whatever the sun does not cover.",
+  });
+
+  it("follows the energy of the plan from the sun to where it was used, and says the split is a convention", () => {
+    const r = render("ALLOCATION", "where did every kWh go", [allocation]);
+    const t = r.paragraphs.join(" ");
+    expect(t).toContain("14.1 kWh your panels make");
+    expect(t).toContain("6.4 kWh is used as it is made, 5.2 kWh is stored, 2.5 kWh is sold and 0 kWh is thrown away");
+    expect(t).toContain("4.7 kWh from the battery");
+    expect(t).toContain("4.5 kWh had come from the sun");
+    expect(t).toContain("accounting convention, not a measurement");
+    expect(ungroundedNumbers(t, [allocation.output])).toEqual([]);
+  });
+
+  it("says what a worse day does to the plan, names a day it could not try, and claims no likelihood", () => {
+    const r = render("ROBUSTNESS", "what happens if the day turns out worse", [robust]);
+    const t = r.paragraphs.join(" ");
+    expect(t).toContain("the dearest costs INR 15.50 more");
+    expect(t).toContain("Less sun than expected: ₹41.20, ₹15.50 more than the day it was made for.");
+    expect(t).toContain("More demand than expected: not tried. The load forecast has no band that covers these hours.");
+    expect(t).toContain("grid makes up whatever the sun does not cover");
+    expect(t).not.toMatch(/\bprobab|\blikel/i);
+    expect(ungroundedNumbers(t, [robust.output])).toEqual([]);
   });
 
   it("without a plan, says so with the tool's reason and does not make up a figure", () => {

@@ -1013,7 +1013,7 @@ export interface paths {
                             tools: {
                                 description: string;
                                 /** @enum {string} */
-                                name: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste";
+                                name: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste" | "getEnergyAllocation" | "getPlanRobustness";
                                 writes: boolean;
                             }[];
                         };
@@ -4009,7 +4009,7 @@ export interface paths {
                 header?: never;
                 path: {
                     id: string;
-                    tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste";
+                    tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste" | "getEnergyAllocation" | "getPlanRobustness";
                 };
                 cookie?: never;
             };
@@ -4037,7 +4037,7 @@ export interface paths {
                             /** @enum {string} */
                             status: "OK" | "UNAVAILABLE";
                             /** @enum {string} */
-                            tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste";
+                            tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste" | "getEnergyAllocation" | "getPlanRobustness";
                             unavailableReason: string | null;
                         };
                     };
@@ -9299,7 +9299,7 @@ export interface components {
                 /** @enum {string} */
                 status: "OK" | "UNAVAILABLE";
                 /** @enum {string} */
-                tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste";
+                tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste" | "getEnergyAllocation" | "getPlanRobustness";
                 unavailableReason: string | null;
             }[];
         };
@@ -9329,7 +9329,7 @@ export interface components {
                 /** @enum {string} */
                 status: "OK" | "UNAVAILABLE";
                 /** @enum {string} */
-                tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste";
+                tool: "getProperty" | "getWeather" | "getSatelliteObservations" | "getSolarForecast" | "getLoadForecast" | "getBatteryState" | "getTariff" | "getEligibility" | "getEnergyOpportunities" | "runOptimization" | "runSimulation" | "calculateEconomics" | "getResilience" | "getCounterfactual" | "getLatestPlan" | "getForecastAccuracy" | "getEnergyHealth" | "getEnergyWaste" | "getEnergyAllocation" | "getPlanRobustness";
                 unavailableReason: string | null;
             }[];
         };

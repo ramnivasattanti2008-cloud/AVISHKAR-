@@ -5807,7 +5807,9 @@
                     "getLatestPlan",
                     "getForecastAccuracy",
                     "getEnergyHealth",
-                    "getEnergyWaste"
+                    "getEnergyWaste",
+                    "getEnergyAllocation",
+                    "getPlanRobustness"
                   ],
                   "type": "string"
                 },
@@ -5959,7 +5961,9 @@
                     "getLatestPlan",
                     "getForecastAccuracy",
                     "getEnergyHealth",
-                    "getEnergyWaste"
+                    "getEnergyWaste",
+                    "getEnergyAllocation",
+                    "getPlanRobustness"
                   ],
                   "type": "string"
                 },
@@ -23153,7 +23157,9 @@
                               "getLatestPlan",
                               "getForecastAccuracy",
                               "getEnergyHealth",
-                              "getEnergyWaste"
+                              "getEnergyWaste",
+                              "getEnergyAllocation",
+                              "getPlanRobustness"
                             ],
                             "type": "string"
                           },
@@ -27715,7 +27721,9 @@
                 "getLatestPlan",
                 "getForecastAccuracy",
                 "getEnergyHealth",
-                "getEnergyWaste"
+                "getEnergyWaste",
+                "getEnergyAllocation",
+                "getPlanRobustness"
               ],
               "type": "string"
             }
@@ -27785,7 +27793,9 @@
                         "getLatestPlan",
                         "getForecastAccuracy",
                         "getEnergyHealth",
-                        "getEnergyWaste"
+                        "getEnergyWaste",
+                        "getEnergyAllocation",
+                        "getPlanRobustness"
                       ],
                       "type": "string"
                     },

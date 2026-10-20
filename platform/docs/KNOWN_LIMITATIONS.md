@@ -100,8 +100,8 @@ What the platform does not do, does only partly, or does with a caveat the user 
 
 ## Copilot
 
-- Answers come from fixed patterns for sixteen kinds of question, in English, without conversation memory or follow-ups. Every
-  number in an answer is one of the eighteen backend tools' (tested). The optional language-model path **has not been run against the
+- Answers come from fixed patterns for eighteen kinds of question, in English, without conversation memory or follow-ups. Every
+  number in an answer is one of the twenty backend tools' (tested). The optional language-model path **has not been run against the
   real service**. The Copilot cannot change settings.
 
 ## Product and operations
