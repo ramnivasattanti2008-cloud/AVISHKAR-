@@ -35,7 +35,11 @@ from avishkar_ems.realdata import real_sites
 from avishkar_ems.summary import plain_summary
 
 logging.disable(logging.WARNING)
-st.set_page_config(page_title="AVISHKAR EMS", layout="wide")
+st.set_page_config(
+    page_title="UrjaSetu EMS | Smart Solar & P2P Energy Management",
+    page_icon="⚡",
+    layout="wide",
+)
 
 
 @st.cache_resource(show_spinner="Training P10/P50/P90 forecast models...")
@@ -56,11 +60,13 @@ def get_advice(key: str):
     return battery_advice(q.site, q.df, q.pv_model, q.load_model, days)
 
 
-st.title("AVISHKAR EMS: predictive energy management for Indian solar sites")
-st.caption("Built on EMHASS. Weather is real (PVGIS/ERA5, 2021-2023) and load is a measured profile; outages, P2P prices "
-           "and tariffs are assumptions until the organisers' dataset is loaded.")
+st.title("⚡ UrjaSetu (ऊर्जा सेतु): Predictive Energy Management & P2P Dispatch")
+st.markdown("##### *India-Ready Rooftop Solar Intelligence, Dynamic Outage Reserve & P2P Trading (India Energy Stack)*")
+st.caption("Built on EMHASS LP Engine • Beckn DEG v2.0 P2P Protocol • Real Weather (PVGIS/ERA5) & Measured CEEW Smart Meter Outages")
 
-key = st.sidebar.selectbox("Site", list(real_sites()), index=1)
+st.sidebar.markdown("## ⚡ UrjaSetu EMS")
+st.sidebar.caption("Predictive Energy Management & Dispatch")
+key = st.sidebar.selectbox("Select Site", list(real_sites()), index=1)
 p = get_site(key)
 site = p.site
 st.sidebar.markdown(
