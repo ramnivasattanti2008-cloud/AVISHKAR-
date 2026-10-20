@@ -5,6 +5,13 @@
 """
 
 import logging
+from pathlib import Path
+import sys
+
+_ROOT = Path(__file__).resolve().parent.parent
+_SRC = _ROOT / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 
 import pandas as pd
 import plotly.graph_objects as go
