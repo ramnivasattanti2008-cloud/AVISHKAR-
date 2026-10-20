@@ -196,6 +196,35 @@ if (signedIn) {
     if (!/not\s+predictions/i.test(text)) throw new Error("the page does not say the days are not predictions");
   });
 
+  // Drawing a roof is the one thing in the product that can only be done with a mouse on a map, so it has never had a test.
+  await visit(`/property/${propertyId}`, "signed in: a roof outline can be drawn on the map and is saved", async (page) => {
+    const canvas = page.locator("canvas.maplibregl-canvas");
+    await canvas.waitFor({ state: "visible", timeout: 25_000 });
+    await page.getByRole("button", { name: "Draw roof outline" }).click();
+    await page.getByText(/Click each corner, double-click to finish/).waitFor({ state: "visible", timeout: 10_000 });
+    await page.waitForTimeout(3000); // the satellite tiles, so the clicks land on a map that has settled
+
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error("the map has no box to click in");
+    const at = (dx, dy) => ({ x: box.x + box.width / 2 + dx, y: box.y + box.height / 2 + dy });
+    const corners = [at(-40, -30), at(40, -30), at(40, 30), at(-40, 30)];
+    for (const c of corners) {
+      await page.mouse.click(c.x, c.y);
+      await page.waitForTimeout(250);
+    }
+    await page.mouse.dblclick(corners[0].x, corners[0].y); // finish where it began
+
+    await page.getByText(/Roof outline saved/).waitFor({ state: "visible", timeout: 20_000 });
+    await page.getByText(/drawn by you, [\d.,]+ m²/).waitFor({ state: "visible", timeout: 15_000 });
+
+    // and the server really has it, with an area a rectangle of that size could have
+    const got = await api.get(`${base}/api/properties/${propertyId}`);
+    const body = await got.json();
+    const mine = (body.geometry.items ?? []).filter((g) => g.kind === "USER_POLYGON");
+    if (mine.length !== 1) throw new Error(`the server holds ${mine.length} drawn outlines`);
+    if (!(mine[0].areaM2 > 1)) throw new Error(`the stored area is ${mine[0].areaM2} m²`);
+  });
+
   const del = await api.delete(`${base}/api/account`, { data: { password }, headers: { "x-csrf-token": await csrf() } });
   if (del.status() === 204) ok("signed in: the account and everything under it are deleted again");
   else bad("signed in: delete the account again", `HTTP ${del.status()}`);

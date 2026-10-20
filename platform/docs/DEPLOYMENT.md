@@ -72,7 +72,7 @@ The full list with comments is `platform/api/.env.example`. Values that must be 
 
 `.github/workflows/ci.yml` runs on every push: the Python EMS (lint, tests, README check), the platform API against a real
 PostGIS service and the real engine (typecheck, lint, tests, build, an end-to-end journey over HTTP through the running web app
-and its proxy, and fifteen checks in a real Chromium), the engine (lint, tests, committed OpenAPI) and the web (typecheck, lint,
+and its proxy, and sixteen checks in a real Chromium), the engine (lint, tests, committed OpenAPI) and the web (typecheck, lint,
 tests including the axe-core accessibility checks, build, smoke test). It does not deploy anything, scan dependencies or build images. The live-provider tests
 (`pnpm -C platform/api test:live`) are run by hand, never in CI.
 
