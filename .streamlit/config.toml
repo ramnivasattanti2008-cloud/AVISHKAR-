@@ -3,6 +3,14 @@ headless = true
 enableCORS = false
 enableXsrfProtection = false
 runOnSave = true
+maxUploadSize = 50
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = false
 
 [theme]
 primaryColor = "#d97706"

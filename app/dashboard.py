@@ -97,9 +97,68 @@ def get_satellite_weather(lat: float, lon: float):
     return fetch_satellite_solar(lat, lon, days=2)
 
 
+@st.cache_data(show_spinner=False)
+def get_cached_day_view(site_key: str, day_str: str, soc_init: float):
+    prep = get_site(site_key)
+    return day_view(prep, day_str, soc_init=soc_init)
+
+
+@st.cache_data(show_spinner=False)
+def get_cached_fleet_offers(day_str: str, soc_init: float):
+    fleet_dict = {}
+    for s_key in real_sites():
+        try:
+            dv_s = get_cached_day_view(s_key, day_str, soc_init)
+            if dv_s.offers:
+                fleet_dict[s_key] = dv_s.offers
+        except Exception:
+            pass
+    return fleet_dict
+
+
+@st.cache_data(show_spinner=False)
+def get_cached_forecast_quality(site_key: str):
+    return forecast_quality(get_site(site_key)).round(3)
+
+
+@st.cache_data(show_spinner=False)
+def get_cached_flex(site_key: str):
+    prep = get_site(site_key)
+    return summarise(prep.df["load_kw"], prep.df["import_rate"], prep.site.tariff.export_rate)
+
+
 # --- Header & Architecture Badges ---
 st.title("⚡ UrjaSetu (ऊर्जा सेतु): Predictive Energy Management & P2P Dispatch")
 st.markdown("##### *India-Ready Rooftop Solar Intelligence, Dynamic Outage Reserve & P2P Trading (India Energy Stack)*")
+
+# Shareable Demo Link Banner for Teammates
+st.markdown(
+    """
+    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #4338ca; border-radius: 14px; padding: 14px 20px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <span style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #818cf8;">🔗 Live Public Demo Link • Share with Teammates & Jury</span><br/>
+                <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 15px; font-weight: 700; color: #38bdf8;">
+                    https://trek-produces-meyer-academy.trycloudflare.com
+                </span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; padding: 4px 12px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(16, 185, 129, 0.4);">
+                    🟢 100% Live & Operational
+                </span>
+                <span style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-weight: 600; padding: 4px 12px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(56, 189, 248, 0.4);">
+                    ⚡ Ultra-Fast LP Caching
+                </span>
+                <span style="background: rgba(168, 85, 247, 0.2); color: #c084fc; font-weight: 600; padding: 4px 12px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(168, 85, 247, 0.4);">
+                    📱 Mobile & Desktop
+                </span>
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.markdown(
     """
     <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
@@ -115,10 +174,47 @@ st.markdown(
 )
 st.caption("Built on EMHASS LP Engine • Real Weather (PVGIS/ERA5) • Measured CEEW Smart Meter Outages • Beckn DEG v2.0")
 
+# --- Session State & 1-Click Tour Scenarios ---
+all_sites = list(real_sites())
+if "site_select" not in st.session_state or st.session_state["site_select"] not in all_sites:
+    st.session_state["site_select"] = "shop-pune"
+if "soc_slider" not in st.session_state:
+    st.session_state["soc_slider"] = 0.50
+if "meter_series" not in st.session_state:
+    st.session_state["meter_series"] = None
+
 # --- Sidebar Controls ---
 st.sidebar.markdown("## ⚡ UrjaSetu EMS")
 st.sidebar.caption("Predictive Energy Management & Dispatch")
-key = st.sidebar.selectbox("Select Site", list(real_sites()), index=1)
+
+with st.sidebar.expander("⚡ 1-Click Demo Scenarios (Tour Guide)", expanded=True):
+    st.caption("Click any preset to immediately load verified test scenarios:")
+    sc1, sc2 = st.columns(2)
+    if sc1.button("☀️ P2P Market", help="Sunny surplus day with active Beckn DEG trades in Pune"):
+        st.session_state["site_select"] = "shop-pune"
+        st.session_state["day_input"] = pd.Timestamp("2023-03-25").date()
+        st.session_state["soc_slider"] = 0.50
+        st.rerun()
+    if sc2.button("🛡️ Outage Cut", help="Monsoon blackout risk with dynamic reserve floor in Mathura"):
+        st.session_state["site_select"] = "home-mathura"
+        st.session_state["day_input"] = pd.Timestamp("2020-07-28").date()
+        st.session_state["soc_slider"] = 0.40
+        st.rerun()
+    sc3, sc4 = st.columns(2)
+    if sc3.button("🚗 EV V2H & DT", help="Evening peak V2H discharge & transformer thermal guard in Jaipur"):
+        st.session_state["site_select"] = "clinic-jaipur"
+        st.session_state["day_input"] = pd.Timestamp("2023-05-15").date()
+        st.session_state["soc_slider"] = 0.60
+        st.rerun()
+    if sc4.button("📂 350kW Meter", help="Load commercial smart meter dataset"):
+        sample_path = _ROOT / "data/real/load_tool.csv"
+        if sample_path.exists():
+            st.session_state["meter_series"] = read_meter_csv(str(sample_path), sep=";", decimal=",")
+        st.rerun()
+
+cur_site_idx = all_sites.index(st.session_state["site_select"])
+key = st.sidebar.selectbox("Select Site", all_sites, index=cur_site_idx, key="site_select")
+
 p = get_site(key)
 site = p.site
 
@@ -130,16 +226,20 @@ st.sidebar.markdown(
 )
 
 test_days = pd.date_range(p.test_start, p.test_end)
-day = st.sidebar.date_input("Day to plan", value=(p.test_start + pd.Timedelta(days=50)).date(),
-                            min_value=test_days[0].date(), max_value=test_days[-1].date())
-soc0 = st.sidebar.slider("Battery charge at midnight", 0.2, 1.0, 0.5, 0.05)
+default_day = (p.test_start + pd.Timedelta(days=50)).date()
+if "day_input" not in st.session_state or not (test_days[0].date() <= st.session_state["day_input"] <= test_days[-1].date()):
+    st.session_state["day_input"] = default_day
+
+day = st.sidebar.date_input("Day to plan", min_value=test_days[0].date(), max_value=test_days[-1].date(), key="day_input")
+soc0 = st.sidebar.slider("Battery charge at midnight", 0.2, 1.0, step=0.05, key="soc_slider")
+
 lang = st.sidebar.radio("Language / भाषा", ["en", "hi"], format_func=lambda x: {"en": "English", "hi": "हिन्दी"}[x])
 
 st.sidebar.markdown("---")
 st.sidebar.caption("🔒 **Privacy Guarantee**: All meter data stays on this local instance. Only aggregated P2P trade offers (window, quantity, floor price) are published.")
 
-# --- Primary Day Simulation ---
-dv = day_view(p, str(day), soc_init=soc0)
+# --- Primary Day Simulation (Ultra-Fast Cached) ---
+dv = get_cached_day_view(key, str(day), soc0)
 s, ex = dv.plan.steps, dv.ems.steps
 hours = s.index
 
@@ -559,16 +659,7 @@ with tab_fleet:
     st.caption("Aggregates P2P surplus offers across independent rooftop sites into bulk commercial trade blocks. "
                "Floor price equals the highest member floor so no site sells at a loss; revenue splits pro rata.")
 
-    fleet_offers = {}
-    for s_key in real_sites():
-        try:
-            p_s = get_site(s_key)
-            dv_s = day_view(p_s, str(day), soc_init=soc0)
-            if dv_s.offers:
-                fleet_offers[s_key] = dv_s.offers
-        except Exception:
-            pass
-
+    fleet_offers = get_cached_fleet_offers(str(day), soc0)
     pooled = pool(fleet_offers)
     col_f1, col_f2, col_f3 = st.columns(3)
     col_f1.metric("Contributing Sites Today", f"{len(fleet_offers)} of {len(real_sites())}")
@@ -630,7 +721,7 @@ with tab_payback:
                 f"({(ems_b / idle_b - 1):.1%}). Held-out year, sampled days, annualised. "
                 "Benefit = bill without the system minus bill with it, plus trade and export revenue, "
                 "minus battery wear, plus the value of any change in stored energy.")
-    st.dataframe(forecast_quality(p).round(3), use_container_width=True)
+    st.dataframe(get_cached_forecast_quality(key), use_container_width=True)
     st.caption("Forecast quality on the held-out year. band80_coverage should sit near 0.80.")
 
 # ==============================================================================
@@ -692,26 +783,32 @@ with tab_custom:
     st.subheader("Analyse Your Own Meter Data (CSV)")
     st.caption("Upload your smart meter CSV (from your utility or smart plug) to evaluate custom solar & battery payback.")
 
-    sample_col1, sample_col2 = st.columns([1, 2])
-    use_sample = sample_col1.button("Load Sample Meter Data (load_tool.csv)")
-    user_file = sample_col2.file_uploader("Or Upload Smart Meter CSV (kW, W, kWh, or Wh)", type=["csv", "txt"])
+    sample_col1, sample_col2, sample_col3 = st.columns([1, 1, 2])
+    use_sample = sample_col1.button("📂 Load 35k Sample Meter Data")
+    clear_sample = sample_col2.button("🗑️ Clear Meter Data")
+    user_file = sample_col3.file_uploader("Or Upload Smart Meter CSV", type=["csv", "txt"])
 
-    meter_series = None
+    if clear_sample:
+        st.session_state.meter_series = None
+        st.rerun()
+
     if user_file is not None:
         try:
             import tempfile
             with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
                 tmp.write(user_file.getvalue())
                 tmp_path = tmp.name
-            meter_series = read_meter_csv(tmp_path)
+            st.session_state.meter_series = read_meter_csv(tmp_path)
             st.success("Successfully parsed uploaded smart meter file!")
         except Exception as e:
             st.error(f"Error parsing uploaded file: {e}")
     elif use_sample:
         sample_path = _ROOT / "data/real/load_tool.csv"
         if sample_path.exists():
-            meter_series = read_meter_csv(str(sample_path), sep=";", decimal=",")
+            st.session_state.meter_series = read_meter_csv(str(sample_path), sep=";", decimal=",")
             st.success("Loaded sample commercial smart meter data (35,000+ readings)!")
+
+    meter_series = st.session_state.meter_series
 
     if meter_series is not None and not meter_series.empty:
         total_days = max(int((meter_series.index[-1] - meter_series.index[0]).days), 1)
@@ -790,7 +887,7 @@ with tab_monitor:
     st.markdown("---")
     st.subheader("Shiftable Burst Loads")
     st.caption("Bursts of use above the base load. Moving them into 10:00-16:00 captures free solar energy.")
-    flex = summarise(p.df["load_kw"], p.df["import_rate"], site.tariff.export_rate)
+    flex = get_cached_flex(key)
     if len(flex):
         st.dataframe(flex, use_container_width=True)
     else:
