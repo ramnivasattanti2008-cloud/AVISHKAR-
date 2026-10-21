@@ -17,7 +17,12 @@
 2. **🏠 Aam Aadmi / Citizen Guide**: Eliminates technical jargon for homeowners, farmers, and small shops with a **Bijli Bachat Meter (₹ saved)**, **Power Cut Shield** (real appliance survival hours: lights, fans, fridge, pump), and **1-Click WhatsApp / SMS Alert Dispatcher**.
 3. **⚡ Outage-Resilient Convex LP Dispatch**: Dynamically enforces an emergency outage reserve floor based on CEEW smart-meter blackout probabilities before cloud cover strikes.
 4. **🤝 Beckn Protocol DEG v2.0**: Implements decentralized, open energy trading (`catalog/publish`, `confirm`, `on_confirm`, `on_status_settled`) without blockchain overhead.
-5. **🌐 Fleet Pooling & Smart Meter CSV Sizing**: Aggregates distributed rooftop solar surplus into bulk commercial trade blocks and provides custom CSV smart-meter payback analysis with PM Surya Ghar Muft Bijli Yojana subsidies.
+5. **🔌 Universal Multi-Vendor Inverter Matrix**: Native Modbus RTU/TCP register translation for **Growatt, Deye, Solis, Luminous, and SunSpec** with physical RS-485 CRC-16 framing.
+6. **🛡️ CEA 2026 Cybersecurity Shield**: Fully compliant with the **Central Electricity Authority (Cyber Security in Power Sector) Regulations, 2026** with air-gapped OT isolation, Indian data residency, and CERT-In 6-hour incident alerts.
+7. **🚗 Vehicle-to-Home (V2H) Smart EV Dispatch**: Bidirectional peak-shaving for Indian electric 2-wheelers (Ola, Ather) and 4-wheelers (Tata Nexon EV) avoiding ₹10/unit evening peak tariffs while protecting morning commute range.
+8. **⚡ Distribution Transformer (DT) Feeder Guard**: Neighborhood-level coordination to prevent 11kV/415V transformer thermal overload and high-voltage (>253V) feeder trips during peak midday solar backfeed.
+9. **🌿 BEE Carbon Credit Trading Scheme (CCTS)**: Real-time avoided CO2 calculation using the official CEA baseline (0.716 kg CO2/kWh) with verifiable green energy certificates.
+10. **🌐 Fleet Pooling & Smart Meter CSV Sizing**: Aggregates distributed rooftop solar surplus into bulk commercial trade blocks and provides custom CSV smart-meter payback analysis with PM Surya Ghar Muft Bijli Yojana subsidies.
 
 ## Results (real weather, measured load, held-out period)
 
