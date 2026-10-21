@@ -109,6 +109,7 @@ include = [
 ]
 
 [project.scripts]
+urjasetu = "avishkar_ems.cli:main"
 emhass = "emhass.command_line:main_sync"
 
 [project.urls]
