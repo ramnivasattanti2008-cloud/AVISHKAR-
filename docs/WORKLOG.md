@@ -472,3 +472,79 @@ What is left is not work that can be done here, and each item says why in the le
 - **Needs data that does not exist here.** A device to control, outage records, city-wide meter data, a sourced grid emission
   factor, and tariff orders beyond the three states on file. Each of these is why some figure in the product is UNAVAILABLE rather
   than estimated, and that is the right answer until the data arrives.
+
+---
+
+## Entry 11: 2026-10-22: Platform Engineering, DevOps, Deployment, Reliability, and Final Integration Master Task
+
+Executed by Platform / DevOps / Integration lead (Person A) on branch `feature/platform-devops-integration` branched from
+`origin/claude/avishkar-fixes-and-platform`:
+
+- **PREREQUISITE REVIEWS COMPLETED**: Read in exact specified order: `CLAUDE.md`, `docs/WORKLOG.md`, `platform/STATUS.md`,
+  `docs/TEAM_PLAN.md`, `docs/KNOWN_ISSUES.md`, root `README.md`, Dockerfiles, `platform/docker-compose.yml`, and `.github/workflows/ci.yml`.
+  Preserved all uncommitted work across worktrees. Worked strictly on feature branch without touching `main` or rewriting history.
+
+- **DOCKER & DEPLOYMENT CONFIGURATION (Section 3)**:
+  - Inspected all container definitions: `platform/docker/{api,engine,web}.Dockerfile`, `platform/docker-compose.yml`, and root `Dockerfile`.
+  - Validated compose syntax and variable interpolation: `docker compose -f platform/docker-compose.yml config` exits 0 with test
+    secrets, and fails safely when `POSTGRES_PASSWORD`, `ENGINE_API_KEY`, `SESSION_SECRET`, or `PROVIDER_USER_AGENT` are omitted.
+  - Docker Desktop client v29.7.2 is installed; local Linux daemon socket was unavailable on the dev machine. Documented exact
+    limitation and reproducible commands for Docker-capable runners in `platform/docs/DEPLOYMENT.md`.
+
+- **PRODUCTION CONFIGURATION & SECRETS (Section 4)**:
+  - Created root `.env.example` documenting all configuration keys, secure placeholders, and deployment instructions.
+  - Hardened `.gitignore` to exclude `.env`, `.env.*`, `.env.local`, `*.dump`, `platform/backups/`, while preserving `.env.example`.
+  - Confirmed via `git ls-files` that no API keys, private passwords, or tokens are committed to source control.
+
+- **PRODUCTION MAP-TILE PROVIDER & CSP (Section 5)**:
+  - Updated `platform/web/src/lib/csp.ts` so `tileOrigin(opts.tileUrl)` is dynamically extracted and included in `img-src`,
+    `connect-src`, and `font-src` (required for MapLibre vector font glyphs). Verified via `csp.test.ts` (6 passed).
+  - Updated `platform/web/next.config.ts` and `basemaps.ts` to recognize `NEXT_PUBLIC_MAP_TILE_URL` and `NEXT_PUBLIC_OSM_TILE_URL`.
+  - Documented setup instructions, domain whitelists, and quotas for MapTiler, Stadia, and CARTO in `platform/docs/DEPLOYMENT.md`.
+
+- **DATABASE BACKUPS & LIVE RESTORE DRILL (Section 6)**:
+  - Implemented production backup and recovery utilities: `platform/scripts/backup-db.sh` and `restore-db.sh`.
+  - Uses native PostgreSQL custom format (`-Fc`) with SHA-256 verification, automated retention pruning (keeping newest 7), and
+    safe logging without printing credentials.
+  - **LIVE RESTORE DRILL COMPLETED**:
+    - Backup: `platform/backups/avishkar_dev_20261021_184300Z.dump` (601,061 bytes, SHA-256: `d7778208070d4219fbd5d190e1c83fb9ef05d775afa7b4c8049f9f25771d3b7f`).
+    - Restored into fresh, isolated database `avishkar_restore_drill`.
+    - Verification: PostGIS 3.4 active, 31/31 public tables restored, 11/11 Prisma migrations up-to-date.
+    - Prisma connection test: `prisma migrate status` reported "Database schema is up to date" with zero drift. Drill target cleanly dropped.
+
+- **REPOSITORY HYGIENE & .GITATTRIBUTES (Section 7)**:
+  - Updated `.gitattributes` with `text=auto`, explicit `eol=lf` for `.sh`, `.sql`, `.py`, `.ts`, `.tsx`, `.js`, `.mjs`, `.json`,
+    `.yaml`, `.yml`, `.md`, `.csv`, `eol=crlf` for `.cmd`/`.bat`, and `binary` for `.pbz2`, `.pkl`, `.dump`, `.png`, `.jpg`, `.ico`.
+  - Avoided unnecessary bulk renormalisation to keep Git diff minimal and reviewable.
+
+- **CONCURRENT PERFORMANCE & LOAD TESTING (Section 8)**:
+  - Created reproducible load testing utility `platform/api/scripts/load-test.ts` and wired script `"load-test"` into `package.json`.
+  - Executed concurrent load test against running Fastify API with 15 concurrent workers (150 requests):
+    - **Throughput**: 218.44 req/sec
+    - **Success Rate**: 100.0% (150/150 ok, 0 errors)
+    - **Latency**: Min 18.8 ms, Mean 66.8 ms, Median (p50) 50.8 ms, p90 93.5 ms, p95 219.5 ms, p99 366.3 ms, Max 394.8 ms.
+  - Burst stress test (250 requests in 0.67s): Verified Fastify rate limiter (`@fastify/rate-limit`) actively defended server,
+    returning HTTP 429 in 0.6 ms.
+
+- **CI & RELEASE VERIFICATION (Section 9)**:
+  - Python tests: `uv run pytest tests/avishkar_ems` -> **78 passed, 2 skipped** (100% green).
+  - Python linter: `uv run ruff check` -> **0 errors**.
+  - README results check: `python scripts/update_readme.py --check` -> **passed**.
+  - Web unit & a11y tests: `pnpm -C platform/web test` -> **344 passed in 39 files** (`vitest.config.ts` capped with `maxWorkers: 4`).
+  - Web production build: Turbopack compilation clean, map worker assets served in `public/maplibre/`.
+  - Web production smoke test: `pnpm -C platform/web smoke http://127.0.0.1:3100` -> **12/12 checks ok**.
+  - API build & typecheck: `pnpm -C platform/api build` and `typecheck` -> clean (0 errors).
+
+- **DOCUMENTATION UPDATES (Section 10)**:
+  - Completely refreshed `platform/docs/DEPLOYMENT.md` with full topology diagram, Docker run instructions, backup/restore
+    procedures, load test benchmarks, rollback plan, and the 5-tier production readiness matrix.
+  - Updated `platform/STATUS.md` rows 77 and 94.
+
+- **NOT DONE / BLOCKED**:
+  - Image build on Docker daemon (requires Docker-capable CI runner or Linux machine).
+  - Production TLS termination & domain DNS setup (requires owner infrastructure).
+  - Commercial tile provider API key & Anthropic API key (requires owner accounts).
+  - Physical inverter hardware actuation (intentionally software-simulated records).
+
+Next: Commit platform changes to `feature/platform-devops-integration`, push, and submit PR.
+

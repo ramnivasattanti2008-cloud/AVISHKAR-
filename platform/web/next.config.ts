@@ -6,6 +6,7 @@ import { securityHeaders } from "./src/lib/csp";
  * first-party and no CORS is needed. Set API_URL for a deployed API; the default is the local development server.
  */
 const API_URL = process.env.API_URL ?? "http://127.0.0.1:8080";
+const TILE_URL = process.env.NEXT_PUBLIC_MAP_TILE_URL ?? process.env.NEXT_PUBLIC_OSM_TILE_URL;
 
 const config: NextConfig = {
   output: "standalone",
@@ -15,7 +16,7 @@ const config: NextConfig = {
     return [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }];
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders({ development: process.env.NODE_ENV !== "production", tileUrl: process.env.NEXT_PUBLIC_OSM_TILE_URL }) }];
+    return [{ source: "/:path*", headers: securityHeaders({ development: process.env.NODE_ENV !== "production", tileUrl: TILE_URL }) }];
   },
 };
 

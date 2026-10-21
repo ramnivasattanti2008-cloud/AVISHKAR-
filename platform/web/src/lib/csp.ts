@@ -9,7 +9,7 @@
 
 export const TILE_HOSTS = ["https://tile.openstreetmap.org", "https://server.arcgisonline.com", "https://*.tile.opentopomap.org"] as const;
 
-/** The origin of a tile URL the deployment chose (NEXT_PUBLIC_OSM_TILE_URL), so switching provider does not blank the map. */
+/** The origin of a tile URL the deployment chose (NEXT_PUBLIC_OSM_TILE_URL / NEXT_PUBLIC_MAP_TILE_URL), so switching provider does not blank the map. */
 export function tileOrigin(url: string | undefined): string | null {
   if (!url) return null;
   try {
@@ -21,8 +21,11 @@ export function tileOrigin(url: string | undefined): string | null {
 }
 
 export function contentSecurityPolicy(opts: { development: boolean; tileUrl?: string }): string {
-  const tiles = [...TILE_HOSTS, ...(tileOrigin(opts.tileUrl) ? [tileOrigin(opts.tileUrl)!] : [])];
+  const customOrigin = tileOrigin(opts.tileUrl);
+  const tiles = [...TILE_HOSTS, ...(customOrigin ? [customOrigin] : [])];
   const uniq = [...new Set(tiles)].join(" ");
+  const fontSources = ["'self'", "data:", ...(customOrigin ? [customOrigin] : [])].join(" ");
+
   return [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline'${opts.development ? " 'unsafe-eval'" : ""}`,
@@ -30,7 +33,7 @@ export function contentSecurityPolicy(opts: { development: boolean; tileUrl?: st
     `img-src 'self' data: blob: ${uniq}`,
     `connect-src 'self' ${uniq}${opts.development ? " ws:" : ""}`,
     "worker-src 'self' blob:",
-    "font-src 'self' data:",
+    `font-src ${fontSources}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

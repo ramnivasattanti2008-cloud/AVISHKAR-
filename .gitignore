@@ -29,8 +29,29 @@ node_modules/
 dist/
 *.tsbuildinfo
 coverage/
+
+# Environment files and secrets (never commit secrets)
+.env
+.env.*
+.env.local
 platform/**/.env
+platform/**/.env.*
 platform/**/.env.local
+!.env.example
+!**/.env.example
+
+# Database backups and recovery dumps
+*.dump
+*.dump.sha256
+*.sql.gz
+platform/backups/
+backups/
 
 # Prisma client is generated (pnpm db:generate), never committed
 platform/api/src/generated/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

@@ -3,7 +3,8 @@ import type { StyleSpecification } from "maplibre-gl";
 /**
  * Map provider abstraction (spec section 6): base layers are data, not code. Tile servers have usage policies: the public
  * OpenStreetMap tile server is fine for development and light use, and a production deployment should point
- * NEXT_PUBLIC_OSM_TILE_URL at its own or a commercial tile service. Satellite imagery is Esri World Imagery.
+ * NEXT_PUBLIC_MAP_TILE_URL or NEXT_PUBLIC_OSM_TILE_URL at its own or a commercial tile service (e.g. MapTiler, Stadia, CARTO).
+ * Satellite imagery is Esri World Imagery.
  */
 export interface Basemap {
   id: "standard" | "satellite" | "terrain";
@@ -13,7 +14,7 @@ export interface Basemap {
   maxzoom: number;
 }
 
-const osm = process.env.NEXT_PUBLIC_OSM_TILE_URL ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const osm = process.env.NEXT_PUBLIC_MAP_TILE_URL ?? process.env.NEXT_PUBLIC_OSM_TILE_URL ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 export const BASEMAPS: Basemap[] = [
   { id: "standard", label: "Standard", tiles: [osm], attribution: "© OpenStreetMap contributors", maxzoom: 19 },
