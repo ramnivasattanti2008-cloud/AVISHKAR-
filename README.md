@@ -4,7 +4,8 @@
 [![ISRO Satellite](https://img.shields.io/badge/ISRO-INSAT--3D%2F3DR%20%26%20NavIC-orange?style=for-the-badge)](https://www.isro.gov.in/)
 [![Protocol](https://img.shields.io/badge/Open%20Grid-Beckn%20DEG%20v2.0-blue?style=for-the-badge)](https://becknprotocol.io/)
 [![Optimization](https://img.shields.io/badge/Solver-HiGHS%20Convex%20LP-purple?style=for-the-badge)](https://highs.dev/)
-[![Tests](https://img.shields.io/badge/Tests-37%20Passed-success?style=for-the-badge)](tests/avishkar_ems)
+[![Tests](https://img.shields.io/badge/Tests-77%20Passed%20(100%25%20Green)-brightgreen?style=for-the-badge)](tests/avishkar_ems)
+[![Code Quality](https://img.shields.io/badge/Linter-Ruff%20Clean%20(0%20errors)-brightgreen?style=for-the-badge)](https://github.com/astral-sh/ruff)
 
 **AVISHKAR FET Hackathon — Problem Statement #2 (*Predictive Energy Management & Surplus Dispatch*)**
 

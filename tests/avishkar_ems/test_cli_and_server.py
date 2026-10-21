@@ -2,31 +2,32 @@ import json
 import threading
 import time
 import urllib.request
-import pytest
-from avishkar_ems.cli import build_parser, cmd_audit, cmd_auction, cmd_nowcast, cmd_watchdog
+
 from avishkar_ems.api_service import run_http_server
+from avishkar_ems.cli import build_parser, cmd_auction, cmd_audit, cmd_nowcast, cmd_watchdog
+
 
 def test_cli_argument_parser():
     parser = build_parser()
-    
+
     # audit
     args = parser.parse_args(["audit", "--site-id", "test-01"])
     assert args.command == "audit"
     assert args.site_id == "test-01"
-    
+
     # nowcast
     args = parser.parse_args(["nowcast", "--hub", "clinic-jaipur"])
     assert args.command == "nowcast"
     assert args.hub == "clinic-jaipur"
-    
+
     # auction
     args = parser.parse_args(["auction"])
     assert args.command == "auction"
-    
+
     # watchdog
     args = parser.parse_args(["watchdog"])
     assert args.command == "watchdog"
-    
+
     # serve
     args = parser.parse_args(["serve", "--port", "8888"])
     assert args.command == "serve"
@@ -44,21 +45,21 @@ def test_http_rest_api_server():
     server_thread = threading.Thread(target=run_http_server, args=(port, 5), daemon=True)
     server_thread.start()
     time.sleep(0.3)
-    
+
     # 1. GET /healthz
     req = urllib.request.urlopen(f"http://127.0.0.1:{port}/healthz")
     assert req.status == 200
     data = json.loads(req.read().decode("utf-8"))
     assert data["status"] == "HEALTHY_ONLINE"
     assert data["cea_cybersecurity_status"] == "COMPLIANT"
-    
+
     # 2. GET / (Root info)
     req_root = urllib.request.urlopen(f"http://127.0.0.1:{port}/")
     assert req_root.status == 200
     root_data = json.loads(req_root.read().decode("utf-8"))
     assert "UrjaSetu" in root_data["system"]
     assert root_data["beckn_protocol"] == "DEG v2.0"
-    
+
     # 3. POST /beckn/search
     post_payload = json.dumps({"context": {"transaction_id": "TEST-TXN-101"}}).encode("utf-8")
     req_search = urllib.request.Request(
@@ -71,7 +72,7 @@ def test_http_rest_api_server():
     search_data = json.loads(resp_search.read().decode("utf-8"))
     assert search_data["context"]["action"] == "on_search"
     assert "catalog" in search_data["message"]
-    
+
     # 4. POST /beckn/confirm
     confirm_payload = json.dumps({
         "context": {"transaction_id": "TEST-TXN-102"},

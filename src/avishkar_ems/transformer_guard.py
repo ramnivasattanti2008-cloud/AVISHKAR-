@@ -7,7 +7,6 @@ and high-voltage tripping caused by simultaneous midday solar export.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -21,7 +20,7 @@ class TransformerRating:
     safe_thermal_threshold_pct: float  # e.g. 80.0%
 
 
-STANDARD_DISTRIBUTION_TRANSFORMERS: Dict[str, TransformerRating] = {
+STANDARD_DISTRIBUTION_TRANSFORMERS: dict[str, TransformerRating] = {
     "dt_100kva": TransformerRating(
         dt_id="DT-100KVA-RESIDENTIAL",
         rated_kva=100.0,

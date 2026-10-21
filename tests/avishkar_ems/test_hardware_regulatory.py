@@ -1,7 +1,7 @@
 """Unit tests for Hardware Modbus Inverter Gateway, Regulatory Sandbox, and UPI settlements."""
 
 from avishkar_ems.hardware_modbus import InverterHardwareGateway, SunSpecModbusFrame
-from avishkar_ems.regulatory import compute_legal_settlement, STATE_REGULATORY_RULES
+from avishkar_ems.regulatory import compute_legal_settlement
 from avishkar_ems.settlement_upi import generate_upi_payment
 
 

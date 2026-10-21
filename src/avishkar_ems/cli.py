@@ -8,18 +8,14 @@ trading, CEA 2026 cybersecurity auditing, and autonomous anti-islanding watchdog
 from __future__ import annotations
 
 import argparse
-import json
 import sys
-import time
-from typing import Any
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-from avishkar_ems.anti_islanding import AntiIslandingStatus, AntiIslandingWatchdog
-from avishkar_ems.battery_physics import evaluate_lfp_battery_physics
+from avishkar_ems.anti_islanding import AntiIslandingWatchdog
 from avishkar_ems.cybersecurity_cea import CEACyberSecurityManager
 from avishkar_ems.market_auction import MarketOrder, MicrogridAuctionEngine
 from avishkar_ems.satellite import INDIAN_SATELLITE_HUBS, fetch_satellite_solar

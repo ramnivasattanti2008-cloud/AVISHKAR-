@@ -13,7 +13,7 @@ import socket
 import struct
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class SunSpecModbusFrame:
         return struct.pack(">HHHBBHH", trans_id, 0, 6, unit_id, 0x06, reg, val)
 
     @staticmethod
-    def parse_read_response(data: bytes) -> Optional[Tuple[int, list[int]]]:
+    def parse_read_response(data: bytes) -> tuple[int, list[int]] | None:
         """Parses MBAP read response returning (unit_id, list_of_register_values)."""
         if len(data) < 9:
             return None
@@ -88,7 +88,7 @@ class SunSpecModbusFrame:
 
 class InverterHardwareGateway:
     """Industrial Modbus Gateway connecting UrjaSetu LP Dispatcher to Inverters.
-    
+
     Supports:
     1. Real Modbus TCP connection to physical IP & Port (e.g., 192.168.1.50:502).
     2. Zero-Hardware High-Fidelity Emulation with realistic voltage/frequency dynamics
@@ -100,12 +100,12 @@ class InverterHardwareGateway:
         self.port = port
         self.unit_id = unit_id
         self.emulate = emulate
-        self._sock: Optional[socket.socket] = None
+        self._sock: socket.socket | None = None
         self._trans_id = 1
-        self._last_setpoint: Dict[str, Any] = {}
+        self._last_setpoint: dict[str, Any] = {}
 
         # Simulated physical registers memory bank
-        self._regs: Dict[int, int] = {
+        self._regs: dict[int, int] = {
             REG_SUNSPEC_ID: 0x5375,
             REG_SUNSPEC_ID + 1: 0x6e53,
             REG_WMAX_LIM_PCT: 10000,    # 100.00%
@@ -167,9 +167,9 @@ class InverterHardwareGateway:
         battery_charge_kw: float = 0.0,
         battery_discharge_kw: float = 0.0,
         island_backup_relay: bool = False,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """Writes optimized LP setpoints to inverter holding registers.
-        
+
         Applies safety clamps:
         - Active power limit clamped to [0.0, 100.0]%
         - Anti-islanding / Grid Code CEA standard verification

@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -23,7 +22,7 @@ class AntiIslandingStatus:
     frequency_hz: float
     rocof_hz_per_sec: float
     shunt_trip_relay_state: str   # "ENERGIZED_CLOSED" or "TRIPPED_OPEN_SAFE"
-    trip_reason: Optional[str]
+    trip_reason: str | None
     trip_latency_ms: float
     watchdog_heartbeat_alive: bool
     statutory_compliance: str
@@ -44,7 +43,7 @@ class AntiIslandingWatchdog:
         self._last_freq = 50.0
         self._last_freq_ts = time.time()
         self._tripped = False
-        self._trip_reason: Optional[str] = None
+        self._trip_reason: str | None = None
         self._trip_time_ms = 0.0
 
     def feed_heartbeat(self) -> None:

@@ -10,7 +10,6 @@ Grounds peer-to-peer (P2P) energy trading in state regulatory orders:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 
 @dataclass(frozen=True)
@@ -26,7 +25,7 @@ class StateWheelingRule:
     allowed_voltage_levels: str
 
 
-STATE_REGULATORY_RULES: Dict[str, StateWheelingRule] = {
+STATE_REGULATORY_RULES: dict[str, StateWheelingRule] = {
     "mathura": StateWheelingRule(
         state="Uttar Pradesh",
         serc_order_ref="UPERC Pilot P2P Trading Regulations 2024 / UPPCL",

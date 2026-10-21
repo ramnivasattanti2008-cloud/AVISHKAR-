@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -45,7 +44,7 @@ class AuctionClearingResult:
     total_ask_volume_kwh: float
     cleared_volume_kwh: float
     uniform_clearing_price_rs_kwh: float
-    matched_trades: List[MatchedTrade]
+    matched_trades: list[MatchedTrade]
     producer_surplus_inr: float
     consumer_surplus_inr: float
     total_social_welfare_inr: float
@@ -57,8 +56,8 @@ class MicrogridAuctionEngine:
     """Executes uniform clearing double-sided auctions for local energy microgrids."""
 
     def __init__(self):
-        self.bids: List[MarketOrder] = []
-        self.asks: List[MarketOrder] = []
+        self.bids: list[MarketOrder] = []
+        self.asks: list[MarketOrder] = []
 
     def submit_order(self, order: MarketOrder) -> None:
         """Adds a verified market order to the book."""
@@ -77,7 +76,7 @@ class MicrogridAuctionEngine:
         total_bid_kwh = sum(b.quantity_kwh for b in sorted_bids)
         total_ask_kwh = sum(a.quantity_kwh for a in sorted_asks)
 
-        trades: List[MatchedTrade] = []
+        trades: list[MatchedTrade] = []
         bid_idx = 0
         ask_idx = 0
 

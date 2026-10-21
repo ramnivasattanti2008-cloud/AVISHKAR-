@@ -1,13 +1,19 @@
 import pytest
-from avishkar_ems.satellite import INDIAN_SATELLITE_HUBS, fetch_satellite_solar, build_microgrid_map_deck
+
+from avishkar_ems.satellite import (
+    INDIAN_SATELLITE_HUBS,
+    build_microgrid_map_deck,
+    fetch_satellite_solar,
+)
 from avishkar_ems.site import SiteSpec
 from avishkar_ems.tariffs import COMMERCIAL_TOD
+
 
 def test_indian_satellite_hubs_metadata():
     assert "shop-pune" in INDIAN_SATELLITE_HUBS
     assert "home-mathura" in INDIAN_SATELLITE_HUBS
     assert "clinic-jaipur" in INDIAN_SATELLITE_HUBS
-    for k, v in INDIAN_SATELLITE_HUBS.items():
+    for _k, v in INDIAN_SATELLITE_HUBS.items():
         assert 8.0 <= v["lat"] <= 37.0  # Indian latitude bounds
         assert 68.0 <= v["lon"] <= 97.0 # Indian longitude bounds
         assert "INSAT" in v["primary_satellite"]

@@ -10,10 +10,10 @@ energy networks and external supervisory SCADA platforms:
 
 from __future__ import annotations
 
+import http.server
 import json
 import time
-from dataclasses import asdict
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from avishkar_ems.cybersecurity_cea import CEACyberSecurityManager
 from avishkar_ems.hardware_modbus import InverterHardwareGateway
@@ -29,7 +29,7 @@ class UrjaSetuApiService:
         self.gateway = InverterHardwareGateway(emulate=True)
         self.gateway.connect()
 
-    def handle_beckn_search(self, request_payload: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_beckn_search(self, request_payload: dict[str, Any]) -> dict[str, Any]:
         """Handles Beckn /search by publishing available solar surplus offers."""
         telemetry = self.gateway.read_telemetry()
         available_export = max(0.0, telemetry.active_power_kw - 1.0)
@@ -61,7 +61,7 @@ class UrjaSetuApiService:
         }
         return response
 
-    def handle_beckn_confirm(self, request_payload: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_beckn_confirm(self, request_payload: dict[str, Any]) -> dict[str, Any]:
         """Handles Beckn /confirm by locking energy order and legal wheeling ledger."""
         order = request_payload.get("message", {}).get("order", {})
         kwh = float(order.get("quantity", {}).get("value", 5.0))
@@ -90,7 +90,7 @@ class UrjaSetuApiService:
             }
         }
 
-    def handle_health(self) -> Dict[str, Any]:
+    def handle_health(self) -> dict[str, Any]:
         """Returns edge gateway telemetry and statutory CEA security status."""
         audit = self.security_mgr.perform_statutory_audit(offline_local_mode=True)
         telemetry = self.gateway.read_telemetry()
@@ -104,9 +104,6 @@ class UrjaSetuApiService:
             "cea_fingerprint": audit.system_fingerprint_sha256,
             "uptime_sec": time.time() - telemetry.timestamp if telemetry.timestamp else 0.0,
         }
-
-
-import http.server
 
 
 class UrjaSetuHttpRequestHandler(http.server.BaseHTTPRequestHandler):

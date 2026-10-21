@@ -6,10 +6,8 @@ Compatible with Google Pay, PhonePe, Paytm, BHIM, and RBI Digital Rupee (e-RUPI)
 
 from __future__ import annotations
 
-import base64
 import urllib.parse
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 
 @dataclass

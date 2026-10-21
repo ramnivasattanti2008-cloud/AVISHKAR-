@@ -14,8 +14,7 @@ Includes native Modbus RTU CRC-16 checksum calculation for serial RS-485 dongles
 from __future__ import annotations
 
 import struct
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
 
 
 def calculate_modbus_crc16(data: bytes) -> int:
@@ -53,7 +52,7 @@ class InverterVendorProfile:
     protocol_type: str  # "MODBUS_RTU_SERIAL" or "MODBUS_TCP"
 
 
-INVERTER_VENDOR_CATALOG: Dict[str, InverterVendorProfile] = {
+INVERTER_VENDOR_CATALOG: dict[str, InverterVendorProfile] = {
     "sunspec": InverterVendorProfile(
         vendor_id="sunspec",
         display_name="SunSpec Standard (SolarEdge / SMA / Fronius)",
@@ -162,7 +161,7 @@ class UniversalInverterTranslator:
         crc_bytes = struct.pack("<H", crc)
         return payload + crc_bytes
 
-    def translate_power_limit(self, limit_pct: float) -> Tuple[int, int, bytes]:
+    def translate_power_limit(self, limit_pct: float) -> tuple[int, int, bytes]:
         """Translates active power limit % into vendor register address, raw value, and RTU frame."""
         clamped_pct = max(0.0, min(100.0, float(limit_pct)))
         reg = self.profile.reg_power_limit_setpoint
@@ -170,7 +169,7 @@ class UniversalInverterTranslator:
         frame = self.build_rtu_write_frame(reg, raw_val)
         return reg, raw_val, frame
 
-    def translate_battery_charge(self, charge_kw: float) -> Tuple[int, int, bytes]:
+    def translate_battery_charge(self, charge_kw: float) -> tuple[int, int, bytes]:
         """Translates battery charge setpoint into vendor register address, value, and frame."""
         safe_kw = max(0.0, float(charge_kw))
         reg = self.profile.reg_battery_charge_setpoint

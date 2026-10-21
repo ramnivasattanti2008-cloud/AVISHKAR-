@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import hashlib
 import time
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -23,7 +23,7 @@ class CEACyberSecurityAudit:
     tls_encryption_enabled: bool
     incident_notification_window_hours: int
     system_fingerprint_sha256: str
-    security_controls_passed: List[str]
+    security_controls_passed: list[str]
     audit_timestamp: str
 
 
@@ -35,12 +35,12 @@ class CEACyberSecurityManager:
 
     def __init__(self, site_id: str = "mathura-microgrid-01"):
         self.site_id = site_id
-        self._incidents: List[Dict[str, Any]] = []
+        self._incidents: list[dict[str, Any]] = []
 
     def perform_statutory_audit(self, offline_local_mode: bool = True) -> CEACyberSecurityAudit:
         """Executes the statutory security verification check."""
         hasher = hashlib.sha256()
-        hasher.update(f"{self.site_id}-{time.time()}".encode("utf-8"))
+        hasher.update(f"{self.site_id}-{time.time()}".encode())
         fingerprint = hasher.hexdigest()[:16].upper()
 
         controls = [
@@ -64,7 +64,7 @@ class CEACyberSecurityManager:
             audit_timestamp=time.strftime("%Y-%m-%d %H:%M:%S IST"),
         )
 
-    def log_security_event(self, event_type: str, severity: str, details: str) -> Dict[str, Any]:
+    def log_security_event(self, event_type: str, severity: str, details: str) -> dict[str, Any]:
         """Logs a critical security event and evaluates CERT-In 6-hour reporting requirement."""
         event = {
             "event_id": f"EVT-US-{len(self._incidents) + 101}",
@@ -78,6 +78,6 @@ class CEACyberSecurityManager:
         self._incidents.append(event)
         return event
 
-    def get_incident_log(self) -> List[Dict[str, Any]]:
+    def get_incident_log(self) -> list[dict[str, Any]]:
         """Returns recorded microgrid cybersecurity event logs."""
         return list(self._incidents)

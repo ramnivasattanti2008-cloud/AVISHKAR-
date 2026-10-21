@@ -17,6 +17,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+
 try:
     import pydeck as pdk
 except ImportError:

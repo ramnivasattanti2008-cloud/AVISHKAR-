@@ -10,7 +10,6 @@ fleets as flexible distributed battery storage systems.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -25,7 +24,7 @@ class EVVehicleSpec:
     typical_range_km: float
 
 
-INDIAN_EV_MODELS: Dict[str, EVVehicleSpec] = {
+INDIAN_EV_MODELS: dict[str, EVVehicleSpec] = {
     "tata_nexon_ev": EVVehicleSpec(
         model_name="Tata Nexon EV (Long Range)",
         category="4-Wheeler",

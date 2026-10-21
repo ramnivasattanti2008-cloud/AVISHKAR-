@@ -1,0 +1,147 @@
+{
+  "context": {
+    "networkId": "indiaenergystack.in/test-ies-p2p-trading-network",
+    "version": "2.0.0",
+    "action": "catalog/publish",
+    "bppId": "sellerapp.example.com",
+    "bppUri": "http://sellerapp.example.com/bpp/receiver",
+    "transactionId": "aa425035-b15e-468c-9398-028d3de45c20",
+    "messageId": "6ab5ff6c-78e5-4000-9bce-07af289097b6",
+    "timestamp": "2026-03-01T00:30:00Z",
+    "schemaContext": [
+      "https://schema.nfh.global/EnergyTradeOffer/v2.0/context.jsonld",
+      "https://schema.nfh.global/EnergyResource/v2.0/context.jsonld",
+      "https://schema.nfh.global/EnergyCustomer/v2.0/context.jsonld",
+      "https://schema.nfh.global/DEGContract/v2.0/context.jsonld",
+      "https://schema.nfh.global/BecknTimeSeries/v1.0/context.jsonld"
+    ]
+  },
+  "message": {
+    "publishDirectives": [
+      {
+        "catalogId": "catalog-p2p-shop-pune-20260301",
+        "catalogType": "REGULAR",
+        "updateMode": "MERGE",
+        "visibleTo": [
+          "indiaenergystack.in/test-ies-p2p-trading-network"
+        ]
+      }
+    ],
+    "catalogs": [
+      {
+        "id": "catalog-p2p-shop-pune-20260301",
+        "descriptor": {
+          "name": "Rooftop solar surplus",
+          "shortDesc": "shop-pune"
+        },
+        "bppId": "sellerapp.example.com",
+        "bppUri": "http://sellerapp.example.com/bpp/receiver",
+        "provider": {
+          "id": "sellerapp.example.com",
+          "descriptor": {
+            "name": "shop-pune"
+          }
+        },
+        "resources": [
+          {
+            "id": "energy-resource-shop-pune",
+            "descriptor": {
+              "name": "Solar + storage at shop-pune"
+            },
+            "resourceAttributes": {
+              "@context": "https://schema.nfh.global/EnergyResource/v2.0/context.jsonld",
+              "@type": "EnergyResource",
+              "type": "SOLAR",
+              "id": "METER_shop-pune"
+            }
+          }
+        ],
+        "offers": [
+          {
+            "id": "offer-shop-pune-20260301T1000-0",
+            "descriptor": {
+              "name": "Solar surplus 10:00-11:00 IST",
+              "shortDesc": "4.5 kWh from 15 kWp + battery"
+            },
+            "resourceIds": [
+              "energy-resource-shop-pune"
+            ],
+            "availableTo": [],
+            "offerAttributes": {
+              "@context": "https://schema.nfh.global/EnergyTradeOffer/v2.0/context.jsonld",
+              "@type": "EnergyTradeOffer",
+              "validityWindow": {
+                "@type": "beckn:TimePeriod",
+                "schema:startTime": "2026-03-01T00:30:00Z",
+                "schema:endTime": "2026-03-01T04:30:00Z"
+              },
+              "contractAttributes": {
+                "@context": "https://schema.nfh.global/DEGContract/v2.0/context.jsonld",
+                "@type": "DEGContract",
+                "roles": [
+                  {
+                    "role": "buyerPlatform",
+                    "participantId": null
+                  },
+                  {
+                    "role": "sellerPlatform",
+                    "participantId": "sellerapp.example.com"
+                  },
+                  {
+                    "role": "buyerDiscom",
+                    "participantId": null
+                  },
+                  {
+                    "role": "sellerDiscom",
+                    "participantId": "SELLER_DISCOM"
+                  }
+                ]
+              },
+              "commitmentAttributes": {
+                "@context": "https://schema.nfh.global/BecknTimeSeries/v1.0/context.jsonld",
+                "@type": "TimeSeries",
+                "intervalPeriod": {
+                  "start": "2026-03-01T04:30:00Z",
+                  "duration": "PT60M"
+                },
+                "payloadDescriptors": [
+                  {
+                    "objectType": "EVENT_PAYLOAD_DESCRIPTOR",
+                    "payloadType": "PRICE_PER_KWH",
+                    "currency": "INR",
+                    "insertedBy": "sellerPlatform"
+                  },
+                  {
+                    "objectType": "EVENT_PAYLOAD_DESCRIPTOR",
+                    "payloadType": "AVAILABLE_QTY",
+                    "units": "KWH",
+                    "insertedBy": "sellerPlatform"
+                  }
+                ],
+                "intervals": [
+                  {
+                    "id": 0,
+                    "payloads": [
+                      {
+                        "type": "PRICE_PER_KWH",
+                        "values": [
+                          5.0
+                        ]
+                      },
+                      {
+                        "type": "AVAILABLE_QTY",
+                        "values": [
+                          4.5
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

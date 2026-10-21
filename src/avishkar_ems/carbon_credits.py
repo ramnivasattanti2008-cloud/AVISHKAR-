@@ -13,8 +13,6 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional
-
 
 # Central Electricity Authority (CEA) National Grid Baseline
 CEA_GRID_EMISSION_FACTOR_KG_PER_KWH = 0.716
@@ -53,7 +51,7 @@ def compute_carbon_credits(
     val_inr = round(credits * float(carbon_price_per_ton_inr), 2)
 
     hasher = hashlib.sha256()
-    hasher.update(f"{site_id}-{kwh}-{time.time()}".encode("utf-8"))
+    hasher.update(f"{site_id}-{kwh}-{time.time()}".encode())
     cert_hash = f"BEE-CCTS-{hasher.hexdigest()[:18].upper()}"
 
     return CarbonCreditReport(

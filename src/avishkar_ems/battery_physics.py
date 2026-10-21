@@ -11,8 +11,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
-
 
 # Thermal activation energy constants for LFP cells
 ACTIVATION_ENERGY_J_MOL = 31500.0   # Ea for LFP graphite-LiFePO4
