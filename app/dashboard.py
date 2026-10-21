@@ -37,6 +37,7 @@ from avishkar_ems.realdata import real_sites
 from avishkar_ems.satellite import (
     INDIAN_SATELLITE_HUBS,
     build_microgrid_map_deck,
+    build_microgrid_plotly_map,
     fetch_satellite_solar,
 )
 from avishkar_ems.anti_islanding import AntiIslandingWatchdog
@@ -53,6 +54,7 @@ from avishkar_ems.inverter_adapters import (
 from avishkar_ems.market_auction import MarketOrder, MicrogridAuctionEngine
 from avishkar_ems.regulatory import STATE_REGULATORY_RULES, compute_legal_settlement, resolve_state_rule
 from avishkar_ems.settlement_upi import generate_upi_payment
+from avishkar_ems.sim import demo_sites
 from avishkar_ems.subsidy import pm_surya_ghar
 from avishkar_ems.summary import plain_summary
 from avishkar_ems.transformer_guard import (
@@ -164,39 +166,153 @@ with tab_sat:
     st.subheader("🛰️ Indian Geospatial Solar Radar & Satellite Observation")
     st.caption("Live solar irradiance, cloud cover nowcasting, and regional P2P microgrid power flows grounded in ISRO INSAT-3D/3DR meteorological observations and NavIC positioning.")
 
-    sat_rep = get_satellite_weather(site.lat, site.lon)
+    # 1. Regional Weather Station / Hub Selector
+    h_col1, h_col2 = st.columns([3, 1])
+    with h_col1:
+        hub_keys = list(INDIAN_SATELLITE_HUBS.keys())
+        default_hub_idx = hub_keys.index(key) if key in hub_keys else 0
+        selected_hub_key = st.selectbox(
+            "📍 Regional Microgrid Weather Station & Satellite Observation Hub:",
+            hub_keys,
+            index=default_hub_idx,
+            format_func=lambda k: f"{INDIAN_SATELLITE_HUBS[k]['name']} ({INDIAN_SATELLITE_HUBS[k]['state']}) — {INDIAN_SATELLITE_HUBS[k]['discom']} [{INDIAN_SATELLITE_HUBS[k]['primary_satellite']}]",
+            help="Select any major Indian solar microgrid hub to inspect live satellite telemetry and ground-truth irradiance",
+        )
+    with h_col2:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        if st.button("🔄 Refresh Radar Feed", help="Fetch latest geostationary satellite telemetry"):
+            st.cache_data.clear()
+            st.rerun()
 
-    # Telemetry metrics row
-    sm1, sm2, sm3, sm4 = st.columns(4)
-    sm1.metric("Direct Normal Solar (DNI)", f"{sat_rep.current_dni_wm2:.0f} W/m²",
-               help="Direct solar beam radiation from satellite observation")
-    sm2.metric("Satellite Cloud Opacity", f"{sat_rep.current_cloud_cover_pct:.0f}%",
-               help="Geostationary cloud fraction over Indian coordinates")
-    sm3.metric("Surface Temperature", f"{sat_rep.current_temp_c:.1f} °C")
-    clearness_now = max(0.05, 1.0 - (sat_rep.current_cloud_cover_pct / 100.0) ** 1.8)
-    sm4.metric("Nowcasting Clearness (kt)", f"{clearness_now:.2f}",
-               help="Atmospheric clearness ratio derived from satellite cloud fraction")
+    hub_meta = INDIAN_SATELLITE_HUBS[selected_hub_key]
+    sat_rep = get_satellite_weather(hub_meta["lat"], hub_meta["lon"])
+    now_ist = pd.Timestamp.now(tz="Asia/Kolkata")
 
-    # 3D PyDeck Interactive Map
-    st.markdown("##### 🗺️ 3D Indian Solar Microgrid & Peer-to-Peer Energy Flow Network")
-    active_sites_map = {k: get_site(k).site for k in real_sites()}
-    deck = build_microgrid_map_deck(active_sites_map, selected_key=key)
-    st.pydeck_chart(deck, use_container_width=True)
+    # 2. Day/Night Physical State Banner
+    if sat_rep.is_night:
+        st.markdown(
+            f"""
+            <div style="background: linear-gradient(90deg, #1e1b4b 0%, #0f172a 100%); padding: 14px 20px; border-radius: 12px; border: 1px solid #3730a3; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <span style="font-size: 19px; font-weight: 700; color: #a5b4fc;">🌙 Nighttime Grid & Battery Reserve Mode</span><br/>
+                        <span style="color: #cbd5e1; font-size: 13px;">Observation Time: <b>{now_ist.strftime('%d %b %Y, %I:%M %p')} IST</b> • Solar Zenith Elevation: <b>0.0° (Sun Below Horizon)</b> • NavIC Zone: <b>{hub_meta['navic_zone']}</b></span>
+                    </div>
+                    <div style="background: #312e81; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #e0e7ff; border: 1px solid #4338ca;">
+                        ⚡ Direct Solar: <b>0 W/m² (Night)</b> • Next Dawn: <b>~06:15 IST</b> (Rooftop solar resumes at sunrise)
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f"""
+            <div style="background: linear-gradient(90deg, #78350f 0%, #0f172a 100%); padding: 14px 20px; border-radius: 12px; border: 1px solid #b45309; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <span style="font-size: 19px; font-weight: 700; color: #fbbf24;">☀️ Active Daytime Solar Radiation & P2P Generation</span><br/>
+                        <span style="color: #cbd5e1; font-size: 13px;">Observation Time: <b>{now_ist.strftime('%d %b %Y, %I:%M %p')} IST</b> • Solar Zenith Elevation: <b>{sat_rep.solar_elevation_deg}°</b> • NavIC Zone: <b>{hub_meta['navic_zone']}</b></span>
+                    </div>
+                    <div style="background: #92400e; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #fef3c7; border: 1px solid #b45309;">
+                        🛰️ {hub_meta['primary_satellite']}
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    st.caption("🟢 Green Nodes = Active Solar EMS Sites | 🟡 Amber Node = Currently Selected | 🔵 Blue Arcs = Peer-to-Peer Surplus Trade Flows | Hover over pins for telemetry.")
+    # 3. Telemetry metrics row (5 columns)
+    sm1, sm2, sm3, sm4, sm5 = st.columns(5)
+    sm1.metric(
+        "Direct Normal Solar (DNI)",
+        f"{sat_rep.current_dni_wm2:.0f} W/m²",
+        help="Direct solar beam radiation from satellite observation (0 at night)",
+    )
+    sm2.metric(
+        "Satellite Cloud Opacity",
+        f"{sat_rep.current_cloud_cover_pct:.0f}%",
+        help="Geostationary cloud fraction over Indian coordinates from INSAT-3D",
+    )
+    sm3.metric("Surface Temperature", f"{sat_rep.current_temp_c:.1f} °C", help="Ground surface ambient temperature")
+    clearness_now = 0.0 if sat_rep.is_night else max(0.05, 1.0 - (sat_rep.current_cloud_cover_pct / 100.0) ** 1.8)
+    sm4.metric(
+        "Nowcasting Clearness (kt)",
+        "0.00 (Night)" if sat_rep.is_night else f"{clearness_now:.2f}",
+        help="Atmospheric clearness ratio derived from satellite cloud fraction",
+    )
+    sm5.metric(
+        "Humidity & Wind",
+        f"{sat_rep.current_humidity_pct:.0f}% • {sat_rep.current_wind_speed_kmh:.1f} km/h",
+        help="Local surface relative humidity and 10m wind speed",
+    )
 
-    with st.expander("📈 View Live Satellite Irradiance & Cloud Profile (48 Hours)"):
+    # 4. Interactive Microgrid Map (Dual Engine Support)
+    st.markdown("---")
+    map_head_col, map_eng_col = st.columns([3, 2])
+    with map_head_col:
+        st.markdown("##### 🗺️ 3D Indian Solar Microgrid & Peer-to-Peer Energy Flow Network")
+    with map_eng_col:
+        map_engine = st.radio(
+            "Map Visualization Engine:",
+            ["🌐 3D PyDeck Mesh (WebGL)", "🗺️ High-Definition Plotly Radar"],
+            horizontal=True,
+            index=0,
+        )
+
+    active_sites_map = {k: v[0] for k, v in demo_sites().items()}
+
+    if "3D PyDeck" in map_engine:
+        try:
+            deck = build_microgrid_map_deck(active_sites_map, selected_key=selected_hub_key)
+            st.pydeck_chart(deck, use_container_width=True)
+        except Exception as e:
+            st.warning(f"PyDeck GPU rendering unavailable ({e}), displaying Plotly High-Definition Map:")
+            p_map = build_microgrid_plotly_map(active_sites_map, selected_key=selected_hub_key)
+            st.plotly_chart(p_map, use_container_width=True)
+    else:
+        p_map = build_microgrid_plotly_map(active_sites_map, selected_key=selected_hub_key)
+        st.plotly_chart(p_map, use_container_width=True)
+
+    st.caption("🟢 Green Nodes = Active Solar EMS Sites | 🟡 Amber Node = Currently Selected Hub | 🔵 Blue Arcs = Peer-to-Peer Surplus Trade Flows | Hover over pins for telemetry.")
+
+    # 5. 48-Hour Live Irradiance & Cloud Profile Chart
+    with st.expander("📈 View Live Satellite Irradiance & Cloud Profile (48 Hours)", expanded=True):
         if not sat_rep.hourly_df.empty:
             hdf = sat_rep.hourly_df.iloc[:48]
             fig_sat = make_subplots(specs=[[{"secondary_y": True}]])
-            fig_sat.add_trace(go.Scatter(x=hdf.index, y=hdf["dni_wm2"], name="Direct Normal Irradiance (W/m²)", line=dict(color="#f59e0b", width=2)), secondary_y=False)
-            fig_sat.add_trace(go.Scatter(x=hdf.index, y=hdf["gti_wm2"], name="Global Tilted Irradiance (W/m²)", line=dict(color="#10b981", dash="dash")), secondary_y=False)
+            fig_sat.add_trace(go.Scatter(x=hdf.index, y=hdf["dni_wm2"], name="Direct Normal Irradiance (W/m²)", line=dict(color="#f59e0b", width=2.5)), secondary_y=False)
+            fig_sat.add_trace(go.Scatter(x=hdf.index, y=hdf["gti_wm2"], name="Global Tilted Irradiance (W/m²)", line=dict(color="#10b981", dash="dash", width=2)), secondary_y=False)
             fig_sat.add_trace(go.Scatter(x=hdf.index, y=hdf["cloud_pct"], name="Cloud Cover (%)", line=dict(color="#94a3b8", width=1.5)), secondary_y=True)
-            fig_sat.update_layout(height=350, margin=dict(l=10, r=10, t=10, b=10), legend=dict(orientation="h", y=-0.15))
-            fig_sat.update_yaxes(title_text="Irradiance (W/m²)", secondary_y=False)
-            fig_sat.update_yaxes(title_text="Cloud Cover (%)", secondary_y=True, range=[0, 100])
+            if "temp_c" in hdf.columns:
+                fig_sat.add_trace(go.Scatter(x=hdf.index, y=hdf["temp_c"], name="Temperature (°C)", line=dict(color="#ef4444", dash="dot", width=1.5)), secondary_y=True)
+
+            # Add vertical marker for Current Time (NOW)
+            fig_sat.add_vline(
+                x=now_ist,
+                line_width=2,
+                line_dash="dash",
+                line_color="#38bdf8",
+                annotation_text="NOW (Current IST)",
+                annotation_position="top left",
+                annotation_font=dict(color="#38bdf8", size=12),
+            )
+
+            fig_sat.update_layout(
+                height=370,
+                margin=dict(l=10, r=10, t=25, b=10),
+                legend=dict(orientation="h", y=-0.18, x=0.5, xanchor="center"),
+                paper_bgcolor="#0f172a",
+                plot_bgcolor="#1e293b",
+                font=dict(color="#f8fafc"),
+            )
+            fig_sat.update_xaxes(showgrid=True, gridcolor="#334155")
+            fig_sat.update_yaxes(title_text="Irradiance (W/m²)", secondary_y=False, showgrid=True, gridcolor="#334155")
+            fig_sat.update_yaxes(title_text="Cloud Cover (%) / Temp (°C)", secondary_y=True, range=[0, 100], showgrid=False)
             st.plotly_chart(fig_sat, use_container_width=True)
-        st.info(f"**Data Grounding**: {sat_rep.source_description}. NavIC Zone: {INDIAN_SATELLITE_HUBS.get(key, {}).get('navic_zone', 'Indian Subcontinent')}.")
+        st.info(f"**Data Grounding**: {sat_rep.source_description}. Primary Satellite: {hub_meta['primary_satellite']}. NavIC Zone: {hub_meta['navic_zone']}.")
 
 # ==============================================================================
 # TAB 2: AAM AADMI / CITIZEN GUIDE (SIMPLE & ACTIONABLE FOR FAMILIES & SHOPS)

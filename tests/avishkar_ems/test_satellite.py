@@ -3,6 +3,7 @@ import pytest
 from avishkar_ems.satellite import (
     INDIAN_SATELLITE_HUBS,
     build_microgrid_map_deck,
+    build_microgrid_plotly_map,
     fetch_satellite_solar,
 )
 from avishkar_ems.site import SiteSpec
@@ -49,3 +50,23 @@ def test_build_microgrid_map_deck():
     deck = build_microgrid_map_deck({"shop-pune": mock_site}, selected_key="shop-pune")
     assert len(deck.layers) == 3 # Scatter, Text, Arc
     assert deck.initial_view_state.latitude == pytest.approx(22.2)
+
+def test_build_microgrid_plotly_map():
+    mock_site = SiteSpec(
+        site_id="shop-pune",
+        lat=18.52,
+        lon=73.85,
+        dc_kwp=15.0,
+        ac_kw=15.0,
+        tilt=15.0,
+        azimuth=180.0,
+        battery_kwh=20.0,
+        battery_kw=10.0,
+        critical_kw=1.5,
+        backup_hours=4.0,
+        system_cost_inr=1150000.0,
+        tariff=COMMERCIAL_TOD,
+    )
+    fig = build_microgrid_plotly_map({"shop-pune": mock_site}, selected_key="shop-pune")
+    assert len(fig.data) >= 4  # 3 trade flows + at least 1-3 node categories
+
