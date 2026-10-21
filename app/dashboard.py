@@ -39,6 +39,9 @@ from avishkar_ems.satellite import (
     build_microgrid_map_deck,
     fetch_satellite_solar,
 )
+from avishkar_ems.hardware_modbus import InverterHardwareGateway
+from avishkar_ems.regulatory import STATE_REGULATORY_RULES, compute_legal_settlement
+from avishkar_ems.settlement_upi import generate_upi_payment
 from avishkar_ems.subsidy import pm_surya_ghar
 from avishkar_ems.summary import plain_summary
 from avishkar_ems.userdata import read_meter_csv
@@ -124,11 +127,13 @@ hours = s.index
 st.info(plain_summary(dv, site.backup_hours, lang))
 
 # --- Tabs Architecture ---
-tab_sat, tab_citizen, tab_plan, tab_offers, tab_fleet, tab_payback, tab_advice, tab_custom, tab_monitor = st.tabs([
+tab_sat, tab_citizen, tab_plan, tab_offers, tab_hardware, tab_reg_upi, tab_fleet, tab_payback, tab_advice, tab_custom, tab_monitor = st.tabs([
     "🛰️ ISRO / NavIC Satellite Radar",
     "🏠 Aam Aadmi / Citizen Guide",
     "📊 Plan for the Day",
     "🤝 P2P Offers & Beckn DEG",
+    "🔌 Hardware Inverter Gateway",
+    "⚖️ DISCOM Wheeling & UPI",
     "🌐 Fleet Pooling (Multi-Site)",
     "💰 Payback & PM Surya Ghar",
     "💡 Appliance & Battery Advisor",
@@ -528,3 +533,112 @@ with tab_monitor:
         st.dataframe(flex, use_container_width=True)
     else:
         st.info("No clear bursts found in this load series.")
+
+# ==============================================================================
+# TAB: HARDWARE INVERTER GATEWAY (SUNSPEC MODBUS RTU / TCP)
+# ==============================================================================
+with tab_hardware:
+    st.subheader("🔌 Industrial Inverter Hardware Gateway (SunSpec Modbus)")
+    st.caption("Direct physical coupling between the LP optimizer and physical inverters (Sungrow, Growatt, GoodWe, Solis, Victron). "
+               "Reads raw Modbus registers (40001+) and latches dispatch setpoints via SunSpec Model 124 control registers.")
+
+    hw_col1, hw_col2 = st.columns([1, 2])
+    with hw_col1:
+        st.markdown("##### ⚙️ Gateway Connection Settings")
+        mode = st.radio("Hardware Mode", ["Edge Hardware Loopback Emulator", "Physical Inverter (Modbus TCP)"])
+        is_emulate = (mode == "Edge Hardware Loopback Emulator")
+        ip_addr = st.text_input("Inverter IP / Host", value="192.168.1.50" if not is_emulate else "127.0.0.1")
+        port_num = st.number_input("Modbus Port", min_value=1, max_value=65535, value=502)
+        unit_id = st.number_input("Unit ID / Slave Address", min_value=1, max_value=247, value=1)
+        connect_btn = st.button("🔄 Poll Live Registers")
+
+    gw = InverterHardwareGateway(host=ip_addr, port=int(port_num), unit_id=int(unit_id), emulate=is_emulate)
+    gw.connect()
+    telemetry = gw.read_telemetry()
+
+    with hw_col2:
+        st.markdown("##### ⚡ Live Inverter Register Telemetry")
+        t_row1, t_row2, t_row3 = st.columns(3)
+        t_row1.metric("Grid Voltage (V)", f"{telemetry.grid_voltage_v:.1f} V", help="Reg 40079: Nominal 230V ±6% (CEA Standard)")
+        t_row2.metric("Grid Frequency (Hz)", f"{telemetry.grid_frequency_hz:.2f} Hz", help="Reg 40085: Nominal 50.00 Hz (IEGC Grid Code)")
+        t_row3.metric("PV DC Voltage", f"{telemetry.pv_dc_voltage_v:.1f} V")
+
+        t_row4, t_row5, t_row6 = st.columns(3)
+        t_row4.metric("Battery Voltage", f"{telemetry.battery_voltage_v:.1f} V")
+        t_row5.metric("Inverter State", telemetry.inverter_state)
+        t_row6.metric("Active Power Limit", f"{telemetry.active_limit_pct:.1f}%", help="Reg 40200 (WMaxLimPct)")
+
+    st.markdown("---")
+    st.markdown("##### 🛠️ Write LP Dispatch Setpoint to Physical Register")
+    st.caption("Writes to Holding Register 40200 (Active Power Limit) and 40203 (Island Contactor Relay).")
+
+    wc1, wc2, wc3 = st.columns(3)
+    set_limit = wc1.slider("Active Power Limit % (WMaxLimPct)", 0.0, 100.0, 100.0, 5.0)
+    set_chg = wc2.number_input("Battery Charge Setpoint (kW)", 0.0, 10.0, 0.0, 0.5)
+    set_relay = wc3.toggle("Emergency Island Contactor Relay (Trip Grid Tie)", value=False)
+
+    if st.button("🚀 Latch Setpoint into Modbus Hardware"):
+        ok, res_msg = gw.write_dispatch_setpoint(
+            active_power_limit_pct=set_limit,
+            battery_charge_kw=set_chg,
+            island_backup_relay=set_relay,
+        )
+        if ok:
+            st.success(f"✅ {res_msg}")
+        else:
+            st.error(f"❌ {res_msg}")
+
+    st.info("🔒 **Hardware Safety Clamps Active**: Under Central Electricity Authority (CEA) Technical Standards for Connectivity of Distributed Generation, active power curtailment and anti-islanding relays trip automatically if voltage exceeds 253V or frequency deviates beyond 49.5–50.5 Hz.")
+
+# ==============================================================================
+# TAB: DISCOM WHEELING & UPI SETTLEMENT
+# ==============================================================================
+with tab_reg_upi:
+    st.subheader("⚖️ Legal DISCOM Wheeling Ledger & Instant UPI Settlement")
+    st.caption("Compliant distribution wheeling under state electricity regulatory frameworks (UPERC P2P Solar Pilot / MERC / RERC). "
+               "Calculates technical line losses, wire usage charges, and generates NPCI UPI instant settlement tokens.")
+
+    reg_col1, reg_col2 = st.columns([1, 1])
+
+    with reg_col1:
+        st.markdown("##### 📑 State Regulatory Framework")
+        cur_rule = STATE_REGULATORY_RULES.get(key, STATE_REGULATORY_RULES["mathura"])
+        st.write(f"**State Jurisdiction:** {cur_rule.state}")
+        st.write(f"**Regulatory Order Ref:** `{cur_rule.serc_order_ref}`")
+        st.write(f"**Sandbox Status:** `{cur_rule.sandbox_status}`")
+        st.write(f"**Allowed Voltage:** {cur_rule.allowed_voltage_levels}")
+
+        st.markdown("##### 🧮 Wheeling Tariff Breakdown")
+        settle_kwh = st.slider("Energy Traded (kWh)", 1.0, 50.0, 10.0, 1.0)
+        settle_price = st.slider("Market Clearing Price (Rs/kWh)", 4.0, 12.0, 6.5, 0.25)
+        buyer_type = st.radio("Buyer Type", ["Residential (Subsidy / Zero CSS)", "Commercial / Industrial (CSS Applied)"])
+
+        legal_res = compute_legal_settlement(
+            site_key=key,
+            gross_kwh=settle_kwh,
+            trade_price_rs_kwh=settle_price,
+            is_residential_buyer=(buyer_type == "Residential (Subsidy / Zero CSS)"),
+        )
+
+        st.markdown(f"""
+        - **Gross Trade Value:** ₹{legal_res.gross_revenue_inr:.2f}
+        - **Technical Line Loss ({cur_rule.wheeling_loss_pct}% on 11kV network):** -{legal_res.technical_loss_kwh:.2f} kWh
+        - **DISCOM Wire Wheeling Charge:** -₹{legal_res.wheeling_fee_inr:.2f}
+        - **Regulatory Cess & Taxes:** -₹{legal_res.state_cess_inr:.2f}
+        - **Net Seller Rupee Payout:** **₹{legal_res.net_seller_payout_inr:.2f}**
+        """)
+
+    with reg_col2:
+        st.markdown("##### 💳 Instant NPCI UPI Settlement Token")
+        st.caption("Sub-rupee instant settlement link matching the Beckn DEG trade reference:")
+
+        upi_req = generate_upi_payment(
+            payee_vpa="solar.mathura@oksbi" if key == "mathura" else "cleanenergy.pune@icici",
+            payee_name=f"UrjaSetu Prosumer ({key.title()})",
+            amount_inr=legal_res.net_seller_payout_inr,
+            trade_id="TRD-2026-US-88",
+        )
+
+        st.markdown(upi_req.qr_svg_html, unsafe_allow_html=True)
+        st.code(upi_req.upi_intent_uri, language="text")
+        st.caption(f"Status: `{upi_req.status}` | Reference: `{upi_req.transaction_ref}`")
