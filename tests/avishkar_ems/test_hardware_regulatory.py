@@ -45,7 +45,7 @@ def test_sunspec_modbus_frame_encoding():
 
 def test_compute_legal_settlement():
     settlement = compute_legal_settlement(
-        site_key="mathura",
+        site_key="home-mathura",
         gross_kwh=10.0,
         trade_price_rs_kwh=6.50,
         is_residential_buyer=True,
@@ -55,6 +55,14 @@ def test_compute_legal_settlement():
     assert settlement.wheeling_fee_inr > 0.0
     assert settlement.net_seller_payout_inr > 0.0
     assert settlement.sandbox_compliant is True
+    assert "UPERC" in settlement.regulatory_ref
+
+    pune_settle = compute_legal_settlement("shop-pune", 20.0, 7.0, is_residential_buyer=False)
+    assert "MERC" in pune_settle.regulatory_ref
+    assert pune_settle.cross_subsidy_inr > 0.0  # CSS applied for commercial buyer
+
+    jaipur_settle = compute_legal_settlement("clinic-jaipur", 15.0, 6.0)
+    assert "RERC" in jaipur_settle.regulatory_ref
 
 
 def test_generate_upi_payment():

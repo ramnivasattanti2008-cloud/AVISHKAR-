@@ -40,7 +40,7 @@ from avishkar_ems.satellite import (
     fetch_satellite_solar,
 )
 from avishkar_ems.hardware_modbus import InverterHardwareGateway
-from avishkar_ems.regulatory import STATE_REGULATORY_RULES, compute_legal_settlement
+from avishkar_ems.regulatory import STATE_REGULATORY_RULES, compute_legal_settlement, resolve_state_rule
 from avishkar_ems.settlement_upi import generate_upi_payment
 from avishkar_ems.subsidy import pm_surya_ghar
 from avishkar_ems.summary import plain_summary
@@ -602,7 +602,7 @@ with tab_reg_upi:
 
     with reg_col1:
         st.markdown("##### 📑 State Regulatory Framework")
-        cur_rule = STATE_REGULATORY_RULES.get(key, STATE_REGULATORY_RULES["mathura"])
+        cur_rule = resolve_state_rule(key)
         st.write(f"**State Jurisdiction:** {cur_rule.state}")
         st.write(f"**Regulatory Order Ref:** `{cur_rule.serc_order_ref}`")
         st.write(f"**Sandbox Status:** `{cur_rule.sandbox_status}`")

@@ -57,7 +57,49 @@ STATE_REGULATORY_RULES: Dict[str, StateWheelingRule] = {
         regulatory_cess_rs=0.08,
         allowed_voltage_levels="LT / 11kV Feeder",
     ),
+    "home-mathura": StateWheelingRule(
+        state="Uttar Pradesh",
+        serc_order_ref="UPERC Pilot P2P Trading Regulations 2024 / UPPCL",
+        sandbox_status="APPROVED_REGULATORY_SANDBOX",
+        wheeling_charge_rs_kwh=1.25,
+        wheeling_loss_pct=4.8,
+        cross_subsidy_surcharge_rs=0.00,  # Waived for residential rooftop pilots
+        regulatory_cess_rs=0.10,
+        allowed_voltage_levels="LT (415V 3-Phase / 230V 1-Phase)",
+    ),
+    "shop-pune": StateWheelingRule(
+        state="Maharashtra",
+        serc_order_ref="MERC MYT Order Case No. 322 / MSEDCL",
+        sandbox_status="COMPLIANT_MICROGRID_DIRECTIVE",
+        wheeling_charge_rs_kwh=1.64,
+        wheeling_loss_pct=5.2,
+        cross_subsidy_surcharge_rs=0.85,
+        regulatory_cess_rs=0.15,
+        allowed_voltage_levels="11kV / 22kV HT & LT",
+    ),
+    "clinic-jaipur": StateWheelingRule(
+        state="Rajasthan",
+        serc_order_ref="RERC Tariff Order JVVNL / RREC Net Metering",
+        sandbox_status="COMPLIANT_DISTRIBUTION_PILOT",
+        wheeling_charge_rs_kwh=1.45,
+        wheeling_loss_pct=4.5,
+        cross_subsidy_surcharge_rs=0.50,
+        regulatory_cess_rs=0.08,
+        allowed_voltage_levels="LT / 11kV Feeder",
+    ),
 }
+
+
+def resolve_state_rule(key: str) -> StateWheelingRule:
+    """Resolves state wheeling rule by exact key or site location substring."""
+    if key in STATE_REGULATORY_RULES:
+        return STATE_REGULATORY_RULES[key]
+    k = key.lower()
+    if "pune" in k or "maharashtra" in k or "merc" in k:
+        return STATE_REGULATORY_RULES["pune"]
+    elif "jaipur" in k or "rajasthan" in k or "rerc" in k:
+        return STATE_REGULATORY_RULES["jaipur"]
+    return STATE_REGULATORY_RULES["mathura"]
 
 
 @dataclass
@@ -84,7 +126,7 @@ def compute_legal_settlement(
     is_residential_buyer: bool = True,
 ) -> LegalSettlementBreakdown:
     """Calculates legally compliant net payouts incorporating DISCOM wheeling charges."""
-    rule = STATE_REGULATORY_RULES.get(site_key, STATE_REGULATORY_RULES["mathura"])
+    rule = resolve_state_rule(site_key)
 
     gross_kwh = max(0.0, float(gross_kwh))
     trade_price_rs_kwh = max(0.0, float(trade_price_rs_kwh))
