@@ -39,11 +39,23 @@ from avishkar_ems.satellite import (
     build_microgrid_map_deck,
     fetch_satellite_solar,
 )
+from avishkar_ems.carbon_credits import compute_carbon_credits
+from avishkar_ems.cybersecurity_cea import CEACyberSecurityManager
+from avishkar_ems.ev_dispatch import INDIAN_EV_MODELS, compute_v2h_dispatch
 from avishkar_ems.hardware_modbus import InverterHardwareGateway
+from avishkar_ems.inverter_adapters import (
+    INVERTER_VENDOR_CATALOG,
+    UniversalInverterTranslator,
+    calculate_modbus_crc16,
+)
 from avishkar_ems.regulatory import STATE_REGULATORY_RULES, compute_legal_settlement, resolve_state_rule
 from avishkar_ems.settlement_upi import generate_upi_payment
 from avishkar_ems.subsidy import pm_surya_ghar
 from avishkar_ems.summary import plain_summary
+from avishkar_ems.transformer_guard import (
+    STANDARD_DISTRIBUTION_TRANSFORMERS,
+    evaluate_feeder_transformer_health,
+)
 from avishkar_ems.userdata import read_meter_csv
 
 logging.disable(logging.WARNING)
@@ -127,13 +139,14 @@ hours = s.index
 st.info(plain_summary(dv, site.backup_hours, lang))
 
 # --- Tabs Architecture ---
-tab_sat, tab_citizen, tab_plan, tab_offers, tab_hardware, tab_reg_upi, tab_fleet, tab_payback, tab_advice, tab_custom, tab_monitor = st.tabs([
+tab_sat, tab_citizen, tab_plan, tab_offers, tab_hardware, tab_reg_upi, tab_ev_grid, tab_fleet, tab_payback, tab_advice, tab_custom, tab_monitor = st.tabs([
     "🛰️ ISRO / NavIC Satellite Radar",
     "🏠 Aam Aadmi / Citizen Guide",
     "📊 Plan for the Day",
     "🤝 P2P Offers & Beckn DEG",
     "🔌 Hardware Inverter Gateway",
     "⚖️ DISCOM Wheeling & UPI",
+    "🚗 EV V2H & Feeder Guard",
     "🌐 Fleet Pooling (Multi-Site)",
     "💰 Payback & PM Surya Ghar",
     "💡 Appliance & Battery Advisor",
@@ -203,6 +216,15 @@ with tab_citizen:
     c2.metric("⚡ Solar Units Generated Today", f"{ex['pv_kw'].sum() * 0.25:.1f} Units (kWh)")
     c3.metric("🔋 Emergency Inverter Charge", f"{ex['soc'].iloc[-1]:.0%}",
               help="Current charge stored in battery for unexpected grid power cuts")
+
+    # 1b. BEE Carbon Credit Trading Scheme (CCTS) Counter
+    clean_kwh_today = float(ex['pv_kw'].sum() * 0.25)
+    carbon_rep = compute_carbon_credits(clean_kwh_today, site_id=key)
+    c_sub1, c_sub2, c_sub3, c_sub4 = st.columns(4)
+    c_sub1.metric("🌿 CO2 Avoided (CEA Factor)", f"{carbon_rep.avoided_co2_kg:.1f} kg", help="Based on Central Electricity Authority baseline (0.716 kg CO2/kWh)")
+    c_sub2.metric("🪵 Coal Displaced", f"{carbon_rep.avoided_coal_kg:.1f} kg")
+    c_sub3.metric("🌳 Trees Equivalent", f"{carbon_rep.equivalent_trees_planted} trees")
+    c_sub4.metric("📜 CCTS Carbon Value", f"₹{carbon_rep.estimated_credit_value_inr:.1f}", help="Estimated market value under BEE Carbon Credit Trading Scheme")
 
     # 2. Power Cut Shield (Inverter Survival Time)
     st.markdown("---")
@@ -544,12 +566,18 @@ with tab_hardware:
 
     hw_col1, hw_col2 = st.columns([1, 2])
     with hw_col1:
-        st.markdown("##### ⚙️ Gateway Connection Settings")
-        mode = st.radio("Hardware Mode", ["Edge Hardware Loopback Emulator", "Physical Inverter (Modbus TCP)"])
+        st.markdown("##### ⚙️ Gateway & Inverter Settings")
+        v_keys = list(INVERTER_VENDOR_CATALOG.keys())
+        selected_vendor = st.selectbox("Inverter Protocol Profile", v_keys, format_func=lambda x: INVERTER_VENDOR_CATALOG[x].display_name)
+        v_translator = UniversalInverterTranslator(selected_vendor)
+        v_prof = v_translator.profile
+        st.caption(f"Protocol: `{v_prof.protocol_type}` | Baud: `{v_prof.baud_rate} 8N1` | Default Slave: `{v_prof.default_slave_id}` | Limit Reg: `{v_prof.reg_power_limit_setpoint}`")
+
+        mode = st.radio("Hardware Interface", ["Edge Hardware Loopback Emulator", "Physical Inverter (Modbus TCP/RS-485)"])
         is_emulate = (mode == "Edge Hardware Loopback Emulator")
-        ip_addr = st.text_input("Inverter IP / Host", value="192.168.1.50" if not is_emulate else "127.0.0.1")
+        ip_addr = st.text_input("Inverter IP / Serial Port", value="192.168.1.50" if not is_emulate else "127.0.0.1")
         port_num = st.number_input("Modbus Port", min_value=1, max_value=65535, value=502)
-        unit_id = st.number_input("Unit ID / Slave Address", min_value=1, max_value=247, value=1)
+        unit_id = st.number_input("Unit ID / Slave Address", min_value=1, max_value=247, value=int(v_prof.default_slave_id))
         connect_btn = st.button("🔄 Poll Live Registers")
 
     gw = InverterHardwareGateway(host=ip_addr, port=int(port_num), unit_id=int(unit_id), emulate=is_emulate)
@@ -559,23 +587,27 @@ with tab_hardware:
     with hw_col2:
         st.markdown("##### ⚡ Live Inverter Register Telemetry")
         t_row1, t_row2, t_row3 = st.columns(3)
-        t_row1.metric("Grid Voltage (V)", f"{telemetry.grid_voltage_v:.1f} V", help="Reg 40079: Nominal 230V ±6% (CEA Standard)")
-        t_row2.metric("Grid Frequency (Hz)", f"{telemetry.grid_frequency_hz:.2f} Hz", help="Reg 40085: Nominal 50.00 Hz (IEGC Grid Code)")
+        t_row1.metric("Grid Voltage (V)", f"{telemetry.grid_voltage_v:.1f} V", help="Nominal 230V ±6% (CEA Standard)")
+        t_row2.metric("Grid Frequency (Hz)", f"{telemetry.grid_frequency_hz:.2f} Hz", help="Nominal 50.00 Hz (IEGC Grid Code)")
         t_row3.metric("PV DC Voltage", f"{telemetry.pv_dc_voltage_v:.1f} V")
 
         t_row4, t_row5, t_row6 = st.columns(3)
         t_row4.metric("Battery Voltage", f"{telemetry.battery_voltage_v:.1f} V")
         t_row5.metric("Inverter State", telemetry.inverter_state)
-        t_row6.metric("Active Power Limit", f"{telemetry.active_limit_pct:.1f}%", help="Reg 40200 (WMaxLimPct)")
+        t_row6.metric("Active Power Limit", f"{telemetry.active_limit_pct:.1f}%")
 
     st.markdown("---")
     st.markdown("##### 🛠️ Write LP Dispatch Setpoint to Physical Register")
-    st.caption("Writes to Holding Register 40200 (Active Power Limit) and 40203 (Island Contactor Relay).")
+    st.caption("Translates LP dispatch setpoint into brand-specific Modbus RTU serial frame with CRC-16 checksum.")
 
     wc1, wc2, wc3 = st.columns(3)
     set_limit = wc1.slider("Active Power Limit % (WMaxLimPct)", 0.0, 100.0, 100.0, 5.0)
     set_chg = wc2.number_input("Battery Charge Setpoint (kW)", 0.0, 10.0, 0.0, 0.5)
     set_relay = wc3.toggle("Emergency Island Contactor Relay (Trip Grid Tie)", value=False)
+
+    _, _, rtu_frame = v_translator.translate_power_limit(set_limit)
+    crc_hex = f"0x{calculate_modbus_crc16(rtu_frame[:-2]):04X}"
+    st.caption(f"Encoded Modbus RTU Frame: `0x{rtu_frame.hex().upper()}` | CRC-16 Checksum: `{crc_hex}`")
 
     if st.button("🚀 Latch Setpoint into Modbus Hardware"):
         ok, res_msg = gw.write_dispatch_setpoint(
@@ -584,11 +616,23 @@ with tab_hardware:
             island_backup_relay=set_relay,
         )
         if ok:
-            st.success(f"✅ {res_msg}")
+            st.success(f"✅ {res_msg} (Vendor: {v_prof.display_name})")
         else:
             st.error(f"❌ {res_msg}")
 
-    st.info("🔒 **Hardware Safety Clamps Active**: Under Central Electricity Authority (CEA) Technical Standards for Connectivity of Distributed Generation, active power curtailment and anti-islanding relays trip automatically if voltage exceeds 253V or frequency deviates beyond 49.5–50.5 Hz.")
+    st.markdown("---")
+    st.markdown("##### 🛡️ Central Electricity Authority (CEA) 2026 Cybersecurity Compliance")
+    st.caption("Statutory OT network segmentation, data residency, and CERT-In 6-hour incident disclosure under CEA Regulations 2026.")
+    cea_mgr = CEACyberSecurityManager(site_id=key)
+    cea_audit = cea_mgr.perform_statutory_audit(offline_local_mode=True)
+    sc1, sc2, sc3 = st.columns(3)
+    sc1.success(f"🔒 Status: `{cea_audit.ot_it_segmentation}`")
+    sc2.info(f"🇮🇳 Data Residency: `{cea_audit.data_residency_country}`")
+    sc3.warning(f"⏱️ CERT-In Disclosure: `{cea_audit.incident_notification_window_hours} Hours`")
+    with st.expander("View CEA Statutory Security Controls Verified"):
+        for ctrl in cea_audit.security_controls_passed:
+            st.write(f"- ✅ `{ctrl}`")
+        st.caption(f"System Fingerprint: `{cea_audit.system_fingerprint_sha256}` | Verified: {cea_audit.audit_timestamp}")
 
 # ==============================================================================
 # TAB: DISCOM WHEELING & UPI SETTLEMENT
@@ -642,3 +686,75 @@ with tab_reg_upi:
         st.markdown(upi_req.qr_svg_html, unsafe_allow_html=True)
         st.code(upi_req.upi_intent_uri, language="text")
         st.caption(f"Status: `{upi_req.status}` | Reference: `{upi_req.transaction_ref}`")
+
+# ==============================================================================
+# TAB: EV V2H & FEEDER TRANSFORMER GUARD
+# ==============================================================================
+with tab_ev_grid:
+    st.subheader("🚗 Vehicle-to-Home (V2H) & Feeder Transformer Shield")
+    st.caption("Coordinating bidirectional EV charging (Ola, Ather, Tata Nexon EV) and neighborhood distribution transformer thermal protection.")
+
+    ev_col1, ev_col2 = st.columns([1, 1])
+
+    with ev_col1:
+        st.markdown("##### 🚗 Bidirectional V2H Smart Dispatch")
+        st.caption("Discharge stored EV battery energy during evening peak tariff hours (18:00 - 22:00 @ ₹10/unit) while preserving commute range.")
+
+        ev_keys = list(INDIAN_EV_MODELS.keys())
+        ev_selected = st.selectbox("Select Electric Vehicle", ev_keys, format_func=lambda x: INDIAN_EV_MODELS[x].model_name)
+        ev_spec = INDIAN_EV_MODELS[ev_selected]
+
+        ev_c1, ev_c2 = st.columns(2)
+        cur_soc = ev_c1.slider("Current EV Battery SoC %", 20.0, 100.0, 80.0, 5.0)
+        commute_soc = ev_c2.slider("Morning Commute Reserve %", 20.0, 80.0, 50.0, 5.0)
+
+        v2h_plan = compute_v2h_dispatch(
+            vehicle_key=ev_selected,
+            current_soc_pct=cur_soc,
+            commute_reserve_soc_pct=commute_soc,
+            peak_tariff_rs=10.0,
+            home_evening_load_kw=float(site.critical_kw),
+        )
+
+        st.markdown(f"""
+        - **Usable V2H Peak Energy:** **{v2h_plan.usable_v2h_energy_kwh:.2f} kWh**
+        - **Discharge Rate:** {v2h_plan.discharge_power_kw:.2f} kW during 18:00-22:00
+        - **Daily Peak Bill Savings:** **₹{v2h_plan.daily_rupee_savings_inr:.1f} / day**
+        - **Monthly Bill Savings:** **₹{v2h_plan.monthly_rupee_savings_inr:.0f} / month**
+        - **Guaranteed Morning Range:** **{v2h_plan.remaining_range_km:.0f} km**
+        - **OCPP 2.0.1 Action:** `{v2h_plan.ocpp_charging_action}`
+        """)
+
+    with ev_col2:
+        st.markdown("##### ⚡ Distribution Transformer (DT) Feeder Thermal Guard")
+        st.caption("Protects local 11kV / 415V neighborhood transformers from overheating during simultaneous midday solar backfeed.")
+
+        dt_keys = list(STANDARD_DISTRIBUTION_TRANSFORMERS.keys())
+        dt_selected = st.selectbox("Neighborhood Transformer Rating", dt_keys, format_func=lambda x: f"{STANDARD_DISTRIBUTION_TRANSFORMERS[x].dt_id} ({STANDARD_DISTRIBUTION_TRANSFORMERS[x].rated_kva:.0f} kVA)")
+
+        pv_feeder = st.slider("Total Neighborhood Solar Generation (kW)", 10.0, 300.0, 75.0, 5.0)
+        load_feeder = st.slider("Total Local Feeder Base Load (kW)", 5.0, 150.0, 25.0, 5.0)
+
+        dt_status = evaluate_feeder_transformer_health(
+            transformer_type=dt_selected,
+            total_rooftop_pv_kw=pv_feeder,
+            local_load_kw=load_feeder,
+            community_bess_available_kw=float(site.battery_kwh * 2.0),
+        )
+
+        st.metric("Transformer Loading %", f"{dt_status.transformer_loading_pct:.1f}%",
+                  help="Safe thermal threshold is ≤ 80% (Central Electricity Authority standard)")
+
+        if dt_status.thermal_status == "SAFE_GREEN":
+            st.success(f"🟢 **Feeder Status: SAFE** | {dt_status.recommendation}")
+        elif dt_status.thermal_status == "WARNING_AMBER":
+            st.warning(f"🟡 **Feeder Status: WARNING (Thermal Threshold Approaching)** | {dt_status.recommendation}")
+        else:
+            st.error(f"🔴 **Feeder Status: CRITICAL OVERLOAD RISK** | {dt_status.recommendation}")
+
+        st.markdown(f"""
+        - **Net Feeder Power Flow:** {dt_status.net_feeder_flow_kw:.1f} kW (`{dt_status.feeder_direction}`)
+        - **Estimated Feeder Voltage:** {dt_status.feeder_voltage_estimated_v:.1f} V (Trip threshold: 253V)
+        - **Target Battery Soaking:** **{dt_status.battery_absorption_target_kw:.1f} kW**
+        - **Mandatory Curtailment:** **{dt_status.curtailment_required_kw:.1f} kW**
+        """)
