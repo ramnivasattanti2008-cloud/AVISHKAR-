@@ -17,7 +17,10 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import pydeck as pdk
+try:
+    import pydeck as pdk
+except ImportError:
+    pdk = None
 
 _log = logging.getLogger("avishkar_ems.satellite")
 
@@ -194,8 +197,10 @@ def build_microgrid_map_deck(
     selected_key: str,
     trades: list[Any] | None = None,
     pitch: int = 40,
-) -> pdk.Deck:
+) -> Any:
     """Build a high-definition 3D PyDeck visualization of Indian solar microgrids and P2P trade arcs."""
+    if pdk is None:
+        raise ImportError("pydeck is required for 3D map visualization. Install with 'pip install pydeck'.")
     site_records = []
     for k, s_info in INDIAN_SATELLITE_HUBS.items():
         is_active = k in active_sites

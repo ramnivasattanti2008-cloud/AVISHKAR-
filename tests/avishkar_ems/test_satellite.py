@@ -24,6 +24,7 @@ def test_fetch_satellite_solar():
     assert "cloud_pct" in report.hourly_df.columns
 
 def test_build_microgrid_map_deck():
+    pytest.importorskip("pydeck", reason="pydeck is an optional dashboard dependency")
     mock_site = SiteSpec(
         site_id="shop-pune",
         lat=18.52,

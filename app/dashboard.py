@@ -39,6 +39,8 @@ from avishkar_ems.satellite import (
     build_microgrid_map_deck,
     fetch_satellite_solar,
 )
+from avishkar_ems.anti_islanding import AntiIslandingWatchdog
+from avishkar_ems.battery_physics import evaluate_lfp_battery_physics
 from avishkar_ems.carbon_credits import compute_carbon_credits
 from avishkar_ems.cybersecurity_cea import CEACyberSecurityManager
 from avishkar_ems.ev_dispatch import INDIAN_EV_MODELS, compute_v2h_dispatch
@@ -48,6 +50,7 @@ from avishkar_ems.inverter_adapters import (
     UniversalInverterTranslator,
     calculate_modbus_crc16,
 )
+from avishkar_ems.market_auction import MarketOrder, MicrogridAuctionEngine
 from avishkar_ems.regulatory import STATE_REGULATORY_RULES, compute_legal_settlement, resolve_state_rule
 from avishkar_ems.settlement_upi import generate_upi_payment
 from avishkar_ems.subsidy import pm_surya_ghar
@@ -338,6 +341,30 @@ with tab_offers:
             st.caption("Lifecycle DRAFT, ACTIVE, COMPLETE. " + ("Checks pass." if not validate_flow(conf, onc, stat) else "Checks FAIL."))
             st.json({"confirm": conf[0], "on_confirm": onc[0], "on_status_settled": stat[0]}, expanded=False)
 
+    st.markdown("---")
+    st.subheader("⚖️ Microgrid Continuous Auction Order Book & Clearing Engine")
+    st.caption("Replaces static heuristic formulas with a real double-sided merit-order continuous auction: clearing price discovered where cumulative supply meets demand.")
+
+    auc_col1, auc_col2 = st.columns([1, 1])
+    auc_engine = MicrogridAuctionEngine()
+    current_export_avail = float(ex["export_kwh"].sum())
+    auc_engine.submit_order(MarketOrder("ASK-US-01", key, "ASK", quantity_kwh=current_export_avail if current_export_avail > 0.5 else 8.0, price_rs_kwh=float(site.tariff.export_rate) + 0.75))
+    auc_engine.submit_order(MarketOrder("ASK-US-02", "neighbor_clinic_30kw", "ASK", quantity_kwh=15.0, price_rs_kwh=6.20))
+    auc_engine.submit_order(MarketOrder("BID-US-01", "apartment_society_a", "BID", quantity_kwh=14.0, price_rs_kwh=7.80))
+    auc_engine.submit_order(MarketOrder("BID-US-02", "ev_charging_hub_b", "BID", quantity_kwh=10.0, price_rs_kwh=7.00))
+    auc_res = auc_engine.clear_market(f"{day} 11:00-11:15")
+
+    with auc_col1:
+        st.metric("Uniform Market Clearing Price (MCP)", f"₹{auc_res.uniform_clearing_price_rs_kwh:.2f}/kWh", help="Point where cumulative supply intersects cumulative demand")
+        st.metric("Cleared Clean Energy", f"{auc_res.cleared_volume_kwh:.1f} kWh / {auc_res.total_ask_volume_kwh:.1f} kWh Offered")
+        st.metric("Total Social Welfare Generated", f"₹{auc_res.total_social_welfare_inr:.2f} (Consumer: ₹{auc_res.consumer_surplus_inr:.1f}, Producer: ₹{auc_res.producer_surplus_inr:.1f})")
+
+    with auc_col2:
+        st.write("**Matched Continuous Trades (Merit Order Dispatch):**")
+        if auc_res.matched_trades:
+            trade_rows = [{"Trade ID": t.trade_id, "Seller": t.seller_id, "Buyer": t.buyer_id, "kWh": t.cleared_kwh, "Price (₹/kWh)": t.clearing_price_rs_kwh, "Value (₹)": t.trade_value_inr} for t in auc_res.matched_trades]
+            st.dataframe(pd.DataFrame(trade_rows), use_container_width=True, hide_index=True)
+
 # ==============================================================================
 # TAB 5: FLEET POOLING & MULTI-SITE DISPATCH
 # ==============================================================================
@@ -447,6 +474,30 @@ with tab_advice:
     adv = get_advice(key)
     st.dataframe(adv, use_container_width=True)
     st.info(advise_text(adv, want, lang))
+
+    st.markdown("---")
+    st.subheader("🔬 Physical LFP Battery Physics & Inverter Part-Load Efficiency")
+    st.caption("Non-linear Arrhenius thermal acceleration, Depth-of-Discharge (DoD) Wöhler stress, and dynamic inverter part-load efficiency curves.")
+
+    bp_c1, bp_c2, bp_c3 = st.columns(3)
+    amb_temp = bp_c1.slider("Ambient Temperature (°C)", 15.0, 50.0, 38.0, 1.0)
+    cycle_dod = bp_c2.slider("Daily Cycle Depth of Discharge (DoD %)", 20.0, 95.0, 80.0, 5.0)
+    inverter_load = bp_c3.slider("Inverter Operating Load (kW)", 0.2, float(site.inverter_kw), min(1.8, float(site.inverter_kw)), 0.2)
+
+    lfp_res = evaluate_lfp_battery_physics(
+        throughput_kwh=float(site.battery_kwh * (cycle_dod / 100.0)),
+        depth_of_discharge_pct=cycle_dod,
+        ambient_temp_c=amb_temp,
+        actual_power_kw=inverter_load,
+        rated_inverter_kw=float(site.inverter_kw),
+        base_wear_per_kwh_inr=1.50,
+    )
+
+    lp_c1, lp_c2, lp_c3, lp_c4 = st.columns(4)
+    lp_c1.metric("Thermal Degradation Multiplier", f"{lfp_res.thermal_acceleration_factor:.2f}x", help="Arrhenius acceleration relative to 25°C")
+    lp_c2.metric("DoD Stress Factor", f"{lfp_res.dod_stress_multiplier:.2f}x", help="Wöhler curve fatigue factor")
+    lp_c3.metric("Dynamic Inverter Efficiency", f"{lfp_res.dynamic_inverter_efficiency_pct:.1f}%", help="Sandia / CEC polynomial efficiency at current loading")
+    lp_c4.metric("Projected Battery Lifespan", f"{lfp_res.projected_calendar_lifespan_years:.1f} Years ({lfp_res.cycle_life_at_operating_point:,} Cycles)")
 
 # ==============================================================================
 # TAB 8: SMART METER CSV ANALYSER
@@ -633,6 +684,27 @@ with tab_hardware:
         for ctrl in cea_audit.security_controls_passed:
             st.write(f"- ✅ `{ctrl}`")
         st.caption(f"System Fingerprint: `{cea_audit.system_fingerprint_sha256}` | Verified: {cea_audit.audit_timestamp}")
+
+    st.markdown("---")
+    st.subheader("⚡ IEEE 1547 & CEA 2.0-Second Anti-Islanding Shunt-Trip Watchdog")
+    st.caption("Failsafe hardware watchdog monitoring Rate of Change of Frequency (ROCOF) and voltage to protect utility linemen during grid blackouts.")
+    watchdog = AntiIslandingWatchdog()
+    watchdog.feed_heartbeat()
+
+    sim_v = st.slider("Grid Voltage Sensor (V)", 180.0, 270.0, float(telemetry.grid_voltage_v), 1.0)
+    sim_hz = st.slider("Grid Frequency Sensor (Hz)", 46.0, 53.0, float(telemetry.grid_frequency_hz), 0.1)
+
+    ai_status = watchdog.evaluate_grid_safety(sim_v, sim_hz)
+    wc_col1, wc_col2, wc_col3 = st.columns(3)
+    if ai_status.shunt_trip_relay_state == "ENERGIZED_CLOSED":
+        wc_col1.success(f"🟢 Contactor: `{ai_status.shunt_trip_relay_state}`")
+    else:
+        wc_col1.error(f"🔴 Contactor: `{ai_status.shunt_trip_relay_state}`")
+    wc_col2.metric("Trip Latency (ms)", f"{ai_status.trip_latency_ms:.1f} ms" if ai_status.trip_latency_ms > 0 else "0.0 ms", help="Mandatory CEA limit: <= 2000 ms")
+    wc_col3.info(f"📜 Standard: `{ai_status.statutory_compliance}`")
+
+    if ai_status.trip_reason:
+        st.error(f"⚠️ **Trip Triggered**: {ai_status.trip_reason} — Mechanical shunt-trip breaker actuated.")
 
 # ==============================================================================
 # TAB: DISCOM WHEELING & UPI SETTLEMENT
