@@ -1,136 +1,53 @@
-## EMHASS Docker
-## Docker run app testing example:
-## docker build -t emhass .
-## OR docker build --build-arg TARGETARCH=amd64 -t emhass .
-## docker run --rm -it -p 5000:5000 --name emhass-container -v ./config.json:/share/config.json -v ./secrets_emhass.yaml:/app/secrets_emhass.yaml emhass
+# Multi-stage production container for UrjaSetu (ऊर्जासेतु) EMS
+# Compliant with CEA 2026 Cybersecurity isolation standards (non-root execution)
 
-# armhf,amd64,armv7,aarch64
-ARG TARGETARCH
-# armhf=raspbian, amd64,armv7,aarch64=debian
-ARG os_version=debian
+FROM python:3.12-slim AS base
 
-FROM ghcr.io/home-assistant/$TARGETARCH-base-$os_version:bookworm AS base
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    TZ=Asia/Kolkata \
+    UV_SYSTEM_PYTHON=1
 
-# check if TARGETARCH was passed by build-arg
-ARG TARGETARCH
-ENV TARGETARCH=${TARGETARCH:?}
-
-WORKDIR /app
-COPY pyproject.toml /app/
-COPY .python-version /app/
-COPY gunicorn.conf.py /app/
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    # Basic utilities
-    gnupg \
+# Install essential system utilities and curl for healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
-    # Numpy dependencies
-    libgfortran5 \
-    libopenblas0-pthread \
-    libopenblas-dev \
-    libatlas3-base \
-    libatlas-base-dev \
-    # h5py / tables dependencies
-    libsz2 \
-    libaec0 \
-    libhdf5-hl-100 \
-    libhdf5-103-1 \
-    libhdf5-dev \
-    libhdf5-serial-dev \
-    # build packages
-    gcc \
-    g++ \
-    patchelf \
-    cmake \
-    ninja-build \
-    # Runtime dependencies
-    tini \
-    # Cleanup apt caches to reduce image size
-    && rm -rf /var/cache/apt/* \
-    && rm -rf /var/lib/apt/lists/* \
-    # Install uv
-    && curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh \
-    # Install python
-    && uv python install \
-    # Setup HDF5 symlinks
-    && ln -s /usr/include/hdf5/serial /usr/include/hdf5/include \
-    # Create directories
-    && mkdir -p /data/ \
-    && mkdir -p /share/emhass/
-
-# copy required EMHASS files
-COPY src/emhass/ /app/src/emhass/
-
-# webserver files
-COPY src/emhass/templates/ /app/src/emhass/templates/
-COPY src/emhass/static/ /app/src/emhass/static/
-COPY src/emhass/static/data/ /app/src/emhass/static/data/
-COPY src/emhass/static/img/ /app/src/emhass/static/img/
-
-# emhass extra packadge data
-COPY src/emhass/data/ /app/src/emhass/data/
-
-# pre generated optimization results
-COPY data/opt_res_latest.csv /app/data/opt_res_latest.csv
-COPY data/long_train_data.pkl /app/data/long_train_data.pkl
-COPY README.md /app/
-COPY pyproject.toml /app/
-
-# secrets file (secrets_emhass.yaml) can be copied into the container with volume mounts with docker run
-# options.json file will be automatically generated and passed from Home Assistant using the addon
-
-#set python env variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# Docker Labels for hass
-LABEL \
-    io.hass.name="emhass" \
-    io.hass.description="EMHASS: Energy Management for Home Assistant" \
-    io.hass.version=${BUILD_VERSION} \
-    io.hass.type="addon" \
-    io.hass.arch="aarch64|amd64" \
-    org.opencontainers.image.source="https://github.com/davidusb-geek/emhass" \
-    org.opencontainers.image.description="EMHASS python package and requirements, in Home Assistant Debian container."
-
-# Set up venv and add it to the PATH so it persists across RUN layers
-RUN uv venv
-ENV PATH="/app/.venv/bin:$PATH"
-
-# Swapped bashisms [[ == ]] for POSIX compliant [ = ] for Debian dash shell compatibility
-RUN [ "${TARGETARCH}" = "aarch64" ] && uv pip install --verbose ndindex || echo "libatomic1 cant be installed"
-
-# install packages and build EMHASS
-RUN uv pip install --verbose .
-RUN uv lock
-
-# remove build only packages
-RUN apt-get remove --purge -y --auto-remove \
-    gcc \
-    g++ \
-    patchelf \
-    cmake \
-    ninja-build \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Environment variables for flexibility
-ENV WORKER_CLASS=uvicorn.workers.UvicornWorker
-ENV PORT=5000
-ENV IP=0.0.0.0
+# Install uv package manager
+COPY --from=ghcr.io/astral-sh/uv:0.5.26 /uv /uvx /bin/
 
-# Entrypoint script inline
-ENTRYPOINT ["/usr/bin/tini", "--", "/bin/bash", "-c", "set -e && \
-if [ ! -f /data/long_train_data.pkl ]; then \
-    echo 'Initializing data: Copying default PKL file...'; \
-    cp /app/data/long_train_data.pkl /data/; \
-fi && \
-if [ ! -f /data/opt_res_latest.csv ]; then \
-    echo 'Initializing data: Copying default CSV file...'; \
-    cp /app/data/opt_res_latest.csv /data/; \
-fi && \
-WORKER_CLASS=${WORKER_CLASS:-uvicorn.workers.UvicornWorker} && \
-PORT=${PORT:-5000} && \
-IP=${IP:-0.0.0.0} && \
-exec uv run --frozen gunicorn emhass.web_server:app -c gunicorn.conf.py -k \"$WORKER_CLASS\""]
+# Create application directory
+WORKDIR /app
+
+# Copy dependency manifests first for maximum Docker layer caching
+COPY pyproject.toml uv.lock* ./
+
+# Install project dependencies into system environment
+RUN uv pip install --no-cache -e ".[app,test]"
+
+# Copy application source code and assets
+COPY src/ ./src/
+COPY app/ ./app/
+COPY scripts/ ./scripts/
+COPY tests/ ./tests/
+COPY README.md LICENSE* ./
+
+# Create unprivileged service user for CEA cybersecurity compliance
+RUN useradd -m -u 1000 emsuser && \
+    mkdir -p /app/results /app/data && \
+    chown -R emsuser:emsuser /app
+
+USER emsuser
+
+# Expose Streamlit Dashboard (8501) and Beckn DEG v2.0 REST API (8000)
+EXPOSE 8501 8000
+
+# Health check probe against local Streamlit server
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8501/_stcore/health || exit 1
+
+# Default startup command: launch UrjaSetu Streamlit dashboard
+CMD ["streamlit", "run", "app/dashboard.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]

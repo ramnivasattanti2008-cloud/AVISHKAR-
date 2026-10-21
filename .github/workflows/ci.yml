@@ -1,0 +1,46 @@
+name: UrjaSetu EMS CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Automated Test Suites
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --extra app --extra test
+
+      - name: Run Full Force Resolution Tests
+        run: uv run pytest tests/avishkar_ems/test_full_force_resolution.py -v
+
+      - name: Run Cutting-Edge Enterprise Features Tests
+        run: uv run pytest tests/avishkar_ems/test_cutting_edge_features.py -v
+
+      - name: Run CLI & Beckn REST API Server Tests
+        run: uv run pytest tests/avishkar_ems/test_cli_and_server.py -v
+
+      - name: Run Hardware & Regulatory Tests
+        run: uv run pytest tests/avishkar_ems/test_hardware_regulatory.py -v
+
+      - name: Run OpenAPI Contract Tests
+        run: uv run pytest tests/test_openapi.py -v

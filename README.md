@@ -24,6 +24,48 @@
 9. **🌿 BEE Carbon Credit Trading Scheme (CCTS)**: Real-time avoided CO2 calculation using the official CEA baseline (0.716 kg CO2/kWh) with verifiable green energy certificates.
 10. **🌐 Fleet Pooling & Smart Meter CSV Sizing**: Aggregates distributed rooftop solar surplus into bulk commercial trade blocks and provides custom CSV smart-meter payback analysis with PM Surya Ghar Muft Bijli Yojana subsidies.
 
+## 🚀 Production Deployment & CLI
+
+### 1. Unified Enterprise CLI
+UrjaSetu ships with an integrated, zero-dependency CLI for operators, researchers, and utility engineers:
+
+```bash
+# Display available subcommands
+python -m avishkar_ems --help
+
+# Run CEA 2026 Cybersecurity & Statutory Audit
+python -m avishkar_ems audit --site-id shop-pune
+
+# Fetch ISRO INSAT-3D/3DR geostationary solar radar nowcast
+python -m avishkar_ems nowcast --hub shop-pune
+
+# Clear continuous double-sided P2P market auction
+python -m avishkar_ems auction
+
+# Verify IEEE 1547 / CEA anti-islanding watchdog trip latency (< 2.0s)
+python -m avishkar_ems watchdog
+
+# Launch Beckn DEG v2.0 REST API server
+python -m avishkar_ems serve --port 8000
+```
+
+### 2. Docker & Microgrid Containerization
+Deploy the entire stack with single-command Docker Compose orchestration:
+
+```bash
+# Build and launch microgrid container
+docker compose up --build -d
+
+# Access Streamlit Dashboard: http://localhost:8501
+# Access Beckn DEG REST API:   http://localhost:8000
+```
+
+### 3. OpenAPI 3.1.0 Contract Generation & Verification
+```bash
+python scripts/generate_openapi.py
+uv run pytest tests/test_openapi.py
+```
+
 ## Results (real weather, measured load, held-out period)
 
 | Input | Source | Real? |

@@ -104,3 +104,79 @@ class UrjaSetuApiService:
             "cea_fingerprint": audit.system_fingerprint_sha256,
             "uptime_sec": time.time() - telemetry.timestamp if telemetry.timestamp else 0.0,
         }
+
+
+import http.server
+
+
+class UrjaSetuHttpRequestHandler(http.server.BaseHTTPRequestHandler):
+    """Zero-dependency HTTP REST request handler for UrjaSetu API."""
+
+    service = UrjaSetuApiService()
+
+    def do_GET(self) -> None:
+        if self.path in ("/health", "/healthz", "/api/health"):
+            data = self.service.handle_health()
+            self._send_json(200, data)
+        elif self.path in ("/", "/api"):
+            self._send_json(200, {
+                "system": "UrjaSetu (ऊर्जासेतु) EMS REST API",
+                "version": "2.0.0",
+                "beckn_protocol": "DEG v2.0",
+                "endpoints": [
+                    "/healthz",
+                    "/beckn/search",
+                    "/beckn/confirm",
+                    "/beckn/status",
+                ],
+                "status": "OPERATIONAL",
+            })
+        else:
+            self._send_json(404, {"error": "Not Found", "path": self.path})
+
+    def do_POST(self) -> None:
+        content_len = int(self.headers.get("Content-Length", 0))
+        post_data = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+        try:
+            body = json.loads(post_data) if post_data.strip() else {}
+        except Exception:
+            body = {}
+
+        if self.path == "/beckn/search":
+            data = self.service.handle_beckn_search(body)
+            self._send_json(200, data)
+        elif self.path == "/beckn/confirm":
+            data = self.service.handle_beckn_confirm(body)
+            self._send_json(200, data)
+        elif self.path == "/beckn/status":
+            health = self.service.handle_health()
+            self._send_json(200, {
+                "context": {"action": "on_status", "domain": "deg:energy"},
+                "message": {"status": "DELIVERING_ACTIVE", "telemetry": health},
+            })
+        else:
+            self._send_json(404, {"error": "Not Found", "path": self.path})
+
+    def _send_json(self, status_code: int, data: dict[str, Any]) -> None:
+        payload = json.dumps(data, indent=2).encode("utf-8")
+        self.send_response(status_code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def log_message(self, format: str, *args: Any) -> None:
+        """Suppress standard stderr request logging in test mode."""
+        pass
+
+
+def run_http_server(port: int = 8000, max_requests: int | None = None) -> None:
+    """Start the UrjaSetu REST API HTTP server."""
+    server = http.server.ThreadingHTTPServer(("0.0.0.0", port), UrjaSetuHttpRequestHandler)
+    if max_requests is not None:
+        for _ in range(max_requests):
+            server.handle_request()
+    else:
+        server.serve_forever()
+

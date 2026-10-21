@@ -1,0 +1,31 @@
+services:
+  urjasetu-ems:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: urjasetu-ems
+    restart: unless-stopped
+    ports:
+      - "8501:8501"   # Streamlit Interactive Dashboard
+      - "8000:8000"   # Beckn DEG v2.0 REST API
+    environment:
+      - TZ=Asia/Kolkata
+      - PYTHONUNBUFFERED=1
+      - EMS_SITE_ID=shop-pune
+    volumes:
+      - ./results:/app/results
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4096M
+        reservations:
+          cpus: '0.5'
+          memory: 1024M
