@@ -106,7 +106,7 @@ def _input_to_schema(input_type: str, p: dict[str, Any]) -> dict[str, Any]:
 def build_config_component(defs: dict[str, dict[str, Any]]) -> dict[str, Any]:
     """Flatten all configuration sections into a unified OpenAPI component schema."""
     properties: dict[str, Any] = {}
-    for section_name, section_props in defs.items():
+    for _section_name, section_props in defs.items():
         if not isinstance(section_props, dict):
             continue
         for prop_name, prop_def in section_props.items():

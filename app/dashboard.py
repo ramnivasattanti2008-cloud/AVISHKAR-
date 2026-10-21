@@ -1,12 +1,12 @@
-# ruff: noqa: C408
+# ruff: noqa: C408, E402
 """Streamlit dashboard: UrjaSetu EMS - predictive energy management and P2P surplus dispatch for Indian solar sites.
 
     streamlit run app/dashboard.py
 """
 
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
 _SRC = _ROOT / "src"
@@ -20,10 +20,16 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from avishkar_ems.advisor import advise_text, battery_advice
+from avishkar_ems.anti_islanding import AntiIslandingWatchdog
+from avishkar_ems.battery_physics import evaluate_lfp_battery_physics
+from avishkar_ems.carbon_credits import compute_carbon_credits
+from avishkar_ems.cybersecurity_cea import CEACyberSecurityManager
 from avishkar_ems.demo import day_view, forecast_quality, prepare, run_payback
+from avishkar_ems.ev_dispatch import INDIAN_EV_MODELS, compute_v2h_dispatch
 from avishkar_ems.explain import explain_day
 from avishkar_ems.fleet import pool, split_money
 from avishkar_ems.flex import summarise
+from avishkar_ems.hardware_modbus import InverterHardwareGateway
 from avishkar_ems.ies import (
     catalog_publish,
     confirm_flow,
@@ -31,28 +37,25 @@ from avishkar_ems.ies import (
     validate_flow,
     validate_publish,
 )
+from avishkar_ems.inverter_adapters import (
+    INVERTER_VENDOR_CATALOG,
+    UniversalInverterTranslator,
+    calculate_modbus_crc16,
+)
 from avishkar_ems.loads import best_start
+from avishkar_ems.market_auction import MarketOrder, MicrogridAuctionEngine
 from avishkar_ems.monitor import daily_summary, deviation_flags
 from avishkar_ems.realdata import real_sites
+from avishkar_ems.regulatory import (
+    compute_legal_settlement,
+    resolve_state_rule,
+)
 from avishkar_ems.satellite import (
     INDIAN_SATELLITE_HUBS,
     build_microgrid_map_deck,
     build_microgrid_plotly_map,
     fetch_satellite_solar,
 )
-from avishkar_ems.anti_islanding import AntiIslandingWatchdog
-from avishkar_ems.battery_physics import evaluate_lfp_battery_physics
-from avishkar_ems.carbon_credits import compute_carbon_credits
-from avishkar_ems.cybersecurity_cea import CEACyberSecurityManager
-from avishkar_ems.ev_dispatch import INDIAN_EV_MODELS, compute_v2h_dispatch
-from avishkar_ems.hardware_modbus import InverterHardwareGateway
-from avishkar_ems.inverter_adapters import (
-    INVERTER_VENDOR_CATALOG,
-    UniversalInverterTranslator,
-    calculate_modbus_crc16,
-)
-from avishkar_ems.market_auction import MarketOrder, MicrogridAuctionEngine
-from avishkar_ems.regulatory import STATE_REGULATORY_RULES, compute_legal_settlement, resolve_state_rule
 from avishkar_ems.settlement_upi import generate_upi_payment
 from avishkar_ems.sim import demo_sites
 from avishkar_ems.subsidy import pm_surya_ghar
@@ -337,7 +340,7 @@ with tab_citizen:
               help="Current charge stored in battery for unexpected grid power cuts")
 
     # 1b. BEE Carbon Credit Trading Scheme (CCTS) Counter
-    clean_kwh_today = float(ex['pv_kw'].sum() * 0.25)
+    clean_kwh_today = float(ex["pv_kw"].sum() * 0.25)
     carbon_rep = compute_carbon_credits(clean_kwh_today, site_id=key)
     c_sub1, c_sub2, c_sub3, c_sub4 = st.columns(4)
     c_sub1.metric("🌿 CO2 Avoided (CEA Factor)", f"{carbon_rep.avoided_co2_kg:.1f} kg", help="Based on Central Electricity Authority baseline (0.716 kg CO2/kWh)")
@@ -653,7 +656,7 @@ with tab_advice:
         st.dataframe(bs, use_container_width=True, hide_index=True)
     st.subheader("How big should my battery be?")
     st.caption("The battery price is an assumption (Rs 25,000 per kWh). Replace it with a real quote.")
-    want = st.slider("Hours of backup I want", 1, 12, int(site.backup_hours))
+    want = st.slider("Hours of backup I want", 1, 12, min(12, max(1, int(site.backup_hours))))
     adv = get_advice(key)
     st.dataframe(adv, use_container_width=True)
     st.info(advise_text(adv, want, lang))
@@ -736,8 +739,11 @@ with tab_custom:
 
         st.markdown("##### Rooftop Solar & Battery Feasibility Estimate")
         eq1, eq2, eq3 = st.columns(3)
-        user_kwp = eq1.number_input("Solar Array Size (kWp)", min_value=1.0, max_value=100.0, value=float(rec_kwp), step=0.5)
-        user_batt = eq2.number_input("Battery Storage (kWh)", min_value=0.0, max_value=100.0, value=float(round(rec_kwp * 1.5, 1)), step=1.0)
+        solar_max = float(max(1000.0, rec_kwp * 2.0))
+        batt_default = float(round(rec_kwp * 1.5, 1))
+        batt_max = float(max(2000.0, batt_default * 2.0))
+        user_kwp = eq1.number_input("Solar Array Size (kWp)", min_value=1.0, max_value=solar_max, value=float(rec_kwp), step=0.5)
+        user_batt = eq2.number_input("Battery Storage (kWh)", min_value=0.0, max_value=batt_max, value=batt_default, step=1.0)
         user_tariff = eq3.number_input("Average DISCOM Tariff (Rs/kWh)", min_value=4.0, max_value=15.0, value=7.5, step=0.5)
 
         est_annual_solar_kwh = user_kwp * 1450.0
@@ -874,8 +880,10 @@ with tab_hardware:
     watchdog = AntiIslandingWatchdog()
     watchdog.feed_heartbeat()
 
-    sim_v = st.slider("Grid Voltage Sensor (V)", 180.0, 270.0, float(telemetry.grid_voltage_v), 1.0)
-    sim_hz = st.slider("Grid Frequency Sensor (Hz)", 46.0, 53.0, float(telemetry.grid_frequency_hz), 0.1)
+    default_v = float(np.clip(telemetry.grid_voltage_v, 180.0, 270.0))
+    default_hz = float(np.clip(telemetry.grid_frequency_hz, 46.0, 53.0))
+    sim_v = st.slider("Grid Voltage Sensor (V)", 180.0, 270.0, default_v, 1.0)
+    sim_hz = st.slider("Grid Frequency Sensor (Hz)", 46.0, 53.0, default_hz, 0.1)
 
     ai_status = watchdog.evaluate_grid_safety(sim_v, sim_hz)
     wc_col1, wc_col2, wc_col3 = st.columns(3)
