@@ -32,9 +32,16 @@ def read_meter_csv(path: str, tz: str = "Asia/Kolkata", sep: str | None = None, 
     step = s.index.to_series().diff().median()
     hours = max(step.total_seconds() / 3600.0, 1e-6)
     name = use_col.lower()
-    energy = name in ("kwh", "wh", "t_kwh", "energy") or "kwh" in name
+    # Energy-per-interval columns (kWh, Wh, t_kWh, "energy") are divided by the
+    # interval length to get average power.  A bare "W" column is divided by 1000.
+    energy = name in ("kwh", "wh", "t_kwh", "energy") or "kwh" in name or "wh" in name
+    watt = (not energy) and ("watt" in name or name.endswith("(w)") or name.endswith("w)"))
     kw = s / hours if energy else s
-    if name == "wh" or name.endswith("(wh)") or (not energy and name.endswith("(w)")):
+    if watt:
+        kw = kw / 1000.0
+    # A Wh column is energy in watt-hours; divide by 1000 to get kWh before the
+    # interval division, so 600 Wh over 15 min = 0.6 kW.
+    if "wh" in name and "kwh" not in name:
         kw = kw / 1000.0
     out = kw.resample("15min").mean()
     day_slot = out.groupby([out.index.hour, out.index.minute])
