@@ -116,3 +116,22 @@ sidebar lists what is real and what is assumed. These cannot be fixed without re
 **17. Small optimiser edge.** Against a fixed-rule battery the EMS is within about +/-1% on benefit at all three sites
 and at Mathura the simple rule is marginally ahead. Its clearer value is the reserve, offers and settlement. This is a
 result, stated in the README and the demo guide, not a defect.
+
+## Phase 3 additions (2026-10-22)
+
+The following items were added on the `feat/phase-3-energy-intelligence` branch.
+
+**18. Monitoring validation.** `src/avishkar_ems/monitor.py` now runs `validate_readings()` before any deviation
+analysis.  The validator refuses missing columns, NaN values, negative powers and timestamp gaps larger than
+90 minutes.  This is a data-quality gate, not a fault detector: it prevents downstream logic from operating on
+malformed telemetry.  See `tests/avishkar_ems/test_monitoring.py`.
+
+**19. Forecast model-fit cache.** `src/avishkar_ems/forecast_cache.py` provides a small LRU cache for fitted
+forecasting models, keyed by a SHA-256 of the training data and the model configuration.  It supports get,
+invalidate and clear, and records hit/miss statistics.  The cache is passive: callers decide when to refit.
+Tests: `tests/avishkar_ems/test_forecast_cache.py`.
+
+**20. Risk-aware optimisation (planned).** A robust optimisation wrapper is intended in
+`src/avishkar_ems/risk_optim.py`.  It will use a deterministic worst-case (maximin) formulation over explicit
+scenarios (baseline, solar shortfall, demand surge, combined adverse) with a risk-aversion penalty on the worst
+shortfall.  No probability calibration is assumed.  Status: not yet implemented.
