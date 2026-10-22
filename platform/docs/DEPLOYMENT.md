@@ -60,7 +60,21 @@ graph TD
    python -m uvicorn avishkar_engine.app:create_app --factory --host 0.0.0.0 --port 8090
    ```
 
-### Step 3: API Service Startup
+### Step 3: Engine Service Startup
+1. Ensure Python 3.12 environment has dependencies installed:
+   ```bash
+   pip install -r platform/engine/requirements-runtime.txt
+   ```
+2. Generate and export a shared secret key (minimum 16 characters):
+   ```bash
+   export ENGINE_API_KEY="generate-at-least-16-characters-secret"
+   ```
+3. Start the engine service:
+   ```bash
+   python -m uvicorn avishkar_engine.app:create_app --factory --host 0.0.0.0 --port 8090
+   ```
+
+### Step 4: API Service Startup
 1. Set the required production environment variables (see Section 4).
 2. Build TypeScript artifacts:
    ```bash
@@ -71,7 +85,7 @@ graph TD
    node platform/api/dist/server.js
    ```
 
-### Step 4: Web Application Startup
+### Step 5: Web Application Startup
 1. Configure `API_URL` and `NEXT_PUBLIC_MAP_TILE_URL` (or `NEXT_PUBLIC_OSM_TILE_URL`) **before building** (Next.js statically bakes proxy rewrites at build time):
    ```bash
    export API_URL="http://127.0.0.1:8080"
@@ -98,6 +112,34 @@ Verify the API health endpoint:
 ```bash
 curl -sf http://127.0.0.1:8080/api/health
 ```
+
+### Step 7: Database Backup and Restore Drill
+1. Encrypt a backup of the production database:
+   ```bash
+   BACKUP_PASSPHRASE="<your-encryption-key>" ./platform/scripts/backup-db.sh --out-dir ./platform/backups --keep 5
+   ```
+2. Restore the backup into an isolated test database:
+   ```bash
+   BACKUP_PASSPHRASE="<your-encryption-key>" ./platform/scripts/restore-db.sh --file ./platform/backups/<latest-dump>.dump.gpg --db avishkar_restore_test
+   ```
+3. Verify the restored database:
+   ```bash
+   wsl -d Ubuntu -e bash -c "PGPASSWORD='avishkar' psql -h 127.0.0.1 -U avishkar -d avishkar_restore_test -c 'SELECT count(*) FROM information_schema.tables WHERE table_schema=\"public\";'"
+   ```
+
+### Step 7: Database Backup and Restore Drill
+1. Encrypt a backup of the production database:
+   ```bash
+   BACKUP_PASSPHRASE="<your-encryption-key>" ./platform/scripts/backup-db.sh --out-dir ./platform/backups --keep 5
+   ```
+2. Restore the backup into an isolated test database:
+   ```bash
+   BACKUP_PASSPHRASE="<your-encryption-key>" ./platform/scripts/restore-db.sh --file ./platform/backups/<latest-dump>.dump.gpg --db avishkar_restore_test
+   ```
+3. Verify the restored database:
+   ```bash
+   wsl -d Ubuntu -e bash -c "PGPASSWORD='avishkar' psql -h 127.0.0.1 -U avishkar -d avishkar_restore_test -c 'SELECT count(*) FROM information_schema.tables WHERE table_schema=\"public\";'"
+   ```
 
 ---
 
@@ -154,6 +196,37 @@ platform/
 ## 4. Environment Variables & Secret Management
 
 All environment variables must be populated from secure environment injection (e.g. AWS Secrets Manager, Vault, or protected `.env` files). Real secrets MUST NEVER be committed to Git.
+
+### 4.1 Security Requirements
+
+| Variable | Minimum length | Description |
+|---|---|---|
+| `POSTGRES_PASSWORD` | 12 chars | Database administrator password (PostgreSQL). |
+| `SESSION_SECRET` | 32 chars | HMAC signing key for session cookie and CSRF tokens. |
+| `ENGINE_API_KEY` | 16 chars | Shared authentication key between API and Python engine. |
+| `BACKUP_PASSPHRASE` | 16 chars | Symmetric encryption passphrase for PostgreSQL dumps (GPG). |
+| `PROVIDER_USER_AGENT` | 1 line | Identifies your instance to upstream providers (required by OSM, weather, etc.). |
+
+### 4.2 Example Production Set
+
+```bash
+export POSTGRES_PASSWORD="<your-unique-random-password>"
+export ENGINE_API_KEY="<at-least-16-chars-engine-key>"
+export SESSION_SECRET="<at-least-32-chars-session-hmac-secret>"
+export BACKUP_PASSPHRASE="<strong-encryption-passphrase>"
+export PROVIDER_USER_AGENT="UrjaSetu EMS/1.0 (+https://github.com/ramnivasattanti2008-cloud/AVISHKAR-)"
+export TRUST_PROXY="false"  # only set true behind a fully trusted reverse proxy
+```
+
+### 4.3 Git-Safe Template
+
+`platform/api/.env.example` and the root `.env.example` contain **only placeholders**, not real values. The `BACKUP_PASSPHRASE` placeholder is present in `.env.example` to remind operators to set it at runtime (never in `.env`).
+
+### 4.4 File Permissions
+
+Backup scripts require the `BACKUP_PASSPHRASE` environment variable and write to `platform/backups`. The backup directory is set to `700` (owner-only). The `secrets_emhass(example).yaml` template is protected by `.gitignore` and is only overridden by explicit exclusion.
+
+---
 
 | Variable Name | Required | Default / Safe Placeholder | Purpose & Security Constraint |
 |---|---|---|---|

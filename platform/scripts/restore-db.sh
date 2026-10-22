@@ -3,13 +3,18 @@
 # UrjaSetu EMS Platform — Production Database Restore Utility
 # ==============================================================================
 # Restores a compressed custom-format (-Fc) dump into a target PostgreSQL database.
-# Verifies SHA-256 integrity before restoring and runs post-restore smoke checks.
+# Verifies SHA-256 integrity, decrypts an encrypted dump in place (never writing
+# the plaintext to a persistent path), and runs post-restore smoke checks.
+#
+# The passphrase is read from BACKUP_PASSPHRASE and is NEVER written to disk or
+# logged. A dump ending in .gpg is treated as encrypted and must be decrypted
+# before pg_restore can read it.
 #
 # Usage:
-#   ./restore-db.sh --file <backup.dump> [options]
+#   BACKUP_PASSPHRASE="..." ./restore-db.sh --file <backup.dump[.gpg]> [options]
 #
 # Options:
-#   --file <path>        Path to the backup dump file (required)
+#   --file <path>        Path to the backup dump file (required; .gpg = encrypted)
 #   --db <name>          Target database name (default: avishkar_restore_test)
 #   --host <host>        Database host (default: "" for local unix socket)
 #   --port <port>        Database port (default: 5432 or $POSTGRES_PORT)
@@ -19,6 +24,28 @@
 #   --docker             Run pg_restore via docker compose exec db
 # ==============================================================================
 set -euo pipefail
+
+RESTORE_TMPDIR="$(mktemp -d)"
+trap 'rm -rf "${RESTORE_TMPDIR}"' EXIT
+
+DECRYPTED_FILE=""
+if [[ "${BACKUP_FILE}" == *.gpg ]]; then
+  if [[ "${BACKUP_PASSPHRASE:-}" == "" ]]; then
+    echo "Error: BACKUP_PASSPHRASE is not set but the dump is encrypted." >&2
+    exit 1
+  fi
+  if ! command -v gpg >/dev/null 2>&1; then
+    echo "Error: gpg is not installed but the dump is encrypted." >&2
+    exit 1
+  fi
+  DECRYPTED_FILE="${RESTORE_TMPDIR}/restore.dump"
+  echo "Decrypting backup..."
+  gpg --batch --yes --pinentry-mode loopback \
+    --passphrase-fd 3 \
+    --output "${DECRYPTED_FILE}" \
+    --decrypt "${BACKUP_FILE}" 3<<<"${BACKUP_PASSPHRASE}"
+  BACKUP_FILE="${DECRYPTED_FILE}"
+fi
 
 BACKUP_FILE=""
 TARGET_DB="${POSTGRES_RESTORE_DB:-avishkar_restore_test}"
