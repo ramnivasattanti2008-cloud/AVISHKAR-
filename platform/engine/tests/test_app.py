@@ -97,6 +97,56 @@ def test_the_key_comes_from_the_environment(monkeypatch):
     assert c.post("/v1/optimise", json=request(2), headers={"x-engine-key": "e" * 20}).status_code == 200
 
 
+# --- ENGINE_INSECURE_DEV is refused in production ---------------------------------------------
+
+
+def test_insecure_dev_is_refused_in_production(monkeypatch):
+    """The engine never starts open in production, even when the bypass flag is set."""
+    monkeypatch.setenv("NODE_ENV", "production")
+    with pytest.raises(EngineConfigError, match="ENGINE_INSECURE_DEV cannot be enabled in production"):
+        create_app(insecure_dev=True)
+    with pytest.raises(EngineConfigError, match="ENGINE_INSECURE_DEV cannot be enabled in production"):
+        create_app(api_key=KEY, insecure_dev=True)
+
+
+def test_insecure_dev_is_refused_in_production_via_env(monkeypatch):
+    """The same protection works when the flag arrives through the environment, as the container does."""
+    monkeypatch.setenv("NODE_ENV", "production")
+    monkeypatch.setenv("ENGINE_INSECURE_DEV", "1")
+    with pytest.raises(EngineConfigError, match="ENGINE_INSECURE_DEV cannot be enabled in production"):
+        create_app()
+
+
+def test_production_requires_a_key_and_enforces_it(monkeypatch):
+    """Production with the bypass off and no key refuses to start; with a key it enforces it."""
+    monkeypatch.setenv("NODE_ENV", "production")
+    monkeypatch.delenv("ENGINE_INSECURE_DEV", raising=False)
+    with pytest.raises(EngineConfigError, match="ENGINE_API_KEY is not set"):
+        create_app()
+    c = TestClient(create_app(api_key=KEY))
+    assert c.post("/v1/optimise", json=request(2)).status_code == 401
+    assert c.post("/v1/optimise", json=request(2), headers={"x-engine-key": KEY}).status_code == 200
+
+
+def test_production_rejects_unknown_and_short_values_of_the_bypass_flag(monkeypatch):
+    """Only the exact string 1 enables the bypass; anything else (0, yes, empty) is treated as off."""
+    monkeypatch.setenv("NODE_ENV", "production")
+    monkeypatch.setenv("ENGINE_INSECURE_DEV", "0")
+    with pytest.raises(EngineConfigError, match="ENGINE_API_KEY is not set"):
+        create_app()
+    monkeypatch.setenv("ENGINE_INSECURE_DEV", "yes")
+    with pytest.raises(EngineConfigError, match="ENGINE_API_KEY is not set"):
+        create_app()
+
+
+def test_development_mode_still_works_without_a_key(monkeypatch):
+    """The documented local development workflow is preserved when NODE_ENV is not production."""
+    monkeypatch.setenv("NODE_ENV", "development")
+    monkeypatch.delenv("ENGINE_API_KEY", raising=False)
+    c = TestClient(create_app(insecure_dev=True))
+    assert c.post("/v1/optimise", json=request(2)).status_code == 200
+
+
 def test_an_internal_failure_does_not_leak_details(client, monkeypatch):
     import avishkar_engine.app as app_module
 

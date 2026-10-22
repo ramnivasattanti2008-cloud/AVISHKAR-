@@ -41,9 +41,14 @@ def _error(status: int, code: str, message: str, request_id: str, details: objec
 
 
 def create_app(api_key: str | None = None, insecure_dev: bool | None = None) -> FastAPI:
-    """Build the app. A key is required unless ENGINE_INSECURE_DEV=1: the engine never starts open by accident."""
+    """Build the app. A key is required unless ENGINE_INSECURE_DEV=1: the engine never starts open by accident.
+    In production (NODE_ENV=\"production\"), insecure_dev mode is forbidden.
+    """
     key = api_key if api_key is not None else os.environ.get("ENGINE_API_KEY")
     insecure = insecure_dev if insecure_dev is not None else os.environ.get("ENGINE_INSECURE_DEV") == "1"
+    # Disallow insecure dev mode in production
+    if os.getenv("NODE_ENV") == "production" and insecure:
+        raise EngineConfigError("ENGINE_INSECURE_DEV cannot be enabled in production.")
     if key is not None and len(key) < MIN_KEY_LENGTH:
         raise EngineConfigError(f"ENGINE_API_KEY must be at least {MIN_KEY_LENGTH} characters")
     if key is None and not insecure:

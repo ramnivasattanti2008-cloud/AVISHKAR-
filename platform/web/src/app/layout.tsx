@@ -11,8 +11,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, colorScheme: "light dark" };
 
-// Applies the saved theme before first paint so the page does not flash the wrong one.
-const THEME_SCRIPT = `try{var t=localStorage.getItem("avk-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
+// Applies the saved theme before first paint so the page does not flash the wrong one. Its content never changes, so it is
+// allowed in the CSP by a SHA-256 hash rather than by 'unsafe-inline'. See src/lib/theme-script.ts.
+import { THEME_SCRIPT } from "@/lib/theme-script";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

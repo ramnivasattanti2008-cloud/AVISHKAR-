@@ -21,11 +21,21 @@ const Env = z.object({
     .optional()
     .transform((v) => (v === undefined ? undefined : v === "true")),
   CORS_ORIGIN: z.string().optional(),
-  /** True only behind a reverse proxy you control, so req.ip (rate limiting, audit log) is the real client address. */
+  /**
+   * Trust the hop(s) between this service and a reverse proxy you control, so req.ip (rate limiting, audit log) is the real
+   * client address. Accepts a hop count (e.g. "1") or "true" (trust every hop — only safe for a single, fully-controlled
+   * proxy). Defaults to 0 hops, i.e. never trust forwarded headers: the connection's peer address is used directly.
+   *
+   * The web app is the only externally-exposed service; the API sits behind it on the private bridge network, so production
+   * should trust exactly one hop. A forged X-Forwarded-For from any other client has no effect unless it arrives on a
+   * trusted hop.
+   */
   TRUST_PROXY: z
-    .enum(["true", "false"])
-    .default("false")
-    .transform((v) => v === "true"),
+    .preprocess(
+      (v) => (typeof v === "string" ? v.trim() : v),
+      z.union([z.enum(["true", "false"]), z.coerce.number().int().nonnegative()]).default("false"),
+    )
+    .transform((v) => (v === "true" ? true : v === "false" ? false : Number(v))),
 
   /** Identifies this application to public providers (Nominatim and Overpass require it). Include a contact. */
   PROVIDER_USER_AGENT: z

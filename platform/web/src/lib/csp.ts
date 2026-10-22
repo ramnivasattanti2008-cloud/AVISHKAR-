@@ -1,8 +1,8 @@
 /**
  * The security headers the web app sends (spec section 51). The page may load code only from its own origin, talk only to its own
- * origin and the map tile servers, and not be framed. Inline scripts and styles are still allowed, because Next writes the data a
- * page hydrates from into inline scripts: this blocks an injected script from a foreign host, not an injected inline one. A strict
- * nonce policy needs every page rendered per request, which is a larger change than this one.
+ * origin and the map tile servers, and not be framed. In production the page loads no inline scripts at all: the one inline script
+ * (the theme picker) is replaced by a SHA-256 hash, so Next's own hydration scripts are the only scripts and they carry their own
+ * nonce. Inline styles remain allowed because Next injects per-page <style> elements for CSS that cannot be moved to a file.
  *
  * Kept free of imports so next.config.ts can use it.
  */
@@ -28,7 +28,7 @@ export function contentSecurityPolicy(opts: { development: boolean; tileUrl?: st
 
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${opts.development ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self'${opts.development ? " 'unsafe-inline' 'unsafe-eval'" : " 'sha256-CziUIgdwQiAXOHBEaXV2OraoUnQkXqcY/0vH3bIKftk='"}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: ${uniq}`,
     `connect-src 'self' ${uniq}${opts.development ? " ws:" : ""}`,

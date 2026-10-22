@@ -40,6 +40,12 @@ platform/**/.env.local
 !.env.example
 !**/.env.example
 
+# Real secret files (any name starting with secrets_) are never committed. The one exception is the
+# documented template, which carries only placeholders and is tracked so the names exist.
+secrets_*.yaml
+secrets_*.yml
+!secrets_emhass(example).yaml
+
 # Database backups and recovery dumps
 *.dump
 *.dump.sha256

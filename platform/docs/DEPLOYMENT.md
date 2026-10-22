@@ -165,7 +165,7 @@ All environment variables must be populated from secure environment injection (e
 | `ENGINE_URL` | Yes | `http://engine:8090` | Network address of the Python optimization engine. |
 | `ENGINE_API_KEY` | Yes | (16+ chars random) | Shared bearer token protecting the engine from unauthorized calls. |
 | `PROVIDER_USER_AGENT` | Yes | `UrjaSetuEMS/1.0 (...)` | Contact email/URL identifying the instance to OpenStreetMap and Nominatim. |
-| `TRUST_PROXY` | Yes | `true` (behind proxy) | Enables Fastify to read `X-Forwarded-For` for accurate per-IP rate limiting. |
+| `TRUST_PROXY` | Yes | `1` (behind proxy) | Fastify reads `X-Forwarded-For` only for the number of hops you trust. `1` is correct here: the web app is the only externally-exposed service and is exactly one hop from the API. `true` trusts every hop and is only safe for a fully controlled proxy; `false` (the default) never trusts forwarded headers. |
 | `JOBS_ENABLED` | Yes | `true` (single worker) | Runs background forecast scoring and satellite refresh. Exactly one process. |
 | `NEXT_PUBLIC_MAP_TILE_URL` | Optional | OpenStreetMap default | Custom/commercial map tile endpoint (MapTiler, Stadia, CARTO). |
 | `ANTHROPIC_API_KEY` | Optional | Empty | Enables AI Copilot conversational explanations. Falls back to templates if absent. |
@@ -200,7 +200,40 @@ The application enforces strict Content Security Policy headers in `platform/web
 
 ---
 
-## 6. Database Backups, Recovery & Restore Drill
+## 6. TLS, HSTS and the edge proxy
+
+**Where TLS terminates: at the edge, in front of the web app.** The application itself does not terminate TLS and does not set
+`Strict-Transport-Security`. The web app's `next.config.ts` sets no TLS, and the Compose file publishes only port 3000, so the
+certificate, the HTTP-to-HTTPS redirect and the HSTS header are the edge proxy's or the hosting provider's responsibility. This section
+describes what that edge must do; it is a deployment task, not a code change, and no production TLS is deployed merely by this document.
+
+1. **Terminate HTTPS at the edge.** Obtain a valid certificate for the public domain from your CA (Let's Encrypt with automatic
+   renewal is the common choice) and terminate TLS there. The web app then receives plain HTTP on its published port and the API,
+   engine and database stay on the private network as described in section 1.
+2. **Redirect HTTP to HTTPS at the edge, not in the app.** A 301 from `http://` to `https://` for the same host, before any application
+   logic. Do not redirect inside Next.js: it cannot see the scheme the browser used and would loop or redirect to the wrong port.
+3. **Set HSTS only after HTTPS has been verified working.** Once the edge serves HTTPS correctly for a while, add:
+   ```
+   Strict-Transport-Security: max-age=31536000; includeSubDomains
+   ```
+   - `max-age=31536000` (one year) is the usual starting value; increase to a longer preload value only when you are sure.
+   - `includeSubDomains` applies the policy to every subdomain of the public host. **Only set it if every subdomain is served over
+     HTTPS.** The API, engine and database are not published, so there are no public subdomains to worry about, but any future
+     published service must also be HTTPS-only.
+   - `preload` is a one-way commitment to the HSTS preload list and is decided by the owner, not by this document. Do not add it
+     before the domain is stable and every subdomain is HTTPS-only.
+4. **Secure cookies.** In production the session and CSRF cookies are already `Secure` (see `api/src/config.ts`: `COOKIE_SECURE` defaults
+   to `NODE_ENV === "production"`). That is correct only when the edge terminates HTTPS, which is why TLS is step 1.
+5. **Proxy headers.** The edge must forward `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host` to the web app, and the web
+   app must forward them to the API on `/api/*`. `TRUST_PROXY` on the API is set to `1` in Compose (section 4), so the API trusts exactly
+   one hop: the web app. Any other client's forged `X-Forwarded-For` has no effect unless it arrives on that trusted hop.
+6. **Avoid redirect loops.** Do not redirect `http://` to `https://` inside the application, and do not redirect `https://` back to
+   `http://`. The edge handles both directions; the app only sees plain HTTP.
+7. **Local development stays usable.** `next dev` and the Compose stack run on plain HTTP on localhost. `Strict-Transport-Security`
+   is not sent, and the `Secure` cookie flag is off unless `NODE_ENV=production` is set, so the app works without a certificate while
+   developing. Nothing here requires a certificate to run locally.
+
+## 7. Database Backups, Recovery & Restore Drill
 
 ### Backup Strategy
 
