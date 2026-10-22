@@ -13,7 +13,13 @@ export interface PropertyHoldings {
   equipment: { batteries: Rec[]; solarSystems: Rec[]; evs: Rec[]; appliances: Rec[] };
   /** The files imported (name, rows accepted and refused, range): not the readings themselves, which are the owner's own file. */
   meterImports: Rec[];
-  meterReadings: { count: number; first: string | null; last: string | null };
+  /** The meter readings themselves, up to 1,000 rows per property, in kWh. */
+  meterReadings: {
+    count: number;
+    first: string | null;
+    last: string | null;
+    rows: { ts: string; importKwh: number; intervalMinutes: number }[];
+  };
   control: { mode: string; maxChargeKw: number | null; maxDischargeKw: number | null; minSocPercent: number | null; automateUntil: string | null } | null;
   /** Counts of what AVISHKAR worked out and stored for this property. Each is in the property's report. */
   stored: { energyTwinVersions: number; forecasts: number; plans: number; whatIfs: number; controlProposals: number; roofOutlines: number };
@@ -50,6 +56,14 @@ export async function accountHoldings(db: Db, userId: string, propertyIds: { id:
       db.controlProposal.count({ where }),
       db.propertyGeometry.count({ where }),
     ]);
+    // Include the actual meter readings (up to 1,000 rows) so the export is not
+    // just metadata.  Larger exports are capped to keep the response bounded.
+    const readingsRows = await db.energyObservation.findMany({
+      where,
+      select: { ts: true, importKwh: true, intervalMinutes: true },
+      orderBy: { ts: "asc" },
+      take: 1000,
+    });
     properties.push({
       propertyId: p.id,
       name: p.name,
@@ -61,7 +75,12 @@ export async function accountHoldings(db: Db, userId: string, propertyIds: { id:
         appliances: appliances.map((a) => rec(toApplianceDto(a))),
       },
       meterImports: imports.map((i) => rec(toImportDto(i))),
-      meterReadings: { count: readings._count._all, first: iso(readings._min.ts), last: iso(readings._max.ts) },
+      meterReadings: {
+        count: readings._count._all,
+        first: iso(readings._min.ts),
+        last: iso(readings._max.ts),
+        rows: readingsRows.map((r) => ({ ts: r.ts.toISOString(), importKwh: r.importKwh, intervalMinutes: r.intervalMinutes })),
+      },
       control: control
         ? { mode: control.mode, maxChargeKw: control.maxChargeKw, maxDischargeKw: control.maxDischargeKw, minSocPercent: control.minSocPercent, automateUntil: iso(control.automateUntil) }
         : null,

@@ -151,6 +151,18 @@ describeDb("what the export holds (spec section 50)", () => {
     expect(sum((p) => p.meterReadings.count)).toBe(await db().energyObservation.count({ where: { property: { ownerId: mine.id } } }));
     count(sum((p) => p.equipment.batteries.length), "batteries exported");
     count(sum((p) => p.meterReadings.count), "readings counted");
+    // The export now carries the readings themselves (up to 1,000 rows per property).
+    const totalRows = sum((p) => p.meterReadings.rows.length);
+    const expectedRows = await db().energyObservation.count({ where: { property: { ownerId: mine.id } } });
+    expect(totalRows).toBe(Math.min(expectedRows, 1000 * body.holdings.properties.length));
+    expect(totalRows).toBeGreaterThan(0);
+    for (const p of body.holdings.properties) {
+      for (const r of p.meterReadings.rows) {
+        expect(typeof r.ts).toBe("string");
+        expect(typeof r.importKwh).toBe("number");
+        expect(typeof r.intervalMinutes).toBe("number");
+      }
+    }
     expect(body.holdings.ownTariffs.length).toBe(await db().tariffPlan.count({ where: { ownerId: mine.id } }));
 
     const text = JSON.stringify(body);

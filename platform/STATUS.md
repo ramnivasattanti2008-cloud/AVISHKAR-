@@ -100,3 +100,15 @@ Last updated: 2026-10-09, after the city energy map (49) and the acceptance walk
 - **Satellite nowcast data source** (D9) and **grid outage data** are unavailable; both remain `UNAVAILABLE`.
 - **Hosting** (Vercel, container registry, managed PostGIS) needs the owner's accounts; deployment is documented and
   scripted, not performed.
+
+## Phase 3 additions (2026-10-22)
+
+The following were added on the `feat/phase-3-energy-intelligence` branch. They live in the Python EMS
+(`src/avishkar_ems/`), not in the platform.
+
+| Item | Status | Where |
+|---|---|---|
+| Monitoring data-quality validation | **DONE** | `src/avishkar_ems/monitor.py::validate_readings` raises on missing columns, NaNs, negative powers and timestamp gaps >90 min. `enhanced_monitor` calls it first. Tests: `tests/avishkar_ems/test_monitoring.py` (4 tests, passing). |
+| Forecast model-fit cache | **DONE** | `src/avishkar_ems/forecast_cache.py` – LRU cache keyed by SHA-256 of training data + config, with `get`/`invalidate`/`clear` and hit/miss stats. Tests: `tests/avishkar_ems/test_forecast_cache.py` (6 tests, passing). |
+| Risk-aware optimisation | **NOT STARTED** | Planned in `src/avishkar_ems/risk_optim.py` – a deterministic worst-case (maximin) LP wrapper over explicit scenarios. No probability calibration is assumed. |
+| Replanning trigger | **NOT STARTED** | Planned as a thin layer on the cache that only refits when the data hash changes. |
