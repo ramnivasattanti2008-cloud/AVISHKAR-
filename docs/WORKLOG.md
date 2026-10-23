@@ -582,8 +582,32 @@ Done at user request ("COMPLETE THE top 4 highest-impact next improvements for U
   * Ruff linter: 0 errors (--no-fix).
 
 Next:
-1. Push branch `claude/avishkar-fixes-and-platform` to origin.
+1. Push branch `claude/avishkar-fixes-and-platform` and `release/urjasetu-v1-readiness` to origin.
 2. Build and verify the Docker images on a Linux / Docker-capable host (`platform/docs/DEPLOYMENT.md`).
 3. Add a commercial tile provider key to environment configuration and CSP.
+
+## Entry 14: 2026-10-23: authoring master architecture (PROJECT.md) and mathematical brain (BRAIN.md)
+
+Done at user request ("MAKE PROJECT.MD AND BRAIN.MD"):
+
+1. **PROJECT.md Authoring**:
+   - Comprehensive master document outlining UrjaSetu (AVISHKAR) vision, Truth-in-Data philosophy, 3-tier system architecture diagram, frontend/API/engine/database specification, key capabilities, operational workflows, Indian tariff and regulatory models, external provider integrations, data privacy & security standards, quickstart guide, and testing verification matrix.
+
+2. **BRAIN.md Authoring**:
+   - Persistent mathematical brain and algorithmic ledger:
+     * Architectural Decisions Ledger (Invariants D1–D14).
+     * Rigorous mathematical formulations for Day-Ahead MILP dispatch optimization (objective, constraints, degradation, reserve floors).
+     * Physical pvlib solar generation modeling (Hay-Davies Perez transposition, cell temperature, module power).
+     * Conformalized Quantile Gradient Boosted Decision Tree load forecasting ($p_{10}, p_{50}, p_{90}$ with empirical pinball coverage).
+     * Robust Maximin risk-hedging formulation with $\alpha$-convex weighting across multi-scenario stress sets.
+     * Every-kWh energy attribution ledger conservation equations.
+     * Monthly bill to hourly load profile synthesis with CEEW diurnal shapes and strict energy conservation.
+     * Future algorithmic roadmap (stochastic dual dynamic programming, battery SOH degradation, P2P peer balancing).
+
+- Evidence:
+  * `PROJECT.md`: 225 lines, fully verified against active implementation.
+  * `BRAIN.md`: 153 lines, mathematically formalized with LaTeX / KaTeX equations.
+  * Git workspace: Cleanly staged with all automated tests passing.
+
 
 
