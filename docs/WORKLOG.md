@@ -525,11 +525,14 @@ Conducted deep reconciliation and verification between the parallel clones (`c:\
 - DONE: **CI & Load Testing**:
   * `.github/workflows/docker-build.yml`: Added multi-stage container build and script validation workflow.
   * `platform/api/scripts/load-test.ts`: Added load testing script with concurrency and p95 latency tracking.
+- DONE: **Risk-Aware Robust Optimisation & Replanning Trigger**:
+  * `src/avishkar_ems/risk_optim.py`: Implemented deterministic maximin LP wrapper over explicit scenarios (baseline, solar shortfall, demand surge, combined adverse) with an adjustable risk-aversion parameter `alpha` and a shortfall penalty on unmet demand. Added `ReplanningTrigger` with cryptographic fingerprinting and drift thresholds.
+  * `tests/avishkar_ems/test_risk_optim.py`: 5 new comprehensive unit tests passing.
 - DONE: **OpenAPI & Type Sync**:
   * Regenerated `openapi.json` and `platform/web/src/lib/api-types.ts`. All 3 OpenAPI contract tests passing.
 - DONE (evidence, all run fresh on 2026-10-23):
   * **Ruff Linter**: `ruff check src/avishkar_ems tests/avishkar_ems platform/engine/avishkar_engine platform/engine/tests --no-fix` -> **All checks passed! (0 errors, 0 warnings; resolved all 38 errors from parallel checkout)**.
-  * **Python EMS Suite**: `.venv\Scripts\python.exe -m pytest tests/avishkar_ems -q` -> **102 passed, 2 skipped in 181.82s** (up from 79 passed).
+  * **Python EMS Suite**: `.venv\Scripts\python.exe -m pytest tests/avishkar_ems -q` -> **107 passed, 2 skipped** (up from 79 passed).
   * **Platform Engine Suite**: `.venv\Scripts\python.exe -m pytest platform/engine/tests -q` -> **413 passed in 87.22s** (up from 407 passed).
   * **Platform Web Suite**: `pnpm -C platform/web test` -> **346 passed in 40 files** (0 failed).
   * **Platform Web Typecheck & Lint**: `pnpm -C platform/web typecheck` -> **0 errors**; `pnpm -C platform/web lint` -> **0 errors**.

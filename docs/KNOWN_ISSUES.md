@@ -129,10 +129,12 @@ forecasting models, keyed by a SHA-256 of the training data and the model config
 `platform/engine/avishkar_engine/load.py` contains an LRU model-fit cache keyed on input data and parameter hashes,
 speeding up repeated API solver calls. Tests: `tests/avishkar_ems/test_forecast_cache.py`, `platform/engine/tests/test_load.py`.
 
-**20. Risk-aware optimisation (planned).** A robust optimisation wrapper is intended in
-`src/avishkar_ems/risk_optim.py`.  It will use a deterministic worst-case (maximin) formulation over explicit
-scenarios (baseline, solar shortfall, demand surge, combined adverse) with a risk-aversion penalty on the worst
-shortfall.  No probability calibration is assumed.  Status: not yet implemented.
+**20. Risk-aware optimisation and replanning trigger.** `src/avishkar_ems/risk_optim.py`
+implements deterministic worst-case (maximin) evaluation across four explicit scenarios
+(baseline, solar shortfall, demand surge, combined adverse) with an adjustable risk-aversion
+parameter `alpha` and a shortfall penalty on unmet demand. No probability calibration is assumed.
+Includes `ReplanningTrigger` to detect forecast and telemetry drift based on data hashes and
+numerical deviation thresholds. Tests: `tests/avishkar_ems/test_risk_optim.py` (5 tests, passing).
 
 ## Phase 4 additions (2026-10-22)
 
