@@ -129,6 +129,12 @@ export interface paths {
                                         count: number;
                                         first: string | null;
                                         last: string | null;
+                                        /** @default [] */
+                                        rows: {
+                                            importKwh: number;
+                                            intervalMinutes: number;
+                                            ts: string;
+                                        }[];
                                     };
                                     name: string;
                                     /** Format: uuid */

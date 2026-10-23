@@ -21,16 +21,19 @@ export function tileOrigin(url: string | undefined): string | null {
 }
 
 export function contentSecurityPolicy(opts: { development: boolean; tileUrl?: string }): string {
-  const tiles = [...TILE_HOSTS, ...(tileOrigin(opts.tileUrl) ? [tileOrigin(opts.tileUrl)!] : [])];
+  const customOrigin = tileOrigin(opts.tileUrl);
+  const tiles = [...TILE_HOSTS, ...(customOrigin ? [customOrigin] : [])];
   const uniq = [...new Set(tiles)].join(" ");
+  const fontSources = ["'self'", "data:", ...(customOrigin ? [customOrigin] : [])].join(" ");
+
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${opts.development ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self'${opts.development ? " 'unsafe-inline' 'unsafe-eval'" : " 'sha256-CziUIgdwQiAXOHBEaXV2OraoUnQkXqcY/0vH3bIKftk='"}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: ${uniq}`,
     `connect-src 'self' ${uniq}${opts.development ? " ws:" : ""}`,
     "worker-src 'self' blob:",
-    "font-src 'self' data:",
+    `font-src ${fontSources}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

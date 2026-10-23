@@ -3,3 +3,13 @@
 *.sql text eol=lf
 platform/api/prisma/migrations/** text eol=lf
 *.cmd text eol=crlf
+
+# Source and generated code/spec files must keep LF line endings across platforms
+*.json text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+

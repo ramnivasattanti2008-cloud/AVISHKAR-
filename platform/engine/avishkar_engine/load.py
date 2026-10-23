@@ -17,6 +17,7 @@ Gaps in the history stay gaps: they are never filled.
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 
 import numpy as np
@@ -34,6 +35,25 @@ MAX_TEST_DAYS = 14
 GBM_MARGIN = 0.98  # the model must beat the best baseline's error by 2% to be chosen
 LAGS_WEEK = tuple(168 * k for k in range(1, 9))
 LAGS_RECENT = tuple(24 * j for j in range(7, 14))
+
+_LOAD_CACHE: dict[str, LoadForecastResponse] = {}
+_MAX_CACHE = 64
+
+
+def clear_cache() -> None:
+    _LOAD_CACHE.clear()
+
+
+def _cache_key(req: LoadForecastRequest) -> str:
+    h = hashlib.sha256()
+    h.update(req.history.start_time.encode())
+    h.update(str(req.history.interval_minutes).encode())
+    h.update(str(req.horizon_hours).encode())
+    h.update((req.forecast_start or "").encode())
+    h.update(str(req.timezone_offset_minutes).encode())
+    kwh_bytes = ",".join("N" if v is None else f"{v:.6f}" for v in req.history.kwh).encode()
+    h.update(kwh_bytes)
+    return h.hexdigest()
 
 
 def hourly_kw(h, offset_min: int = 330) -> pd.Series:
@@ -124,6 +144,10 @@ def _unavailable(reason: str, hist_days: float, gaps: float) -> LoadForecastResp
 
 
 def forecast(req: LoadForecastRequest) -> LoadForecastResponse:
+    ckey = _cache_key(req)
+    if ckey in _LOAD_CACHE:
+        return _LOAD_CACHE[ckey]
+
     s_all = hourly_kw(req.history, req.timezone_offset_minutes)
     gaps = float(s_all.isna().mean())
     span_days = len(s_all) / 24.0
@@ -253,7 +277,7 @@ def forecast(req: LoadForecastRequest) -> LoadForecastResponse:
         return MethodScore(method=r.name, description=r.description, mae_kw=round(r.mae, 5), rmse_kw=round(r.rmse, 5), wape_pct=None if r.wape is None else round(r.wape, 3),
                            bias_kw=round(r.bias, 5), coverage_80=None if r.coverage is None else round(r.coverage, 4))
 
-    return LoadForecastResponse(
+    resp = LoadForecastResponse(
         status="ok",
         unavailable_reason=None,
         times=[t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in horizon],
@@ -278,3 +302,7 @@ def forecast(req: LoadForecastRequest) -> LoadForecastResponse:
         ],
         notes=notes,
     )
+    if len(_LOAD_CACHE) >= _MAX_CACHE:
+        _LOAD_CACHE.pop(next(iter(_LOAD_CACHE)))
+    _LOAD_CACHE[ckey] = resp
+    return resp

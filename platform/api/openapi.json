@@ -22095,12 +22095,37 @@
                                       "string",
                                       "null"
                                     ]
+                                  },
+                                  "rows": {
+                                    "default": [],
+                                    "items": {
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "importKwh": {
+                                          "type": "number"
+                                        },
+                                        "intervalMinutes": {
+                                          "type": "number"
+                                        },
+                                        "ts": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "ts",
+                                        "importKwh",
+                                        "intervalMinutes"
+                                      ],
+                                      "type": "object"
+                                    },
+                                    "type": "array"
                                   }
                                 },
                                 "required": [
                                   "count",
                                   "first",
-                                  "last"
+                                  "last",
+                                  "rows"
                                 ],
                                 "type": "object"
                               },

@@ -18,7 +18,12 @@ const PropertyHoldingsSchema = z.object({
   tariffPlanId: z.uuid().nullable(),
   equipment: z.object({ batteries: z.array(Rec), solarSystems: z.array(Rec), evs: z.array(Rec), appliances: z.array(Rec) }),
   meterImports: z.array(Rec).describe("The files imported: name, rows accepted and refused, range. Not the readings themselves, which are your own file."),
-  meterReadings: z.object({ count: z.number(), first: z.string().nullable(), last: z.string().nullable() }),
+  meterReadings: z.object({
+    count: z.number(),
+    first: z.string().nullable(),
+    last: z.string().nullable(),
+    rows: z.array(z.object({ ts: z.string(), importKwh: z.number(), intervalMinutes: z.number() })).default([]),
+  }),
   control: z.object({ mode: z.string(), maxChargeKw: z.number().nullable(), maxDischargeKw: z.number().nullable(), minSocPercent: z.number().nullable(), automateUntil: z.string().nullable() }).nullable(),
   stored: z
     .object({ energyTwinVersions: z.number(), forecasts: z.number(), plans: z.number(), whatIfs: z.number(), controlProposals: z.number(), roofOutlines: z.number() })

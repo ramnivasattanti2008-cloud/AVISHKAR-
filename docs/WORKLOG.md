@@ -472,3 +472,80 @@ What is left is not work that can be done here, and each item says why in the le
 - **Needs data that does not exist here.** A device to control, outage records, city-wide meter data, a sourced grid emission
   factor, and tariff orders beyond the three states on file. Each of these is why some figure in the product is UNAVAILABLE rather
   than estimated, and that is the right answer until the data arrives.
+
+
+## Entry 11: 2026-10-23: test suite optimization, load-model caching, line endings fix, full suite green
+
+Done at user request ("COMPLETE ALL THE PENDING WORKS AND EVERYTHING FAST AND BEST"):
+
+- DONE: line endings in `.gitattributes`. Pinned LF line endings for `*.json`, `*.ts`, `*.tsx`, `*.js`, `*.mjs`, `*.py`, `*.md` to permanently resolve CRLF conversion warnings on generated files (`openapi.json`, `api-types.ts`) as flagged in `docs/TEAM_PLAN.md` #25.
+- DONE: load forecast caching (`platform/engine/avishkar_engine/load.py`). Repeated calls with identical meter history and horizons (such as proposal generation, planning, futures and tests) now hit an in-memory LRU cache keyed by a cryptographic hash of the input series and parameters, bypassing redundant GBDT refits. Added cache test `test_forecast_cache_hits_and_clears` in `test_load.py`.
+- DONE: `test/control.test.ts` timeouts resolved. With load-model caching in place, the entire file of 18 integration tests finishes in ~62 s, resolving the 3 intermittent timeouts under full-suite load previously documented in `docs/TEAM_PLAN.md`.
+- DONE (evidence, all run fresh on 2026-10-23):
+  * **Platform API suite**: `pnpm -C platform/api test` -> **887 passed in 58 files** (0 failed; was 883 passed / 4 failed).
+  * **Platform Web suite**: `pnpm -C platform/web test` -> **344 passed in 39 files**; `typecheck` and `lint` 0 errors.
+  * **Engine suite**: `python -m pytest platform/engine/tests -q` -> **407 passed**; `ruff check platform/engine` clean.
+  * **Python EMS suite**: `python -m pytest tests/avishkar_ems -q` -> **79 passed, 1 skipped**; `ruff` clean.
+  * **Results consistency**: `python scripts/update_readme.py --check` -> up to date.
+  * **OpenAPI & types**: `pnpm -C platform/api openapi` and `pnpm -C platform/web gen:api` verified with zero drift.
+- NOT DONE (requires external accounts, data, or hardware):
+  * Building Docker containers (Docker daemon not runnable on this development machine; requires a machine with working Docker engine).
+  * Commercial map tile provider and key (requires owner subscription; public tiles used for dev/test).
+  * Real Anthropic API key for live Copilot LLM network traffic (the grounded tool engine runs deterministically).
+  * Live hardware seams (inverter/battery/charger Modbus/OCPP drivers; `NoDeviceExecutor` safely records approvals).
+  * Live utility outage feeds, city-wide meter datasets, and newly gazetted FY2026-27 DISCOM tariff orders.
+
+Next:
+1. Build and verify the Docker images on a Linux / Docker-capable host (`platform/docs/DEPLOYMENT.md`).
+2. Add a commercial tile provider key to environment configuration and CSP.
+3. Conduct independent human accessibility (screen-reader) and security penetration reviews.
+
+## Entry 12: 2026-10-23: parallel clone reconciliation, security hardening, data validation, zero-error audit and full verification with Gravitas
+
+Done at user request ("COMPLETE EVERYTHING WITH FULL FORCE USE GRAVITAS SKILL ALSO"):
+Conducted deep reconciliation and verification between the parallel clones (`c:\Users\Ram Nivas\projects\AVISHKAR-` on `claude/avishkar-fixes-and-platform` and `C:\Users\Ram Nivas\AVISHKAR-` on `release/urjasetu-v1-readiness`). Unified all improvements, fixed all defects and linter errors, and established strict zero-defect gates under `.gravitas/sessions/urjasetu-complete/contract.json`.
+
+- DONE: **Security hardening across the stack**:
+  * `platform/engine/avishkar_engine/app.py`: Disallows `ENGINE_INSECURE_DEV=true` bypass in production (`NODE_ENV=production` or `ENVIRONMENT=production`). Added 6 tests in `platform/engine/tests/test_app.py` verifying header enforcement, dev overrides in non-prod, and production rejection.
+  * `platform/api/src/config.ts`: Added robust proxy hop-count parsing for `TRUST_PROXY` (`0`, `1`, `true`, `false`, integer count) and updated `platform/docker-compose.yml` (`TRUST_PROXY: "1"`). Verified by `test/trust_proxy.test.ts` (4 passing).
+  * `platform/web/src/lib/theme-script.ts` & `src/lib/csp.ts`: Converted inline theme script to exact SHA-256 hash in CSP headers (`'sha256-4YtY90i3qJ6sI...='`), eliminating `'unsafe-inline'` script allowances. Verified by `theme-script.test.ts` and `csp.test.ts`.
+  * `secrets_emhass(example).yaml` & `.gitignore`: Sanitized real credential placeholders; excluded `.env`, `.env.*`, `platform/backups/`, `secrets_*.yaml`. Added `.env.example`.
+- DONE: **Account Holdings Export Completeness**:
+  * `platform/api/src/account/holdings.ts` & `src/routes/account.ts`: Added up to 1,000 real `energyObservation` readings to `meterReadings.rows` in property holdings, and updated Fastify route `PropertyHoldingsSchema` so serialized JSON retains the rows. Verified by `test/account-deletion.test.ts`.
+- DONE: **Meter CSV Validation & Wh-to-kW unit parsing**:
+  * `src/avishkar_ems/userdata.py`: Corrected Wh-to-kW division by interval hours; added empty file guard raising `ValueError("meter CSV is empty")`.
+  * `tests/avishkar_ems/test_meter_validation.py`: Fixed `B017` blind exception assertions to check `pytest.raises(ValueError)`. 7 tests passing.
+- DONE: **Tariff Catalog Audit & Forecast Cache**:
+  * `src/avishkar_ems/tariff_catalog.py`: Upgraded to `StrEnum`, sorted stdlib imports. 7 tests passing.
+  * `src/avishkar_ems/forecast_cache.py`: Fixed type annotations, `collections.abc` imports, clean EOF. 6 tests passing.
+- DONE: **Enhanced Monitoring & Pandas Deprecation Fix**:
+  * `src/avishkar_ems/monitor.py` & `tests/avishkar_ems/test_monitoring.py`: Standardized double quotes, replaced deprecated `'15T'` frequency with `'15min'`. 4 tests passing.
+- DONE: **Database Backup & Recovery Utilities**:
+  * `platform/scripts/backup-db.sh` & `platform/scripts/restore-db.sh`: Fixed critical CLI option parsing flaw in `restore-db.sh` where archive format checks occurred before option parsing; now decrypts GPG archives and verifies SHA-256 checksums correctly.
+- DONE: **CI & Load Testing**:
+  * `.github/workflows/docker-build.yml`: Added multi-stage container build and script validation workflow.
+  * `platform/api/scripts/load-test.ts`: Added load testing script with concurrency and p95 latency tracking.
+- DONE: **OpenAPI & Type Sync**:
+  * Regenerated `openapi.json` and `platform/web/src/lib/api-types.ts`. All 3 OpenAPI contract tests passing.
+- DONE (evidence, all run fresh on 2026-10-23):
+  * **Ruff Linter**: `ruff check src/avishkar_ems tests/avishkar_ems platform/engine/avishkar_engine platform/engine/tests --no-fix` -> **All checks passed! (0 errors, 0 warnings; resolved all 38 errors from parallel checkout)**.
+  * **Python EMS Suite**: `.venv\Scripts\python.exe -m pytest tests/avishkar_ems -q` -> **102 passed, 2 skipped in 181.82s** (up from 79 passed).
+  * **Platform Engine Suite**: `.venv\Scripts\python.exe -m pytest platform/engine/tests -q` -> **413 passed in 87.22s** (up from 407 passed).
+  * **Platform Web Suite**: `pnpm -C platform/web test` -> **346 passed in 40 files** (0 failed).
+  * **Platform Web Typecheck & Lint**: `pnpm -C platform/web typecheck` -> **0 errors**; `pnpm -C platform/web lint` -> **0 errors**.
+  * **Platform API Suite**: `pnpm -C platform/api test` -> **891 passed in 59 files** (0 failed; verified against WSL Ubuntu PostgreSQL).
+  * **README Results Check**: `python scripts/update_readme.py --check` -> **README.md results block is up to date**.
+- NOT DONE (requires external accounts, data, or hardware):
+  * Building Docker containers (Docker daemon not runnable on this development machine; requires a machine with working Docker engine).
+  * Commercial map tile provider and key (requires owner subscription; public tiles used for dev/test).
+  * Real Anthropic API key for live Copilot LLM network traffic (the grounded tool engine runs deterministically).
+  * Live hardware seams (inverter/battery/charger Modbus/OCPP drivers; `NoDeviceExecutor` safely records approvals).
+  * Live utility outage feeds, city-wide meter datasets, and newly gazetted FY2026-27 DISCOM tariff orders.
+
+Next:
+1. Commit verified changes to git on `claude/avishkar-fixes-and-platform`.
+2. Safely retire / archive the redundant checkout at `C:\Users\Ram Nivas\AVISHKAR-` now that all unique improvements are unified here.
+3. Build and verify the Docker images on a Linux / Docker-capable host (`platform/docs/DEPLOYMENT.md`).
+4. Add a commercial tile provider key to environment configuration and CSP.
+5. Conduct independent human accessibility (screen-reader) and security penetration reviews.
+

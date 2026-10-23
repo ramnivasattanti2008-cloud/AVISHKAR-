@@ -51,7 +51,7 @@ services:
       ENGINE_URL: http://engine:8090
       ENGINE_API_KEY: ${ENGINE_API_KEY}
       # the web app is the only thing that reaches the API, and it forwards the visitor's address
-      TRUST_PROXY: "true"
+      TRUST_PROXY: "1"
       PROVIDER_USER_AGENT: ${PROVIDER_USER_AGENT:?set PROVIDER_USER_AGENT to something that identifies the service with a real contact}
       # run the background jobs in exactly one API process
       JOBS_ENABLED: "true"

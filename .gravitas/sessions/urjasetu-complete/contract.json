@@ -1,0 +1,36 @@
+{
+  "mode": "implement",
+  "objective": "Reconcile parallel repository features, fix all linter and script defects, wire improvements, and verify full green test suites across Python EMS, Engine, API, and Web",
+  "acceptance_criteria": [
+    "Reconcile security hardening: engine production auth bypass prevention, proxy trust hops, CSP hash",
+    "Reconcile meter CSV Wh unit fix and data quality validation with 0 ruff errors",
+    "Reconcile account export meter readings completeness (1000 rows in holdings)",
+    "Reconcile tariff catalog audit and forecast model-fit cache with clean 0-error typing/imports",
+    "Reconcile enhanced monitoring with clean 0-error code and no deprecated Pandas freq",
+    "Fix fatal argument parsing and decryption ordering bug in restore-db.sh",
+    "Reconcile database backup/restore scripts, docker workflow, and load test script",
+    "ruff check passes with --no-fix across all Python code (0 errors)",
+    "All pytest suites pass: tests/avishkar_ems and platform/engine/tests",
+    "All platform web tests pass (pnpm -C platform/web test)",
+    "All platform api tests pass with live Postgres (pnpm -C platform/api test)",
+    "docs/WORKLOG.md and platform/STATUS.md updated with verifiable evidence"
+  ],
+  "non_goals": [
+    "Do not edit vendored src/emhass/",
+    "Do not invent simulated data as live"
+  ],
+  "risk": "medium",
+  "budget": "balanced",
+  "allowed_write_scope": [
+    ".gitignore",
+    ".gitattributes",
+    ".github/",
+    "docs/",
+    "platform/",
+    "src/avishkar_ems/",
+    "tests/avishkar_ems/",
+    "secrets_emhass(example).yaml",
+    ".env.example"
+  ],
+  "verification": "impact"
+}

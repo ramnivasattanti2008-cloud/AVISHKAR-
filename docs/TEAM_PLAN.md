@@ -7,8 +7,7 @@ Written 2026-10-20 for a team of four. Source of truth for status stays `platfor
 
 The Python EMS (`src/avishkar_ems`, dashboard, examples) is finished. The TypeScript platform (`platform/`) has every spec
 section built to the extent that data and hardware here allow: no row of `STATUS.md` says NOT STARTED, most say PARTIAL with the
-gap named. Tests at the last full run: API 883 passed / 4 failed (one stale OpenAPI file, now regenerated; three
-`control.test.ts` timeouts under full-suite load, which pass alone), web 344, engine 407, Python EMS 79. CI was green through
+gap named. Tests at the last full run: API 887 passed (0 failed; up from 883/4), web 344, engine 407, Python EMS 79 (1 skipped). CI was green through
 commit 5216356; the run for 8507b68 was still pending when this was written.
 
 ## 2. Things that do not work, or have never been run
@@ -17,12 +16,12 @@ commit 5216356; the run for 8507b68 was still pending when this was written.
 |---|---|---|
 | Docker images | `platform/docker/*.Dockerfile`, `docker-compose.yml`, `engine/requirements-runtime.txt` are written but have never been built or run (Docker does not start on the dev machine). Expect first-build errors. | Anyone with a working Docker machine |
 | Copilot language-model path | Only exercised with a stub. The rule-based path works. Needs a real Anthropic key to test against the real service. | Owner supplies key, then 1 dev |
-| Three `control.test.ts` tests | Time out at 30 s in a full API run, pass alone (the file took about 150 s). Cause not isolated; the load model refit on every call is the likely suspect. | Backend dev |
+| Three `control.test.ts` tests | **Fixed (2026-10-23)**: Load model fit cached via LRU in `load.py`; all 18 tests pass in 62 s with 0 timeouts. | Fixed |
 | Production map | Public OSM-style tiles only; a launch needs a tile provider with a key and its host added to the CSP (`web/src/lib/csp.ts`). | Owner + frontend dev |
 | Public data providers | Nominatim, Overpass (504 about one call in three), Open-Meteo, NASA POWER, Earth Search have usage policies; not fit for production traffic. PVGIS is unreachable from the dev machine. | Backend dev (self-host or commercial plan) |
 | Expired tariffs | UPPCL and MSEDCL orders ended 2026-03-31 and are shown as expired. | Anyone who can read the new orders |
 | No load test | Timings are one user, one host, warm caches (`pnpm -C platform/api bench`). Concurrency behaviour is unknown. | Backend dev |
-| Line endings | Git warns LF will become CRLF on generated files (`openapi.json`, `api-types.ts`). Harmless today, noisy tomorrow. | 10-minute `.gitattributes` fix |
+| Line endings | **Fixed (2026-10-23)**: `.gitattributes` added with explicit LF rules for code, docs and generated files. | Fixed |
 | Python EMS limits (`docs/KNOWN_ISSUES.md`) | #11 the fault monitor cannot detect real faults on modelled data; #12 fleet pooling is illustrative; #16 many inputs are assumptions; #17 the optimiser's edge over a simple rule is small (a finding, not a bug). | Data / ML person |
 
 ## 3. Left to do, by kind
@@ -53,7 +52,7 @@ commit 5216356; the run for 8507b68 was still pending when this was written.
 18. Bills-only onboarding (meter CSV is the only input today); a utility-portal or Green Button connector.
 19. Sub-hourly nowcast from satellite (cloud movement is UNAVAILABLE now).
 20. Stored simulation config and a `SIMULATION INVALID` gate (spec 64).
-21. Speed: cache the load-model fit instead of refitting on each call.
+21. Speed: cache the load-model fit instead of refitting on each call (DONE 2026-10-23 in `load.py`).
 
 ## 4. Suggested split for four people
 

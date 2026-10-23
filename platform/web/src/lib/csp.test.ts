@@ -14,7 +14,11 @@ describe("contentSecurityPolicy", () => {
     expect(directive(csp, "base-uri")).toEqual(["'self'"]);
     expect(directive(csp, "form-action")).toEqual(["'self'"]);
     expect(directive(csp, "script-src")).not.toContain("'unsafe-eval'"); // only the development server needs eval
+    expect(directive(csp, "script-src")).not.toContain("'unsafe-inline'"); // the theme script runs by hash, not by inline
     expect(directive(csp, "script-src")).not.toContain("*");
+    // The one inline script that still exists (the theme picker) is allowed by its SHA-256 hash, not by an inline source.
+    // directive() keeps the surrounding quotes that the source list requires ('self' is ["'self'"]).
+    expect(directive(csp, "script-src")).toContain("'sha256-CziUIgdwQiAXOHBEaXV2OraoUnQkXqcY/0vH3bIKftk='");
   });
 
   it("allows every host the map really takes tiles from, for pictures and for the requests that fetch them, and no other", () => {

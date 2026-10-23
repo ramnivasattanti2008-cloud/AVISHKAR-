@@ -116,3 +116,40 @@ sidebar lists what is real and what is assumed. These cannot be fixed without re
 **17. Small optimiser edge.** Against a fixed-rule battery the EMS is within about +/-1% on benefit at all three sites
 and at Mathura the simple rule is marginally ahead. Its clearer value is the reserve, offers and settlement. This is a
 result, stated in the README and the demo guide, not a defect.
+
+## Phase 3 additions (2026-10-22)
+
+**18. Monitoring validation.** `src/avishkar_ems/monitor.py` now runs `validate_readings()` before any deviation
+analysis.  The validator refuses missing columns, NaN values, negative powers and timestamp gaps larger than
+90 minutes.  This is a data-quality gate, not a fault detector: it prevents downstream logic from operating on
+malformed telemetry.  See `tests/avishkar_ems/test_monitoring.py`.
+
+**19. Forecast model-fit cache.** `src/avishkar_ems/forecast_cache.py` provides an in-memory LRU cache for fitted
+forecasting models, keyed by a SHA-256 of the training data and the model configuration.  In addition,
+`platform/engine/avishkar_engine/load.py` contains an LRU model-fit cache keyed on input data and parameter hashes,
+speeding up repeated API solver calls. Tests: `tests/avishkar_ems/test_forecast_cache.py`, `platform/engine/tests/test_load.py`.
+
+**20. Risk-aware optimisation (planned).** A robust optimisation wrapper is intended in
+`src/avishkar_ems/risk_optim.py`.  It will use a deterministic worst-case (maximin) formulation over explicit
+scenarios (baseline, solar shortfall, demand surge, combined adverse) with a risk-aversion penalty on the worst
+shortfall.  No probability calibration is assumed.  Status: not yet implemented.
+
+## Phase 4 additions (2026-10-22)
+
+**21. Tariff catalogue audit.** `src/avishkar_ems/tariff_catalog.py` loads every tariff JSON in
+`data/tariffs/`, reads its `meta` block, and reports a status: `CURRENT`, `EXPIRED`,
+`NOT_YET_EFFECTIVE` or `UNVERIFIED` (no source or effective dates).  `select_current` and
+`select_for_consumer` pick the right record for a date and consumer type.  No prices are invented:
+a record whose source is missing or whose effective period has passed is reported, not used.
+Tests: `tests/avishkar_ems/test_tariff_catalog.py` (7 tests, passing).
+
+**22. Meter CSV validation.** `src/avishkar_ems/userdata.py` now detects empty files, missing usage
+columns, non-numeric readings, negative readings and duplicate timestamps.  Rows that cannot be
+parsed are dropped; nothing is silently filled in.  Wh columns are converted to kW correctly.
+Tests: `tests/avishkar_ems/test_meter_validation.py` (7 tests, passing).
+
+**23. Account export now carries the meter readings.** `platform/api/src/account/holdings.ts`
+and `platform/api/src/routes/account.ts` include up to 1,000 meter readings per property (timestamp, kWh, interval minutes) in the
+`meterReadings.rows` array, in addition to the counts that were already there.  The export is
+authorised by the signed-in user only and never contains another person's data, passwords or
+tokens.  Test: `platform/api/test/account-deletion.test.ts` checks the row count and shape.

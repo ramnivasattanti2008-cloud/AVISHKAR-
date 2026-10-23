@@ -2,8 +2,17 @@
 
 from __future__ import annotations
 
+from enum import StrEnum
+
 import numpy as np
 import pandas as pd
+
+
+class DEVIATION_MODES(StrEnum):
+    UNDERPERFORMANCE = "underperformance"
+    SENSOR_STUCK = "sensor_stuck"
+    INVERTER_OFF = "inverter_off"
+    DEGRADATION = "degradation"
 
 
 def deviation_flags(
@@ -28,6 +37,76 @@ def deviation_flags(
     run_id = (~low).cumsum()
     flag = flag.groupby(run_id).transform("any") & low
     return pd.DataFrame({"ratio": ratio, "deviation_pct": (1 - ratio) * 100, "flag": flag})
+
+
+def detect_sensor_stuck(df: pd.DataFrame, min_poa: float = 200.0, min_steps: int = 16) -> pd.Series:
+    """Flag steps where pv_kw is completely constant despite varying irradiance."""
+    judged = df["poa_wm2"] >= min_poa
+    pv_diff = df["pv_kw"].diff().abs() < 1e-3
+    stuck_run = (pv_diff & judged).astype(int).groupby((~(pv_diff & judged)).cumsum()).cumsum()
+    flag = stuck_run >= min_steps
+    run_id = (~(pv_diff & judged)).cumsum()
+    return flag.groupby(run_id).transform("any") & pv_diff & judged
+
+
+def detect_inverter_off(df: pd.DataFrame, min_poa: float = 200.0, min_steps: int = 4) -> pd.Series:
+    """Flag steps where irradiance is high but PV generation is exactly zero."""
+    off = (df["poa_wm2"] >= min_poa) & (df["pv_kw"] <= 1e-3)
+    run = off.astype(int).groupby((~off).cumsum()).cumsum()
+    flag = run >= min_steps
+    run_id = (~off).cumsum()
+    return flag.groupby(run_id).transform("any") & off
+
+
+def validate_readings(df: pd.DataFrame) -> None:
+    """Validate dataframe columns before monitoring.
+
+    * Raises ``ValueError`` if required columns are missing.
+    * Raises ``ValueError`` if any value in ``pv_kw``, ``expected_kw`` or ``poa_wm2`` is negative.
+    * Raises ``ValueError`` if a NaN value is present in those columns.
+    * Detects timestamp gaps where the delta between consecutive indices exceeds 90 minutes.
+    """
+    required = {"pv_kw", "expected_kw", "poa_wm2"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns for monitoring: {sorted(missing)}")
+
+    for col in required:
+        if df[col].isna().any():
+            raise ValueError(f"Missing values detected in column {col} during monitoring")
+        if (df[col] < 0).any():
+            raise ValueError(f"Negative values detected in column {col} during monitoring")
+
+    ts = df.index
+    if ts.tzinfo is not None:
+        ts = ts.tz_convert(None)
+    delta = ts.to_series().diff().dropna()
+    if (delta > pd.Timedelta("90min")).any():
+        raise ValueError("Timestamp gap larger than 90 minutes detected; data may be stale.")
+
+
+def enhanced_monitor(df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate all deviation flags into a diagnostic DataFrame.
+
+    Validates the input, then runs the underlying flaggers.  This function performs
+    static data-quality checks first so that downstream logic never operates on
+    malformed telemetry.
+    """
+    validate_readings(df)
+    base = deviation_flags(df)
+    stuck = detect_sensor_stuck(df)
+    off = detect_inverter_off(df)
+
+    mode = pd.Series("NORMAL", index=df.index)
+    mode[base["flag"]] = DEVIATION_MODES.UNDERPERFORMANCE.value
+    mode[stuck] = DEVIATION_MODES.SENSOR_STUCK.value
+    mode[off] = DEVIATION_MODES.INVERTER_OFF.value
+
+    res = base.copy()
+    res["sensor_stuck"] = stuck
+    res["inverter_off"] = off
+    res["fault_mode"] = mode
+    return res
 
 
 def daily_summary(df: pd.DataFrame, flags: pd.DataFrame) -> pd.DataFrame:
