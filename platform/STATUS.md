@@ -18,7 +18,7 @@ things no amount of code can supply here: no device to control, no outage data, 
 factor, no tariff orders outside three states, no Docker engine on this machine, and no key for the optional language model. The
 spec's own acceptance test was walked end to end by a fresh account and is written down in [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
 
-Last updated: 2026-10-23, after Entry 12 full reconciliation across parallel checkouts, security hardening, data validation, bug fixes, and verified green gates across all suites. Evidence, all run fresh on 2026-10-23: `pnpm -C platform/api test` 891 passed (59 files); `pnpm -C platform/web test` 346 passed (40 files); `cd platform/engine && python -m pytest tests -q` 413 passed, `ruff` clean; `python -m pytest tests/avishkar_ems -q` 107 passed, 2 skipped; `python scripts/update_readme.py --check` clean; API & Web typecheck and lint clean (0 errors); backup/restore scripts verified.
+Last updated: 2026-10-23, after Entry 13 top 4 high-impact platform improvements: multi-state tariffs (KA BESCOM + DL BSES), hardware driver seams (Home Assistant & MQTT), bills-only onboarding engine, and intraday replan drift endpoint. Evidence: `pnpm -C platform/api test` 903 passed (61 files); `pnpm -C platform/web test` 346 passed (40 files); `cd platform/engine && python -m pytest tests -q` 413 passed; `python -m pytest tests/avishkar_ems -q` 111 passed, 2 skipped; `python scripts/update_readme.py --check` clean; API & Web typecheck and lint clean (0 errors); backup/restore scripts verified.
 
 ## Summary
 

@@ -552,3 +552,38 @@ Next:
 4. Add a commercial tile provider key to environment configuration and CSP.
 5. Conduct independent human accessibility (screen-reader) and security penetration reviews.
 
+## Entry 13: 2026-10-23: top 4 high-impact platform improvements: multi-state tariffs, hardware drivers, bills onboarding, intraday replan drift
+
+Done at user request ("COMPLETE THE top 4 highest-impact next improvements for UrjaSetu... WITH FULL FORCE"):
+
+1. **Multi-State Tariff Expansion (Karnataka & Delhi)**:
+   - Added `data/tariffs/home-bengaluru.json`: Official KERC FY2025-26 LT-2(a) schedule for Bengaluru Urban (7.00 Rs/kWh upper marginal rate, 3.10 Rs/kWh solar net-metering buyback, 110 Rs/kW/mo fixed charge).
+   - Added `data/tariffs/home-delhi.json`: Official DERC FY2025-26 BRPL domestic schedule (6.50 Rs/kWh representative slab, 3.80 Rs/kWh APPC net-metering credit, 70 Rs/kW/mo fixed charge).
+   - Seeded into PostgreSQL via `pnpm -C platform/api db:seed` (5 curated tariffs and 2 policy rules active). Verified with `test_tariff_catalog.py` (7 passed).
+
+2. **Physical Device Control Seams (Home Assistant & MQTT)**:
+   - Extended `platform/api/src/control/executor.ts` with `HomeAssistantExecutor` (REST dispatch to Home Assistant entities for switches, battery charging rate, and inverters) and `MqttDeviceExecutor` (JSON dispatch events to MQTT topics with revert capabilities). Added `resolveExecutorFromEnv`.
+   - Verified by `test/control-executor.test.ts` (8 passed).
+
+3. **Bills-Only Onboarding Engine**:
+   - Implemented `src/avishkar_ems/bills.py`: Converts 6-12 monthly electricity bills (kWh) into continuous hourly load series based on empirical CEEW diurnal profiles. Guarantees strict energy conservation (sum of hourly profile equals monthly total) and labels synthetic data with `ESTIMATED: derived from monthly bills`.
+   - Verified by `tests/avishkar_ems/test_bills.py` (4 passed).
+
+4. **Intraday Plan Drift Detection & Replanning Endpoint**:
+   - Implemented `platform/api/src/plan/drift.ts` (`calculateDrift`, `checkPlanDrift`) and route `GET /api/properties/:id/plan/drift`. Compares recent `energy_observations` against the active `optimization_run` schedule, recommending replanning when usage drifts >15%.
+   - Documented in `platform/docs/API.md`, synced with `openapi.json` and `src/lib/api-types.ts`. Verified by `test/plan-drift.test.ts` (4 passed) and `test/openapi.test.ts` (3 passed).
+
+- Evidence:
+  * Python EMS suite: 111 passed, 2 skipped (up from 107).
+  * API tests: 903 passed across 61 files (up from 891/59).
+  * Web tests: 346 passed across 40 files; typecheck and lint 0 errors.
+  * Engine tests: 413 passed.
+  * Total automated tests: 1,773 passing with 0 failures.
+  * Ruff linter: 0 errors (--no-fix).
+
+Next:
+1. Push branch `claude/avishkar-fixes-and-platform` to origin.
+2. Build and verify the Docker images on a Linux / Docker-capable host (`platform/docs/DEPLOYMENT.md`).
+3. Add a commercial tile provider key to environment configuration and CSP.
+
+

@@ -3,7 +3,8 @@ import { z } from "zod";
 import type { AppDeps } from "../app.js";
 import { audit } from "../audit.js";
 import { requireUser } from "../auth/hooks.js";
-import { PlanRequest, PlanSchema, PlanSummarySchema } from "../plan/schemas.js";
+import { checkPlanDrift } from "../plan/drift.js";
+import { PlanDriftSchema, PlanRequest, PlanSchema, PlanSummarySchema } from "../plan/schemas.js";
 import { createPlan, getPlan, listPlans } from "../plan/service.js";
 import { ErrorResponse } from "../schemas.js";
 
@@ -39,6 +40,8 @@ export const planRoutes: FastifyPluginAsyncZod<{ deps: AppDeps }> = async (app, 
   );
 
   app.get("/api/properties/:id/plan", { ...auth, schema: { tags: ["plan"], summary: "The latest plan", params: P, response: { 200: PlanSchema, ...errs } } }, async (req) => getPlan(deps.db, req.user!.id, req.params.id));
+
+  app.get("/api/properties/:id/plan/drift", { ...auth, schema: { tags: ["plan"], summary: "Check whether real-time observations have drifted from the plan", params: P, response: { 200: PlanDriftSchema, ...errs } } }, async (req) => checkPlanDrift(deps.db, req.params.id, deps.now()));
 
   app.get("/api/properties/:id/plans", { ...auth, schema: { tags: ["plan"], summary: "Plans made for a property, newest first", params: P, response: { 200: z.object({ plans: z.array(PlanSummarySchema) }), ...errs } } }, async (req) => ({
     plans: await listPlans(deps.db, req.user!.id, req.params.id),

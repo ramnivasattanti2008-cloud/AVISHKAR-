@@ -181,6 +181,7 @@ The plan: when to charge, discharge, import, export and run flexible loads, chec
 | Method | Path | What it does |
 |---|---|---|
 | GET | `/api/properties/{id}/plan` | The latest plan |
+| GET | `/api/properties/{id}/plan/drift` | Check whether real-time observations have drifted from the plan |
 | POST | `/api/properties/{id}/plan` | Plan the next day or two |
 | GET | `/api/properties/{id}/plans` | Plans made for a property, newest first |
 | GET | `/api/properties/{id}/plans/{planId}` | One plan as it was shown |

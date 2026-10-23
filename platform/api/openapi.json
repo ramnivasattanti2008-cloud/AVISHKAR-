@@ -13259,6 +13259,87 @@
         ],
         "type": "object"
       },
+      "PlanDrift": {
+        "additionalProperties": false,
+        "properties": {
+          "driftPercent": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "evaluatedAt": {
+            "type": "string"
+          },
+          "observationsEvaluated": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "replanRecommended": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ON_TRACK",
+              "DRIFT_DETECTED",
+              "NO_PLAN",
+              "INSUFFICIENT_OBSERVATIONS"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "driftPercent",
+          "replanRecommended",
+          "reason",
+          "observationsEvaluated",
+          "evaluatedAt"
+        ],
+        "type": "object"
+      },
+      "PlanDriftInput": {
+        "properties": {
+          "driftPercent": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "evaluatedAt": {
+            "type": "string"
+          },
+          "observationsEvaluated": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "replanRecommended": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ON_TRACK",
+              "DRIFT_DETECTED",
+              "NO_PLAN",
+              "INSUFFICIENT_OBSERVATIONS"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "driftPercent",
+          "replanRecommended",
+          "reason",
+          "observationsEvaluated",
+          "evaluatedAt"
+        ],
+        "type": "object"
+      },
       "PlanInput": {
         "properties": {
           "appliances": {
@@ -29819,6 +29900,68 @@
           }
         },
         "summary": "Plan the next day or two",
+        "tags": [
+          "plan"
+        ]
+      }
+    },
+    "/api/properties/{id}/plan/drift": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDrift"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Check whether real-time observations have drifted from the plan",
         "tags": [
           "plan"
         ]

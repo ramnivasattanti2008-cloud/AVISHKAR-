@@ -102,3 +102,16 @@ export type PlanDto = z.infer<typeof PlanSchema>;
 export const PlanSummarySchema = z
   .object({ id: z.uuid(), createdAt: iso, mode: z.enum(MODES), startsAt: iso, steps: z.number(), netCostInr: z.number(), baselineNetCostInr: z.number(), savingsInr: z.number() })
   .meta({ id: "PlanSummary" });
+
+
+export const PlanDriftSchema = z
+  .object({
+    status: z.enum(["ON_TRACK", "DRIFT_DETECTED", "NO_PLAN", "INSUFFICIENT_OBSERVATIONS"]),
+    driftPercent: z.number().nullable(),
+    replanRecommended: z.boolean(),
+    reason: z.string(),
+    observationsEvaluated: z.number(),
+    evaluatedAt: z.string(),
+  })
+  .meta({ id: "PlanDrift" });
+export type PlanDriftDto = z.infer<typeof PlanDriftSchema>;

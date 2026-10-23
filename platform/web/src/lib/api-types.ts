@@ -5644,6 +5644,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/plan/drift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check whether real-time observations have drifted from the plan */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanDrift"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/plans": {
         parameters: {
             query?: never;
@@ -11019,6 +11084,24 @@ export interface components {
                 problems: string[];
                 valid: boolean;
             };
+        };
+        PlanDrift: {
+            driftPercent: number | null;
+            evaluatedAt: string;
+            observationsEvaluated: number;
+            reason: string;
+            replanRecommended: boolean;
+            /** @enum {string} */
+            status: "ON_TRACK" | "DRIFT_DETECTED" | "NO_PLAN" | "INSUFFICIENT_OBSERVATIONS";
+        };
+        PlanDriftInput: {
+            driftPercent: number | null;
+            evaluatedAt: string;
+            observationsEvaluated: number;
+            reason: string;
+            replanRecommended: boolean;
+            /** @enum {string} */
+            status: "ON_TRACK" | "DRIFT_DETECTED" | "NO_PLAN" | "INSUFFICIENT_OBSERVATIONS";
         };
         PlanInput: {
             appliances: {

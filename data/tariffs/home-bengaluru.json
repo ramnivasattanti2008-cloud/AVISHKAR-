@@ -1,0 +1,33 @@
+{
+  "name": "BESCOM LT-2(a) Bengaluru Urban domestic FY2025-26",
+  "source": "KERC Tariff Order FY2025-26, Schedule LT-2(a) Domestic: Telescopic slabs 0-100 kWh @ 4.75 Rs/kWh, >100 kWh @ 7.00 Rs/kWh. Modelled at upper tier 7.00 Rs/kWh; fixed charge Rs 110/kW/month; export net-metering rate 3.10 Rs/kWh (KERC Generic Solar PPA rate).",
+  "tou_blocks": [
+    [
+      0,
+      24,
+      7.0
+    ]
+  ],
+  "export_rate": 3.1,
+  "p2p_charges": 0.65,
+  "shortfall_penalty": 5.0,
+  "meta": {
+    "state": "KA",
+    "discom": "BESCOM",
+    "category": "LT-2(a) Domestic",
+    "consumerType": "RESIDENTIAL",
+    "tariffYear": "FY2025-26",
+    "effectiveFrom": "2025-04-01",
+    "effectiveTo": "2026-03-31",
+    "fixedCharge": {
+      "amountInr": 110,
+      "basis": "PER_KW_MONTH"
+    },
+    "exportRateBasis": "REGULATOR_ORDER",
+    "meteringMode": "NET_METERING",
+    "notes": [
+      "Modelled on KERC FY2025-26 LT-2(a) tariff schedule. Marginal rate 7.00 INR/kWh applied for solar displacement calculations.",
+      "Net-metering buyback credited at KERC benchmark solar export tariff."
+    ]
+  }
+}
