@@ -1,0 +1,205 @@
+{
+  "$schema": "urn:urjasetu:energy-balance:v1",
+  "scope": "NATIONAL",
+  "regionCode": "IN",
+  "regionName": "All India",
+  "source": "Central Electricity Authority (CEA) Power Supply Position Reports",
+  "sourceUrl": "https://cea.nic.in/power-supply-position-monthly-reports",
+  "verifiedAt": "2026-10-24",
+  "energyUnit": "MU",
+  "demandUnit": "MW",
+  "observations": [
+    {
+      "reportingPeriod": "2024-04",
+      "energyRequirementMu": 144576.0,
+      "energySuppliedMu": 143890.0,
+      "peakDemandMw": 224150.0,
+      "peakMetMw": 223500.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-05",
+      "energyRequirementMu": 156320.0,
+      "energySuppliedMu": 155120.0,
+      "peakDemandMw": 250200.0,
+      "peakMetMw": 246500.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-06",
+      "energyRequirementMu": 152430.0,
+      "energySuppliedMu": 151280.0,
+      "peakDemandMw": 242000.0,
+      "peakMetMw": 239800.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-07",
+      "energyRequirementMu": 141200.0,
+      "energySuppliedMu": 140650.0,
+      "peakDemandMw": 226500.0,
+      "peakMetMw": 225900.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-08",
+      "energyRequirementMu": 143800.0,
+      "energySuppliedMu": 143100.0,
+      "peakDemandMw": 218400.0,
+      "peakMetMw": 217800.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-09",
+      "energyRequirementMu": 142100.0,
+      "energySuppliedMu": 141600.0,
+      "peakDemandMw": 231200.0,
+      "peakMetMw": 230500.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-10",
+      "energyRequirementMu": 140500.0,
+      "energySuppliedMu": 139950.0,
+      "peakDemandMw": 220100.0,
+      "peakMetMw": 219600.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-11",
+      "energyRequirementMu": 131800.0,
+      "energySuppliedMu": 131350.0,
+      "peakDemandMw": 208500.0,
+      "peakMetMw": 208100.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-12",
+      "energyRequirementMu": 133200.0,
+      "energySuppliedMu": 132780.0,
+      "peakDemandMw": 212400.0,
+      "peakMetMw": 211900.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-01",
+      "energyRequirementMu": 137400.0,
+      "energySuppliedMu": 136920.0,
+      "peakDemandMw": 221800.0,
+      "peakMetMw": 221300.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-02",
+      "energyRequirementMu": 134100.0,
+      "energySuppliedMu": 133680.0,
+      "peakDemandMw": 225600.0,
+      "peakMetMw": 225000.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-03",
+      "energyRequirementMu": 148900.0,
+      "energySuppliedMu": 148350.0,
+      "peakDemandMw": 238900.0,
+      "peakMetMw": 238200.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-04",
+      "energyRequirementMu": 152100.0,
+      "energySuppliedMu": 151420.0,
+      "peakDemandMw": 239400.0,
+      "peakMetMw": 238600.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-05",
+      "energyRequirementMu": 164200.0,
+      "energySuppliedMu": 163050.0,
+      "peakDemandMw": 258500.0,
+      "peakMetMw": 254800.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-06",
+      "energyRequirementMu": 159800.0,
+      "energySuppliedMu": 158700.0,
+      "peakDemandMw": 249800.0,
+      "peakMetMw": 247900.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-07",
+      "energyRequirementMu": 147500.0,
+      "energySuppliedMu": 146950.0,
+      "peakDemandMw": 234200.0,
+      "peakMetMw": 233700.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-08",
+      "energyRequirementMu": 149800.0,
+      "energySuppliedMu": 149150.0,
+      "peakDemandMw": 227600.0,
+      "peakMetMw": 227100.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-09",
+      "energyRequirementMu": 148300.0,
+      "energySuppliedMu": 147800.0,
+      "peakDemandMw": 239500.0,
+      "peakMetMw": 238800.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-10",
+      "energyRequirementMu": 146200.0,
+      "energySuppliedMu": 145700.0,
+      "peakDemandMw": 229100.0,
+      "peakMetMw": 228600.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-11",
+      "energyRequirementMu": 137400.0,
+      "energySuppliedMu": 136980.0,
+      "peakDemandMw": 216800.0,
+      "peakMetMw": 216400.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-12",
+      "energyRequirementMu": 138900.0,
+      "energySuppliedMu": 138480.0,
+      "peakDemandMw": 220900.0,
+      "peakMetMw": 220450.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2026-01",
+      "energyRequirementMu": 143500.0,
+      "energySuppliedMu": 143020.0,
+      "peakDemandMw": 230700.0,
+      "peakMetMw": 230200.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2026-02",
+      "energyRequirementMu": 140200.0,
+      "energySuppliedMu": 139800.0,
+      "peakDemandMw": 234800.0,
+      "peakMetMw": 234250.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2026-03",
+      "energyRequirementMu": 155800.0,
+      "energySuppliedMu": 155250.0,
+      "peakDemandMw": 248600.0,
+      "peakMetMw": 247900.0,
+      "provenance": "VERIFIED_REPORT"
+    }
+  ]
+}

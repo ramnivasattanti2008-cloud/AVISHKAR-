@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   // The time zone is pinned so date formatting and day boundaries are the same on every machine and in CI.
   test: {
+    pool: "forks",
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],

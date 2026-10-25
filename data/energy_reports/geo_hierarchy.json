@@ -1,0 +1,132 @@
+{
+  "$schema": "urn:urjasetu:geo-hierarchy:v1",
+  "version": "1.0.0",
+  "source": "Census of India, Central Electricity Authority (CEA), KERC & APERC Tariff Filings",
+  "sourceUrl": "https://cea.nic.in",
+  "verifiedAt": "2026-10-24",
+  "notes": [
+    "A utility service area is not co-terminus with a revenue district.",
+    "State electricity figures from CEA are never disaggregated into synthetic district figures.",
+    "District-level metrics are only reported when published directly by district authorities or the national solar portal."
+  ],
+  "levels": [
+    {
+      "code": "NATIONAL",
+      "name": "National (India)",
+      "id": "IN"
+    },
+    {
+      "code": "STATE",
+      "name": "State",
+      "supported": ["KA", "AP"]
+    },
+    {
+      "code": "DISTRICT",
+      "name": "District",
+      "supported": ["KA_BLR_URBAN", "AP_VSKP"]
+    },
+    {
+      "code": "UTILITY",
+      "name": "Electricity Distribution Company (DISCOM)",
+      "supported": ["BESCOM", "HESCOM", "GESCOM", "MESCOM", "CESC", "APEPDCL", "APSPDCL", "APCPDCL"]
+    }
+  ],
+  "entities": {
+    "IN": {
+      "level": "NATIONAL",
+      "name": "India (All India)",
+      "parent": null,
+      "subRegions": ["KA", "AP"]
+    },
+    "KA": {
+      "level": "STATE",
+      "name": "Karnataka",
+      "parent": "IN",
+      "districts": ["KA_BLR_URBAN", "KA_BLR_RURAL", "KA_MYSURU", "KA_TUMAKURU", "KA_BELAGAVI"],
+      "utilities": ["BESCOM", "HESCOM", "GESCOM", "MESCOM", "CESC"]
+    },
+    "AP": {
+      "level": "STATE",
+      "name": "Andhra Pradesh",
+      "parent": "IN",
+      "districts": ["AP_VSKP", "AP_KRISHNA", "AP_GUNTUR", "AP_KURNOOL", "AP_TIRUPATI"],
+      "utilities": ["APEPDCL", "APSPDCL", "APCPDCL"]
+    },
+    "KA_BLR_URBAN": {
+      "level": "DISTRICT",
+      "name": "Bengaluru Urban District",
+      "parent": "KA",
+      "censusCode": "572",
+      "servedByUtilities": ["BESCOM"],
+      "boundaryNote": "Bengaluru Urban is one of eight districts served by BESCOM. BESCOM sales are broader than Bengaluru Urban."
+    },
+    "AP_VSKP": {
+      "level": "DISTRICT",
+      "name": "Visakhapatnam District",
+      "parent": "AP",
+      "censusCode": "510",
+      "servedByUtilities": ["APEPDCL"],
+      "boundaryNote": "Visakhapatnam is served by APEPDCL. APEPDCL covers 5 coastal districts."
+    },
+    "BESCOM": {
+      "level": "UTILITY",
+      "name": "Bangalore Electricity Supply Company Limited",
+      "state": "KA",
+      "headquarters": "Bengaluru",
+      "servedDistricts": ["KA_BLR_URBAN", "KA_BLR_RURAL", "Chikkaballapura", "Kolar", "Davanagere", "Tumakuru", "Chitradurga", "Ramanagara"],
+      "consumerCountApprox": 13400000
+    },
+    "APEPDCL": {
+      "level": "UTILITY",
+      "name": "Eastern Power Distribution Company of Andhra Pradesh Limited",
+      "state": "AP",
+      "headquarters": "Visakhapatnam",
+      "servedDistricts": ["AP_VSKP", "Srikakulam", "Vizianagaram", "East Godavari", "West Godavari", "Anakapalli"],
+      "consumerCountApprox": 6800000
+    }
+  },
+  "coverageMatrix": {
+    "ENERGY_REQUIREMENT": {
+      "NATIONAL": { "status": "AVAILABLE", "source": "CEA Power Supply Position Monthly" },
+      "STATE": { "status": "AVAILABLE", "source": "CEA Power Supply Position Monthly" },
+      "DISTRICT": { "status": "UNAVAILABLE", "reason": "Not published at district level by CEA; disaggregation prohibited" },
+      "UTILITY": { "status": "PERIODIC", "source": "SERC Annual Tariff Filings / SLDC" }
+    },
+    "ENERGY_SUPPLIED": {
+      "NATIONAL": { "status": "AVAILABLE", "source": "CEA Power Supply Position Monthly" },
+      "STATE": { "status": "AVAILABLE", "source": "CEA Power Supply Position Monthly" },
+      "DISTRICT": { "status": "UNAVAILABLE", "reason": "CEA publishes state-level grid figures only" },
+      "UTILITY": { "status": "PERIODIC", "source": "DISCOM Monthly Power Purchase Filings" }
+    },
+    "PEAK_DEMAND": {
+      "NATIONAL": { "status": "AVAILABLE", "source": "CEA Monthly Executive Summary (MW)" },
+      "STATE": { "status": "AVAILABLE", "source": "CEA Monthly Executive Summary (MW)" },
+      "DISTRICT": { "status": "UNAVAILABLE", "reason": "Substation SCADA is not public at district aggregation" },
+      "UTILITY": { "status": "PERIODIC", "source": "DISCOM Peak Demand Reports" }
+    },
+    "DEMAND_MET": {
+      "NATIONAL": { "status": "AVAILABLE", "source": "CEA Monthly Executive Summary (MW)" },
+      "STATE": { "status": "AVAILABLE", "source": "CEA Monthly Executive Summary (MW)" },
+      "DISTRICT": { "status": "UNAVAILABLE", "reason": "Grid demand met is balanced at state and inter-state control area" },
+      "UTILITY": { "status": "PERIODIC", "source": "DISCOM Peak Met Records" }
+    },
+    "SOLAR_CAPACITY": {
+      "NATIONAL": { "status": "AVAILABLE", "source": "MNRE / CEA Monthly Installed Capacity (MW)" },
+      "STATE": { "status": "AVAILABLE", "source": "MNRE / KREDL / NREDCAP (MW)" },
+      "DISTRICT": { "status": "PERIODIC", "source": "PM Surya Ghar National Portal (Rooftop Only)" },
+      "UTILITY": { "status": "PERIODIC", "source": "Grid-connected Solar PPA Registrations" }
+    },
+    "SOLAR_GENERATION": {
+      "NATIONAL": { "status": "AVAILABLE", "source": "CEA Monthly Renewable Generation Report (MU)" },
+      "STATE": { "status": "AVAILABLE", "source": "CEA Monthly Renewable Generation Report (MU)" },
+      "DISTRICT": { "status": "UNAVAILABLE", "reason": "CEA only aggregates at state and regional level" },
+      "UTILITY": { "status": "UNAVAILABLE", "reason": "Rooftop gross/net meters not aggregated openly" }
+    },
+    "RENEWABLE_CAPACITY_ADDITIONS": {
+      "NATIONAL": { "status": "AVAILABLE", "source": "CEA Monthly Generation Additions" },
+      "STATE": { "status": "AVAILABLE", "source": "CEA & State Nodal Agencies" },
+      "DISTRICT": { "status": "UNAVAILABLE", "reason": "No district breakdown in official gazettes" },
+      "UTILITY": { "status": "PERIODIC", "source": "DISCOM Interconnection Queues" }
+    }
+  }
+}

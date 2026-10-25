@@ -20,11 +20,12 @@ export function tileOrigin(url: string | undefined): string | null {
   }
 }
 
-export function contentSecurityPolicy(opts: { development: boolean; tileUrl?: string }): string {
-  const customOrigin = tileOrigin(opts.tileUrl);
-  const tiles = [...TILE_HOSTS, ...(customOrigin ? [customOrigin] : [])];
+export function contentSecurityPolicy(opts: { development: boolean; tileUrl?: string | string[] }): string {
+  const urls = Array.isArray(opts.tileUrl) ? opts.tileUrl : opts.tileUrl ? [opts.tileUrl] : [];
+  const customOrigins = urls.map(tileOrigin).filter((o): o is string => Boolean(o));
+  const tiles = [...TILE_HOSTS, ...customOrigins];
   const uniq = [...new Set(tiles)].join(" ");
-  const fontSources = ["'self'", "data:", ...(customOrigin ? [customOrigin] : [])].join(" ");
+  const fontSources = ["'self'", "data:", ...customOrigins].join(" ");
 
   return [
     "default-src 'self'",
@@ -41,7 +42,7 @@ export function contentSecurityPolicy(opts: { development: boolean; tileUrl?: st
   ].join("; ");
 }
 
-export function securityHeaders(opts: { development: boolean; tileUrl?: string }): { key: string; value: string }[] {
+export function securityHeaders(opts: { development: boolean; tileUrl?: string | string[] }): { key: string; value: string }[] {
   return [
     { key: "Content-Security-Policy", value: contentSecurityPolicy(opts) },
     { key: "X-Content-Type-Options", value: "nosniff" },

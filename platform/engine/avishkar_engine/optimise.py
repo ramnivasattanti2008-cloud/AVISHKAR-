@@ -579,3 +579,20 @@ def _decisions(req: OptimiseRequest, s: Schedule, pi: np.ndarray, pe: np.ndarray
             out.append(Decision(step=first, kind="appliance", kwh=round(float(p.sum() * dt), 4), reason=f"{a.name} placed from {_label(req, first)} to {_label(req, last + 1)}, inside its window, where energy is cheapest given solar and tariff (cheapest import in its window is at {_label(req, cheapest)})"))
     out.sort(key=lambda d: (d.step, d.kind))
     return out[:limit]
+
+
+def optimise_batch_parallel(requests: list[OptimiseRequest], max_workers: int | None = None) -> list[OptimiseResponse]:
+    """Execute multiple optimisation requests in parallel across CPU cores.
+
+    HiGHS solver runs native compiled C++ routines which release Python's GIL.
+    """
+    if not requests:
+        return []
+    if len(requests) == 1:
+        return [optimise(requests[0])]
+    from concurrent.futures import ThreadPoolExecutor
+
+    workers = min(len(requests), max_workers or 4)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(optimise, requests))
+

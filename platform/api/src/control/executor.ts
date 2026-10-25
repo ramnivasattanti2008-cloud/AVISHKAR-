@@ -7,6 +7,8 @@
  * 3. MqttDeviceExecutor: Publishes JSON control events to MQTT broker topics.
  */
 
+import { EnphaseCloudExecutor, SolarEdgeCloudExecutor } from "./cloud_executor.js";
+
 export interface ExecutorProposal {
   id: string;
   propertyId: string;
@@ -182,6 +184,21 @@ export class MqttDeviceExecutor implements DeviceExecutor {
 export function resolveExecutorFromEnv(env: NodeJS.ProcessEnv = process.env): DeviceExecutor {
   if (env.HASS_URL && env.HASS_TOKEN) {
     return new HomeAssistantExecutor(env.HASS_URL, env.HASS_TOKEN);
+  }
+  // Check Cloud OEM Inverter integrations (Enphase, SolarEdge)
+  if (env.ENPHASE_API_KEY && env.ENPHASE_SYSTEM_ID) {
+    return new EnphaseCloudExecutor({
+      apiKey: env.ENPHASE_API_KEY,
+      systemId: env.ENPHASE_SYSTEM_ID,
+      baseUrl: env.ENPHASE_BASE_URL,
+    });
+  }
+  if (env.SOLAREDGE_API_KEY && env.SOLAREDGE_SITE_ID) {
+    return new SolarEdgeCloudExecutor({
+      apiKey: env.SOLAREDGE_API_KEY,
+      systemId: env.SOLAREDGE_SITE_ID,
+      baseUrl: env.SOLAREDGE_BASE_URL,
+    });
   }
   return new NoDeviceExecutor();
 }

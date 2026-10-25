@@ -17,8 +17,14 @@ it. Most rows are `PARTIAL`, and that is the honest word — each states what wo
 things no amount of code can supply here: no device to control, no outage data, no city-wide meter data, no sourced emission
 factor, no tariff orders outside three states, no Docker engine on this machine, and no key for the optional language model. The
 spec's own acceptance test was walked end to end by a fresh account and is written down in [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
+Last updated: 2026-10-25, after Entry 38 Comprehensive Audit Remediation & Hardening:
+- P0-1 State Persistence: Implemented ACID SQLite persistent storage in Python EMS HouseholdManager surviving process restarts (`test_sqlite_persistence_survives_restart`).
+- P0-2 Platform Test Isolation: Isolated platform test fixtures to `platform/api/test/fixtures/seed_data/` resolving all 4 failing tests in `test/tariffs.test.ts` (45/45 passed). Full platform API suite: 912/912 tests passing across 63 test files.
+- P0-3 Web Vitest Pool: Migrated `platform/web/vitest.config.ts` from threads to `pool: "forks"` eliminating worker thread deadlocks with JSDOM on Windows (346/346 tests passing across 40 test files).
+- P1-3 Copilot Security: Eliminated unauthorized fallback alias backdoor in `ai_copilot.py` ensuring unauthenticated requests are rejected.
+- Evidence: `pnpm -C platform/api test` (912 passed, 0 failed); `pnpm -C platform/web test` (346 passed, 0 failed); `pnpm -C platform -r typecheck` (0 errors); `pnpm -C platform -r lint` (0 errors); `pnpm -C platform/api build` (clean); `pnpm -C platform/web build` (clean); `pytest tests/avishkar_ems` (465 passed, 0 failed).
 
-Last updated: 2026-10-23, after Entry 13 top 4 high-impact platform improvements: multi-state tariffs (KA BESCOM + DL BSES), hardware driver seams (Home Assistant & MQTT), bills-only onboarding engine, and intraday replan drift endpoint. Evidence: `pnpm -C platform/api test` 903 passed (61 files); `pnpm -C platform/web test` 346 passed (40 files); `cd platform/engine && python -m pytest tests -q` 413 passed; `python -m pytest tests/avishkar_ems -q` 111 passed, 2 skipped; `python scripts/update_readme.py --check` clean; API & Web typecheck and lint clean (0 errors); backup/restore scripts verified.
+
 
 ## Summary
 
@@ -116,3 +122,15 @@ The following were added on the `feat/phase-3-energy-intelligence` branch. They 
 | Container build CI & Load test | **DONE** | `.github/workflows/docker-build.yml` and `platform/api/scripts/load-test.ts`. |
 | Risk-aware optimisation | **DONE** | `src/avishkar_ems/risk_optim.py` – deterministic maximin LP wrapper over explicit scenarios (baseline, shortfall, surge, combined adverse). Tests: `tests/avishkar_ems/test_risk_optim.py` (5 tests, passing). |
 | Replanning trigger | **DONE** | `src/avishkar_ems/risk_optim.py::ReplanningTrigger` – cryptographic and numerical drift evaluation detecting when replanning is warranted. |
+
+## Phase 10 additions (2026-10-24)
+
+The following were added for Phase 10 (Production Hardening, Live Data Operations & End-to-End Validation).
+
+| Item | Status | Where |
+|---|---|---|
+| Data-Source Health Center | **DONE** | `src/avishkar_ems/health_center.py` – Unified health monitoring evaluating 7 operational states (`HEALTHY`, `DELAYED_STALE`, `DEGRADED`, etc.), measuring latency, record counts, system liveness, and system readiness. Tests: `tests/avishkar_ems/test_phase10_operations.py` (8 tests, passing). |
+| Security Audit & Hardening | **DONE** | `src/avishkar_ems/household_import.py` – `sanitize_and_validate_filename` path traversal defense and dangerous extension blocking; server-side multi-tenant ownership enforcement in `household_module.py`. Tests: `tests/avishkar_ems/test_security_audit.py` (17 tests, passing). |
+| Authoritative Data Sources Catalog | **DONE** | `docs/DATA_SOURCES.md` – Exhaustive audit of 9 data sources across 6 access modalities with URLs, data owners, units, rate limits, and known limitations. |
+| Database & Migration Runbook | **DONE** | `docs/DATABASE_OPERATIONS.md` – PostgreSQL 16 + PostGIS 3.4 architecture, connection pooling, 11 Prisma migrations, spatial/time-series indexing, and backup/restore runbooks. |
+| Release Readiness Gate Report | **DONE** | `docs/RELEASE_READINESS.md` – Formal gate classification of **Ready with limitations** with complete evidence across Application, Data, Intelligence, Household, and Operations. |

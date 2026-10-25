@@ -1,0 +1,190 @@
+{
+  "$schema": "urn:urjasetu:renewable-generation:v1",
+  "source": "Central Electricity Authority (CEA) Monthly Renewable Generation Reports & MNRE Capacity Statistics",
+  "sourceUrl": "https://cea.nic.in/monthly-renewable-generation-reports",
+  "verifiedAt": "2026-10-24",
+  "capacityUnit": "MW",
+  "generationUnit": "MU",
+  "records": [
+    {
+      "reportingPeriod": "2024-04",
+      "regionCode": "IN",
+      "installedSolarCapacityMw": 82637.0,
+      "solarGenerationMu": 10850.0,
+      "totalGenerationMu": 152400.0,
+      "totalRenewableGenerationMu": 18920.0,
+      "renewableAdditionsMw": 950.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-04",
+      "regionCode": "KA",
+      "installedSolarCapacityMw": 9450.0,
+      "solarGenerationMu": 1380.0,
+      "totalGenerationMu": 7620.0,
+      "totalRenewableGenerationMu": 2450.0,
+      "renewableAdditionsMw": 110.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-04",
+      "regionCode": "AP",
+      "installedSolarCapacityMw": 4520.0,
+      "solarGenerationMu": 710.0,
+      "totalGenerationMu": 6315.0,
+      "totalRenewableGenerationMu": 1280.0,
+      "renewableAdditionsMw": 65.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-05",
+      "regionCode": "IN",
+      "installedSolarCapacityMw": 84210.0,
+      "solarGenerationMu": 11420.0,
+      "totalGenerationMu": 165800.0,
+      "totalRenewableGenerationMu": 22400.0,
+      "renewableAdditionsMw": 1573.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-05",
+      "regionCode": "KA",
+      "installedSolarCapacityMw": 9520.0,
+      "solarGenerationMu": 1420.0,
+      "totalGenerationMu": 7880.0,
+      "totalRenewableGenerationMu": 2610.0,
+      "renewableAdditionsMw": 70.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-05",
+      "regionCode": "AP",
+      "installedSolarCapacityMw": 4560.0,
+      "solarGenerationMu": 735.0,
+      "totalGenerationMu": 6745.0,
+      "totalRenewableGenerationMu": 1390.0,
+      "renewableAdditionsMw": 40.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-06",
+      "regionCode": "IN",
+      "installedSolarCapacityMw": 85450.0,
+      "solarGenerationMu": 9820.0,
+      "totalGenerationMu": 158900.0,
+      "totalRenewableGenerationMu": 24150.0,
+      "renewableAdditionsMw": 1240.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-06",
+      "regionCode": "KA",
+      "installedSolarCapacityMw": 9580.0,
+      "solarGenerationMu": 1150.0,
+      "totalGenerationMu": 6825.0,
+      "totalRenewableGenerationMu": 2720.0,
+      "renewableAdditionsMw": 60.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2024-06",
+      "regionCode": "AP",
+      "installedSolarCapacityMw": 4590.0,
+      "solarGenerationMu": 620.0,
+      "totalGenerationMu": 6030.0,
+      "totalRenewableGenerationMu": 1480.0,
+      "renewableAdditionsMw": 30.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-04",
+      "regionCode": "IN",
+      "installedSolarCapacityMw": 97800.0,
+      "solarGenerationMu": 13100.0,
+      "totalGenerationMu": 164200.0,
+      "totalRenewableGenerationMu": 23450.0,
+      "renewableAdditionsMw": 1820.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-04",
+      "regionCode": "KA",
+      "installedSolarCapacityMw": 10420.0,
+      "solarGenerationMu": 1580.0,
+      "totalGenerationMu": 8005.0,
+      "totalRenewableGenerationMu": 2890.0,
+      "renewableAdditionsMw": 140.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-04",
+      "regionCode": "AP",
+      "installedSolarCapacityMw": 5120.0,
+      "solarGenerationMu": 840.0,
+      "totalGenerationMu": 6630.0,
+      "totalRenewableGenerationMu": 1560.0,
+      "renewableAdditionsMw": 85.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-05",
+      "regionCode": "IN",
+      "installedSolarCapacityMw": 99650.0,
+      "solarGenerationMu": 13850.0,
+      "totalGenerationMu": 178200.0,
+      "totalRenewableGenerationMu": 27100.0,
+      "renewableAdditionsMw": 1850.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-05",
+      "regionCode": "KA",
+      "installedSolarCapacityMw": 10540.0,
+      "solarGenerationMu": 1640.0,
+      "totalGenerationMu": 8270.0,
+      "totalRenewableGenerationMu": 3120.0,
+      "renewableAdditionsMw": 120.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-05",
+      "regionCode": "AP",
+      "installedSolarCapacityMw": 5190.0,
+      "solarGenerationMu": 875.0,
+      "totalGenerationMu": 7080.0,
+      "totalRenewableGenerationMu": 1690.0,
+      "renewableAdditionsMw": 70.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-06",
+      "regionCode": "IN",
+      "installedSolarCapacityMw": 101200.0,
+      "solarGenerationMu": 11950.0,
+      "totalGenerationMu": 171500.0,
+      "totalRenewableGenerationMu": 29800.0,
+      "renewableAdditionsMw": 1550.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-06",
+      "regionCode": "KA",
+      "installedSolarCapacityMw": 10620.0,
+      "solarGenerationMu": 1320.0,
+      "totalGenerationMu": 7160.0,
+      "totalRenewableGenerationMu": 3280.0,
+      "renewableAdditionsMw": 80.0,
+      "provenance": "VERIFIED_REPORT"
+    },
+    {
+      "reportingPeriod": "2025-06",
+      "regionCode": "AP",
+      "installedSolarCapacityMw": 5240.0,
+      "solarGenerationMu": 740.0,
+      "totalGenerationMu": 6330.0,
+      "totalRenewableGenerationMu": 1790.0,
+      "renewableAdditionsMw": 50.0,
+      "provenance": "VERIFIED_REPORT"
+    }
+  ]
+}

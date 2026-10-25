@@ -1,0 +1,33 @@
+{
+  "name": "TANGEDCO LT-1A Tamil Nadu domestic FY2025-26",
+  "source": "TNERC Tariff Order FY2025-26, Schedule LT-1A Domestic: Slabs 0-100 kWh @ 0.00 Rs/kWh, 101-200 kWh @ 4.50 Rs/kWh, 201-500 kWh @ 6.00 Rs/kWh, >500 kWh @ 8.00 Rs/kWh. Modelled at representative tier 6.00 Rs/kWh; fixed charge Rs 50/connection/month; solar net feed-in rate 3.40 Rs/kWh.",
+  "tou_blocks": [
+    [
+      0,
+      24,
+      6.0
+    ]
+  ],
+  "export_rate": 3.4,
+  "p2p_charges": 0.65,
+  "shortfall_penalty": 5.0,
+  "meta": {
+    "state": "TN",
+    "discom": "TANGEDCO",
+    "category": "LT-1A Domestic",
+    "consumerType": "RESIDENTIAL",
+    "tariffYear": "FY2025-26",
+    "effectiveFrom": "2025-04-01",
+    "effectiveTo": "2026-03-31",
+    "fixedCharge": {
+      "amountInr": 50,
+      "basis": "PER_CONNECTION_MONTH"
+    },
+    "exportRateBasis": "REGULATOR_ORDER",
+    "meteringMode": "NET_METERING",
+    "notes": [
+      "Modelled on TNERC FY2025-26 LT-1A tariff schedule. Representative rate 6.00 INR/kWh applied.",
+      "Solar rooftop generation exported under TNERC Net Feed-in Scheme credited at benchmark tariff."
+    ]
+  }
+}

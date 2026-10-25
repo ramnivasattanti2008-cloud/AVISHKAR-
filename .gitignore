@@ -47,10 +47,21 @@ secrets_*.yml
 
 # Database backups and recovery dumps
 *.dump
+*.dump.*
 *.dump.sha256
+*.dump.gpg
+*.dump.gpg.sha256
+*.dump.enc
+*.dump.enc.sha256
 *.sql.gz
 platform/backups/
 backups/
 
 # Prisma client is generated (pnpm db:generate), never committed
 platform/api/src/generated/
+
+# SQLite databases
+*.db
+*.db-journal
+*.sqlite
+

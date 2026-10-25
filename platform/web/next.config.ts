@@ -15,7 +15,8 @@ const config: NextConfig = {
     return [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }];
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders({ development: process.env.NODE_ENV !== "production", tileUrl: process.env.NEXT_PUBLIC_OSM_TILE_URL }) }];
+    const tileUrls = [process.env.NEXT_PUBLIC_OSM_TILE_URL, process.env.NEXT_PUBLIC_SATELLITE_TILE_URL].filter(Boolean) as string[];
+    return [{ source: "/:path*", headers: securityHeaders({ development: process.env.NODE_ENV !== "production", tileUrl: tileUrls }) }];
   },
 };
 

@@ -14,13 +14,14 @@ export interface Basemap {
 }
 
 const osm = process.env.NEXT_PUBLIC_OSM_TILE_URL ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const sat = process.env.NEXT_PUBLIC_SATELLITE_TILE_URL ?? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
 export const BASEMAPS: Basemap[] = [
   { id: "standard", label: "Standard", tiles: [osm], attribution: "© OpenStreetMap contributors", maxzoom: 19 },
   {
     id: "satellite",
     label: "Satellite",
-    tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+    tiles: [sat],
     attribution: "Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community",
     maxzoom: 19,
   },

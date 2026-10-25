@@ -11,6 +11,7 @@ import tempfile
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from app.urjasetu_view import render_urjasetu_dashboard
 from plotly.subplots import make_subplots
 
 from avishkar_ems import cache
@@ -121,7 +122,19 @@ def get_fleet_pooling(current_key: str, day_str: str, offers_tuple: tuple):
 
 
 # ------------------ SIDEBAR ------------------
-st.sidebar.markdown("### ⚡ **AVISHKAR EMS Controller**")
+st.sidebar.markdown("### ⚡ **UrjaSetu & AVISHKAR EMS**")
+dashboard_mode = st.sidebar.radio(
+    "Navigation Mode",
+    ["🏛️ Unified National & State Explorer (UrjaSetu)", "⚡ Site Dispatch EMS (AVISHKAR)"],
+    index=0,
+)
+
+if dashboard_mode == "🏛️ Unified National & State Explorer (UrjaSetu)":
+    render_urjasetu_dashboard()
+    st.stop()
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("### ⚡ **AVISHKAR Site Controller**")
 key = st.sidebar.selectbox("Select Site", list(real_sites()), index=1)
 p = get_site(key)
 site = p.site

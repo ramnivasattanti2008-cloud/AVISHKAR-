@@ -1,0 +1,33 @@
+{
+  "name": "GUVNL R-LT Gujarat Urban domestic FY2025-26",
+  "source": "GERC Tariff Order FY2025-26, Schedule R-LT Residential: Telescopic slabs 0-100 kWh @ 4.10 Rs/kWh, 101-250 kWh @ 4.80 Rs/kWh, >250 kWh @ 5.30 Rs/kWh. Modelled at upper tier 5.30 Rs/kWh; fixed charge Rs 70/kW/month; export net-metering rate 2.25 Rs/kWh (GERC Solar Rooftop Policy buyback rate).",
+  "tou_blocks": [
+    [
+      0,
+      24,
+      5.3
+    ]
+  ],
+  "export_rate": 2.25,
+  "p2p_charges": 0.6,
+  "shortfall_penalty": 4.5,
+  "meta": {
+    "state": "GJ",
+    "discom": "GUVNL",
+    "category": "R-LT Residential",
+    "consumerType": "RESIDENTIAL",
+    "tariffYear": "FY2025-26",
+    "effectiveFrom": "2025-04-01",
+    "effectiveTo": "2026-03-31",
+    "fixedCharge": {
+      "amountInr": 70,
+      "basis": "PER_KW_MONTH"
+    },
+    "exportRateBasis": "REGULATOR_ORDER",
+    "meteringMode": "NET_METERING",
+    "notes": [
+      "Modelled on GERC FY2025-26 R-LT residential schedule. Marginal rate 5.30 INR/kWh applied for solar displacement calculations.",
+      "Net-metering buyback credited at GERC approved solar rooftop feed-in rate of Rs. 2.25/kWh."
+    ]
+  }
+}
