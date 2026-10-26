@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, describeError } from "@/lib/api";
 import { formatDateTime, formatNumber } from "@/lib/format";
-import type { AdminAudit, AdminJobs, AdminOverview } from "@/lib/types";
+import type { AdminAudit, AdminJobs, AdminOverview, AdminUsersList } from "@/lib/types";
 import { useAuth } from "../AuthProvider";
 
 const VALIDITY_TONE: Record<string, string> = { WITHIN: "live", OPEN_ENDED: "updated", EXPIRED: "unavailable", NOT_YET_EFFECTIVE: "estimated", UNKNOWN: "estimated" };
@@ -34,6 +34,7 @@ export function AdminView() {
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [jobs, setJobs] = useState<AdminJobs | null>(null);
   const [audit, setAudit] = useState<AdminAudit | null>(null);
+  const [usersList, setUsersList] = useState<AdminUsersList["users"] | null>(null);
   const [filter, setFilter] = useState("");
   const [applied, setApplied] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -45,21 +46,70 @@ export function AdminView() {
     return api<AdminAudit>("/api/admin/audit", { query: { limit: 25, action: action || undefined, before } }).then((a) => setAudit(append ? { entries: [...append.entries, ...a.entries], next: a.next } : a));
   }, []);
 
+  const loadUsers = useCallback(() => {
+    return api<AdminUsersList>("/api/admin/users").then((res) => setUsersList(res.users));
+  }, []);
+
   useEffect(() => {
     if (!admin) return;
     let live = true;
-    Promise.all([api<AdminOverview>("/api/admin/overview"), api<AdminJobs>("/api/admin/jobs"), api<AdminAudit>("/api/admin/audit", { query: { limit: 25 } })])
-      .then(([o, j, a]) => {
+    Promise.all([
+      api<AdminOverview>("/api/admin/overview"),
+      api<AdminJobs>("/api/admin/jobs"),
+      api<AdminAudit>("/api/admin/audit", { query: { limit: 25 } }),
+      api<AdminUsersList>("/api/admin/users"),
+    ])
+      .then(([o, j, a, u]) => {
         if (!live) return;
         setOverview(o);
         setJobs(j);
         setAudit(a);
+        setUsersList(u.users);
       })
       .catch((e) => live && setError(describeError(e)));
     return () => {
       live = false;
     };
   }, [admin]);
+
+  async function toggleRole(targetUserId: string, currentRole: "USER" | "ADMIN") {
+    const nextRole = currentRole === "ADMIN" ? "USER" : "ADMIN";
+    setBusy(`role-${targetUserId}`);
+    setError(null);
+    setMessage(null);
+    try {
+      await api(`/api/admin/users/${targetUserId}/role`, {
+        method: "PATCH",
+        body: { role: nextRole },
+      });
+      setMessage(`Updated user role to ${nextRole}.`);
+      await loadUsers();
+      await loadAudit(applied);
+    } catch (e) {
+      setError(describeError(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function verifyTariff(tariffId: string) {
+    setBusy(`tariff-${tariffId}`);
+    setError(null);
+    setMessage(null);
+    try {
+      await api(`/api/admin/tariffs/${tariffId}`, {
+        method: "PATCH",
+        body: { verifiedAt: new Date().toISOString() },
+      });
+      setMessage("Marked tariff as verified with current timestamp.");
+      setOverview(await api<AdminOverview>("/api/admin/overview"));
+      await loadAudit(applied);
+    } catch (e) {
+      setError(describeError(e));
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function runJob(name: string) {
     setBusy(name);
@@ -123,6 +173,62 @@ export function AdminView() {
               <Count label="On an expired tariff" value={overview.dataHealth.propertiesOnExpiredTariff} hint="properties" />
             </dl>
           </section>
+
+          {/* User accounts & role administration */}
+          {usersList && (
+            <section className="card mt-4 p-4" aria-labelledby="adm-users-roles">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 id="adm-users-roles" className="text-lg font-semibold">User Accounts & Roles</h2>
+                  <p className="text-sm text-muted">Manage roles and permissions. Every role change is permanently audited.</p>
+                </div>
+                <button type="button" className="btn text-xs" onClick={() => void loadUsers()} disabled={busy !== null}>
+                  Refresh accounts
+                </button>
+              </div>
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <caption className="sr-only">Platform users and their role assignments</caption>
+                  <thead>
+                    <tr className="border-b border-line text-left text-xs text-muted">
+                      <th scope="col" className="py-2 pr-3 font-medium">Email</th>
+                      <th scope="col" className="py-2 pr-3 font-medium">Display Name</th>
+                      <th scope="col" className="py-2 pr-3 font-medium">Properties</th>
+                      <th scope="col" className="py-2 pr-3 font-medium">Role</th>
+                      <th scope="col" className="py-2 pr-3 font-medium">Joined</th>
+                      <th scope="col" className="py-2 font-medium">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usersList.map((u) => (
+                      <tr key={u.id} className="border-t border-line/60 align-middle">
+                        <td className="py-2 pr-3 font-mono text-xs">{u.email}</td>
+                        <td className="py-2 pr-3 text-muted">{u.displayName ?? "—"}</td>
+                        <td className="num py-2 pr-3">{u.propertiesCount}</td>
+                        <td className="py-2 pr-3">
+                          <span className="badge" data-tone={u.role === "ADMIN" ? "live" : "updated"}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="num py-2 pr-3 text-xs text-muted">{formatDateTime(u.createdAt)}</td>
+                        <td className="py-2">
+                          <button
+                            type="button"
+                            className="btn text-xs"
+                            disabled={busy === `role-${u.id}` || u.id === user?.id}
+                            title={u.id === user?.id ? "You cannot demote yourself from the UI" : undefined}
+                            onClick={() => void toggleRole(u.id, u.role)}
+                          >
+                            {busy === `role-${u.id}` ? "Updating…" : u.role === "ADMIN" ? "Demote to USER" : "Promote to ADMIN"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           <section className="card mt-4 p-4" aria-labelledby="adm-prov">
             <h2 id="adm-prov" className="text-lg font-semibold">Providers, last hour</h2>
@@ -201,7 +307,8 @@ export function AdminView() {
                     <th scope="col" className="py-1 pr-3 font-medium">Validity</th>
                     <th scope="col" className="py-1 pr-3 font-medium">Source</th>
                     <th scope="col" className="py-1 pr-3 font-medium">Checked</th>
-                    <th scope="col" className="py-1 font-medium">Properties</th>
+                    <th scope="col" className="py-1 pr-3 font-medium">Properties</th>
+                    <th scope="col" className="py-1 font-medium">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -211,7 +318,17 @@ export function AdminView() {
                       <td className="pr-3"><span className="badge" data-tone={VALIDITY_TONE[t.validity] ?? "estimated"} title={t.validityMessage}>{t.validity.replace("_", " ")}</span></td>
                       <td className="pr-3">{t.sourceUrl ? <a className="text-accent underline" href={t.sourceUrl} rel="noreferrer noopener">{t.source}</a> : t.source}</td>
                       <td className="pr-3">{t.verifiedAt ? formatDateTime(t.verifiedAt) : "—"}</td>
-                      <td className="num">{t.propertiesUsing}</td>
+                      <td className="num pr-3">{t.propertiesUsing}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn text-xs"
+                          disabled={busy === `tariff-${t.id}`}
+                          onClick={() => void verifyTariff(t.id)}
+                        >
+                          {busy === `tariff-${t.id}` ? "Updating…" : "Verify now"}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

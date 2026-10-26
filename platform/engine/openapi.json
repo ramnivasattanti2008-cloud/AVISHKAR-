@@ -378,6 +378,159 @@
         "title": "Decision",
         "type": "object"
       },
+      "DegradationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "capacityKwh": {
+            "description": "Nominal battery storage capacity in kWh",
+            "exclusiveMinimum": 0.0,
+            "title": "Capacitykwh",
+            "type": "number"
+          },
+          "cellTemperatureCelsius": {
+            "anyOf": [
+              {
+                "maximum": 70.0,
+                "minimum": -20.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 25.0,
+            "description": "Ambient cell temperature",
+            "title": "Celltemperaturecelsius"
+          },
+          "maxChargeKw": {
+            "default": 5.0,
+            "description": "Rated peak charge power",
+            "exclusiveMinimum": 0.0,
+            "title": "Maxchargekw",
+            "type": "number"
+          },
+          "maxDischargeKw": {
+            "default": 5.0,
+            "description": "Rated peak discharge power",
+            "exclusiveMinimum": 0.0,
+            "title": "Maxdischargekw",
+            "type": "number"
+          },
+          "nominalCycleLife": {
+            "default": 4000.0,
+            "description": "Cycle life at 80% DoD to 80% SOH",
+            "exclusiveMinimum": 0.0,
+            "title": "Nominalcyclelife",
+            "type": "number"
+          },
+          "operationalDays": {
+            "default": 1.0,
+            "description": "Time span represented by the SOC profile in days",
+            "exclusiveMinimum": 0.0,
+            "title": "Operationaldays",
+            "type": "number"
+          },
+          "replacementCostInr": {
+            "default": 30000.0,
+            "description": "Cell replacement cost in INR per unit",
+            "minimum": 0.0,
+            "title": "Replacementcostinr",
+            "type": "number"
+          },
+          "socKwh": {
+            "description": "SOC trajectory in kWh",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "title": "Sockwh",
+            "type": "array"
+          }
+        },
+        "required": [
+          "socKwh",
+          "capacityKwh"
+        ],
+        "title": "DegradationRequest",
+        "type": "object"
+      },
+      "DegradationResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "calendarCapacityLossPercent": {
+            "title": "Calendarcapacitylosspercent",
+            "type": "number"
+          },
+          "cycleCapacityLossPercent": {
+            "title": "Cyclecapacitylosspercent",
+            "type": "number"
+          },
+          "deratedMaxChargeKw": {
+            "title": "Deratedmaxchargekw",
+            "type": "number"
+          },
+          "deratedMaxDischargeKw": {
+            "title": "Deratedmaxdischargekw",
+            "type": "number"
+          },
+          "dodDistribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Doddistribution",
+            "type": "object"
+          },
+          "equivalentFullCycles": {
+            "title": "Equivalentfullcycles",
+            "type": "number"
+          },
+          "estimatedRemainingCycles": {
+            "title": "Estimatedremainingcycles",
+            "type": "number"
+          },
+          "rainflowCycleCount": {
+            "title": "Rainflowcyclecount",
+            "type": "integer"
+          },
+          "stateOfHealthPercent": {
+            "title": "Stateofhealthpercent",
+            "type": "number"
+          },
+          "summaryVerdict": {
+            "title": "Summaryverdict",
+            "type": "string"
+          },
+          "thermalDerateFactor": {
+            "title": "Thermalderatefactor",
+            "type": "number"
+          },
+          "totalCapacityLossPercent": {
+            "title": "Totalcapacitylosspercent",
+            "type": "number"
+          },
+          "wearCostInr": {
+            "title": "Wearcostinr",
+            "type": "number"
+          }
+        },
+        "required": [
+          "equivalentFullCycles",
+          "rainflowCycleCount",
+          "dodDistribution",
+          "cycleCapacityLossPercent",
+          "calendarCapacityLossPercent",
+          "totalCapacityLossPercent",
+          "stateOfHealthPercent",
+          "wearCostInr",
+          "estimatedRemainingCycles",
+          "thermalDerateFactor",
+          "deratedMaxChargeKw",
+          "deratedMaxDischargeKw",
+          "summaryVerdict"
+        ],
+        "title": "DegradationResponse",
+        "type": "object"
+      },
       "EvIn": {
         "additionalProperties": false,
         "properties": {
@@ -2034,6 +2187,66 @@
         "summary": "Is the engine up",
         "tags": [
           "system"
+        ]
+      }
+    },
+    "/v1/battery/degradation": {
+      "post": {
+        "description": "ASTM E1049 Rainflow cycle counting, non-linear DoD wear, calendar aging and thermal derating.",
+        "operationId": "battery_degradation_v1_battery_degradation_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-engine-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Engine-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DegradationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DegradationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyze battery degradation and thermal health",
+        "tags": [
+          "battery"
         ]
       }
     },

@@ -137,3 +137,81 @@ export async function setRole(db: Db, email: string, role: "ADMIN" | "USER"): Pr
   await audit(db, { userId: null, action: role === "ADMIN" ? "admin.grant" : "admin.revoke", entityType: "user", entityId: user.id, detail: { from: user.role, to: role, by: "command line" } });
   return { id: updated.id, email: updated.email, role: updated.role };
 }
+
+export async function listUsers(db: Db) {
+  const users = await db.user.findMany({
+    where: { deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      displayName: true,
+      createdAt: true,
+      _count: { select: { properties: true } },
+    },
+  });
+  return {
+    users: users.map((u) => ({
+      id: u.id,
+      email: u.email,
+      role: u.role as "USER" | "ADMIN",
+      displayName: u.displayName,
+      createdAt: u.createdAt.toISOString(),
+      propertiesCount: u._count.properties,
+    })),
+  };
+}
+
+export async function updateUserRole(db: Db, adminUserId: string, targetUserId: string, role: "ADMIN" | "USER") {
+  const user = await db.user.findUnique({ where: { id: targetUserId } });
+  if (!user || user.deletedAt) throw new Error(`User ${targetUserId} not found.`);
+  const updated = await db.user.update({ where: { id: targetUserId }, data: { role } });
+  await audit(db, {
+    userId: adminUserId,
+    action: role === "ADMIN" ? "admin.user.promote" : "admin.user.demote",
+    entityType: "user",
+    entityId: targetUserId,
+    detail: { from: user.role, to: role },
+  });
+  return {
+    id: updated.id,
+    email: updated.email,
+    role: updated.role as "USER" | "ADMIN",
+    displayName: updated.displayName,
+    createdAt: updated.createdAt.toISOString(),
+  };
+}
+
+export async function updateTariffPlan(db: Db, adminUserId: string, tariffId: string, data: { verifiedAt?: string | null; effectiveTo?: string | null }) {
+  const plan = await db.tariffPlan.findUnique({ where: { id: tariffId } });
+  if (!plan || plan.deletedAt) throw new Error(`Tariff plan ${tariffId} not found.`);
+
+  const updateData: { verifiedAt?: Date | null; effectiveTo?: Date | null } = {};
+  if (data.verifiedAt !== undefined) {
+    updateData.verifiedAt = data.verifiedAt ? new Date(data.verifiedAt) : null;
+  }
+  if (data.effectiveTo !== undefined) {
+    updateData.effectiveTo = data.effectiveTo ? new Date(data.effectiveTo) : null;
+  }
+
+  const updated = await db.tariffPlan.update({
+    where: { id: tariffId },
+    data: updateData,
+  });
+
+  await audit(db, {
+    userId: adminUserId,
+    action: "admin.tariff.update",
+    entityType: "tariff_plan",
+    entityId: tariffId,
+    detail: { verifiedAt: updateData.verifiedAt?.toISOString(), effectiveTo: updateData.effectiveTo?.toISOString() },
+  });
+
+  return {
+    id: updated.id,
+    name: updated.name,
+    verifiedAt: updated.verifiedAt?.toISOString() ?? null,
+    effectiveTo: updated.effectiveTo?.toISOString() ?? null,
+  };
+}

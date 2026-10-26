@@ -65,7 +65,10 @@ export function PropertiesView() {
     <div className="mx-auto w-full max-w-4xl px-4 py-10">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Your properties</h1>
-        <Link href="/map" className="btn btn-primary">Add on the map</Link>
+        <div className="flex items-center gap-2">
+          <Link href="/properties/compare" className="btn btn-neutral">Compare</Link>
+          <Link href="/map" className="btn btn-primary">Add on the map</Link>
+        </div>
       </div>
       {error && <p role="alert" className="mt-4 text-sm text-[color:var(--tone-unavailable-fg)]">{error}</p>}
       {items && own.length === 0 && <p className="card mt-6 p-5 text-muted">No properties of your own yet. Open the map, choose a place and select “Analyze this property”{world ? ", or try the demo world below" : ""}.</p>}

@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from avishkar_engine import __version__, load, solar
+from avishkar_engine.degradation import DegradationRequest, DegradationResponse
 from avishkar_engine.forecast_schemas import (
     LoadForecastRequest,
     LoadForecastResponse,
@@ -129,5 +130,12 @@ def create_app(api_key: str | None = None, insecure_dev: bool | None = None) -> 
         """Weekly-lagged baselines and a conformally calibrated quantile model, compared on a chronological holdout. The response
         says which won, by how much, and how often the 80% band held on hours it had not seen."""
         return load.forecast(req)
+
+    @app.post("/v1/battery/degradation", tags=["battery"], summary="Analyze battery degradation and thermal health", response_model=DegradationResponse, response_model_by_alias=True, dependencies=[Depends(authorise)])
+    def battery_degradation(req: DegradationRequest) -> DegradationResponse:
+        """ASTM E1049 Rainflow cycle counting, non-linear DoD wear, calendar aging and thermal derating."""
+        from avishkar_engine.degradation import analyze_degradation
+
+        return analyze_degradation(req)
 
     return app

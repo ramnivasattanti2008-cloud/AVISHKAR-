@@ -150,6 +150,13 @@ export async function updateBattery(db: Db, userId: string, propertyId: string, 
   return toBatteryDto(await db.battery.update({ where: { id }, data }));
 }
 
+export async function getBattery(db: Db, userId: string, propertyId: string, id: string) {
+  await ownProperty(db, userId, propertyId);
+  const row = await db.battery.findFirst({ where: { id, propertyId } });
+  if (!row) throw new AppError("NOT_FOUND", "No such battery.");
+  return toBatteryDto(row);
+}
+
 export async function deleteBattery(db: Db, userId: string, propertyId: string, id: string): Promise<void> {
   await ownProperty(db, userId, propertyId);
   const { count } = await db.battery.deleteMany({ where: { id, propertyId } });

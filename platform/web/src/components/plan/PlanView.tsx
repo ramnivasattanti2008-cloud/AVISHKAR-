@@ -11,6 +11,7 @@ import { PropertyTabs } from "../property/PropertyTabs";
 import { usePropertyData } from "../property/usePropertyData";
 import { AllocationPanel } from "./AllocationPanel";
 import { CloudFrontPanel } from "./CloudFrontPanel";
+import { EnergyFlowDiagram } from "./EnergyFlowDiagram";
 import { RobustnessPanel } from "./RobustnessPanel";
 import { RecommendationCard } from "./RecommendationCard";
 import { BatteryChart, PriceChart, SERIES, SourcesChart } from "./PlanCharts";
@@ -368,6 +369,8 @@ export function PlanView({ id }: { id: string }) {
           </section>
         </>
       )}
+
+      {plan && <EnergyFlowDiagram plan={plan} />}
 
       {plan && <AllocationPanel id={id} />}
 

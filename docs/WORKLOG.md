@@ -2177,3 +2177,71 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 - Remaining PARTIAL rows in `platform/STATUS.md`: a risk-aware objective, a re-plan trigger when a forecast changes, and the DLMS/COSEM and Modbus bridges.
 
 
+## Entry 41 — 2026-10-26 — Battery Degradation Engine, Interactive Energy Flow Simulator, Installation Sizing Planner, Multi-Property Comparison Matrix, and Admin Governance Controls
+
+### What was done
+1. **ASTM E1049 Rainflow Battery Degradation Engine (`platform/engine/avishkar_engine/degradation.py`)**:
+   - Implemented standard ASTM E1049-85 compliant Rainflow cycle counting (`rainflow_count`) to extract full and half cycles from arbitrary battery state-of-charge time series.
+   - Implemented non-linear Depth-of-Discharge (DoD) power-law aging wear rate model ($C_{fade} = C_0 \cdot \sum (DoD_i)^{k_{dod}}$ where exponent $k_{dod} = 1.85$).
+   - Implemented Arrhenius thermal acceleration derating ($e^{\frac{E_a}{R} (1/T_{ref} - 1/T)}$) to penalize capacity fade at elevated cell temperatures.
+   - Built end-to-end degradation analysis function `analyze_degradation` calculating total throughput, full equivalent cycles, capacity fade percentage, and projected remaining useful life (RUL) in cycles and operating days.
+   - Added `POST /v1/battery/degradation` to FastAPI engine (`platform/engine/avishkar_engine/app.py`).
+   - Regenerated engine OpenAPI contract (`platform/engine/openapi.json`).
+   - Created comprehensive unit test suite in `platform/engine/tests/test_degradation.py` (7 tests: zero SOC variation, single 100% cycle, half cycles, non-linear DoD penalty, Arrhenius thermal sensitivity, empty series validation, and API endpoint integration).
+   - Added client bindings and schemas in `platform/api/src/engine/{schemas.ts,client.ts}`.
+   - Exposed `GET /api/properties/:id/batteries/:assetId/degradation` in `platform/api/src/routes/assets.ts` with ownership isolation and error handling.
+
+2. **Interactive Animated Energy Flow Simulator (`platform/web/src/components/plan/EnergyFlowDiagram.tsx`)**:
+   - Implemented dynamic node-link energy flow canvas modeling physical generation, battery storage state, grid interchange, and domestic demand sinks.
+   - Built interactive timeline scrubber with play, pause, reset, step-forward, and hour-by-hour slider controls.
+   - Rendered active animated flow lines indicating directional energy transfer (solar to load/battery/grid, battery discharge to load, grid import to load/battery).
+   - Integrated seamlessly into `platform/web/src/components/plan/PlanView.tsx`.
+   - Added unit test suite in `platform/web/src/components/plan/EnergyFlowDiagram.test.tsx` (3 tests verifying rendering, scrubber step, and time scrubbing).
+
+3. **Solar & Storage Installation Sizing Planner (`platform/web/src/components/property/InstallationPlanner.tsx`)**:
+   - Built dedicated sizing & capital investment advisory view at `/property/[id]/planner`.
+   - Codified MNRE PM Surya Ghar: Muft Bijli Yojana residential subsidy schedule (₹30,000/kW up to 2 kW, ₹18,000 for 3rd kW, capped at ₹78,000).
+   - Computed 25-year Levelized Cost of Electricity (LCOE) and Net Present Value (NPV) based on roof area, solar irradiance, and installed system costs.
+   - Displayed 10-year battery capacity fade curves based on cycle depth and Arrhenius operating temperatures.
+   - Added tab navigation item in `PropertyTabs.tsx` linking directly to `/property/[id]/planner`.
+   - Added unit test suite in `platform/web/src/components/property/InstallationPlanner.test.tsx` (3 tests verifying initial state, slider interactions, and twin data integration).
+
+4. **Multi-Property Comparison Matrix (`platform/web/src/components/property/PropertyComparisonView.tsx`)**:
+   - Created portfolio-wide comparison view at `/properties/compare`.
+   - Evaluates and ranks properties side-by-side across solar potential (usable roof area, estimated annual yield), installed BESS capacity, smart EV loads, and tariff plans.
+   - Added quick-access "Compare Properties" button in `PropertiesView.tsx`.
+   - Added unit test suite in `platform/web/src/components/property/PropertyComparisonView.test.tsx` (2 tests verifying empty state and multi-property matrix rendering).
+
+5. **Admin Governance & Tariff Verification Controls (`platform/api`, `platform/web`)**:
+   - Added administrative user listing (`GET /api/admin/users`) and role promotion/demotion (`PATCH /api/admin/users/:id/role`) in `platform/api/src/routes/admin.ts`.
+   - Added tariff plan verification endpoint (`PATCH /api/admin/tariffs/:id`).
+   - Audited all admin actions with structured immutable logs (`admin.user.role_change`, `admin.tariff.update`).
+   - Updated `AdminView.tsx` with User Accounts & Roles management table with promote/demote action and Tariff verification action button.
+   - Added unit tests in `platform/api/test/admin.test.ts` (3 new tests; 13 total passing) and `platform/web/src/components/admin/AdminView.test.tsx` (11 total passing).
+
+6. **Contract Synchronization & Documentation**:
+   - Synchronized `platform/api/openapi.json` and generated `platform/web/src/lib/api-types.ts`.
+   - Documented all 4 new endpoints in `platform/docs/API.md`.
+   - Validated contract conformity with `vitest run test/openapi.test.ts` (3/3 passing).
+
+### Evidence
+- `pytest platform/engine/tests -q`: **438 passed in 113.88s** (Exit Code 0).
+- `pytest tests/avishkar_ems -q`: **465 passed, 2 skipped in 176.84s** (Exit Code 0).
+- `pnpm -C platform/api test`: **63 test files passed, 916 passed, 0 failed in 656.40s** (Exit Code 0).
+- `pnpm -C platform/web test`: **43 test files passed, 355 passed, 0 failed in 48.80s** (Exit Code 0).
+- `pnpm -C platform -r typecheck`: **Clean (0 errors across @avishkar/api and @avishkar/web)**.
+- `pnpm -C platform -r lint`: **Clean (0 errors across @avishkar/api and @avishkar/web)**.
+- `ruff check platform/engine src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: **All checks passed (0 errors)**.
+
+### What was NOT done
+- Did not connect real-world physical inverter hardware or DLMS/COSEM smart meters; control remains advisory.
+- Did not invent or simulate satellite cloud-movement nowcast data or grid outage probability; these remain UNAVAILABLE by design.
+- Did not run Docker daemon containers or deploy to third-party hosting providers (requires user-provided credentials/runtimes).
+- Did not edit vendored code in `src/emhass/`.
+
+### What is next
+- Security review and architectural audit documentation.
+- Provision Docker/container registry and remote PostGIS instance when deployment credentials are provided.
+
+
+

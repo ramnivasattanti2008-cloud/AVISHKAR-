@@ -7,8 +7,17 @@ import { AppError } from "../errors.js";
 import { JOBS } from "../jobs/registry.js";
 import { JobRunner } from "../jobs/runner.js";
 import { ErrorResponse } from "../schemas.js";
-import { AuditSchema, JobRunSchema, JobsSchema, OverviewSchema } from "../admin/schemas.js";
-import { auditPage, overview } from "../admin/service.js";
+import {
+  AdminUserSchema,
+  AdminUsersListSchema,
+  AuditSchema,
+  JobRunSchema,
+  JobsSchema,
+  OverviewSchema,
+  UpdateRoleRequestSchema,
+  UpdateTariffRequestSchema,
+} from "../admin/schemas.js";
+import { auditPage, listUsers, overview, updateTariffPlan, updateUserRole } from "../admin/service.js";
 
 const errs = { 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse, 429: ErrorResponse };
 
@@ -23,6 +32,64 @@ export const adminRoutes: FastifyPluginAsyncZod<{ deps: AppDeps; runner?: JobRun
     async (req) => {
       await audit(deps.db, { userId: req.user!.id, action: "admin.overview", requestId: req.id, ip: req.ip });
       return overview(deps);
+    },
+  );
+
+  app.get(
+    "/api/admin/users",
+    {
+      ...gate,
+      schema: {
+        tags,
+        summary: "List all user accounts with roles and property counts",
+        response: { 200: AdminUsersListSchema, ...errs },
+      },
+    },
+    async (req) => {
+      await audit(deps.db, { userId: req.user!.id, action: "admin.users.list", requestId: req.id, ip: req.ip });
+      return listUsers(deps.db);
+    },
+  );
+
+  app.patch(
+    "/api/admin/users/:id/role",
+    {
+      ...gate,
+      schema: {
+        tags,
+        summary: "Update a user's role (promote or demote)",
+        params: z.object({ id: z.string().uuid() }),
+        body: UpdateRoleRequestSchema,
+        response: { 200: AdminUserSchema.omit({ propertiesCount: true }), ...errs },
+      },
+    },
+    async (req) => {
+      return updateUserRole(deps.db, req.user!.id, req.params.id, req.body.role);
+    },
+  );
+
+  app.patch(
+    "/api/admin/tariffs/:id",
+    {
+      ...gate,
+      schema: {
+        tags,
+        summary: "Update tariff verification timestamp or expiration date",
+        params: z.object({ id: z.string().uuid() }),
+        body: UpdateTariffRequestSchema,
+        response: {
+          200: z.object({
+            id: z.string(),
+            name: z.string(),
+            verifiedAt: z.string().nullable(),
+            effectiveTo: z.string().nullable(),
+          }),
+          ...errs,
+        },
+      },
+    },
+    async (req) => {
+      return updateTariffPlan(deps.db, req.user!.id, req.params.id, req.body);
     },
   );
 
@@ -74,3 +141,4 @@ export const adminRoutes: FastifyPluginAsyncZod<{ deps: AppDeps; runner?: JobRun
     },
   );
 };
+

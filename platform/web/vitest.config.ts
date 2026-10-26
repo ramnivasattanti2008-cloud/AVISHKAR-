@@ -8,6 +8,7 @@ export default defineConfig({
   // The time zone is pinned so date formatting and day boundaries are the same on every machine and in CI.
   test: {
     pool: "forks",
+    isolate: false,
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],

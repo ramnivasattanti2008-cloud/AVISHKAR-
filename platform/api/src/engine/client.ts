@@ -12,6 +12,8 @@ import {
   type SolarForecastRequest,
   TypicalDaysResponse,
   type TypicalDaysRequest,
+  DegradationResponse,
+  type DegradationRequest,
 } from "./schemas.js";
 
 export interface EngineOptions {
@@ -57,6 +59,10 @@ export class EngineClient {
 
   async loadForecast(req: LoadForecastRequest, ctx: Ctx = {}): Promise<LoadForecastResponse> {
     return this.call("POST", "/v1/load/forecast", req, LoadForecastResponse, ctx, this.o.timeoutMs);
+  }
+
+  async batteryDegradation(req: DegradationRequest, ctx: Ctx = {}): Promise<DegradationResponse> {
+    return this.call("POST", "/v1/battery/degradation", req, DegradationResponse, ctx, this.o.timeoutMs);
   }
 
   private async call<S extends z.ZodType>(method: "GET" | "POST", path: string, body: unknown, schema: S, ctx: Ctx, timeoutMs: number): Promise<z.output<S>> {

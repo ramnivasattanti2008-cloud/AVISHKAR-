@@ -233,3 +233,31 @@ export const TypicalDaysResponse = z.object({
   notes: z.array(z.string()),
 });
 export type TypicalDaysResponse = z.infer<typeof TypicalDaysResponse>;
+
+export interface DegradationRequest {
+  socKwh: number[];
+  capacityKwh: number;
+  nominalCycleLife?: number;
+  replacementCostInr?: number;
+  cellTemperatureCelsius?: number | null;
+  maxChargeKw?: number;
+  maxDischargeKw?: number;
+  operationalDays?: number;
+}
+
+export const DegradationResponse = z.object({
+  equivalentFullCycles: z.number(),
+  rainflowCycleCount: z.number(),
+  dodDistribution: z.record(z.string(), z.number()),
+  cycleCapacityLossPercent: z.number(),
+  calendarCapacityLossPercent: z.number(),
+  totalCapacityLossPercent: z.number(),
+  stateOfHealthPercent: z.number(),
+  wearCostInr: z.number(),
+  estimatedRemainingCycles: z.number(),
+  thermalDerateFactor: z.number(),
+  deratedMaxChargeKw: z.number(),
+  deratedMaxDischargeKw: z.number(),
+  summaryVerdict: z.string(),
+});
+export type DegradationResponse = z.infer<typeof DegradationResponse>;

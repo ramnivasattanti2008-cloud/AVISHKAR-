@@ -29,6 +29,7 @@ import {
   deleteBattery,
   deleteEv,
   deleteSolarSystem,
+  getBattery,
   listApplianceEvents,
   listAppliances,
   listBatteries,
@@ -45,6 +46,8 @@ import {
 } from "../assets/service.js";
 import { audit } from "../audit.js";
 import { requireUser } from "../auth/hooks.js";
+import { DegradationResponse } from "../engine/schemas.js";
+import { AppError } from "../errors.js";
 import { ErrorResponse, measured } from "../schemas.js";
 
 const P = z.object({ id: z.uuid() });
@@ -89,6 +92,50 @@ export const assetRoutes: FastifyPluginAsyncZod<{ deps: AppDeps; nilm?: NilmEngi
     reply.code(204);
     return null;
   });
+
+  app.get(
+    "/api/properties/:id/batteries/:assetId/degradation",
+    {
+      ...auth,
+      schema: {
+        tags: ["assets"],
+        summary: "Battery degradation analysis (ASTM E1049 Rainflow cycle counting, DoD wear, thermal derating)",
+        params: PA,
+        querystring: z.object({
+          cellTemperatureCelsius: z.coerce.number().min(-20).max(70).optional(),
+        }),
+        response: { 200: DegradationResponse, ...errs },
+      },
+    },
+    async (req) => {
+      if (!deps.engine) throw new AppError("ENGINE_UNAVAILABLE", "The planning engine is not available.");
+      const b = await getBattery(db, req.user!.id, req.params.id, req.params.assetId);
+      const latestPlan = await db.optimizationRun.findFirst({
+        where: { propertyId: req.params.id },
+        orderBy: { createdAt: "desc" },
+      });
+      const planJson = latestPlan?.plan as { schedule?: { batterySocKwh?: number[] } } | null;
+      const socKwh =
+        planJson?.schedule?.batterySocKwh && planJson.schedule.batterySocKwh.length >= 3
+          ? planJson.schedule.batterySocKwh
+          : [b.capacityKwh * 0.2, b.capacityKwh * 0.85, b.capacityKwh * 0.2];
+
+      const deg = await deps.engine.batteryDegradation(
+        {
+          socKwh,
+          capacityKwh: b.capacityKwh,
+          nominalCycleLife: b.entered.ratedCycles ?? 4000,
+          replacementCostInr: 30000,
+          cellTemperatureCelsius: req.query.cellTemperatureCelsius ?? 25,
+          maxChargeKw: b.maxChargeKw,
+          maxDischargeKw: b.maxDischargeKw,
+        },
+        { requestId: req.id },
+      );
+
+      return deg;
+    },
+  );
 
   app.get("/api/properties/:id/solar-systems", { ...auth, schema: { tags: ["assets"], summary: "Solar systems of a property", params: P, response: { 200: z.object({ solarSystems: z.array(SolarSystemSchema) }), ...errs } } }, async (req) => ({
     solarSystems: await listSolarSystems(db, req.user!.id, req.params.id),

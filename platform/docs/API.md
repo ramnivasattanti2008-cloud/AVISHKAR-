@@ -226,6 +226,9 @@ For administrators: the health of data, catalogue, models and providers, the bac
 | GET | `/api/admin/jobs` | The background jobs, when each is next due and what it did lately |
 | POST | `/api/admin/jobs/{name}/run` | Run one background job now |
 | GET | `/api/admin/overview` | Health of the data, the catalogue, the models and the providers: counts, and no one's readings |
+| PATCH | `/api/admin/tariffs/{id}` | Update tariff verification timestamp or expiration date |
+| GET | `/api/admin/users` | List all user accounts with roles and property counts |
+| PATCH | `/api/admin/users/{id}/role` | Update a user's role (promote or demote) |
 
 ### control
 
@@ -276,6 +279,7 @@ What a property has: batteries, solar systems, electric vehicles, appliances and
 | POST | `/api/properties/{id}/batteries` | Add a battery |
 | DELETE | `/api/properties/{id}/batteries/{assetId}` | Delete a battery |
 | PATCH | `/api/properties/{id}/batteries/{assetId}` | Change a battery |
+| GET | `/api/properties/{id}/batteries/{assetId}/degradation` | Analyze battery degradation using ASTM E1049 Rainflow cycle counting, DoD power-law, and Arrhenius thermal aging |
 | GET | `/api/properties/{id}/evs` | Electric vehicles of a property |
 | POST | `/api/properties/{id}/evs` | Add an electric vehicle |
 | DELETE | `/api/properties/{id}/evs/{assetId}` | Delete an electric vehicle |
