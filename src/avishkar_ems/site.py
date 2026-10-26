@@ -34,3 +34,8 @@ class SiteSpec:
     @property
     def one_way_eff(self) -> float:
         return self.round_trip_eff**0.5
+
+    @property
+    def inverter_kw(self) -> float:
+        """Inverter AC rating alias for ac_kw."""
+        return self.ac_kw
