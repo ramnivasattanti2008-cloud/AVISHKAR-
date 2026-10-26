@@ -23,7 +23,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 from avishkar_ems.household_module import (
@@ -38,7 +38,9 @@ ALLOWED_EXTENSIONS = {".txt", ".csv", ".xlsx", ".json", ".tsv"}
 
 def sanitize_and_validate_filename(filename: str) -> str:
     """Sanitizes filename against path traversal and validates permitted extensions."""
-    base_name = Path(filename).name
+    # Both separators and drive letters are stripped on every OS, so an upload named
+    # like a Windows path is reduced to its file name on the Linux server too.
+    base_name = PureWindowsPath(filename).name
     # Strip dangerous characters while preserving legitimate filenames
     clean_name = re.sub(r"[^\w\.\-]", "_", base_name)
     if not clean_name:

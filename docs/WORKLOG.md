@@ -2130,4 +2130,25 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 - Develop DLMS/COSEM (IS 15959) and Modbus TCP/RTU hardware bridges for real physical smart meters and inverters.
 - Provision cloud staging environment with automated WAL replication.
 
+## Entry 39 — 2026-10-26 — Upload filename sanitiser: Windows paths on Linux
+
+### What was done
+- `src/avishkar_ems/household_import.py` (`sanitize_and_validate_filename`): the base name was taken with `Path(filename).name`, which on Linux splits only on `/`. A Windows-style upload name such as `C:\Windows\System32\cmd.csv` kept its backslashes and came out as `C__Windows_System32_cmd.csv`. It now uses `PureWindowsPath(filename).name`, which treats both separators and drive letters the same way on every OS.
+- The two tests that expected `cmd.csv` now pass: `tests/avishkar_ems/test_security_audit.py::test_windows_path_traversal_sanitization` and `tests/avishkar_ems/test_phase22_independent_validation.py::test_iv10_independent_file_upload_and_traversal_defense`.
+
+### Evidence
+- `pytest tests/avishkar_ems -q` before the change: **2 failed, 463 passed, 2 skipped**. After: **465 passed, 2 skipped**.
+- `pytest platform/engine/tests -q` (engine requirements installed into the same environment): **414 passed**.
+- `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: **All checks passed**.
+- `python scripts/update_readme.py --check`: **exit 0**, "README.md results block is up to date". It also notes that code changed since `results/` was generated; `examples/run_demo.py` was not re-run.
+
+### What was NOT done
+- Did not re-run `examples/run_demo.py`, so `results/` was not regenerated.
+- A drive letter with no separator (`C:cmd.csv`) now gives `cmd.csv` on Linux too; this case has no test of its own.
+- Did not merge this line with the older line on `main`. Both changed `app/dashboard.py` (31 conflict blocks) and `src/avishkar_ems/battery_physics.py`, so the combination is a decision for the owner.
+
+### What is next
+- Decide how the two lines are combined before more work lands on either.
+- Remaining PARTIAL rows in `platform/STATUS.md`: the battery cycle limit (`maxCyclesPerDay` is reported, not enforced), a risk-aware objective, a re-plan trigger when a forecast changes, and the DLMS/COSEM and Modbus bridges.
+
 
