@@ -548,3 +548,26 @@ Executed by Platform / DevOps / Integration lead (Person A) on branch `feature/p
 
 Next: Commit platform changes to `feature/platform-devops-integration`, push, and submit PR.
 
+---
+
+## Entry 12: 2026-10-26: Fix failing `ci / python (push)` lint job
+
+Executed on branch `fix/phase-1-security-hardening` for PR #2.
+
+- **What failed (from GitHub Actions logs):**
+  - Workflow run: `39817463114`, job: `python` (`119959599737`) failed in the lint step.
+  - Root cause in logs: Ruff `I001` import-order violation at `src/avishkar_ems/monitor.py:3`.
+  - Evidence command (local): fetched job logs via MCP `get_job_logs` for job `119959599737`.
+
+- **What I changed:**
+  - Minimal, surgical lint-only fix in `src/avishkar_ems/monitor.py`: inserted one blank line between the stdlib import (`Enum`) and third-party imports (`numpy`, `pandas`) to satisfy Ruff import grouping.
+
+- **Validation evidence:**
+  - `~/.local/bin/ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix` → `All checks passed!`
+
+- **What I did not do:**
+  - Did not change runtime logic, behavior, or tests.
+  - Did not modify vendored `src/emhass/` code.
+
+- **Next:**
+  - Re-run CI; `ci / python (push)` should now pass the lint gate and proceed to test/readme steps.
