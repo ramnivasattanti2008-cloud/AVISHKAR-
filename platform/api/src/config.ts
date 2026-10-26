@@ -33,9 +33,9 @@ const Env = z.object({
   TRUST_PROXY: z
     .preprocess(
       (v) => (typeof v === "string" ? v.trim() : v),
-      z.union([z.enum(["true", "false"]), z.coerce.number().int().nonnegative()]).default("false"),
+      z.union([z.enum(["true", "false"]), z.string().regex(/^\d+$/, "TRUST_PROXY must be true, false, or a non-negative integer hop count")]).default("false"),
     )
-    .transform((v) => (v === "true" ? true : v === "false" ? false : Number(v))),
+    .transform((v) => (v === "true" ? true : v === "false" ? false : v)),
 
   /** Identifies this application to public providers (Nominatim and Overpass require it). Include a contact. */
   PROVIDER_USER_AGENT: z
