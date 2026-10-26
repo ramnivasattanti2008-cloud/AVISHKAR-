@@ -2145,7 +2145,7 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 ### What was NOT done
 - Did not re-run `examples/run_demo.py`, so `results/` was not regenerated.
 - A drive letter with no separator (`C:cmd.csv`) now gives `cmd.csv` on Linux too; this case has no test of its own.
-- Did not merge this line with the older line on `main`. Both changed `app/dashboard.py` (31 conflict blocks) and `src/avishkar_ems/battery_physics.py`, so the combination is a decision for the owner.
+- Did not merge this line with the older line on `main`. Both changed `app/dashboard.py` (14 conflict hunks in a default `git merge`) and `src/avishkar_ems/battery_physics.py`, so the combination is a decision for the owner.
 
 ### What is next
 - Decide how the two lines are combined before more work lands on either.
