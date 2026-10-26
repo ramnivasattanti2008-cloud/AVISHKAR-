@@ -1,15 +1,18 @@
 import { type ReactElement } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PROPERTY_ID, community, demoWorld, fakeApi, json, property, resilienceReport, today, vppSimulation } from "@/test/fixtures";
+import { PROPERTY_ID, adminAudit, adminJobs, adminOverview, community, demoWorld, fakeApi, json, property, resilienceReport, today, vppSimulation } from "@/test/fixtures";
 import { energyHealth, energyWaste } from "@/test/insight-fixtures";
 import { energyFutures } from "@/test/futures-fixtures";
 import { RULES_JSDOM_CANNOT_RUN, a11yViolations, describeViolations } from "@/test/a11y";
 import { AccountView } from "./account/AccountView";
+import { AdminView } from "./admin/AdminView";
 import { CommunityView } from "./community/CommunityView";
 import { FuturesView } from "./futures/FuturesView";
 import { HealthView } from "./insight/HealthView";
 import { PropertiesView } from "./PropertiesView";
+import { InstallationPlanner } from "./property/InstallationPlanner";
+import { PropertyComparisonView } from "./property/PropertyComparisonView";
 import { ResilienceView } from "./resilience/ResilienceView";
 import { TodayView } from "./today/TodayView";
 
@@ -112,6 +115,36 @@ const cases: { name: string; render: () => void; ready: () => Promise<unknown> }
       page(<AccountView />);
     },
     ready: () => screen.findByRole("heading", { name: "Your account and your data" }),
+  },
+  {
+    name: "Installation Planner",
+    render: () => {
+      stub([["GET", "/api/tariffs", () => json({ tariffs: [] })]]);
+      page(<InstallationPlanner id={PROPERTY_ID} />);
+    },
+    ready: () => screen.findByText(/Installation Sizing & Investment Planner/i),
+  },
+  {
+    name: "Property Comparison",
+    render: () => {
+      stub([["GET", "/api/properties", () => json({ properties: [property({ name: "Home" })] })]]);
+      page(<PropertyComparisonView />);
+    },
+    ready: () => screen.findByText(/Property Comparison Matrix/i),
+  },
+  {
+    name: "Admin Governance",
+    render: () => {
+      auth.user = { id: "a1", email: "admin@example.com", role: "ADMIN", displayName: "Admin" };
+      stub([
+        ["GET", "/api/admin/overview", () => json(adminOverview())],
+        ["GET", "/api/admin/jobs", () => json(adminJobs())],
+        ["GET", "/api/admin/audit", () => json(adminAudit())],
+        ["GET", "/api/admin/users", () => json({ users: [{ id: "u1", email: "user@example.com", role: "USER", displayName: "User", createdAt: "2026-10-01T00:00:00Z", propertiesCount: 1 }] })],
+      ]);
+      page(<AdminView />);
+    },
+    ready: () => screen.findByRole("region", { name: "Accounts and data" }),
   },
 ];
 

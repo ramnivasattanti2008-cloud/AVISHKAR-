@@ -60,11 +60,13 @@ These are real gaps. None is hidden by the code; several are the owner's decisio
   does not leak this (same message and same cost for an unknown email), but registration does.
 - **No account lockout.** Brute force is slowed only by the per-client rate limit (10 a minute on login) and argon2's cost.
   Behind a proxy, `TRUST_PROXY=true` must be set or every client shares one address.
-- **The administrator role is granted from the command line only** (`pnpm -C platform/api db:make-admin <email>`, audited as
-  `admin.grant`): no route can make an administrator, and a registration always makes an ordinary user (both tested). The
-  admin routes (`/api/admin/*`) answer 403 to anyone else. An administrator sees counts and aggregates, never another person's
-  readings, equipment or plans, but the audit log they can read does carry email addresses and IP addresses. There is one
-  administrator role with no finer permissions, no second-person approval for anything, and no two-factor sign-in for it.
+- **The initial administrator role is granted from the command line** (`pnpm -C platform/api db:make-admin <email>`, audited as
+  `admin.grant`). Once an administrator exists, user role promotion and demotion between USER and ADMIN can be managed
+  via `PATCH /api/admin/users/:id/role` (audited as `admin.user.role_change`), with server-side protection preventing self-demotion.
+  The admin routes (`/api/admin/*`) answer 403 to non-administrators. Administrators can list users (`GET /api/admin/users`) and
+  verify unverified tariff orders (`PATCH /api/admin/tariffs/:id`, audited as `admin.tariff.update`). An administrator sees
+  counts and aggregates, never another person's private readings, equipment or plans. The audit log they read records emails,
+  actions, and IP addresses.
 - **`/api/system/health` is public** and shows provider names, call counts, latencies and the last error text of each public
   provider. It contains no secrets, but it is information about the deployment; restrict it at the proxy if that matters.
 - **No dependency or container scanning in CI**, and no signed releases. Both audits were run by hand on 2026-10-09, and the

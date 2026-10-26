@@ -196,6 +196,15 @@ if (signedIn) {
     if (!/not\s+predictions/i.test(text)) throw new Error("the page does not say the days are not predictions");
   });
 
+  await visit("/properties/compare", "signed in: the property comparison view renders the portfolio matrix", async (page) => {
+    await page.getByText(/Property Comparison Matrix/i).first().waitFor({ state: "visible", timeout: 15_000 });
+  });
+
+  await visit(`/property/${propertyId}/planner`, "signed in: the installation planner renders sizing and subsidy calculations", async (page) => {
+    await page.getByText(/Installation Sizing & Investment Planner/i).first().waitFor({ state: "visible", timeout: 15_000 });
+    await page.getByText(/MNRE Benchmark Model/i).first().waitFor({ state: "visible", timeout: 10_000 });
+  });
+
   // Drawing a roof is the one thing in the product that can only be done with a mouse on a map, so it has never had a test.
   await visit(`/property/${propertyId}`, "signed in: a roof outline can be drawn on the map and is saved", async (page) => {
     const canvas = page.locator("canvas.maplibregl-canvas");

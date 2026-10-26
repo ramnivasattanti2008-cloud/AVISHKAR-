@@ -2244,4 +2244,38 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 - Provision Docker/container registry and remote PostGIS instance when deployment credentials are provided.
 
 
+## Entry 42 — 2026-10-27 — Accessibility (a11y) Gate Expansion, End-to-End Browser Journey Suite, and Security Review
+
+### What was done
+1. **Automated Accessibility (axe-core) Audit Gate Expansion (`platform/web/src/components/a11y.test.tsx`)**:
+   - Expanded axe-core accessibility suite from 7 views to 10 views by adding `InstallationPlanner`, `PropertyComparisonView`, and `AdminView`.
+   - Verified that all 10 views pass automated accessibility audits with 0 axe-core violations (12 tests total passing).
+   - Fixed defensive null guard in `platform/web/src/components/property/usePropertyData.ts` ensuring `state && state.id === id` evaluates safely if `id` is uninitialized.
+
+2. **Browser End-to-End Walk Extension (`platform/web/scripts/browser.mjs`)**:
+   - Added automated signed-in browser walk coverage for `/properties/compare` (verifying multi-property portfolio comparison matrix renders).
+   - Added automated browser walk coverage for `/property/${propertyId}/planner` (verifying sizing inputs, PM Surya Ghar subsidy schedules, and LCOE/NPV calculations).
+
+3. **Security Architecture Documentation Updates (`platform/docs/SECURITY.md`)**:
+   - Documented the new administrative endpoints for user listing (`GET /api/admin/users`) and role promotion/demotion (`PATCH /api/admin/users/:id/role`).
+   - Documented server-side protection preventing self-demotion and verified that all transitions generate immutable audit logs (`admin.user.role_change`, `admin.tariff.update`).
+
+### Evidence
+- `pnpm -C platform/web exec vitest run src/components/a11y.test.tsx`: **12 passed across 1 test file in 3.62s** (Exit Code 0).
+- `pnpm -C platform/web test`: **43 test files passed, 358 passed in 49.83s** (Exit Code 0).
+- `pnpm -C platform/api exec vitest run test/openapi.test.ts`: **3 passed in 0.99s** (Exit Code 0).
+- `pnpm -C platform -r typecheck`: **Clean (0 errors across @avishkar/api and @avishkar/web)**.
+- `pnpm -C platform -r lint`: **Clean (0 errors across @avishkar/api and @avishkar/web)**.
+- `ruff check platform/engine src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: **All checks passed (0 errors)**.
+
+### What was NOT done
+- Did not perform live container execution (requires external Docker host).
+- Did not connect real-world physical inverter hardware or DLMS/COSEM smart meters; control remains advisory.
+- Did not edit vendored code in `src/emhass/`.
+
+### What is next
+- Final release tagging and submission verification.
+
+
+
 

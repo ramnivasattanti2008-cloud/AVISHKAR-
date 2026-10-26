@@ -56,7 +56,7 @@ export function usePropertyData(id: string): PropertyData {
   }, [id, version]);
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);
-  const current = state?.id === id ? state.data : null;
+  const current = state && state.id === id ? state.data : null;
   return {
     property: current?.property ?? null,
     twin: twinOverride ?? current?.twin ?? null,
