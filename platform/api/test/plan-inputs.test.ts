@@ -162,6 +162,20 @@ describe("aggregateBatteries", () => {
     expect(a.input.chargeEfficiency).toBeCloseTo((0.9 * 10 + 0.98 * 30) / 40, 5);
     expect(a.notes.join(" ")).toContain("2 batteries are planned as one store");
   });
+
+  it("passes the owner's cycle limit on: the store has one only when every battery has one, weighted by capacity", () => {
+    expect(aggregateBatteries([bat()], now, null)!.input.maxCyclesPerDay).toBeNull();
+    const one = aggregateBatteries([bat({ maxCyclesPerDay: 1 })], now, null)!;
+    expect(one.input.maxCyclesPerDay).toBe(1);
+    expect(one.notes.join(" ")).toContain("cycle limit you entered");
+    // 10 kWh at 1 cycle a day allows 10 kWh a day and 30 kWh at 0.5 allows 15: 25 kWh over 40 kWh is 0.625 cycles
+    const two = aggregateBatteries([bat({ maxCyclesPerDay: 1 }), bat({ id: "c", capacityKwh: 30, maxCyclesPerDay: 0.5 })], now, null)!;
+    expect(two.input.maxCyclesPerDay).toBeCloseTo(0.625, 6);
+    // with one battery unlimited the store has no limit that can honestly be stated
+    const partial = aggregateBatteries([bat({ maxCyclesPerDay: 1 }), bat({ id: "c", capacityKwh: 30 })], now, null)!;
+    expect(partial.input.maxCyclesPerDay).toBeNull();
+    expect(partial.notes.join(" ")).toContain("Only some batteries have a cycle limit");
+  });
 });
 
 const ev = (over: Partial<Ev> = {}): Ev =>

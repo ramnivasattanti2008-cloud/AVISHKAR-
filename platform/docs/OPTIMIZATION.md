@@ -85,4 +85,4 @@ climatology scaled to a clear-sky day. This ignores cloudy-day variability, whic
 - One battery (several are summed), one vehicle, one run per appliance per plan.
 - Plans are not rolling: nothing re-plans when a forecast changes.
 - No net-metering settlement and no demand charge.
-- No battery degradation model beyond the owner's wear cost per kWh; no cycle limit.
+- No battery degradation model beyond the owner's wear cost per kWh. The owner's `maxCyclesPerDay`, when every installed battery has one, caps the energy drawn from the store over the horizon; the optimiser and the independent check both enforce it.

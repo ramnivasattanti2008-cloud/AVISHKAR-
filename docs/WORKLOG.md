@@ -2151,4 +2151,29 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 - Decide how the two lines are combined before more work lands on either.
 - Remaining PARTIAL rows in `platform/STATUS.md`: the battery cycle limit (`maxCyclesPerDay` is reported, not enforced), a risk-aware objective, a re-plan trigger when a forecast changes, and the DLMS/COSEM and Modbus bridges.
 
+## Entry 40 — 2026-10-26 — Battery cycle limit (`maxCyclesPerDay`) enforced in the optimiser
+
+### What was done
+- The owner's `maxCyclesPerDay` (already stored on each battery, 0.1 to 10) now reaches the engine. `aggregateBatteries` (`platform/api/src/plan/service.ts`) passes it on. A store of several batteries gets the capacity-weighted average, which is exactly the sum of their allowances, and only when every installed battery has a limit; otherwise none is applied and the notes say so.
+- Engine (`platform/engine/avishkar_engine`): `BatteryIn.max_cycles_per_day`, optional, `maxCyclesPerDay` on the wire. The optimiser adds one row: the energy drawn out of the battery over the horizon may not exceed `maxCyclesPerDay x capacity x hours / 24`, the same quantity `battery_cycles` reports. The independent check `validate()` refuses a plan that breaks it.
+- Tests: `platform/engine/tests/test_cycle_limit.py` (17). Hand-solved: a two-cycle day costs 60 unlimited, 150 with a one-cycle limit, 240 with no control; a generous limit leaves the plan unchanged; the allowance scales with the horizon (half a day, 5 kWh); the validator refuses the unlimited plan checked against a limit; 12 seeded random days stay within the allowance. `platform/api/test/plan-inputs.test.ts` gained one case (the store's limit).
+- `platform/engine/openapi.json` regenerated with `scripts/export_openapi.py`; the only change is the new field.
+- Docs: `platform/STATUS.md` (summary row 4 and row 25) and `platform/docs/OPTIMIZATION.md` no longer say there is no cycle limit.
+
+### Evidence
+- `pytest platform/engine/tests -q`: **431 passed** (414 before, plus 17).
+- `ruff check platform/engine --no-fix`: **All checks passed**.
+- `pnpm -C api typecheck`: exit 0. `pnpm -C api lint`: exit 0.
+- `vitest run test/plan-inputs.test.ts`: **37 passed** (36 before, plus 1).
+- `pnpm -C api test`: **520 passed, 393 skipped** across 38 files run and 25 skipped. The skips are the PostGIS integration files, because `DATABASE_URL_TEST` is not set on this machine.
+
+### What was NOT done
+- The PostGIS integration tests (`plan.test.ts` and the rest) were not run, so no plan has been checked end to end through the database with a limit set. The wiring is covered by the pure aggregation test and the engine tests.
+- A cycle limit is a throughput cap over the horizon, not a degradation curve: wear is still one cost per kWh drawn.
+- The what-if simulator passes no limit for a battery added in a scenario (`scenarios/service.ts`); the owner has not stated one for a hypothetical battery.
+
+### What is next
+- A degradation curve (capacity fade with throughput), if the owner supplies a source for it.
+- Remaining PARTIAL rows in `platform/STATUS.md`: a risk-aware objective, a re-plan trigger when a forecast changes, and the DLMS/COSEM and Modbus bridges.
+
 

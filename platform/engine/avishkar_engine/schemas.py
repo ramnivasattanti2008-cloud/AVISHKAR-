@@ -43,6 +43,12 @@ class BatteryIn(Wire):
         default=False,
         description="The horizon starts and ends at the same charge, which the planner chooses: for a typical day that repeats. initialSocKwh and terminalSocKwh are then not used (send any value in range).",
     )
+    max_cycles_per_day: float | None = Field(
+        default=None,
+        ge=0.1,
+        le=10,
+        description="Most full cycles a day the battery may do: the energy drawn out of it over the horizon is capped at this many capacities per day. None: no limit.",
+    )
 
     @model_validator(mode="after")
     def _ordered(self) -> BatteryIn:

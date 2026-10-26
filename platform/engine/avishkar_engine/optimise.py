@@ -235,6 +235,10 @@ def optimise(req: OptimiseRequest) -> OptimiseResponse:
         else:
             terminal = b.terminal_soc_kwh if b.terminal_soc_kwh is not None else b.initial_soc_kwh
             m.row([(L.soc[n - 1], 1.0), (L.terminal_short, 1.0)], float(terminal), np.inf)
+    if b and b.max_cycles_per_day is not None:
+        # the cycle count is the energy drawn out of the battery over the horizon in units of its capacity: cap it at the allowance
+        allowance = b.max_cycles_per_day * b.capacity_kwh * n * dt / 24.0
+        m.row([(d, dt / b.discharge_efficiency) for d in L.dis], -np.inf, allowance)
     if req.ev:
         ev = req.ev
         for t in range(n):
@@ -506,6 +510,8 @@ def validate(req: OptimiseRequest, s: Schedule) -> Validation:
             problems.append("a battery power limit is exceeded")
         if np.any((chg > 1e-6) & (dis > 1e-6)):
             problems.append("the battery charges and discharges in the same step")
+        if b.max_cycles_per_day is not None and float(dis.sum()) * dt / b.discharge_efficiency > b.max_cycles_per_day * b.capacity_kwh * n * dt / 24.0 + 1e-5:
+            problems.append("the battery is cycled more than its maxCyclesPerDay allows over the horizon")
     elif np.any(chg > 1e-9) or np.any(dis > 1e-9):
         problems.append("a battery is used but none exists")
     if req.ev:

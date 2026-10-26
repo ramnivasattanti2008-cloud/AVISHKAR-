@@ -86,6 +86,13 @@ export function aggregateBatteries(rows: Battery[], now: Date, startSocPercent: 
     notes.push("Battery efficiency, usable range and wear cost use the documented defaults where you did not enter them.");
   }
 
+  // The store is one battery to the optimiser, so its allowance is the batteries' allowances added up (capacity times cycles a day):
+  // the capacity-weighted average limit. It applies only when every installed battery has one.
+  const cycleLimited = installed.every((b) => b.maxCyclesPerDay !== null);
+  const maxCyclesPerDay = cycleLimited ? round(installed.reduce((a, b) => a + b.maxCyclesPerDay! * b.capacityKwh, 0) / cap, 6) : null;
+  if (cycleLimited) notes.push(`The plan keeps the store within the cycle limit you entered: ${round(maxCyclesPerDay!, 2)} full cycles a day on average.`);
+  else if (installed.some((b) => b.maxCyclesPerDay !== null)) notes.push("Only some batteries have a cycle limit, so the plan applies none to the store.");
+
   let initial: number;
   let basis: BatteryPlan["startBasis"];
   const fresh = installed.every((b) => b.currentSoc !== null && b.currentSocAt !== null && now.getTime() - b.currentSocAt.getTime() <= 24 * HOUR_MS);
@@ -116,6 +123,7 @@ export function aggregateBatteries(rows: Battery[], now: Date, startSocPercent: 
       initialSocKwh: round(clamped, 6),
       terminalSocKwh: round(clamped, 6),
       wearInrPerKwh: round(wavg((i) => dtos[i]!.effective.wearInrPerKwh.value ?? DEFAULTS.battery.wearInrPerKwh.value), 4),
+      maxCyclesPerDay,
     },
     usableKwh: round(maxKwh - minKwh, 3),
     capacityKwh: cap,

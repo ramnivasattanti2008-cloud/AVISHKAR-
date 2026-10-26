@@ -28,6 +28,8 @@ export interface OptimiseRequest {
     wearInrPerKwh?: number;
     /** The horizon starts and ends at the same charge, which the planner chooses (a typical day that repeats). */
     cyclic?: boolean;
+    /** Most full cycles a day the battery may do: the energy drawn out of it over the horizon is capped at this many capacities a day. */
+    maxCyclesPerDay?: number | null;
   } | null;
   grid?: { importLimitKw?: number | null; exportLimitKw?: number | null; outages?: { startStep: number; endStep: number }[] };
   criticalKw?: number;
