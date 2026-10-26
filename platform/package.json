@@ -1,0 +1,13 @@
+{
+  "name": "avishkar-platform",
+  "private": true,
+  "description": "AVISHKAR: location-aware energy intelligence platform (API, web, engine). See SPEC.md, ARCHITECTURE.md, STATUS.md.",
+  "packageManager": "pnpm@11.25.0",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm -r --if-present test",
+    "build": "pnpm -r --if-present build"
+  }
+}

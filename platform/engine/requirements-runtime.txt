@@ -1,0 +1,15 @@
+# What the AVISHKAR engine needs to RUN (not to be tested): the imports of platform/engine/avishkar_engine, at the versions the whole
+# EMS environment (../../requirements-lock.txt) was verified with. The engine does not import the EMS or EMHASS, so a deployment
+# image installs this and not the lock file. To run its tests as well, add: pytest==9.1.1 and httpx==0.28.1.
+#
+# Checked by installing exactly this list into an empty virtual environment and running the engine's tests (WORKLOG entry 10).
+fastapi==0.142.2
+uvicorn==0.30.6
+starlette==1.7.0
+pydantic==2.13.5
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.18.1
+scikit-learn==1.9.1
+pvlib==0.16.1
+highspy==1.15.1

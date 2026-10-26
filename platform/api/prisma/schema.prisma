@@ -1,0 +1,865 @@
+// AVISHKAR platform database. PostgreSQL + PostGIS.
+// Conventions: snake_case tables and columns (SQL and PostGIS queries stay readable), uuid primary keys,
+// timestamptz everywhere, geometry columns declared Unsupported(...) because Prisma has no spatial type; spatial
+// reads and writes go through $queryRaw (see src/properties/geo.ts). Triggers keep geometry in step with lat/lon.
+// Migrations are SQL files in prisma/migrations and may contain things Prisma cannot express (extension, triggers).
+// Tables are added phase by phase (platform/ARCHITECTURE.md section 4); this file is the contract.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+/// How a value should be read by a person. LIVE is only allowed when the provider timestamp is fresh (D7).
+enum DataStatus {
+  LIVE
+  UPDATED
+  FORECAST
+  ESTIMATED
+  SIMULATED
+  DEMO
+  /// Looked-up reference data that does not vary with time (geocoding, building footprints, policy tables).
+  REFERENCE
+  UNAVAILABLE
+}
+
+/// ANALYSIS: the provider's current model analysis (what the weather is now, per its model; not a station reading).
+/// FORECAST: a value the provider predicted at fetch time. HISTORICAL: reanalysis of the past (for evaluation).
+enum ObservationKind {
+  ANALYSIS
+  FORECAST
+  HISTORICAL
+}
+
+/// How complete the inputs behind an Energy Twin are (not a statistical confidence).
+enum DataQuality {
+  MINIMAL
+  PARTIAL
+  FULL
+}
+
+enum GeometryKind {
+  BUILDING_FOOTPRINT
+  USER_POLYGON
+}
+
+enum ConsumerType {
+  RESIDENTIAL
+  COMMERCIAL
+  INDUSTRIAL
+  AGRICULTURAL
+  OTHER
+}
+
+enum FixedChargeBasis {
+  PER_CONNECTION_MONTH
+  PER_KW_MONTH
+}
+
+/// Where a plan's export credit came from. ASSUMPTION means the source order did not state one and a value was assumed.
+enum ExportRateBasis {
+  REGULATOR_ORDER
+  USER_ENTERED
+  ASSUMPTION
+  NONE
+}
+
+enum MeteringMode {
+  NET_METERING
+  NET_BILLING
+  GROSS_METERING
+  NONE
+  UNKNOWN
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(USER)
+  displayName  String?  @map("display_name")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Soft delete marker: set when the owner asks for deletion; a job erases the data (spec section 50).
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  sessions    Session[]
+  properties  Property[]
+  auditLogs   AuditLog[]
+  tariffPlans TariffPlan[]
+  jobRuns     JobRun[]
+  controlSettings ControlSetting[]
+  controlDecisions ControlProposal[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// SHA-256 of the opaque cookie token. The token itself is never stored.
+  tokenHash String    @unique @map("token_hash")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  userAgent String?   @map("user_agent")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Property {
+  id        String   @id @default(uuid()) @db.Uuid
+  ownerId   String   @map("owner_id") @db.Uuid
+  name      String
+  latitude  Float
+  longitude Float
+  /// Maintained from latitude/longitude by a trigger (see migration). Read with $queryRaw.
+  location  Unsupported("geometry(Point,4326)")?
+  address   String?
+  /// Where the coordinates came from: a PositioningProvider name (browser-geolocation, manual, geocoded, imported, map-click).
+  positionSource String  @map("position_source")
+  /// Horizontal accuracy in metres when the source reports one.
+  positionAccuracyM Float? @map("position_accuracy_m")
+  /// True for deterministic demo properties; they are never returned by live queries (spec sections 43, 74).
+  isDemo    Boolean  @default(false) @map("is_demo")
+  /// The tariff the owner chose for this property (a curated plan or one they entered). Cleared if the plan is deleted.
+  tariffPlanId String? @map("tariff_plan_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  owner      User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tariffPlan TariffPlan?        @relation(fields: [tariffPlanId], references: [id], onDelete: SetNull)
+  geometries PropertyGeometry[]
+  twins      EnergyTwin[]
+  batteries  Battery[]
+  solarSystems SolarSystem[]
+  evs        Ev[]
+  appliances Appliance[]
+  energyImports      EnergyImport[]
+  energyObservations EnergyObservation[]
+  energyDna  EnergyDna[]
+  forecastRuns ForecastRun[]
+  optimizationRuns OptimizationRun[]
+  scenarios  Scenario[]
+  controlSetting ControlSetting?
+  controlProposals ControlProposal[]
+
+  @@index([ownerId])
+  @@index([tariffPlanId])
+  @@index([location], type: Gist)
+  @@map("properties")
+}
+
+model PropertyGeometry {
+  id         String       @id @default(uuid()) @db.Uuid
+  propertyId String       @map("property_id") @db.Uuid
+  kind       GeometryKind
+  geom       Unsupported("geometry(Polygon,4326)")
+  areaM2     Float        @map("area_m2")
+  /// Provider that supplied it (for example overpass-osm) or "user".
+  source     String
+  sourceRef  String?      @map("source_ref")
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([geom], type: Gist)
+  @@map("property_geometry")
+}
+
+/// One row per observation, forecast or result that the platform stores or serves (spec section 40).
+model DataProvenance {
+  id                String     @id @default(uuid()) @db.Uuid
+  /// What this row describes, for example weather_observation, solar_forecast, tariff, simulation_run.
+  entityType        String     @map("entity_type")
+  entityId          String?    @map("entity_id")
+  dataType          String     @map("data_type")
+  status            DataStatus
+  provider          String
+  source            String
+  latitude          Float?
+  longitude         Float?
+  observedAt        DateTime?  @map("observed_at") @db.Timestamptz(3)
+  generatedAt       DateTime   @default(now()) @map("generated_at") @db.Timestamptz(3)
+  quality           Float?
+  confidence        Float?
+  processingVersion String     @map("processing_version")
+  modelVersion      String?    @map("model_version")
+  detail            Json?
+
+  @@index([entityType, entityId])
+  @@index([provider, generatedAt])
+  @@map("data_provenance")
+}
+
+/// Append-only (a trigger rejects UPDATE and DELETE). Admin changes and automated actions are recorded here.
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  userId     String?  @map("user_id") @db.Uuid
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  requestId  String?  @map("request_id")
+  ip         String?
+  detail     Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+/// Outcome and latency of every external provider call (spec sections 69 and 72).
+model ProviderCall {
+  id         BigInt   @id @default(autoincrement())
+  provider   String
+  operation  String
+  ok         Boolean
+  statusCode Int?      @map("status_code")
+  latencyMs  Int       @map("latency_ms")
+  error      String?
+  requestId  String?   @map("request_id")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([provider, createdAt])
+  @@map("provider_calls")
+}
+
+/// Shared TTL cache for expensive provider responses (spec section 70). Survives restarts and is shared with workers.
+model CacheEntry {
+  key       String   @id
+  provider  String
+  value     Json
+  storedAt  DateTime @default(now()) @map("stored_at") @db.Timestamptz(3)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("cache_entries")
+}
+
+/// Weather values as issued, kept per fetch so forecast error can be measured against what actually happened later
+/// (spec sections 13, 38, 39). Keyed by a 0.05 degree cell (about 5 km), not by property, so neighbours share rows.
+model WeatherObservation {
+  id        BigInt          @id @default(autoincrement())
+  provider  String
+  /// round(latitude * 20) and round(longitude * 20): a 0.05 degree grid cell.
+  latCell   Int             @map("lat_cell")
+  lonCell   Int             @map("lon_cell")
+  variable  String
+  kind      ObservationKind
+  /// The instant the value refers to (UTC).
+  validAt   DateTime        @map("valid_at") @db.Timestamptz(3)
+  value     Float
+  unit      String
+  /// When this platform fetched it: the forecast "issue time" for FORECAST rows.
+  fetchedAt DateTime        @map("fetched_at") @db.Timestamptz(3)
+
+  @@unique([provider, latCell, lonCell, variable, kind, validAt, fetchedAt])
+  @@index([latCell, lonCell, variable, validAt])
+  @@index([fetchedAt])
+  @@map("weather_observations")
+}
+
+/// One Sentinel-2 (or other) acquisition seen over a place. Metadata only; no imagery is stored (spec section 11).
+model SatelliteObservation {
+  id               String    @id @default(uuid()) @db.Uuid
+  provider         String
+  /// The catalogue's own id for the scene.
+  sceneId          String    @map("scene_id")
+  satellite        String
+  sensor           String
+  acquiredAt       DateTime  @map("acquired_at") @db.Timestamptz(3)
+  processedAt      DateTime? @map("processed_at") @db.Timestamptz(3)
+  cloudPercent     Float?    @map("cloud_percent")
+  /// GeoJSON polygon of the scene footprint.
+  footprint        Json
+  source           String
+  processingStatus String    @map("processing_status")
+  thumbnailUrl     String?   @map("thumbnail_url")
+  fetchedAt        DateTime  @default(now()) @map("fetched_at") @db.Timestamptz(3)
+
+  @@unique([provider, sceneId])
+  @@index([acquiredAt])
+  @@map("satellite_observations")
+}
+
+/// A versioned snapshot of what AVISHKAR knows about a property (spec section 8). Every analysis or major data change adds
+/// a version; old versions are kept. Scalar results are columns; the lists are short documentation of where they came from.
+model EnergyTwin {
+  id         String      @id @default(uuid()) @db.Uuid
+  propertyId String      @map("property_id") @db.Uuid
+  version    Int
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  /// Why this version was made: analyze, geometry-added, ...
+  reason     String
+  dataQuality DataQuality @map("data_quality")
+  /// Weighted share of the inputs for a complete twin that are available, 0..1. See confidence_basis.
+  confidence Float
+  confidenceBasis Json   @map("confidence_basis")
+  latitude   Float
+  longitude  Float
+  elevationM Float?      @map("elevation_m")
+
+  geometryKind       GeometryKind? @map("geometry_kind")
+  roofAreaM2         Float?        @map("roof_area_m2")
+  usableRoofAreaM2   Float?        @map("usable_roof_area_m2")
+  solarCapacityKwEstimate Float?   @map("solar_capacity_kw_estimate")
+
+  ghiKwhM2Day        Float? @map("ghi_kwh_m2_day")
+  clearSkyKwhM2Day   Float? @map("clear_sky_kwh_m2_day")
+  clearnessIndex     Float? @map("clearness_index")
+  yieldKwhPerKwpDay  Float? @map("yield_kwh_per_kwp_day")
+  estimatedDailyGenerationKwh Float? @map("estimated_daily_generation_kwh")
+  forecastNext24hGhiKwhM2     Float? @map("forecast_next_24h_ghi_kwh_m2")
+  forecastNext24hKwhPerKwp    Float? @map("forecast_next_24h_kwh_per_kwp")
+
+  satelliteObservationId String? @map("satellite_observation_id") @db.Uuid
+
+  /// [{ provider, dataType, status, ok, at, note }]: every source tried, including the ones that failed.
+  sources     Json
+  /// [{ key, value, unit, rationale }]: every assumption that went into an estimate.
+  assumptions Json
+  /// [{ what, reason }]: things the twin cannot say yet and why.
+  unavailable Json
+
+  /// The tariff in force when this version was built, and a copy of what was known about it then (a plan can be edited or
+  /// deleted later; the snapshot keeps the version honest).
+  tariffPlanId   String? @map("tariff_plan_id") @db.Uuid
+  tariffSnapshot Json?   @map("tariff_snapshot")
+
+  /// Mean daily consumption from the owner's imported meter data when this version was built, and the Energy DNA it came from.
+  meanDailyLoadKwh Float?   @map("mean_daily_load_kwh")
+  energyDnaId      String?  @map("energy_dna_id") @db.Uuid
+  /// What the owner had entered when this version was built: batteries, solar systems, EVs, appliances (a copy, like the tariff).
+  assetsSnapshot   Json?    @map("assets_snapshot")
+
+  property   Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tariffPlan TariffPlan? @relation(fields: [tariffPlanId], references: [id], onDelete: SetNull)
+
+  @@unique([propertyId, version])
+  @@map("energy_twins")
+}
+
+/// An electricity tariff (spec section 22). Curated rows (owner_id null, seed_key set) come from regulator orders recorded in
+/// data/tariffs with their source text; a user can enter their own, which only they can see. Never one universal tariff.
+model TariffPlan {
+  id       String  @id @default(uuid()) @db.Uuid
+  /// Stable key of a curated row ("curated:shop-pune") so reseeding updates instead of duplicating. Null for user rows.
+  seedKey  String? @unique @map("seed_key")
+  /// Null for curated plans (visible to everyone); the owner for plans a user entered.
+  ownerId  String? @map("owner_id") @db.Uuid
+  name     String
+  /// ISO 3166-2:IN code without the country prefix (MH, UP, RJ, ...).
+  state    String?
+  discom   String?
+  category String?
+  consumerType ConsumerType @map("consumer_type")
+
+  /// [{ startHour, endHour, rate }] in INR/kWh, local time, end exclusive; together they cover all 24 hours (a block may wrap midnight).
+  touBlocks Json @map("tou_blocks")
+  /// [{ upToKwhPerMonth: number | null, rate }] telescopic slabs, last one open-ended; null when the plan has none. Not combined with ToD.
+  slabs     Json?
+
+  fixedChargeInr   Float?            @map("fixed_charge_inr")
+  fixedChargeBasis FixedChargeBasis? @map("fixed_charge_basis")
+  exportRate       Float?            @map("export_rate")
+  exportRateBasis  ExportRateBasis   @default(NONE) @map("export_rate_basis")
+  meteringMode     MeteringMode      @default(UNKNOWN) @map("metering_mode")
+
+  /// Citation of the order or bill the numbers came from, in plain words.
+  source        String
+  sourceUrl     String?   @map("source_url")
+  tariffYear    String?   @map("tariff_year")
+  effectiveFrom DateTime? @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+  verifiedAt    DateTime? @map("verified_at") @db.Timestamptz(3)
+  /// Plain-language caveats (string[]).
+  notes         Json      @default("[]")
+  /// Values other parts of the platform use that are not part of the bill: p2p charges, shortfall penalty.
+  extras        Json?
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  owner      User?        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  properties Property[]
+  twins      EnergyTwin[]
+
+  @@index([state, consumerType])
+  @@index([ownerId])
+  @@map("tariff_plans")
+}
+
+/// A policy or programme rule as configuration (spec sections 23 and 24): never a constant in code. Each row says where it was
+/// read, when it was checked, and from when to when it applies.
+model PolicyRule {
+  id        String  @id @default(uuid()) @db.Uuid
+  /// Stable key so reseeding updates instead of duplicating ("PM_SURYA_GHAR:residential_cfa:IN").
+  seedKey   String  @unique @map("seed_key")
+  program   String
+  ruleKey   String  @map("rule_key")
+  /// "IN" for national rules, otherwise a state code.
+  region    String
+  /// Who the rule applies to: RESIDENTIAL, GHS_RWA, ...
+  appliesTo String  @map("applies_to")
+  /// The rule itself (tiers, caps, limits), in the shape its engine reads.
+  rule      Json
+  /// The rule as the source states it, kept verbatim for display.
+  statedAs  String? @map("stated_as")
+  source    String
+  sourceUrl String? @map("source_url")
+  effectiveFrom DateTime? @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+  verifiedAt    DateTime? @map("verified_at") @db.Timestamptz(3)
+  /// Conditions and caveats (string[]).
+  notes     Json    @default("[]")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([program, region])
+  @@map("policy_rules")
+}
+
+enum AssetStatus {
+  /// Installed and in use.
+  EXISTING
+  /// Being considered: used in what-if runs, never in the plan for today.
+  PLANNED
+}
+
+/// The class of an appliance for backup and scheduling (spec section 27): the optimiser must preserve CRITICAL loads.
+enum AppliancePriority {
+  CRITICAL
+  IMPORTANT
+  FLEXIBLE
+  DISCRETIONARY
+}
+
+enum ApplianceEventSource {
+  USER_LOGGED
+  NILM_ESTIMATE
+  METER_DERIVED
+}
+
+/// A home or business battery (spec section 25). Only what the owner states is stored; blank efficiency and SOC limits are
+/// filled with labelled defaults when read, never written here, so what the person entered stays distinguishable.
+model Battery {
+  id         String      @id @default(uuid()) @db.Uuid
+  propertyId String      @map("property_id") @db.Uuid
+  name       String
+  status     AssetStatus @default(EXISTING)
+  capacityKwh      Float @map("capacity_kwh")
+  maxChargeKw      Float @map("max_charge_kw")
+  maxDischargeKw   Float @map("max_discharge_kw")
+  /// 0..1, one way. Null means not stated: the documented default applies and is labelled an assumption.
+  chargeEfficiency    Float? @map("charge_efficiency")
+  dischargeEfficiency Float? @map("discharge_efficiency")
+  /// State-of-charge limits as fractions of nominal capacity: below min is unusable, above max is not used, reserve is kept for backup.
+  minSoc     Float? @map("min_soc")
+  maxSoc     Float? @map("max_soc")
+  reserveSoc Float? @map("reserve_soc")
+  maxCyclesPerDay Float? @map("max_cycles_per_day")
+  /// Cycle life to the end of warranty life, from the datasheet, for the degradation estimate.
+  ratedCycles     Int?   @map("rated_cycles")
+  wearInrPerKwh   Float? @map("wear_inr_per_kwh")
+  currentSoc      Float? @map("current_soc")
+  currentSocAt    DateTime? @map("current_soc_at") @db.Timestamptz(3)
+  installedOn     DateTime? @map("installed_on") @db.Date
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("batteries")
+}
+
+/// A solar PV system, installed or planned. Azimuth is degrees clockwise from north (180 is south), as in the Python EMS.
+model SolarSystem {
+  id         String      @id @default(uuid()) @db.Uuid
+  propertyId String      @map("property_id") @db.Uuid
+  name       String
+  status     AssetStatus @default(EXISTING)
+  capacityKwp Float @map("capacity_kwp")
+  tiltDeg     Float @map("tilt_deg")
+  azimuthDeg  Float @map("azimuth_deg")
+  inverterKw  Float? @map("inverter_kw")
+  /// Fixed system losses (wiring, mismatch, soiling) as a fraction; null means not stated.
+  lossFraction Float? @map("loss_fraction")
+  installedOn DateTime? @map("installed_on") @db.Date
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("solar_systems")
+}
+
+/// An electric vehicle and how it is charged (spec section 31).
+model Ev {
+  id         String @id @default(uuid()) @db.Uuid
+  propertyId String @map("property_id") @db.Uuid
+  name       String
+  batteryKwh Float  @map("battery_kwh")
+  chargerKw  Float  @map("charger_kw")
+  chargerEfficiency Float? @map("charger_efficiency")
+  /// The state of charge the owner wants by departure, 0..1.
+  targetSoc  Float  @map("target_soc")
+  currentSoc Float? @map("current_soc")
+  currentSocAt DateTime? @map("current_soc_at") @db.Timestamptz(3)
+  /// Local time of day, HH:MM, and the weekdays it applies to (0 = Monday ... 6 = Sunday).
+  departureTime String @map("departure_time")
+  departureDays Int[]  @map("departure_days")
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("evs")
+}
+
+/// An appliance or load (spec sections 27 to 30). Flexible appliances carry the window the optimiser may move them within.
+model Appliance {
+  id         String @id @default(uuid()) @db.Uuid
+  propertyId String @map("property_id") @db.Uuid
+  name       String
+  /// What it is, in the owner's words or a common kind: refrigerator, air conditioner, washing machine, geyser, pump, lights.
+  kind       String
+  priority   AppliancePriority
+  ratedPowerW Float @map("rated_power_w")
+  quantity   Int    @default(1)
+  /// Typical running time per day in minutes, if the owner knows it.
+  runtimeMinPerDay Int? @map("runtime_min_per_day")
+  /// [{ days: number[], from: "HH:MM", to: "HH:MM" }]: when it usually runs.
+  schedule   Json?
+  /// The window a flexible appliance may be moved within, and how long it needs. Local time HH:MM.
+  earliestStart String? @map("earliest_start")
+  latestFinish  String? @map("latest_finish")
+  durationMin   Int?    @map("duration_min")
+  interruptible Boolean @default(false)
+  comfortNote   String? @map("comfort_note")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  property Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  events   ApplianceEvent[]
+
+  @@index([propertyId])
+  @@map("appliances")
+}
+
+/// One run of an appliance: logged by the owner, estimated by a NILM engine (with its uncertainty), or derived from a meter.
+model ApplianceEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  applianceId String   @map("appliance_id") @db.Uuid
+  startedAt   DateTime @map("started_at") @db.Timestamptz(3)
+  endedAt     DateTime? @map("ended_at") @db.Timestamptz(3)
+  energyKwh   Float?   @map("energy_kwh")
+  source      ApplianceEventSource
+  /// 0..1 and the uncertainty of the energy figure in kWh: required for NILM estimates (spec section 29).
+  confidence     Float?
+  uncertaintyKwh Float? @map("uncertainty_kwh")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  appliance Appliance @relation(fields: [applianceId], references: [id], onDelete: Cascade)
+
+  @@index([applianceId, startedAt])
+  @@map("appliance_events")
+}
+
+/// A meter file the owner uploaded, with what was kept and what was refused, and why (spec sections 10 and 40).
+model EnergyImport {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  filename   String?
+  /// SHA-256 of the file text: the same file is refused a second time.
+  sha256     String
+  uploadedAt DateTime @default(now()) @map("uploaded_at") @db.Timestamptz(3)
+  rows       Int
+  accepted   Int
+  rejected   Int
+  /// Rows whose timestamp already existed for this property: left as they were.
+  duplicates Int
+  intervalMinutes Int @map("interval_minutes")
+  /// Which column of the file held the usage, and the unit it was in (kWh, Wh, kW or W).
+  usageColumn String @map("usage_column")
+  unit       String
+  fromTs     DateTime? @map("from_ts") @db.Timestamptz(3)
+  toTs       DateTime? @map("to_ts") @db.Timestamptz(3)
+  /// { rejectedByReason, gaps, spikes, ... }
+  quality    Json
+  notes      Json     @default("[]")
+
+  property     Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  observations EnergyObservation[]
+
+  @@unique([propertyId, sha256])
+  @@index([propertyId, uploadedAt])
+  @@map("energy_imports")
+}
+
+/// One meter reading: energy used in the interval that STARTS at ts, in kWh. Raw readings only: gaps stay gaps.
+model EnergyObservation {
+  id         BigInt   @id @default(autoincrement())
+  propertyId String   @map("property_id") @db.Uuid
+  importId   String?  @map("import_id") @db.Uuid
+  ts         DateTime @db.Timestamptz(3)
+  intervalMinutes Int @map("interval_minutes")
+  importKwh  Float    @map("import_kwh")
+
+  property Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  import   EnergyImport? @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, ts])
+  @@index([importId])
+  @@map("energy_observations")
+}
+
+/// The Energy DNA of a property (spec section 9): a normalised fingerprint of how it uses energy, computed only from its own
+/// imported readings. Versioned; the patterns are arrays because they are the product, the scalars are columns.
+model EnergyDna {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  version    Int
+  computedAt DateTime @default(now()) @map("computed_at") @db.Timestamptz(3)
+  fromTs     DateTime @map("from_ts") @db.Timestamptz(3)
+  toTs       DateTime @map("to_ts") @db.Timestamptz(3)
+  completeDays Int    @map("complete_days")
+  meanDailyKwh   Float @map("mean_daily_kwh")
+  weekdayDailyKwh Float? @map("weekday_daily_kwh")
+  weekendDailyKwh Float? @map("weekend_daily_kwh")
+  peakKw     Float    @map("peak_kw")
+  peakHour   Int      @map("peak_hour")
+  baseloadKw Float    @map("baseload_kw")
+  /// { hourly: number[24], weekdayHourly, weekendHourly, monthlyDailyKwh: {YYYY-MM: kWh} } in kW and kWh.
+  patterns   Json
+  /// What this fingerprint cannot say yet and why (flexible load, weather sensitivity, ...).
+  unavailable Json
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, version])
+  @@map("energy_dna")
+}
+
+enum ForecastKind {
+  SOLAR
+  LOAD
+}
+
+/// One forecast exactly as it was issued, kept so that a later job can score it against what really happened (spec sections
+/// 13, 38 and 39). At most one is stored per property, kind and hour: the first one issued in that hour.
+model ForecastRun {
+  id         String       @id @default(uuid()) @db.Uuid
+  propertyId String       @map("property_id") @db.Uuid
+  kind       ForecastKind
+  issuedAt   DateTime     @map("issued_at") @db.Timestamptz(3)
+  /// issued_at cut to the hour: the uniqueness key.
+  issuedHour DateTime     @map("issued_hour") @db.Timestamptz(3)
+  /// The label of the first hour covered, as the engine returned it (UTC), and how many hours.
+  firstHour  DateTime     @map("first_hour") @db.Timestamptz(3)
+  hours      Int
+  /// "solar-pvlib-solis" or the load method that won its holdout, with the engine version that produced it.
+  model         String
+  engineVersion String @map("engine_version")
+  /// { times: string[], p10Kw: (number|null)[], p50Kw: number[], p90Kw: (number|null)[] }
+  series     Json
+  /// What it was built from: systems, history window, band calibration, holdout scores. Enough to explain it later.
+  basis      Json
+  /// Filled in by the evaluation job once the hours have passed and actuals exist.
+  evaluatedAt DateTime? @map("evaluated_at") @db.Timestamptz(3)
+  evaluation  Json?
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, kind, issuedHour])
+  @@index([propertyId, kind, issuedAt])
+  @@map("forecast_runs")
+}
+
+enum PlanMode {
+  SAVE_MONEY
+  INDEPENDENCE
+  RESILIENCE
+  GREEN
+  REVENUE
+  BALANCED
+}
+
+/// A plan the engine produced, the platform re-checked and showed (spec sections 17 to 21 and 64). A plan whose independent
+/// check failed is never stored as a plan. The numbers are SIMULATED outcomes of FORECAST inputs, never measurements.
+model OptimizationRun {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  createdAt  DateTime @map("created_at") @db.Timestamptz(3)
+  mode       PlanMode
+  /// Start of step 0 (a whole local hour), the step length in hours and the number of steps.
+  startsAt   DateTime @map("starts_at") @db.Timestamptz(3)
+  stepHours  Float    @map("step_hours")
+  steps      Int
+  netCostInr         Float @map("net_cost_inr")
+  baselineNetCostInr Float @map("baseline_net_cost_inr")
+  savingsInr         Float @map("savings_inr")
+  engineVersion String @map("engine_version")
+  /// The whole plan exactly as it was shown: schedule, decisions, inputs and the assumptions behind them.
+  plan       Json
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  controlProposals ControlProposal[]
+
+  @@index([propertyId, createdAt])
+  @@map("optimization_runs")
+}
+
+/// A what-if the owner asked for (spec sections 32, 33, 37 and 62): today's setup against a changed one over a typical year, with the
+/// money arithmetic. The result is an ESTIMATE from typical days, kept whole as it was shown so it can be compared and explained.
+model Scenario {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  createdAt  DateTime @map("created_at") @db.Timestamptz(3)
+  name       String
+  /// What was asked: the changes, the costs and the economic assumptions.
+  request    Json
+  /// The whole result as it was shown.
+  result     Json
+  /// The yearly saving of the change over today's setup, INR (negative when it costs more).
+  annualSavingsInr Float @map("annual_savings_inr")
+  engineVersion String @map("engine_version")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, createdAt])
+  @@map("scenarios")
+}
+
+/// Background work and its history (spec sections 69 and 71): one row for each time a job started, so the admin page can say what
+/// ran, when, how long it took and what it found, and the runner can tell whether a job is due.
+enum JobTrigger {
+  SCHEDULE
+  MANUAL
+}
+
+enum JobStatus {
+  RUNNING
+  OK
+  FAILED
+  SKIPPED
+}
+
+model JobRun {
+  id          String     @id @default(uuid()) @db.Uuid
+  job         String
+  trigger     JobTrigger
+  startedAt   DateTime   @map("started_at") @db.Timestamptz(3)
+  finishedAt  DateTime?  @map("finished_at") @db.Timestamptz(3)
+  status      JobStatus
+  /// What the job found or did, in numbers: properties visited, forecasts scored, scenes stored.
+  summary     Json?
+  error       String?
+  /// The administrator who asked for a manual run.
+  requestedBy String?    @map("requested_by") @db.Uuid
+
+  requester User? @relation(fields: [requestedBy], references: [id], onDelete: SetNull)
+
+  @@index([job, startedAt(sort: Desc)])
+  @@map("job_runs")
+}
+
+/// Human control (spec section 46). How much AVISHKAR may do for a property, and the limits it must keep to. AVISHKAR has no device
+/// connection today, so no mode changes anything outside the platform; the mode decides what a person is asked and what is recorded.
+enum ControlMode {
+  OBSERVE
+  RECOMMEND
+  APPROVE
+  AUTOMATE
+}
+
+model ControlSetting {
+  propertyId     String      @id @map("property_id") @db.Uuid
+  mode           ControlMode @default(RECOMMEND)
+  /// Safety limits the owner sets. Null means only the device's own limit applies.
+  maxChargeKw    Float?      @map("max_charge_kw")
+  maxDischargeKw Float?      @map("max_discharge_kw")
+  /// The lowest charge the battery may be taken to, as a share of its capacity.
+  minSocPercent  Float?      @map("min_soc_percent")
+  /// AUTOMATE only: when the owner's authorization ends. Never open-ended.
+  automateUntil  DateTime?   @map("automate_until") @db.Timestamptz(3)
+  updatedAt      DateTime    @map("updated_at") @db.Timestamptz(3)
+  updatedBy      String?     @map("updated_by") @db.Uuid
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@map("control_settings")
+}
+
+enum ProposalKind {
+  BATTERY_CHARGE
+  BATTERY_DISCHARGE
+  APPLIANCE_RUN
+  EV_CHARGE
+}
+
+enum ProposalState {
+  PROPOSED
+  APPROVED
+  REJECTED
+  WITHDRAWN
+  EXPIRED
+  APPLIED
+  FAILED
+  ROLLED_BACK
+  BLOCKED
+}
+
+/// One move the plan wants made, waiting for (or recording) a person's decision.
+model ControlProposal {
+  id           String        @id @default(uuid()) @db.Uuid
+  propertyId   String        @map("property_id") @db.Uuid
+  /// The plan it came from. Cleared if the plan is deleted; the proposal keeps its own reason and command.
+  planId       String?       @map("plan_id") @db.Uuid
+  createdAt    DateTime      @map("created_at") @db.Timestamptz(3)
+  kind         ProposalKind
+  startsAt     DateTime      @map("starts_at") @db.Timestamptz(3)
+  endsAt       DateTime      @map("ends_at") @db.Timestamptz(3)
+  command      Json
+  reason       String
+  state        ProposalState
+  decidedAt    DateTime?     @map("decided_at") @db.Timestamptz(3)
+  /// Who decided. Null when the system did, under an AUTOMATE authorization, or when the decision was made by time passing.
+  decidedBy    String?       @map("decided_by") @db.Uuid
+  decisionNote String?       @map("decision_note")
+  /// What the device executor answered, as it answered.
+  result       Json?
+  /// The safety checks the move was put through, each with what it compared.
+  safety       Json
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  plan     OptimizationRun? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  decider  User?    @relation(fields: [decidedBy], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, createdAt])
+  @@map("control_proposals")
+}

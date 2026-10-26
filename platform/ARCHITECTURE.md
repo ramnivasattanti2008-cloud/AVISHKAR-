@@ -1,0 +1,205 @@
+# AVISHKAR platform: architecture assessment and decisions
+
+Written 2026-10-07 in response to [SPEC.md](SPEC.md) §100 ("audit first, then build"). Progress lives in
+[STATUS.md](STATUS.md); the chronological record of what was done and not done lives in
+[../docs/WORKLOG.md](../docs/WORKLOG.md). Decisions are numbered (D1, D2...) so later changes can reference them.
+
+## 1. Audit of the repository at the start of platform work
+
+**Implemented and real (reused, not rewritten):** the Python energy-management system in `src/avishkar_ems/` (P10/P50/P90
+quantile forecasts with conformal calibration, outage-risk reserve floor, a two-pass EMHASS LP planner, a battery
+executor, P2P offer sizing and settlement, payback and battery-size advice, Beckn-shaped offer messages), a Streamlit
+dashboard, real weather and measured Indian household load for three sites, regulator-order tariffs for three sites.
+Details: `CLAUDE.md`, `docs/KNOWN_ISSUES.md`.
+
+**Mock, simulated or assumed (must stay labelled):** `sim.py` synthetic sites; shop and clinic load (a German factory
+profile) and their outages; export rates; P2P prices (`p2p_share`); fleet pooling across cities; generation is modelled,
+not metered.
+
+**Absent for the platform spec:** web API, database and schema, authentication, map UI, provider abstractions for
+weather/geocoding/satellite, tariff/DISCOM catalogue, policy table, job queue, Copilot, community/VPP service, OpenAPI,
+observability, deployment descriptors. There was no Node code, no `package.json`, no Docker Compose.
+
+**Environment (probed 2026-10-07):** Windows 11; Python 3.12 venv; Node 24.19, npm 11, pnpm 11; no local PostgreSQL;
+Docker Desktop installed (engine had to be started). Reachable from this machine: Open-Meteo forecast and archive APIs,
+Nominatim, Overpass, NASA POWER, the Earth Search STAC catalogue (Sentinel-2). **Not** reachable: PVGIS (EU JRC), which
+times out here.
+
+## 2. Decisions
+
+**D1. Two runtimes, one platform: TypeScript API + Python engine.** Spec §53 asks for a TypeScript backend. The numerics
+the product needs (pvlib solar geometry, gradient-boosted quantile models, LP/MILP via HiGHS, the existing validated
+`avishkar_ems` code) exist in Python and not in comparable quality in Node. Rewriting them would throw away working,
+tested code (against §85). So: the TypeScript API owns HTTP, auth, validation, persistence, providers, jobs and
+provenance; a Python **engine service** (`platform/engine`, FastAPI) exposes pure computation (forecast, optimize,
+simulate, economics). The API calls the engine over HTTP and stores every result with provenance. This is a deliberate,
+documented deviation from "backend = TypeScript only".
+
+**D2. Monorepo under `platform/` with pnpm workspaces:** `platform/api` (Fastify), `platform/web` (Next.js),
+`platform/engine` (FastAPI), `platform/packages/*` (shared types and the provenance schema). The existing Python
+package and Streamlit app are untouched and keep working.
+
+**D3. Fastify, not Express:** built-in schema validation, first-class TypeScript, OpenAPI generation (§68).
+
+**D4. PostgreSQL + PostGIS with Prisma and hand-written SQL migrations.** Prisma has no native geometry type, so spatial
+columns are declared `Unsupported("geometry(...)")` and queried with `$queryRaw`; the migration enables the `postgis`
+extension. Local and CI databases run the `postgis/postgis` image. No giant JSON column holds a whole object (§52); JSON
+is used only for provenance detail and model parameters.
+
+**D5. Job queue on Postgres (`pg-boss`), not Redis:** one fewer service, transactional with the data, adequate for the
+volumes here (§71). Revisit if throughput demands it.
+
+**D6. Provenance is a first-class table and a response envelope, not an afterthought (§3, §40).** Every value an API
+returns is wrapped as `{ value, unit, status, provider, observedAt|generatedAt, location, quality, processingVersion,
+modelVersion?, confidence? }` where `status` is one of `LIVE | UPDATED | FORECAST | ESTIMATED | SIMULATED | DEMO |
+UNAVAILABLE`. `LIVE` is only allowed when a provider timestamp is within a configured freshness window (D7).
+
+**D7. Freshness rules are code, not copy.** A value is `LIVE` only if its observation time is within the provider's
+declared cadence times 1.5; otherwise `UPDATED` with an explicit age. The UI renders the age. (§42, §72, §76.)
+
+**D8. Provider abstraction with failover (§6, §10, §72):** one interface per capability (`GeocodingProvider`,
+`WeatherProvider`, `SolarResourceProvider`, `SatelliteProvider`, `BuildingFootprintProvider`, `PositioningProvider`).
+Initial real implementations: Nominatim (geocoding), Open-Meteo (weather and irradiance forecast and archive), NASA POWER
+(solar resource climatology; secondary and PVGIS substitute), Overpass (OSM building footprints), Earth Search STAC
+(Sentinel-2 scene metadata and cloud percentage). Each call records latency and outcome. Providers read their base URLs
+and keys from environment variables (§73); defaults are public endpoints and respect their usage policies (identifying
+User-Agent, cache, rate limit).
+
+**D9. Satellite scope is honest (§11, §12).** Phase 2 delivers Sentinel-2 *metadata* (acquisition time, cloud percentage,
+footprint, thumbnail URL) from STAC. A genuine cloud-movement nowcast needs sub-hourly geostationary imagery (e.g.
+INSAT-3D/3DR or Himawari-class products), which has no open, key-free, programmatic API from this environment. Until such
+a source is integrated, the nowcast endpoint returns `UNAVAILABLE: no recent sub-hourly satellite observations` and the
+short-horizon solar forecast uses Open-Meteo minutely-15 radiation. Nothing is faked.
+
+**D10. NavIC (§4):** a `PositioningProvider` interface with `browser-geolocation`, `manual`, `imported` implementations.
+A `navic` provider class exists as an interface stub that throws `NotAvailable` unless hardware is configured. The UI
+shows the real provider name; browser GNSS is never labelled NavIC.
+
+**D11. Optimiser:** LP/MILP in the engine using HiGHS (`scipy.optimize.milp`/`linprog`), written directly so every
+constraint is explicit and testable (§18, §66, §67): battery SOC and rate limits, efficiencies, critical-load coverage,
+appliance windows, EV deadline, export limits, reserve. Objective weights per mode (§17). The existing EMHASS-based day-ahead
+planner remains the engine for the demo sites; the new optimiser is the general one. Every result passes an energy
+conservation check (§67) and is rejected, not shown, if it fails.
+
+**D12. Tariffs and policy are data (§22, §24).** `tariffs` and `policy_rules` tables with effective/expiry dates, region,
+source URL and notes; admin-editable with audit log. Seeded only from sources already in this repo (the three
+regulator-order tariff JSONs, with their `source` notes) and the PM Surya Ghar slabs currently in `subsidy.py`, marked
+`needs-verification`. No tariff is ever shipped as "universal". Missing tariff means `Tariff data unavailable` plus manual
+entry.
+
+**D13. Demo data is a separate world (§74, §93).** Demo properties live under a `demo` tenant/flag and are never returned
+by live queries; every value derived from them carries `status = DEMO`. The existing real-data sites (Mathura home with
+CEEW meter, regulator-order tariffs) are *real inputs with modelled generation* and are labelled accordingly.
+
+**D14. AI Copilot (§44, §90, §91):** a tool-calling layer in the API; the model may only call the tools of the registry (the fourteen of §91 and four more: the latest plan, forecast accuracy, energy health and energy waste) and
+every number in its answer must be traceable to a tool result id. The tool layer ships and is tested first and works
+without any LLM (a deterministic "explain" renderer). An LLM adapter (Anthropic API, key from env) is optional and added
+after the tool layer, with a post-check that rejects answers containing numbers absent from tool results.
+
+**D15. The engine is a stateless, keyed, internal service (§53, §68).** `platform/engine` takes the data in the request and
+returns the arithmetic and how it was done; it never touches the database or the network, so the API owns persistence, auth
+and provenance. It authenticates the API with a shared key (`x-engine-key`, constant-time compare, at least 16 characters) and
+refuses to start without one unless `ENGINE_INSECURE_DEV=1`. Its contract is `engine/openapi.json` (a test fails when it is
+stale); the TypeScript client (`api/src/engine`) validates every reply with zod and turns each failure into one of three
+honest errors: `ENGINE_UNAVAILABLE` (down, timed out, key refused), `ENGINE_REJECTED` (it refused our inputs, with its own
+words) and `ENGINE_BAD_RESPONSE` (a shape we do not understand, probably a different version). With no `ENGINE_URL` the
+routes that need it answer 503; nothing is ever computed in the API as a stand-in.
+
+**D16. A plan is shown only if it passes its own independent check (§64, §67).** The optimiser's schedule is recomputed from
+scratch by a separate function (every hour's energy balance, battery limits, EV and appliance windows). A plan that fails is
+refused as `PLAN_INVALID` ("SIMULATION INVALID") and never stored as a plan. What is shown is a snapshot kept as one JSON
+document in `optimization_runs`: the schedule, the decisions with their reasons, the inputs and every assumption, so a plan can
+be reproduced and explained later. Its savings are against the same day with no control and are always labelled SIMULATED;
+the saving shown is the difference of the two costs shown, so the figures always add up. Whatever a person has not entered is
+assumed in the open (the battery's starting charge, the export rate, outages: none) and listed with the plan.
+
+**D17. Forecast uncertainty is learned from the place's own past errors, never assumed (§13, §15, §38).** The solar band is
+the empirical error of the weather provider's own day-ahead forecasts at the property's location, by sky condition, from
+Open-Meteo's previous-runs API, with coverage reported on hours the band was not fitted to; with no such record there is no
+band, and the reason is shown. The load methods (weekly baselines and a conformalised quantile model) compete on a
+chronological holdout and the winner must beat the best baseline by 2%. A forecast is only called FORECAST when it is for
+the future: a load forecast made from meter data that ends days ago is labelled ESTIMATED and says so. Each forecast is
+stored as issued (`forecast_runs`) so a later job can score it against what really happened; that job is not built yet.
+
+**D18. A year is estimated from typical days, and money is only ever the owner's numbers (§32, §33, §62).** A yearly what-if is one
+typical weekday and weekend day per month, each planned by the same optimiser as the daily plan (the day repeats, so the battery
+starts at the charge the planner chooses), weighted by the next 365 days' calendar. Load comes from the property's own Energy
+DNA, solar from the monthly climatology; the limits (no cloudy-day variability, months without readings use the average month,
+no EV or appliances) are listed with every result. Payback, discounted payback, NPV and IRR are computed only from prices the
+owner enters: there is no price list and no emission-factor table, because none has been read from a source, and an absent price
+makes the money UNAVAILABLE with the reason while the saving is still shown. A published subsidy is shown beside the investment,
+never netted off it, and never for an addition to an existing system.
+
+**D19. Community and fleet results are simulations of synthetic or self-owned homes, never of other people (§47, §48, §81).**
+The community view reads only the signed-in owner's own properties; a fleet is drawn (seeded, so a run repeats) around one of
+those properties with shares and sizes the owner states, and every default is an assumption that is returned with the result.
+Nothing here trades or moves electricity, and the label says so (`COMMUNITY ENERGY SIMULATION`, `VIRTUAL POWER PLANT
+SIMULATION`, values `SIMULATED`). Coordination may only help: shiftable load moves inside a power cap no lower than what the
+uncoordinated fleet already draws, so the coordinated bill can never be higher. No neighbour, other account or real
+per-building consumption is read or shown; a city map would need aggregated or simulated data and stays unbuilt until that exists.
+
+**D20. Demo data is a labelled copy in the owner's own account, and the label is enforced on the way out (§74, §75, §76, §93).**
+The demo world is four properties the owner adds to their own account (`isDemo`), never a shared account with a password. Their
+readings are generated by a pure function of the site and the date and imported through the ordinary importer, so every
+downstream calculation treats them like real readings. What keeps them from passing as real is not each service remembering:
+a serialization hook (`demo/relabel.ts`) relabels every computed provenance in a response about a demo property to DEMO,
+recording the original label in its notes, and leaves only outside providers' values, sourced references and UNAVAILABLE alone.
+The hook never mutates (provider results are cached and shared). Reports and Copilot answers say DEMO DATA first, and the
+community view leaves demo properties out. A cloud front is a scenario the person sets, never an observation (there is no
+nowcast source); it is two plans of the same day, so every figure is the planner's.
+
+**D21. Human control is a recorded workflow in front of a seam, not a device integration (§46).** The four modes decide what a
+person is asked and what is written down: Observe proposes nothing, Recommend shows moves as advice, Approve asks for a decision
+on each, Automate (a time-limited, explicit authorization inside the owner's safety limits) acts without asking. A plan's moves
+become proposals, each checked against those limits before it can be approved; a move that breaks one is BLOCKED and the
+database refuses to store it as approved. What would change a device is behind `DeviceExecutor`; the only one shipped declines
+and says nothing was changed, so Automate cannot be chosen and an approval is only a record. Time decides moves nobody decided:
+they expire instead of running later. Every decision is audited.
+
+**D22. Background jobs are a database-checked in-process scheduler, and administrators see aggregates (§71, §92).** Each job
+(forecast scoring, weather and satellite refresh, tariff checks) is due by when it last started; a failure retries sooner; the
+check-and-insert of a run happens under a short advisory lock, so two processes cannot run one job at once, and a run that died
+stops blocking after 30 minutes. The administrator role is granted only from the command line. The admin API shows counts and
+aggregates and nothing that belongs to one person, and every admin read and action is itself audited.
+
+## 3. Target architecture
+
+```
+ browser ── Next.js (web) ──HTTPS──► Fastify API ──► domain services ──► Prisma ──► PostgreSQL+PostGIS
+                                         │                │
+                                         │                ├──► provider adapters ──► Open-Meteo / Nominatim / NASA POWER /
+                                         │                │        (cache, failover,   Overpass / Earth Search STAC
+                                         │                │         latency, provenance)
+                                         │                └──► Python engine (FastAPI) ──► avishkar_ems + pvlib + HiGHS
+                                         └──► pg-boss worker (separate process): weather refresh, forecast generation,
+                                              forecast evaluation, model metrics, opportunity recalculation
+```
+
+## 4. Build order and gates
+
+Follows SPEC §84. A phase is DONE only when its tests pass and `STATUS.md` says so with evidence.
+
+1. **Foundation:** monorepo, API skeleton, config/env validation, Postgres+PostGIS compose, Prisma schema and
+   migrations, auth, audit log, provenance envelope, geocoding, property CRUD. Gate: typecheck, lint, tests, migration
+   applied to a real PostGIS.
+2. **Real data:** weather, solar resource, satellite metadata, building footprint, Energy Twin snapshots.
+3. **Forecasts:** solar baselines + weather-adjusted model with measured MAE; load baseline; probabilistic bands.
+4. **Assets:** battery, EV, appliances, energy flow.
+5. **Optimisation:** optimiser, allocation, opportunities, value.
+6. **Simulation:** what-if, counterfactual, economics, resilience, carbon.
+7. **Copilot and explanations.**
+8. **Community and VPP simulation.**
+9. **Hardening:** security review, observability, OpenAPI, deployment, end-to-end tests, docs, patent-discovery notes.
+
+The web UI is built per phase alongside the API it needs, map first, never ahead of backend capability (§86).
+
+## 5. Risks and blockers recorded up front
+
+- **PostGIS needs Docker:** the engine had to be started; if it cannot run, migrations and integration tests cannot be
+  verified and that is recorded as BLOCKED rather than assumed.
+- **PVGIS unreachable here:** NASA POWER and Open-Meteo archive replace it for solar resource; the Python EMS still uses
+  bundled PVGIS files for its three sites.
+- **Satellite nowcast (D9)** and **grid outage data (§26)** have no open source reachable; both stay `UNAVAILABLE`.
+- **Indian tariffs and policy** are published as PDFs/orders per DISCOM; there is no reliable machine-readable national
+  feed. The catalogue grows by adding sourced rows, never by guessing.
+- **Scope:** the specification is very large. `STATUS.md` is the honest ledger; nothing is marked done without evidence.

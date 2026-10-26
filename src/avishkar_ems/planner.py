@@ -25,6 +25,11 @@ from avishkar_ems.site import SiteSpec
 
 STEP_H = 0.25  # 15-minute resolution
 
+
+def is_optimal(status: str) -> bool:
+    """True when the EMHASS solver status says the plan is optimal; anything else deserves a look."""
+    return str(status).startswith("Optimal")
+
 _EMHASS_ROOT = pathlib.Path(emhass.__file__).resolve().parent
 _EMHASS_CONF = {
     "data_path": _EMHASS_ROOT.parent.parent / "data/",
@@ -46,11 +51,24 @@ def _run(coro):
 
 
 @lru_cache(maxsize=1)
+def _plan_logger() -> logging.Logger:
+    """One logger for all planning calls. EMHASS's get_logger adds a handler per call, so it is called once and its
+    handler removed: records then reach whatever the application configured on the root logger, exactly once."""
+    from emhass.utils import get_logger
+
+    logger, handler = get_logger("emhass_plan", _EMHASS_CONF, save_to_file=False)
+    logger.removeHandler(handler)
+    logger.setLevel(logging.WARNING)
+    return logger
+
+
+@lru_cache(maxsize=1)
 def _base_params() -> dict:
     from emhass.utils import build_config, build_params, build_secrets, get_logger
 
-    logger, _ = get_logger("emhass_base", _EMHASS_CONF, save_to_file=False)
-    logger.setLevel(logging.WARNING)
+    logger, handler = get_logger("emhass_base", _EMHASS_CONF, save_to_file=False)
+    logger.removeHandler(handler)
+    logger.setLevel(logging.ERROR)  # only chatter here: "secret parameters still match their defaults"
 
     async def build():
         config = await build_config(_EMHASS_CONF, logger, _EMHASS_CONF["defaults_path"])
@@ -97,7 +115,7 @@ def plan_day(
 ) -> DayPlan:
     """Plan one day (96 steps) using P50 forecasts and the hard reserve floor."""
     from emhass.optimization import Optimization
-    from emhass.utils import get_logger, get_yaml_parse
+    from emhass.utils import get_yaml_parse
 
     params = copy.deepcopy(_base_params())
     no_loads = {  # this EMS plans PV, battery and grid only; EMHASS defaults to 2 deferrable loads
@@ -130,8 +148,7 @@ def plan_day(
                 placed = True
         if not placed:
             raise KeyError(f"EMHASS config has no parameter '{key}'; EMHASS version mismatch?")
-    logger, _ = get_logger("emhass_plan", _EMHASS_CONF, save_to_file=False)
-    logger.setLevel(logging.WARNING)
+    logger = _plan_logger()
     rh, optim_conf, plant_conf = get_yaml_parse(orjson.dumps(params).decode(), logger)
     rh["optimization_time_step"] = pd.Timedelta(minutes=15)
 
@@ -155,4 +172,7 @@ def plan_day(
     steps["grid_kw"] = res["P_grid"].to_numpy() / 1000.0
     steps["soc"] = res["SOC_opt"].to_numpy()
     steps["import_rate"], steps["export_rate"], steps["prod_price_used"] = import_rate, export_rate, prod
-    return DayPlan(steps, float(reserve.floor_soc), reserve, str(opt.optim_status))
+    status = str(opt.optim_status)
+    if not is_optimal(status):
+        _log.warning("EMHASS returned status %r for %s; this plan may be unusable", status, index[0])
+    return DayPlan(steps, float(reserve.floor_soc), reserve, status)

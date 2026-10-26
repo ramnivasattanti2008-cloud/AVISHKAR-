@@ -164,3 +164,56 @@ def test_outage_backs_up_critical_load_only_so_the_reserve_floor_holds(shop, sho
     res = execute_day(site, a, floor.floor_soc + 0.001, 0.0, "idle").steps
     assert res.loc[res["outage"], "unserved_critical_kwh"].sum() == pytest.approx(0.0, abs=1e-6)
     assert res.loc[res["outage"], "unserved_kwh"].sum() > 0  # the non-critical part was shed
+
+
+def test_sampled_days_are_independent_but_consecutive_days_carry_charge(shop, shop_year, models, monkeypatch):
+    """Days weeks apart must not inherit each other's end-of-day charge; consecutive days still do."""
+    import avishkar_ems.payback as payback
+
+    site, _ = shop
+    seen = []
+    real = payback.execute_day
+
+    def spy(site_, actual, soc_init, floor_soc, policy, *a, **k):
+        res = real(site_, actual, soc_init, floor_soc, policy, *a, **k)
+        if policy == "guided":
+            seen.append((soc_init, res.end_soc))
+        return res
+
+    monkeypatch.setattr(payback, "execute_day", spy)
+    kw = {"with_hindsight": False, "with_replan": False, "soc_start": 0.5}
+    d1 = pd.Timestamp("2026-03-02")
+
+    evaluate(site, shop_year, models[0], models[1], [d1, d1 + pd.Timedelta(days=7)], **kw)
+    assert [s[0] for s in seen] == [0.5, 0.5]  # a week apart: the second day starts fresh
+
+    seen.clear()
+    evaluate(site, shop_year, models[0], models[1], [d1, d1 + pd.Timedelta(days=1)], **kw)
+    assert seen[1][0] == pytest.approx(seen[0][1])  # consecutive: yesterday's end state is today's start
+
+
+def test_evaluation_reports_month_coverage_and_solver_status(shop, shop_year, models):
+    site, _ = shop
+    days = list(pd.date_range("2026-01-05", "2026-06-20", freq="28D"))
+    ev = evaluate(site, shop_year, models[0], models[1], days, with_hindsight=False, with_replan=False)
+    assert ev.months_covered() == len({d.month for d in days})
+    assert ev.non_optimal_days().empty
+    ev.daily.loc[ev.daily.index[0], "status"] = "Infeasible"  # a non-optimal day must be reported, not hidden
+    assert len(ev.non_optimal_days()) == 1
+
+
+def test_planning_does_not_leak_log_handlers(shop, shop_year, models):
+    """EMHASS's get_logger adds a handler on every call; planning thousands of days must not stack them up."""
+    import logging
+
+    site, _ = shop
+    sl = _day(shop_year, "2026-02-22")
+    a = shop_year.loc[sl]
+    pv_b, ld_b = _bands(shop_year, models, sl)
+    args = (site, pv_b, ld_b, a["import_rate"].to_numpy(), a["export_rate"].to_numpy(),
+            a["p2p_price_fcst"].to_numpy(), 0.5, reserve_floor(site))
+    plan_day(*args)
+    before = len(logging.getLogger("emhass_plan").handlers)
+    plan_day(*args)
+    plan_day(*args)
+    assert len(logging.getLogger("emhass_plan").handlers) == before == 0

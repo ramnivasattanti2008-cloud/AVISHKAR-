@@ -1,0 +1,2327 @@
+{
+  "components": {
+    "schemas": {
+      "ApplianceIn": {
+        "additionalProperties": false,
+        "properties": {
+          "durationSteps": {
+            "minimum": 1.0,
+            "title": "Durationsteps",
+            "type": "integer"
+          },
+          "earliestStartStep": {
+            "minimum": 0.0,
+            "title": "Earlieststartstep",
+            "type": "integer"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "interruptible": {
+            "default": false,
+            "title": "Interruptible",
+            "type": "boolean"
+          },
+          "latestFinishStep": {
+            "description": "Exclusive: the run must be over before this step starts.",
+            "exclusiveMinimum": 0.0,
+            "title": "Latestfinishstep",
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "powerKw": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000.0,
+            "title": "Powerkw",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "powerKw",
+          "durationSteps",
+          "earliestStartStep",
+          "latestFinishStep"
+        ],
+        "title": "ApplianceIn",
+        "type": "object"
+      },
+      "ApplianceResult": {
+        "additionalProperties": false,
+        "properties": {
+          "energyKwh": {
+            "title": "Energykwh",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "runSteps": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Runsteps",
+            "type": "array"
+          },
+          "startStep": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "First step of a non-interruptible run; None for an interruptible one.",
+            "title": "Startstep"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "startStep",
+          "runSteps",
+          "energyKwh"
+        ],
+        "title": "ApplianceResult",
+        "type": "object"
+      },
+      "BandCalibration": {
+        "additionalProperties": false,
+        "properties": {
+          "bins": {
+            "items": {
+              "$ref": "#/components/schemas/BinStat"
+            },
+            "title": "Bins",
+            "type": "array"
+          },
+          "holdoutCoverage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of held-out hours that fell inside the 80% band (None when too few).",
+            "title": "Holdoutcoverage"
+          },
+          "holdoutHours": {
+            "title": "Holdouthours",
+            "type": "integer"
+          },
+          "hoursUsed": {
+            "title": "Hoursused",
+            "type": "integer"
+          },
+          "medianResidualKt": {
+            "title": "Medianresidualkt",
+            "type": "number"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "targetCoverage": {
+            "title": "Targetcoverage",
+            "type": "number"
+          }
+        },
+        "required": [
+          "method",
+          "hoursUsed",
+          "bins",
+          "medianResidualKt",
+          "holdoutHours",
+          "holdoutCoverage",
+          "targetCoverage"
+        ],
+        "title": "BandCalibration",
+        "type": "object"
+      },
+      "Baseline": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "exportKwh": {
+            "title": "Exportkwh",
+            "type": "number"
+          },
+          "importKwh": {
+            "title": "Importkwh",
+            "type": "number"
+          },
+          "netCostInr": {
+            "title": "Netcostinr",
+            "type": "number"
+          },
+          "unservedKwh": {
+            "title": "Unservedkwh",
+            "type": "number"
+          }
+        },
+        "required": [
+          "description",
+          "netCostInr",
+          "importKwh",
+          "exportKwh",
+          "unservedKwh"
+        ],
+        "title": "Baseline",
+        "type": "object"
+      },
+      "BatteryIn": {
+        "additionalProperties": false,
+        "properties": {
+          "capacityKwh": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 100000.0,
+            "title": "Capacitykwh",
+            "type": "number"
+          },
+          "chargeEfficiency": {
+            "maximum": 1.0,
+            "minimum": 0.5,
+            "title": "Chargeefficiency",
+            "type": "number"
+          },
+          "cyclic": {
+            "default": false,
+            "description": "The horizon starts and ends at the same charge, which the planner chooses: for a typical day that repeats. initialSocKwh and terminalSocKwh are then not used (send any value in range).",
+            "title": "Cyclic",
+            "type": "boolean"
+          },
+          "dischargeEfficiency": {
+            "maximum": 1.0,
+            "minimum": 0.5,
+            "title": "Dischargeefficiency",
+            "type": "number"
+          },
+          "initialSocKwh": {
+            "minimum": 0.0,
+            "title": "Initialsockwh",
+            "type": "number"
+          },
+          "maxChargeKw": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 100000.0,
+            "title": "Maxchargekw",
+            "type": "number"
+          },
+          "maxDischargeKw": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 100000.0,
+            "title": "Maxdischargekw",
+            "type": "number"
+          },
+          "maxSocKwh": {
+            "exclusiveMinimum": 0.0,
+            "title": "Maxsockwh",
+            "type": "number"
+          },
+          "minSocKwh": {
+            "minimum": 0.0,
+            "title": "Minsockwh",
+            "type": "number"
+          },
+          "reserveSocKwh": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Kept back for backup outside an outage; None for no reserve.",
+            "title": "Reservesockwh"
+          },
+          "terminalSocKwh": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stored energy to end the horizon with. None: as much as it started with.",
+            "title": "Terminalsockwh"
+          },
+          "wearInrPerKwh": {
+            "default": 0,
+            "description": "Cost of wear per kWh drawn out of the battery.",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Wearinrperkwh",
+            "type": "number"
+          }
+        },
+        "required": [
+          "capacityKwh",
+          "maxChargeKw",
+          "maxDischargeKw",
+          "chargeEfficiency",
+          "dischargeEfficiency",
+          "minSocKwh",
+          "maxSocKwh",
+          "initialSocKwh"
+        ],
+        "title": "BatteryIn",
+        "type": "object"
+      },
+      "BinStat": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "p10": {
+            "title": "P10",
+            "type": "number"
+          },
+          "p50": {
+            "title": "P50",
+            "type": "number"
+          },
+          "p90": {
+            "title": "P90",
+            "type": "number"
+          },
+          "samples": {
+            "title": "Samples",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "samples",
+          "p10",
+          "p50",
+          "p90"
+        ],
+        "title": "BinStat",
+        "type": "object"
+      },
+      "Decision": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "charge_battery",
+              "discharge_battery",
+              "export",
+              "curtail",
+              "ev_charge",
+              "appliance",
+              "import_peak",
+              "shed"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "kwh": {
+            "title": "Kwh",
+            "type": "number"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "step",
+          "kind",
+          "kwh",
+          "reason"
+        ],
+        "title": "Decision",
+        "type": "object"
+      },
+      "EvIn": {
+        "additionalProperties": false,
+        "properties": {
+          "availableFromStep": {
+            "minimum": 0.0,
+            "title": "Availablefromstep",
+            "type": "integer"
+          },
+          "chargerEfficiency": {
+            "maximum": 1.0,
+            "minimum": 0.5,
+            "title": "Chargerefficiency",
+            "type": "number"
+          },
+          "chargerKw": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 350.0,
+            "title": "Chargerkw",
+            "type": "number"
+          },
+          "departureStep": {
+            "description": "Charging must be complete before this step starts.",
+            "exclusiveMinimum": 0.0,
+            "title": "Departurestep",
+            "type": "integer"
+          },
+          "energyNeededKwh": {
+            "description": "Energy the vehicle's battery must gain by departure.",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Energyneededkwh",
+            "type": "number"
+          }
+        },
+        "required": [
+          "energyNeededKwh",
+          "chargerKw",
+          "chargerEfficiency",
+          "availableFromStep",
+          "departureStep"
+        ],
+        "title": "EvIn",
+        "type": "object"
+      },
+      "ForecastErrorHistory": {
+        "additionalProperties": false,
+        "description": "Past hours where we know both what was forecast a day ahead and what the best analysis says happened.",
+        "properties": {
+          "forecastGhiWm2": {
+            "description": "The day-ahead forecast of GHI that had been made for the same hours.",
+            "items": {
+              "type": "number"
+            },
+            "title": "Forecastghiwm2",
+            "type": "array"
+          },
+          "weather": {
+            "$ref": "#/components/schemas/HourlyWeatherIn",
+            "description": "The ACTUAL (analysed) irradiance and temperature for each past hour."
+          }
+        },
+        "required": [
+          "weather",
+          "forecastGhiWm2"
+        ],
+        "title": "ForecastErrorHistory",
+        "type": "object"
+      },
+      "GridIn": {
+        "additionalProperties": false,
+        "properties": {
+          "exportLimitKw": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exportlimitkw"
+          },
+          "importLimitKw": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Importlimitkw"
+          },
+          "outages": {
+            "items": {
+              "$ref": "#/components/schemas/Outage"
+            },
+            "maxItems": 50,
+            "title": "Outages",
+            "type": "array"
+          }
+        },
+        "title": "GridIn",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HourlyWeatherIn": {
+        "additionalProperties": false,
+        "properties": {
+          "convention": {
+            "default": "end",
+            "description": "Open-Meteo labels an hourly irradiance value with the END of the hour it averages ('end').",
+            "enum": [
+              "end",
+              "start"
+            ],
+            "title": "Convention",
+            "type": "string"
+          },
+          "ghiWm2": {
+            "description": "Global horizontal irradiance, W/m2, averaged over each hour.",
+            "items": {
+              "type": "number"
+            },
+            "title": "Ghiwm2",
+            "type": "array"
+          },
+          "startTime": {
+            "title": "Starttime",
+            "type": "string"
+          },
+          "temperatureC": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Temperaturec",
+            "type": "array"
+          }
+        },
+        "required": [
+          "startTime",
+          "ghiWm2",
+          "temperatureC"
+        ],
+        "title": "HourlyWeatherIn",
+        "type": "object"
+      },
+      "LoadForecastRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "forecastStart": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "First hour to forecast (UTC offset required). Default: the hour after the last reading.",
+            "title": "Forecaststart"
+          },
+          "history": {
+            "$ref": "#/components/schemas/LoadSeriesIn"
+          },
+          "horizonHours": {
+            "default": 24,
+            "maximum": 168.0,
+            "minimum": 1.0,
+            "title": "Horizonhours",
+            "type": "integer"
+          },
+          "timezoneOffsetMinutes": {
+            "default": 330,
+            "maximum": 840.0,
+            "minimum": -720.0,
+            "title": "Timezoneoffsetminutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "history"
+        ],
+        "title": "LoadForecastRequest",
+        "type": "object"
+      },
+      "LoadForecastResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "gapsShare": {
+            "description": "Share of hours in the history with no reading.",
+            "title": "Gapsshare",
+            "type": "number"
+          },
+          "historyDays": {
+            "title": "Historydays",
+            "type": "number"
+          },
+          "holdoutDays": {
+            "title": "Holdoutdays",
+            "type": "integer"
+          },
+          "kwhP50": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kwhp50"
+          },
+          "methods": {
+            "items": {
+              "$ref": "#/components/schemas/MethodScore"
+            },
+            "title": "Methods",
+            "type": "array"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "p10Kw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "P10Kw",
+            "type": "array"
+          },
+          "p50Kw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "P50Kw",
+            "type": "array"
+          },
+          "p90Kw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "P90Kw",
+            "type": "array"
+          },
+          "peakProbability": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Peakprobability",
+            "type": "array"
+          },
+          "peakThresholdKw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The property's own 95th percentile of hourly power over its history.",
+            "title": "Peakthresholdkw"
+          },
+          "selectedMethod": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selectedmethod"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "times": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Times",
+            "type": "array"
+          },
+          "unavailableReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailablereason"
+          }
+        },
+        "required": [
+          "status",
+          "unavailableReason",
+          "times",
+          "p10Kw",
+          "p50Kw",
+          "p90Kw",
+          "kwhP50",
+          "peakThresholdKw",
+          "peakProbability",
+          "selectedMethod",
+          "methods",
+          "holdoutDays",
+          "historyDays",
+          "gapsShare",
+          "assumptions",
+          "notes"
+        ],
+        "title": "LoadForecastResponse",
+        "type": "object"
+      },
+      "LoadSeriesIn": {
+        "additionalProperties": false,
+        "properties": {
+          "intervalMinutes": {
+            "enum": [
+              15,
+              30,
+              60
+            ],
+            "title": "Intervalminutes",
+            "type": "integer"
+          },
+          "kwh": {
+            "description": "Energy in each interval, kWh; null where there is no reading (gaps are never filled).",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Kwh",
+            "type": "array"
+          },
+          "startTime": {
+            "description": "Start of the first reading's interval, with a UTC offset.",
+            "title": "Starttime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startTime",
+          "intervalMinutes",
+          "kwh"
+        ],
+        "title": "LoadSeriesIn",
+        "type": "object"
+      },
+      "LocationIn": {
+        "additionalProperties": false,
+        "properties": {
+          "altitudeM": {
+            "default": 0,
+            "maximum": 9000.0,
+            "minimum": -500.0,
+            "title": "Altitudem",
+            "type": "number"
+          },
+          "latitude": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude",
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude",
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "title": "LocationIn",
+        "type": "object"
+      },
+      "MethodScore": {
+        "additionalProperties": false,
+        "properties": {
+          "biasKw": {
+            "title": "Biaskw",
+            "type": "number"
+          },
+          "coverage80": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of held-out hours inside this method's 80% band.",
+            "title": "Coverage80"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "maeKw": {
+            "title": "Maekw",
+            "type": "number"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "rmseKw": {
+            "title": "Rmsekw",
+            "type": "number"
+          },
+          "wapePct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wapepct"
+          }
+        },
+        "required": [
+          "method",
+          "description",
+          "maeKw",
+          "rmseKw",
+          "wapePct",
+          "biasKw",
+          "coverage80"
+        ],
+        "title": "MethodScore",
+        "type": "object"
+      },
+      "Metrics": {
+        "additionalProperties": false,
+        "properties": {
+          "biasKw": {
+            "description": "Mean of forecast minus actual: positive means over-forecasting.",
+            "title": "Biaskw",
+            "type": "number"
+          },
+          "hours": {
+            "title": "Hours",
+            "type": "integer"
+          },
+          "maeKw": {
+            "title": "Maekw",
+            "type": "number"
+          },
+          "mapePct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mean absolute percentage error over hours with real output; None if there are none.",
+            "title": "Mapepct"
+          },
+          "rmseKw": {
+            "title": "Rmsekw",
+            "type": "number"
+          },
+          "wapePct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Total absolute error over total actual energy.",
+            "title": "Wapepct"
+          }
+        },
+        "required": [
+          "hours",
+          "maeKw",
+          "rmseKw",
+          "mapePct",
+          "wapePct",
+          "biasKw"
+        ],
+        "title": "Metrics",
+        "type": "object"
+      },
+      "MonthClimate": {
+        "additionalProperties": false,
+        "properties": {
+          "airTempC": {
+            "anyOf": [
+              {
+                "maximum": 60.0,
+                "minimum": -60.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mean air temperature of that month; 25 C when absent.",
+            "title": "Airtempc"
+          },
+          "ghiKwhM2Day": {
+            "description": "Mean daily global horizontal irradiation of that month, kWh/m2/day (a climatology, not a forecast).",
+            "exclusiveMinimum": 0.0,
+            "maximum": 12.0,
+            "title": "Ghikwhm2Day",
+            "type": "number"
+          },
+          "month": {
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Month",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "ghiKwhM2Day"
+        ],
+        "title": "MonthClimate",
+        "type": "object"
+      },
+      "OptimiseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "appliances": {
+            "items": {
+              "$ref": "#/components/schemas/ApplianceIn"
+            },
+            "maxItems": 20,
+            "title": "Appliances",
+            "type": "array"
+          },
+          "backupHours": {
+            "default": 0,
+            "description": "RESILIENCE mode keeps this many hours of critical load in the battery.",
+            "maximum": 72.0,
+            "minimum": 0.0,
+            "title": "Backuphours",
+            "type": "number"
+          },
+          "battery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BatteryIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "carbonKgPerKwh": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional grid carbon intensity per step; weights GREEN mode.",
+            "title": "Carbonkgperkwh"
+          },
+          "criticalKw": {
+            "default": 0,
+            "description": "Load that is kept supplied in an outage; everything else is shed.",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Criticalkw",
+            "type": "number"
+          },
+          "ev": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exportPrice": {
+            "description": "INR per kWh credited for export, per step (0 if none).",
+            "items": {
+              "type": "number"
+            },
+            "title": "Exportprice",
+            "type": "array"
+          },
+          "grid": {
+            "$ref": "#/components/schemas/GridIn"
+          },
+          "importPrice": {
+            "description": "INR per kWh bought from the grid, per step.",
+            "items": {
+              "type": "number"
+            },
+            "title": "Importprice",
+            "type": "array"
+          },
+          "loadKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Loadkw",
+            "type": "array"
+          },
+          "mode": {
+            "default": "SAVE_MONEY",
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "pvKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Pvkw",
+            "type": "array"
+          },
+          "startTime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO 8601 time of step 0; only used to word the reasons.",
+            "title": "Starttime"
+          },
+          "stepHours": {
+            "title": "Stephours",
+            "type": "number"
+          },
+          "timeLimitS": {
+            "default": 20,
+            "exclusiveMinimum": 0.0,
+            "maximum": 120.0,
+            "title": "Timelimits",
+            "type": "number"
+          }
+        },
+        "required": [
+          "stepHours",
+          "loadKw",
+          "pvKw",
+          "importPrice",
+          "exportPrice"
+        ],
+        "title": "OptimiseRequest",
+        "type": "object"
+      },
+      "OptimiseResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "appliances": {
+            "items": {
+              "$ref": "#/components/schemas/ApplianceResult"
+            },
+            "title": "Appliances",
+            "type": "array"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Baseline"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/Decision"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "SAVE_MONEY",
+              "INDEPENDENCE",
+              "RESILIENCE",
+              "GREEN",
+              "REVENUE",
+              "BALANCED"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "modeWeights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Modeweights",
+            "type": "object"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "savingsInr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Baseline net cost minus planned net cost (negative would mean the plan is worse than doing nothing).",
+            "title": "Savingsinr"
+          },
+          "schedule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Schedule"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "solver": {
+            "$ref": "#/components/schemas/SolverInfo"
+          },
+          "totals": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Totals"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "validation": {
+            "$ref": "#/components/schemas/Validation"
+          }
+        },
+        "required": [
+          "mode",
+          "modeWeights",
+          "solver",
+          "schedule",
+          "appliances",
+          "totals",
+          "baseline",
+          "savingsInr",
+          "decisions",
+          "validation",
+          "notes"
+        ],
+        "title": "OptimiseResponse",
+        "type": "object"
+      },
+      "Outage": {
+        "additionalProperties": false,
+        "properties": {
+          "endStep": {
+            "description": "Exclusive.",
+            "exclusiveMinimum": 0.0,
+            "title": "Endstep",
+            "type": "integer"
+          },
+          "startStep": {
+            "minimum": 0.0,
+            "title": "Startstep",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "startStep",
+          "endStep"
+        ],
+        "title": "Outage",
+        "type": "object"
+      },
+      "PvSystemIn": {
+        "additionalProperties": false,
+        "properties": {
+          "azimuthDeg": {
+            "description": "Degrees clockwise from north: 180 faces south.",
+            "exclusiveMaximum": 360.0,
+            "minimum": 0.0,
+            "title": "Azimuthdeg",
+            "type": "number"
+          },
+          "capacityKwp": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 100000.0,
+            "title": "Capacitykwp",
+            "type": "number"
+          },
+          "inverterKw": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inverterkw"
+          },
+          "lossFraction": {
+            "default": 0.14,
+            "maximum": 0.5,
+            "minimum": 0.0,
+            "title": "Lossfraction",
+            "type": "number"
+          },
+          "tempCoeffPerC": {
+            "default": -0.004,
+            "description": "Fractional power change per degree C of cell temperature above 25 C.",
+            "maximum": 0.0,
+            "minimum": -0.01,
+            "title": "Tempcoeffperc",
+            "type": "number"
+          },
+          "tiltDeg": {
+            "maximum": 90.0,
+            "minimum": 0.0,
+            "title": "Tiltdeg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "capacityKwp",
+          "tiltDeg",
+          "azimuthDeg"
+        ],
+        "title": "PvSystemIn",
+        "type": "object"
+      },
+      "Schedule": {
+        "additionalProperties": false,
+        "properties": {
+          "applianceKw": {
+            "additionalProperties": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Appliancekw",
+            "type": "object"
+          },
+          "batteryChargeKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Batterychargekw",
+            "type": "array"
+          },
+          "batteryDischargeKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Batterydischargekw",
+            "type": "array"
+          },
+          "batteryInitialSocKwh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The charge the horizon started with. Always given when a battery is planned.",
+            "title": "Batteryinitialsockwh"
+          },
+          "batterySocKwh": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Batterysockwh",
+            "type": "array"
+          },
+          "evChargeKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Evchargekw",
+            "type": "array"
+          },
+          "gridExportKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Gridexportkw",
+            "type": "array"
+          },
+          "gridImportKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Gridimportkw",
+            "type": "array"
+          },
+          "pvCurtailedKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Pvcurtailedkw",
+            "type": "array"
+          },
+          "pvUsedKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Pvusedkw",
+            "type": "array"
+          },
+          "servedLoadKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Servedloadkw",
+            "type": "array"
+          },
+          "unservedKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Unservedkw",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pvUsedKw",
+          "pvCurtailedKw",
+          "gridImportKw",
+          "gridExportKw",
+          "batteryChargeKw",
+          "batteryDischargeKw",
+          "batterySocKwh",
+          "evChargeKw",
+          "applianceKw",
+          "servedLoadKw",
+          "unservedKw"
+        ],
+        "title": "Schedule",
+        "type": "object"
+      },
+      "SolarEvaluateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "actualKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Actualkw",
+            "type": "array"
+          },
+          "clearSkyKw": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clearskykw"
+          },
+          "forecastKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Forecastkw",
+            "type": "array"
+          },
+          "minActualKw": {
+            "default": 0.05,
+            "description": "Hours with less than this actual output are left out of MAPE.",
+            "minimum": 0.0,
+            "title": "Minactualkw",
+            "type": "number"
+          }
+        },
+        "required": [
+          "forecastKw",
+          "actualKw"
+        ],
+        "title": "SolarEvaluateRequest",
+        "type": "object"
+      },
+      "SolarEvaluateResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "clearSky": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Metrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "forecast": {
+            "$ref": "#/components/schemas/Metrics"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "persistenceBaseline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Metrics"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The naive baseline: the output of the same hour a day earlier."
+          },
+          "skillVsClearSky": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skillvsclearsky"
+          },
+          "skillVsPersistence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1 - MAE(forecast)/MAE(persistence): above 0 means the forecast beats the naive baseline.",
+            "title": "Skillvspersistence"
+          }
+        },
+        "required": [
+          "forecast",
+          "persistenceBaseline",
+          "clearSky",
+          "skillVsPersistence",
+          "skillVsClearSky",
+          "notes"
+        ],
+        "title": "SolarEvaluateResponse",
+        "type": "object"
+      },
+      "SolarForecastRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "errorHistory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ForecastErrorHistory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Without it no uncertainty band is claimed."
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationIn"
+          },
+          "system": {
+            "$ref": "#/components/schemas/PvSystemIn"
+          },
+          "weather": {
+            "$ref": "#/components/schemas/HourlyWeatherIn"
+          }
+        },
+        "required": [
+          "location",
+          "system",
+          "weather"
+        ],
+        "title": "SolarForecastRequest",
+        "type": "object"
+      },
+      "SolarForecastResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "calibration": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BandCalibration"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "clearSkyKw": {
+            "description": "What the system would produce under a cloudless sky, from a clear-sky model: a reference curve, not a ceiling. The forecast can sit above it where the weather model's irradiance exceeds the clear-sky model, up to 1.25 times, beyond which it is clipped.",
+            "items": {
+              "type": "number"
+            },
+            "title": "Clearskykw",
+            "type": "array"
+          },
+          "kwhClearSky": {
+            "title": "Kwhclearsky",
+            "type": "number"
+          },
+          "kwhP10": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kwhp10"
+          },
+          "kwhP50": {
+            "title": "Kwhp50",
+            "type": "number"
+          },
+          "kwhP90": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kwhp90"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "p10Kw": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P10Kw"
+          },
+          "p50Kw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "P50Kw",
+            "type": "array"
+          },
+          "p90Kw": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P90Kw"
+          },
+          "times": {
+            "description": "The label of each hour, in UTC, as sent.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Times",
+            "type": "array"
+          },
+          "yieldKwhPerKwpP50": {
+            "title": "Yieldkwhperkwpp50",
+            "type": "number"
+          }
+        },
+        "required": [
+          "times",
+          "clearSkyKw",
+          "p50Kw",
+          "p10Kw",
+          "p90Kw",
+          "kwhP50",
+          "kwhP10",
+          "kwhP90",
+          "kwhClearSky",
+          "yieldKwhPerKwpP50",
+          "calibration",
+          "assumptions",
+          "notes"
+        ],
+        "title": "SolarForecastResponse",
+        "type": "object"
+      },
+      "SolverInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "integerVariables": {
+            "title": "Integervariables",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "objective": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objective"
+          },
+          "seconds": {
+            "title": "Seconds",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "optimal",
+              "infeasible",
+              "error"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message",
+          "objective",
+          "seconds",
+          "integerVariables"
+        ],
+        "title": "SolverInfo",
+        "type": "object"
+      },
+      "Totals": {
+        "additionalProperties": false,
+        "properties": {
+          "batteryCycles": {
+            "title": "Batterycycles",
+            "type": "number"
+          },
+          "batteryThroughputKwh": {
+            "title": "Batterythroughputkwh",
+            "type": "number"
+          },
+          "curtailedKwh": {
+            "title": "Curtailedkwh",
+            "type": "number"
+          },
+          "evDeliveredKwh": {
+            "title": "Evdeliveredkwh",
+            "type": "number"
+          },
+          "evShortfallKwh": {
+            "title": "Evshortfallkwh",
+            "type": "number"
+          },
+          "exportKwh": {
+            "title": "Exportkwh",
+            "type": "number"
+          },
+          "exportRevenueInr": {
+            "title": "Exportrevenueinr",
+            "type": "number"
+          },
+          "importCostInr": {
+            "title": "Importcostinr",
+            "type": "number"
+          },
+          "importKwh": {
+            "title": "Importkwh",
+            "type": "number"
+          },
+          "loadKwh": {
+            "title": "Loadkwh",
+            "type": "number"
+          },
+          "netCostInr": {
+            "title": "Netcostinr",
+            "type": "number"
+          },
+          "pvKwh": {
+            "title": "Pvkwh",
+            "type": "number"
+          },
+          "pvUsedKwh": {
+            "title": "Pvusedkwh",
+            "type": "number"
+          },
+          "selfConsumptionRatio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of PV generation that was not curtailed: used by the property, stored or sold. Despite the name, solar that is exported counts as used; it is not the share consumed on site (None when there is no PV).",
+            "title": "Selfconsumptionratio"
+          },
+          "selfSufficiencyRatio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of the load met without the grid (None when there is no load).",
+            "title": "Selfsufficiencyratio"
+          },
+          "unservedKwh": {
+            "title": "Unservedkwh",
+            "type": "number"
+          },
+          "wearCostInr": {
+            "title": "Wearcostinr",
+            "type": "number"
+          }
+        },
+        "required": [
+          "importKwh",
+          "exportKwh",
+          "importCostInr",
+          "exportRevenueInr",
+          "wearCostInr",
+          "netCostInr",
+          "loadKwh",
+          "pvKwh",
+          "pvUsedKwh",
+          "curtailedKwh",
+          "batteryThroughputKwh",
+          "batteryCycles",
+          "evDeliveredKwh",
+          "evShortfallKwh",
+          "unservedKwh",
+          "selfConsumptionRatio",
+          "selfSufficiencyRatio"
+        ],
+        "title": "Totals",
+        "type": "object"
+      },
+      "TypicalDay": {
+        "additionalProperties": false,
+        "properties": {
+          "capped": {
+            "title": "Capped",
+            "type": "boolean"
+          },
+          "clearness": {
+            "description": "That irradiation as a share of a clear day's.",
+            "title": "Clearness",
+            "type": "number"
+          },
+          "ghiKwhM2DayUsed": {
+            "description": "The irradiation the typical day carries. Equals the input unless it exceeded 1.25 times a clear day, when it is capped.",
+            "title": "Ghikwhm2Dayused",
+            "type": "number"
+          },
+          "kwhPerKwp": {
+            "title": "Kwhperkwp",
+            "type": "number"
+          },
+          "month": {
+            "title": "Month",
+            "type": "integer"
+          },
+          "pvKw": {
+            "description": "Mean power in each of the 24 local hours (hour 0 is midnight to 1 am).",
+            "items": {
+              "type": "number"
+            },
+            "title": "Pvkw",
+            "type": "array"
+          }
+        },
+        "required": [
+          "month",
+          "ghiKwhM2DayUsed",
+          "clearness",
+          "capped",
+          "pvKw",
+          "kwhPerKwp"
+        ],
+        "title": "TypicalDay",
+        "type": "object"
+      },
+      "TypicalDaysRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/LocationIn"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/MonthClimate"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "Months",
+            "type": "array"
+          },
+          "system": {
+            "$ref": "#/components/schemas/PvSystemIn"
+          },
+          "timezoneOffsetMinutes": {
+            "default": 330,
+            "description": "Hours of the typical day are local hours at this offset from UTC.",
+            "maximum": 840.0,
+            "minimum": -720.0,
+            "title": "Timezoneoffsetminutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "location",
+          "system",
+          "months"
+        ],
+        "title": "TypicalDaysRequest",
+        "type": "object"
+      },
+      "TypicalDaysResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/TypicalDay"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "assumptions",
+          "notes"
+        ],
+        "title": "TypicalDaysResponse",
+        "type": "object"
+      },
+      "Validation": {
+        "additionalProperties": false,
+        "properties": {
+          "maxBalanceErrorKw": {
+            "title": "Maxbalanceerrorkw",
+            "type": "number"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid",
+          "maxBalanceErrorKw",
+          "problems"
+        ],
+        "title": "Validation",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Planning, forecasting and simulation for the AVISHKAR platform. Stateless and internal: send the data, get the arithmetic and how it was done.",
+    "title": "AVISHKAR engine",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Health Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Is the engine up",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/v1/load/forecast": {
+      "post": {
+        "description": "Weekly-lagged baselines and a conformally calibrated quantile model, compared on a chronological holdout. The response\nsays which won, by how much, and how often the 80% band held on hours it had not seen.",
+        "operationId": "load_forecast_v1_load_forecast_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-engine-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Engine-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoadForecastRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadForecastResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Forecast a property's load from its own history",
+        "tags": [
+          "forecasting"
+        ]
+      }
+    },
+    "/v1/optimise": {
+      "post": {
+        "description": "Choose battery, grid, solar, EV and appliance schedules that minimise a mode-weighted cost. The plan is re-checked\nfrom scratch before it is returned (`validation`); an invalid plan must not be shown as a plan.",
+        "operationId": "plan_v1_optimise_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-engine-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Engine-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptimiseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptimiseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Plan a horizon",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/v1/solar/evaluate": {
+      "post": {
+        "description": "MAE, RMSE, MAPE, WAPE and bias, next to the persistence and clear-sky baselines the forecast has to beat.",
+        "operationId": "solar_evaluate_v1_solar_evaluate_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-engine-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Engine-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolarEvaluateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolarEvaluateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Score a solar forecast against what happened",
+        "tags": [
+          "forecasting"
+        ]
+      }
+    },
+    "/v1/solar/forecast": {
+      "post": {
+        "description": "A physical PV model driven by the irradiance forecast. The 10th to 90th percentile band exists only when the past errors\nof that forecast are supplied (`errorHistory`); otherwise none is claimed.",
+        "operationId": "solar_forecast_v1_solar_forecast_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-engine-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Engine-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolarForecastRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolarForecastResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Forecast solar output from a weather forecast",
+        "tags": [
+          "forecasting"
+        ]
+      }
+    },
+    "/v1/solar/typical-days": {
+      "post": {
+        "description": "The clear-sky day of mid-month scaled to the month's mean irradiation, as local-hour power. For annual what-if simulation: it carries\neach month's energy but no cloudy-day variability, which the response says.",
+        "operationId": "solar_typical_days_v1_solar_typical_days_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-engine-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Engine-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TypicalDaysRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypicalDaysResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "One typical day of output per month from a monthly climatology",
+        "tags": [
+          "forecasting"
+        ]
+      }
+    }
+  }
+}

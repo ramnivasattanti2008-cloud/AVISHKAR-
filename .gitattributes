@@ -1,0 +1,37 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Scripts and code files that require LF line endings across all platforms
+*.sh text eol=lf
+*.sql text eol=lf
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.csv text eol=lf
+
+# Migrations must keep LF line endings for schema checksum consistency
+platform/api/prisma/migrations/** text eol=lf
+
+# Windows-specific scripts require CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary assets and archives
+*.pbz2 binary
+*.pkl binary
+*.dump binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.tar.gz binary
+*.zip binary

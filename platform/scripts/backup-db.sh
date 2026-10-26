@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# UrjaSetu EMS Platform — Production Database Backup Utility
+# ==============================================================================
+# Creates a transactionally consistent, compressed custom-format (-Fc) dump of
+# the PostgreSQL + PostGIS database. Calculates a SHA-256 checksum and enforces
+# retention pruning.
+#
+# Usage:
+#   ./backup-db.sh [options]
+#
+# Options:
+#   --db <name>          Database name (default: avishkar or $POSTGRES_DB)
+#   --host <host>        Database host (default: "" for local unix socket)
+#   --port <port>        Database port (default: 5432 or $POSTGRES_PORT)
+#   --user <user>        Database user (default: avishkar or $POSTGRES_USER)
+#   --out-dir <dir>      Output directory (default: platform/backups)
+#   --keep <count>       Number of backups to retain (default: 7)
+#   --docker             Run pg_dump via docker compose exec db
+# ==============================================================================
+set -euo pipefail
+
+DB_NAME="${POSTGRES_DB:-avishkar}"
+DB_HOST="${POSTGRES_HOST:-}"
+DB_PORT="${POSTGRES_PORT:-5432}"
+DB_USER="${POSTGRES_USER:-avishkar}"
+OUT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/backups"
+KEEP_COUNT=7
+USE_DOCKER=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --db) DB_NAME="$2"; shift 2 ;;
+    --host) DB_HOST="$2"; shift 2 ;;
+    --port) DB_PORT="$2"; shift 2 ;;
+    --user) DB_USER="$2"; shift 2 ;;
+    --out-dir) OUT_DIR="$2"; shift 2 ;;
+    --keep) KEEP_COUNT="$2"; shift 2 ;;
+    --docker) USE_DOCKER=true; shift 1 ;;
+    *) echo "Unknown option: $1" >&2; exit 1 ;;
+  esac
+done
+
+mkdir -p "${OUT_DIR}"
+chmod 700 "${OUT_DIR}" || true
+
+TIMESTAMP="$(date -u +"%Y%m%d_%H%M%SZ")"
+BACKUP_FILE="${OUT_DIR}/${DB_NAME}_${TIMESTAMP}.dump"
+CHECKSUM_FILE="${BACKUP_FILE}.sha256"
+
+echo "=== UrjaSetu EMS Database Backup ==="
+echo "Timestamp:   ${TIMESTAMP}"
+echo "Database:    ${DB_NAME}"
+echo "Destination: ${BACKUP_FILE}"
+
+HOST_ARGS=()
+if [[ -n "${DB_HOST}" && "${DB_HOST}" != "localhost" ]]; then
+  HOST_ARGS=(-h "${DB_HOST}" -p "${DB_PORT}")
+fi
+
+if [[ "${USE_DOCKER}" == "true" ]]; then
+  echo "Executing pg_dump via Docker Compose..."
+  docker compose exec -T db pg_dump -U "${DB_USER}" -d "${DB_NAME}" -Fc > "${BACKUP_FILE}"
+else
+  # Check if pg_dump is available locally or via WSL
+  if command -v pg_dump >/dev/null 2>&1; then
+    PGPASSWORD="${POSTGRES_PASSWORD:-}" pg_dump \
+      "${HOST_ARGS[@]}" \
+      -U "${DB_USER}" \
+      -d "${DB_NAME}" \
+      -Fc \
+      --file="${BACKUP_FILE}"
+  elif command -v wsl >/dev/null 2>&1; then
+    echo "Running pg_dump inside WSL..."
+    wsl -d Ubuntu -u "${DB_USER}" -- bash -c \
+      "pg_dump ${HOST_ARGS[@]} -U '${DB_USER}' -d '${DB_NAME}' -Fc" > "${BACKUP_FILE}"
+  else
+    echo "Error: Neither pg_dump nor WSL found." >&2
+    exit 1
+  fi
+fi
+
+# Verify backup size
+BACKUP_SIZE=$(stat -c%s "${BACKUP_FILE}" 2>/dev/null || stat -f%z "${BACKUP_FILE}" 2>/dev/null || wc -c < "${BACKUP_FILE}")
+if [[ "${BACKUP_SIZE}" -lt 1024 ]]; then
+  echo "Error: Backup file is suspiciously small (${BACKUP_SIZE} bytes)." >&2
+  rm -f "${BACKUP_FILE}"
+  exit 1
+fi
+
+# Generate SHA-256 checksum
+if command -v sha256sum >/dev/null 2>&1; then
+  sha256sum "${BACKUP_FILE}" | awk '{print $1}' > "${CHECKSUM_FILE}"
+elif command -v shasum >/dev/null 2>&1; then
+  shasum -a 256 "${BACKUP_FILE}" | awk '{print $1}' > "${CHECKSUM_FILE}"
+else
+  openssl dgst -sha256 "${BACKUP_FILE}" | awk '{print $NF}' > "${CHECKSUM_FILE}"
+fi
+
+CHECKSUM=$(cat "${CHECKSUM_FILE}")
+echo "SHA-256:     ${CHECKSUM}"
+echo "Size:        ${BACKUP_SIZE} bytes"
+echo "Status:      SUCCESS"
+
+# Retention pruning
+echo "Applying retention policy (keeping newest ${KEEP_COUNT} backups)..."
+find "${OUT_DIR}" -name "${DB_NAME}_*.dump" -type f | sort -r | tail -n +"$((KEEP_COUNT + 1))" | while read -r old_dump; do
+  echo "Pruning old backup: ${old_dump}"
+  rm -f "${old_dump}" "${old_dump}.sha256"
+done
+
+echo "Backup complete."

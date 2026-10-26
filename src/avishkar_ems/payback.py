@@ -19,6 +19,7 @@ from avishkar_ems.dispatch import Offer, offer_mask
 from avishkar_ems.engine import plan_and_offer
 from avishkar_ems.execute import DT, execute_day
 from avishkar_ems.intraday import execute_with_replan
+from avishkar_ems.planner import is_optimal
 from avishkar_ems.reserve import outage_rate_90d, outage_risk, reserve_floor
 from avishkar_ems.settle import TradeResult, settle
 from avishkar_ems.sim import STEPS_PER_DAY
@@ -64,6 +65,16 @@ class Evaluation:
     trades: list[TradeResult] = field(default_factory=list)
     offers: list[Offer] = field(default_factory=list)
     daily: pd.DataFrame | None = None
+
+    def months_covered(self) -> int:
+        """How many calendar months the sampled days fall in (a yearly figure from fewer than 12 leans one way)."""
+        return 0 if self.daily is None or self.daily.empty else int(self.daily["day"].dt.month.nunique())
+
+    def non_optimal_days(self) -> pd.DataFrame:
+        """Sampled days where the solver did not report an optimal plan; their results are not trustworthy."""
+        if self.daily is None or self.daily.empty:
+            return pd.DataFrame(columns=["day", "status"])
+        return self.daily.loc[~self.daily["status"].map(is_optimal), ["day", "status"]]
 
     def payback_table(self) -> pd.DataFrame:
         rows = {}
@@ -126,18 +137,25 @@ def evaluate(
     with_hindsight: bool = True,
     with_replan: bool = True,
 ) -> Evaluation:
-    """Run the EMS and both baselines on the given days of `df` (which includes history for lags)."""
+    """Run the EMS and both baselines on the given days of `df` (which includes history for lags).
+
+    Battery charge is carried from one day to the next only when the days are consecutive. Sampled days that are
+    weeks apart each start from `soc_start`, because yesterday's charge says nothing about a day a month later."""
     ems, idle, rule, hind, rep = Totals(), Totals(), Totals(), Totals(), Totals()
     soc_e, soc_i, soc_r, soc_h, soc_p = soc_start, soc_start, soc_start, soc_start, soc_start
     all_trades: list[TradeResult] = []
     all_offers: list[Offer] = []
     daily_rows = []
     pvf, lf = pv_features(df), load_features(df)
+    prev_day = None
     for day in test_days:
         d0 = pd.Timestamp(day).tz_localize(df.index.tz) if pd.Timestamp(day).tzinfo is None else pd.Timestamp(day)
         sl = (df.index >= d0) & (df.index < d0 + pd.Timedelta(days=1))
         if sl.sum() != STEPS_PER_DAY:
             continue
+        if prev_day is not None and d0 - prev_day != pd.Timedelta(days=1):
+            soc_e = soc_i = soc_r = soc_h = soc_p = soc_start  # a gap: do not carry charge across it
+        prev_day = d0
         actual = df.loc[sl]
         pv_b = pv_model.predict(pvf.loc[sl], scale=actual["pv_clear_kw"])
         ld_b = load_model.predict(lf.loc[sl].fillna(lf.loc[sl].mean()))

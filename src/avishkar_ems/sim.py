@@ -117,7 +117,7 @@ def simulate_site(
     frac_day = rng.uniform(0.35, 0.75, days)[day_pos]
     p2p_price = np.clip(export_rate + (import_rate - export_rate) * (frac_day + rng.normal(0, 0.03, n)),
                         export_rate, import_rate)
-    p2p_price_fcst = export_rate + (import_rate - export_rate) * 0.55
+    p2p_price_fcst = export_rate + (import_rate - export_rate) * site.tariff.p2p_share
 
     return pd.DataFrame(
         {
