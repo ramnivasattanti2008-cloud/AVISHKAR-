@@ -157,7 +157,11 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
 - **Database on this machine**: Docker's engine is not usable, so PostgreSQL 16 + PostGIS 3.4 run inside WSL Ubuntu
   (databases `avishkar_dev`, `avishkar_test`; credentials only in the git-ignored `platform/api/.env`). WSL stops idle
   distros and takes Postgres with it: keep it alive with
-  `wsl -d Ubuntu -u root -- bash -lc "service postgresql start; exec sleep infinity"` (run it in the background).
+  `wsl -d Ubuntu -u root -- bash -lc "service postgresql start; exec sleep infinity"` (run it in the background), or
+  `start-database.cmd` (runs `scripts/wsl-init-db.sh`, then migrates and seeds `DATABASE_URL`); `start-platform.cmd` starts the
+  engine, API and web. `DATABASE_URL` may point at a Neon cloud database (`docs/DATABASE_GUIDE.md`, `pnpm -C platform/api
+  db:health`), so `db:migrate` and `db:seed` can write to the cloud; tests always use the local `DATABASE_URL_TEST`. Every
+  password and key is read from `platform/api/.env`: never write one into a script or a doc.
 - Prisma 7.10 (CLI pinned; `latest` resolves to an 8.0 release candidate) and TypeScript 5.9 (typescript-eslint does not
   support TS 7). Migrations are SQL with hand-written additions; GiST indexes must be declared in `schema.prisma` or Prisma
   drops them. Check drift with `pnpm -C platform/api exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`

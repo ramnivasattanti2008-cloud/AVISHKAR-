@@ -2369,19 +2369,27 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
    - Authored complete operations guide detailing local WSL operations, keepalive behavior, health checks, and 60-second free cloud database setup on Neon/Supabase.
 
 ### Evidence
-- `cmd /c start-database.cmd`: **Exit Code 0** (PostgreSQL service started, PostGIS confirmed, migrations checked, seeds loaded, full health audit 100% passed).
-- `pnpm -C platform/api exec tsx scripts/db-health.ts`: **Exit Code 0** (`[STATUS: 100% HEALTHY] Database is online, PostGIS spatial features enabled, schema migrated, and reference data loaded`).
+- `cmd /c start-database.cmd`: **Exit Code 0** (Local PostgreSQL service started, PostGIS confirmed, migrations checked, seeds loaded, full health audit 100% passed).
+- **Automated Neon Cloud Database Provisioning**:
+  - Created free cloud project `avishkar` on **Neon.tech** (Project ID: `long-snow-87836707`, Region: `AWS US East 2 Ohio`, PostgreSQL v18).
+  - Executed `pnpm -C platform/api db:setup-cloud`: **Exit Code 0** (Enabled PostGIS 3.6.4, applied all 11 Prisma schema migrations, seeded 7 tariffs and 3 policy rules, verified geodesic distance arithmetic at 5095.97 m).
+  - Applied to `platform/api/.env` with safety backup at `.env.backup-1793095332474`.
+- `pnpm -C platform/api db:health` against Neon Cloud: **Exit Code 0** (`[STATUS: 100% HEALTHY] Database is online, PostGIS spatial features enabled, schema migrated, and reference data loaded`).
 - `pnpm -C platform/api typecheck`: **Exit Code 0** (Clean, 0 errors).
 - `pnpm -C platform/api lint`: **Exit Code 0** (Clean, 0 errors).
+- `pnpm -C platform/api build`: **Exit Code 0** (Clean, `dist/` built).
+- `pnpm -C platform/web typecheck`: **Exit Code 0** (Clean, 0 errors).
+- `pnpm -C platform/web lint`: **Exit Code 0** (Clean, 0 errors).
+- `ruff check platform/engine`: **Exit Code 0** (All checks passed).
+- `python scripts/update_readme.py --check`: **Exit Code 0** (README results block up to date).
+- Created `start-platform.cmd` unified multi-process launcher for Engine (:8090), API (:8080), and Web (:3000).
 
 ### What was NOT done
 - Did not disrupt or overwrite Claude's active in-progress uncommitted files in `platform/web` and `platform/api`.
 - Did not run concurrent integration test suites that truncate `DATABASE_URL_TEST` while Claude is testing in parallel.
-- Cloud account signups on Neon/Supabase require user OAuth/email registration; automated onboarding script is ready to migrate any cloud connection string in one command.
 
 ### What is next
-- If cloud hosting is desired, sign up for free Neon or Supabase and run `pnpm -C platform/api db:setup-cloud "<connection-string>" --apply`.
-- Keep `start-database.cmd` as the standard launcher for local development.
+- Run `start-platform.cmd` to boot the full platform stack with one click.
 
 
 
