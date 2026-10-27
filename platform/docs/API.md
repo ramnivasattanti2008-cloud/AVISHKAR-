@@ -206,6 +206,7 @@ What-if: today's setup against added solar, a battery or another tariff over a t
 | POST | `/api/properties/{id}/scenarios` | What would adding solar, a battery or a different tariff do over a year |
 | DELETE | `/api/properties/{id}/scenarios/{scenarioId}` | Delete a scenario |
 | GET | `/api/properties/{id}/scenarios/{scenarioId}` | One scenario as it was shown |
+| GET | `/api/properties/{id}/scenarios/{scenarioId}/export.csv` | Download one stored what-if as CSV |
 
 ### copilot
 

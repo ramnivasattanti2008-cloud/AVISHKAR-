@@ -140,6 +140,7 @@ export function EvForm({ propertyId, initial, onSaved, onCancel }: FormProps<Ev>
   const [soc, setSoc] = useState(toPct(initial?.currentSoc));
   const [time, setTime] = useState(initial?.departureTime ?? "08:00");
   const [days, setDays] = useState<number[]>(initial?.departureDays ?? [0, 1, 2, 3, 4]);
+  const [arrival, setArrival] = useState(initial?.arrivalTime ?? "");
   const [eff, setEff] = useState(toPct(initial?.entered.chargerEfficiency));
   const { busy, error, save } = useSave(propertyId, "evs", initial?.id, onSaved);
   const toggle = (d: number) => setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()));
@@ -150,7 +151,7 @@ export function EvForm({ propertyId, initial, onSaved, onCancel }: FormProps<Ev>
       error={error}
       submitLabel={initial ? "Save changes" : "Add vehicle"}
       onCancel={onCancel}
-      onSubmit={() => save({ name, batteryKwh: num(bat), chargerKw: num(chg), targetSoc: fromPct(target), currentSoc: fromPct(soc), departureTime: time, departureDays: days, chargerEfficiency: fromPct(eff) })}
+      onSubmit={() => save({ name, batteryKwh: num(bat), chargerKw: num(chg), targetSoc: fromPct(target), currentSoc: fromPct(soc), departureTime: time, departureDays: days, arrivalTime: arrival.trim() === "" ? null : arrival, chargerEfficiency: fromPct(eff) })}
     >
       <Field label="Name" value={name} onChange={setName} required className="sm:col-span-2" placeholder="for example: Family car" />
       <Field label="Battery size, kWh" value={bat} onChange={setBat} type="number" required />
@@ -158,6 +159,7 @@ export function EvForm({ propertyId, initial, onSaved, onCancel }: FormProps<Ev>
       <Field label="Charge wanted by departure, %" value={target} onChange={setTarget} type="number" required />
       <Field label="Charge now, %" value={soc} onChange={setSoc} type="number" />
       <Field label="Leaves at" value={time} onChange={setTime} type="time" required />
+      <Field label="Usually plugged in from" value={arrival} onChange={setArrival} type="time" hint="Blank: plans assume it is plugged in throughout." />
       <Field label="Charger efficiency, %" value={eff} onChange={setEff} type="number" hint="Blank uses a labelled default." />
       <fieldset className="sm:col-span-2">
         <legend className="text-sm text-muted">Leaves on these days</legend>

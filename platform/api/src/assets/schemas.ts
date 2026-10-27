@@ -80,6 +80,7 @@ const EvFields = z.object({
   currentSoc: fraction.nullish(),
   departureTime: hhmm.describe("Local time, 24-hour."),
   departureDays: z.array(z.number().int().min(0).max(6)).min(1).max(7).describe("0 is Monday, 6 is Sunday."),
+  arrivalTime: hhmm.nullish().describe("When the car is usually plugged in at home, local 24-hour time. Blank: a plan assumes it is plugged in throughout."),
   notes: text(500).nullish(),
 });
 export const EvInput = EvFields.refine((v) => new Set(v.departureDays).size === v.departureDays.length, { message: "List each weekday once.", path: ["departureDays"] });
@@ -191,6 +192,7 @@ export const EvSchema = z
     currentSocAt: z.string().nullable(),
     departureTime: z.string(),
     departureDays: z.array(z.number()),
+    arrivalTime: z.string().nullable(),
     entered: z.object({ chargerEfficiency: z.number().nullable() }),
     effective: z.object({ chargerEfficiency: Param }),
     notes: z.string().nullable(),

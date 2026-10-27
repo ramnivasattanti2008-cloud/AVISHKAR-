@@ -321,7 +321,12 @@ export function ScenarioView({ id }: { id: string }) {
           <section className="card mt-4 p-4" aria-label="Estimated difference over a year">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-lg font-semibold">{result.name}</h2>
-              <StatusBadge status={result.comparison.provenance.status} />
+              <div className="flex items-center gap-3">
+                <a className="text-sm font-semibold text-accent underline" href={`/api/properties/${id}/scenarios/${result.id}/export.csv`} download>
+                  Download (CSV)
+                </a>
+                <StatusBadge status={result.comparison.provenance.status} />
+              </div>
             </div>
             <p className="mt-1 text-base" data-testid="headline">
               {c.annualSavingsInr >= 0 ? (

@@ -140,6 +140,18 @@ describe("EvForm", () => {
     await userEvent.click(screen.getByLabelText("Tue"));
     await userEvent.click(screen.getByRole("button", { name: "Add vehicle" }));
     expect(api.calls[0]!.body).toMatchObject({ name: "Car", batteryKwh: 40, chargerKw: 7.4, targetSoc: 0.8, departureTime: "08:00", departureDays: [0, 2, 3, 4, 5] });
+    expect(api.calls[0]!.body).not.toHaveProperty("arrivalTime"); // blank on create is left out
+  });
+
+  it("sends the time the car is usually plugged in, and blank as not entered", async () => {
+    const api = ok(`${base}/evs/${ev().id}`, "PATCH");
+    vi.stubGlobal("fetch", api.fetch);
+    render(<EvForm propertyId={PROPERTY_ID} initial={ev({ arrivalTime: "18:30" })} onSaved={noop} onCancel={noop} />);
+    const field = screen.getByLabelText(/Usually plugged in from/);
+    expect(field).toHaveValue("18:30");
+    await userEvent.clear(field);
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(api.calls[0]!.body).toMatchObject({ arrivalTime: null });
   });
 
   it("shows the server's refusal when no day is chosen", async () => {

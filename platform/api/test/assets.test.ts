@@ -157,6 +157,16 @@ describeDb("assets", () => {
       expect((await add("evs", { ...EV, ...patch })).statusCode).toBe(400);
     });
 
+    it("stores when the car is usually plugged in, blank when not said, and clears it on request", async () => {
+      expect((await add("evs", EV)).json().arrivalTime).toBeNull();
+      const e = (await add("evs", { ...EV, name: "Second", arrivalTime: "18:30" })).json();
+      expect(e.arrivalTime).toBe("18:30");
+      expect((await add("evs", { ...EV, arrivalTime: "6pm" })).statusCode).toBe(400);
+      const renamed = (await call("PATCH", path("evs", e.id), s, { name: "Renamed" })).json();
+      expect(renamed.arrivalTime).toBe("18:30"); // a PATCH that does not send it leaves it alone
+      expect((await call("PATCH", path("evs", e.id), s, { arrivalTime: null })).json().arrivalTime).toBeNull();
+    });
+
     it("stamps the charge time when a current charge is sent", async () => {
       t.clock.now = new Date("2026-10-08T06:00:00Z");
       const e = (await add("evs", { ...EV, currentSoc: 0.3 })).json();
@@ -375,6 +385,7 @@ describeDb("assets", () => {
       await expect(db().solarSystem.create({ data: { propertyId: pid, name: "x", capacityKwp: 1, tiltDeg: 120, azimuthDeg: 180 } })).rejects.toThrow(/solar_systems_orientation/);
       await expect(db().ev.create({ data: { propertyId: pid, name: "x", batteryKwh: 40, chargerKw: 7, targetSoc: 0.8, departureTime: "7:30", departureDays: [1] } })).rejects.toThrow(/evs_departure/);
       await expect(db().ev.create({ data: { propertyId: pid, name: "x", batteryKwh: 40, chargerKw: 7, targetSoc: 0.8, departureTime: "07:30", departureDays: [9] } })).rejects.toThrow(/evs_departure/);
+      await expect(db().ev.create({ data: { propertyId: pid, name: "x", batteryKwh: 40, chargerKw: 7, targetSoc: 0.8, departureTime: "07:30", departureDays: [1], arrivalTime: "6pm" } })).rejects.toThrow(/evs_arrival/);
       await expect(db().appliance.create({ data: { propertyId: pid, name: "x", kind: "washer", priority: "FLEXIBLE", ratedPowerW: 500 } })).rejects.toThrow(/appliances_flexible_has_window/);
       const a = await db().appliance.create({ data: { propertyId: pid, name: "x", kind: "fridge", priority: "CRITICAL", ratedPowerW: 100 } });
       const ev = { applianceId: a.id, startedAt: new Date("2026-10-01T10:00:00Z") };

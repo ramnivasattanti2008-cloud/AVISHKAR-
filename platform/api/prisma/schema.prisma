@@ -530,6 +530,8 @@ model Ev {
   /// Local time of day, HH:MM, and the weekdays it applies to (0 = Monday ... 6 = Sunday).
   departureTime String @map("departure_time")
   departureDays Int[]  @map("departure_days")
+  /// Local time of day, HH:MM, the car is usually plugged in at home. Null: not entered (a plan then assumes it is plugged in throughout).
+  arrivalTime String? @map("arrival_time")
   notes      String?
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)

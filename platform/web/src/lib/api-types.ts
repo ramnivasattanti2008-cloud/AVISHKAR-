@@ -4963,6 +4963,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        /** @description When the car is usually plugged in at home, local 24-hour time. Blank: a plan assumes it is plugged in throughout. */
+                        arrivalTime?: string | null;
                         batteryKwh: number;
                         chargerEfficiency?: number | null;
                         chargerKw: number;
@@ -5116,6 +5118,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        /** @description When the car is usually plugged in at home, local 24-hour time. Blank: a plan assumes it is plugged in throughout. */
+                        arrivalTime?: string | null;
                         batteryKwh?: number;
                         chargerEfficiency?: number | null;
                         chargerKw?: number;
@@ -6776,6 +6780,75 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/scenarios/{scenarioId}/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download one stored what-if as CSV
+         * @description One row per month, today's setup beside the changed one, then the year. The first lines (starting with #) say it is an ESTIMATE from typical days and give the economics with their assumptions. Nothing is recomputed.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    scenarioId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -10988,6 +11061,7 @@ export interface components {
             };
         };
         Ev: {
+            arrivalTime: string | null;
             batteryKwh: number;
             chargerKw: number;
             createdAt: string;
@@ -11018,6 +11092,7 @@ export interface components {
             updatedAt: string;
         };
         EvInput: {
+            arrivalTime: string | null;
             batteryKwh: number;
             chargerKw: number;
             createdAt: string;

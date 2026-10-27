@@ -10,7 +10,7 @@ import { type ForecastDeps, loadForecast, solarForecast } from "../forecast/serv
 import { simulated } from "../provenance/index.js";
 import { getProperty } from "../properties/service.js";
 import { getTariff, type TariffPlanDto } from "../tariff/service.js";
-import { HOUR_MS, departureStep, istIso, local, planStart, resample, windowInHorizon } from "./horizon.js";
+import { HOUR_MS, arrivalStep, departureStep, istIso, local, planStart, resample, windowInHorizon } from "./horizon.js";
 import { type ScenarioResult, batteryMoves, confidence, headline, scenarioSpecs, windowKwh } from "./explain.js";
 import { CENTRAL_WEIGHT, riskDays, riskRequest, riskSummary } from "./risk.js";
 import type { PlanDto, PlanRequest } from "./schemas.js";
@@ -145,10 +145,17 @@ export function evPlan(rows: Ev[], startMs: number, steps: number): { input: Non
   const dep = departureStep(ev.departureTime, ev.departureDays, startMs, steps);
   if (!dep || dep.step < 1) return { input: null, notes: [...notes, `${ev.name} is not scheduled: it departs within the first hour or on no day within the next week.`] };
   if (dep.beyondHorizon) notes.push(`${ev.name} departs after this plan ends, so its charge is completed within the plan's hours.`);
-  notes.push(`${ev.name} is assumed to be plugged in from the start of the plan.`);
+  // the last arrival before it leaves; when it leaves after the plan ends, the last arrival before the plan ends
+  const from = ev.arrivalTime ? arrivalStep(ev.arrivalTime, dep.beyondHorizon ? startMs + steps * HOUR_MS : dep.atMs, startMs) : 0;
+  if (from >= dep.step) {
+    return { input: null, notes: [...notes, `${ev.name} is not scheduled: it comes home at ${ev.arrivalTime} and leaves at ${ev.departureTime}, which leaves no whole hour to charge inside the plan.`] };
+  }
+  if (!ev.arrivalTime) notes.push(`${ev.name} is assumed to be plugged in from the start of the plan (no arrival time is entered).`);
+  else if (from === 0) notes.push(`${ev.name} is home (from ${ev.arrivalTime}) when the plan starts.`);
+  else notes.push(`${ev.name} comes home at ${ev.arrivalTime}, so it charges from the next whole hour on.`);
   const dto = toEvDto(ev);
   return {
-    input: { energyNeededKwh: round(need, 3), chargerKw: ev.chargerKw, chargerEfficiency: dto.effective.chargerEfficiency.value as number, availableFromStep: 0, departureStep: dep.step },
+    input: { energyNeededKwh: round(need, 3), chargerKw: ev.chargerKw, chargerEfficiency: dto.effective.chargerEfficiency.value as number, availableFromStep: from, departureStep: dep.step },
     energyNeededKwh: round(need, 3),
     departure: startMs + dep.step * HOUR_MS,
     notes,

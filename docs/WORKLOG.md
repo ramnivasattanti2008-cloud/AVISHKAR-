@@ -2395,3 +2395,48 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 
 
 
+
+
+## Entry 46 — 2026-10-28 — EV arrival time, what-if CSV export, tariff and subsidy fuzzing, secrets kept out of git
+
+### What was done
+- **EV arrival time** (spec 31). New optional `arrivalTime` on a vehicle (migration `20261027120000_ev_arrival_time`, with a
+  CHECK on the HH:MM format; API schema, DTO, PATCH can clear it). The planner (`plan/horizon.ts arrivalStep`, `evPlan`) lets the
+  car charge only from the first whole hour after its last arrival before departure; a car that arrives too late to charge in a
+  whole hour is left out with that reason; blank keeps the old assumption (plugged in throughout) and says so. `departureStep`
+  now also returns the exact departure instant, so a car home at 07:00 and gone at 07:30 is not mistaken for one that came home
+  the day before. Web: "Usually plugged in from" on the vehicle form, shown on its card.
+- **What-if CSV export** (spec 64): `GET /api/properties/:id/scenarios/:scenarioId/export.csv` (`scenarios/export.ts`), a row
+  per month and the year, today's setup beside the changed one, the header saying it is an ESTIMATE with the economics and their
+  assumptions; owner only; audited as `scenario.export`; a "Download (CSV)" link beside the what-if's title.
+- **Fuzzing** (spec 66): `api/test/tariff-policy-fuzz.test.ts`, 800 seeded tariffs (valid and deliberately broken: gaps,
+  overlaps, NaN, negative or huge rates, bad slabs) and 500 subsidy rules. It found no defect.
+- **Secrets kept out of git.** The parallel session's files carried the local database password, the Neon cloud database
+  password and the engine API key in plain text. Before they were pushed (commit `2b39be5`) the scripts were changed to read
+  them from the git-ignored `platform/api/.env` (`scripts/wsl-init-db.sh` passes the password to psql on stdin) and the guide
+  shows placeholders; checked by logging in with the parsed password and by comparing the key the launcher reads with the file.
+- Docs: `platform/STATUS.md` rows 31, 64-67 and 65-66, `platform/docs/API.md`.
+
+### Evidence
+- `pnpm -C platform/api test` (real PostGIS and engine): **938 passed** in 67 files.
+- `pnpm -C platform/web test`: **366 passed** in 44 files (before the what-if link test was added; `ScenarioView.test.tsx` then
+  12 passed).
+- `pnpm -C platform/api typecheck && lint`: clean. Web lint clean; web `src` typechecks clean with a tsconfig that leaves out
+  `.next`, because a `next dev` started by the parallel session had written broken files in `.next/dev/types` that made
+  `pnpm -C platform/web typecheck` fail on them.
+- `none of the three secrets is in any commit` (`git log --all -S`), nor in any committable file except the parallel session's
+  uncommitted `render.yaml`.
+
+### What was NOT done
+- Not committed, because they are the parallel session's and unreviewed by its owner: `render.yaml` (it contains the Neon cloud
+  database password in plain text, line 32), `tools/cloudflared.exe` (a 55 MB downloaded binary that should not be in git),
+  `start-platform-live.cmd`, `docs/DEPLOYMENT_GUIDE.md`, its WORKLOG Entry 45 and its change to STATUS row 9 ("DONE for
+  deployment"; CLAUDE.md still says the deployment files were never built or run).
+- The Neon database (`DATABASE_URL`) has not been migrated: the new `arrival_time` column exists only in the local test
+  database. `pnpm -C platform/api db:migrate` is needed before the API runs against Neon, and it changes the cloud schema.
+- One arrival time for every day; still one vehicle per plan, no vehicle-to-home.
+
+### What is next
+- The owner decides about `render.yaml` (move the password to Render's dashboard, then commit), the binary (download it at
+  run time instead), and the public tunnel that is running (`cloudflared tunnel --url http://localhost:3000`).
+- Merge with `main`, still the owner's decision.

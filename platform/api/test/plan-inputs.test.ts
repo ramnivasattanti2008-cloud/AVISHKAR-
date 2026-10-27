@@ -41,9 +41,9 @@ describe("windowInHorizon", () => {
 
 describe("departureStep", () => {
   const all = [0, 1, 2, 3, 4, 5, 6];
-  it("finds the next departure and counts whole hours before it", () => expect(departureStep("07:30", all, START, 24)).toEqual({ step: 15, beyondHorizon: false }));
-  it("respects the weekdays", () => expect(departureStep("07:30", [4], START, 24)).toEqual({ step: 24, beyondHorizon: true })); // Friday is beyond a 24 h plan
-  it("never picks a departure that has passed today", () => expect(departureStep("09:00", [2], START, 200)).toEqual({ step: 161, beyondHorizon: false })); // next Wednesday 09:00 is 6 days 17 hours after Wednesday 16:00
+  it("finds the next departure and counts whole hours before it", () => expect(departureStep("07:30", all, START, 24)).toMatchObject({ step: 15, beyondHorizon: false, atMs: Date.parse("2026-10-08T02:00:00Z") }));
+  it("respects the weekdays", () => expect(departureStep("07:30", [4], START, 24)).toMatchObject({ step: 24, beyondHorizon: true })); // Friday is beyond a 24 h plan
+  it("never picks a departure that has passed today", () => expect(departureStep("09:00", [2], START, 200)).toMatchObject({ step: 161, beyondHorizon: false })); // next Wednesday 09:00 is 6 days 17 hours after Wednesday 16:00
   it("is null when no listed day comes up", () => expect(departureStep("07:30", [], START, 24)).toBeNull());
 });
 
@@ -179,7 +179,7 @@ describe("aggregateBatteries", () => {
 });
 
 const ev = (over: Partial<Ev> = {}): Ev =>
-  ({ id: "e", propertyId: "p", name: "Nexon", batteryKwh: 30, chargerKw: 3.3, chargerEfficiency: null, targetSoc: 0.8, currentSoc: 0.2, currentSocAt: now, departureTime: "07:30", departureDays: [0, 1, 2, 3, 4, 5, 6], notes: null, createdAt: now, updatedAt: now, ...over }) as Ev;
+  ({ id: "e", propertyId: "p", name: "Nexon", batteryKwh: 30, chargerKw: 3.3, chargerEfficiency: null, targetSoc: 0.8, currentSoc: 0.2, currentSocAt: now, departureTime: "07:30", departureDays: [0, 1, 2, 3, 4, 5, 6], arrivalTime: null, notes: null, createdAt: now, updatedAt: now, ...over }) as Ev;
 
 describe("evPlan", () => {
   it("needs the energy to the target by the departure hour", () => {
@@ -192,6 +192,20 @@ describe("evPlan", () => {
     expect(evPlan([ev({ currentSoc: 0.9 })], START, 24)).toMatchObject({ input: null, notes: [expect.stringContaining("already at its target")] });
     expect(evPlan([ev({ departureTime: "16:30" })], START, 24)).toMatchObject({ input: null, notes: [expect.stringContaining("within the first hour")] });
   });
+  it("charges only once the car is home, from the first whole hour after it arrives", () => {
+    // the plan starts at 16:00 IST and the car leaves at 07:30 (in step 15)
+    const evening = evPlan([ev({ arrivalTime: "18:00" })], START, 24);
+    expect(evening.input).toMatchObject({ availableFromStep: 2, departureStep: 15 }); // exactly 2 h in
+    expect(evening.notes.join(" ")).toContain("comes home at 18:00, so it charges from the next whole hour on");
+    const half = evPlan([ev({ arrivalTime: "19:30" })], START, 24);
+    expect(half.input).toMatchObject({ availableFromStep: 4 }); // 3.5 h in: from 20:00, never part of the hour before
+    const home = evPlan([ev({ arrivalTime: "12:00" })], START, 24);
+    expect(home.input).toMatchObject({ availableFromStep: 0 });
+    expect(home.notes.join(" ")).toContain("is home (from 12:00) when the plan starts");
+    // home at 07:00 and gone at 07:30: no whole hour to charge
+    expect(evPlan([ev({ arrivalTime: "07:00" })], START, 24)).toMatchObject({ input: null, notes: [expect.stringContaining("leaves no whole hour to charge")] });
+  });
+
   it("plans the first vehicle only, naming it, and has nothing to say with none", () => {
     expect(evPlan([], START, 24)).toEqual({ input: null, notes: [] });
     expect(evPlan([ev(), ev({ id: "f", name: "Other" })], START, 24).notes.join(" ")).toContain("Only the first of your 2 vehicles is planned (Nexon)");

@@ -11068,6 +11068,12 @@
       "Ev": {
         "additionalProperties": false,
         "properties": {
+          "arrivalTime": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "batteryKwh": {
             "type": "number"
           },
@@ -11194,6 +11200,7 @@
           "currentSocAt",
           "departureTime",
           "departureDays",
+          "arrivalTime",
           "entered",
           "effective",
           "notes"
@@ -11202,6 +11209,12 @@
       },
       "EvInput": {
         "properties": {
+          "arrivalTime": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "batteryKwh": {
             "type": "number"
           },
@@ -11325,6 +11338,7 @@
           "currentSocAt",
           "departureTime",
           "departureDays",
+          "arrivalTime",
           "entered",
           "effective",
           "notes"
@@ -29517,6 +29531,18 @@
             "application/json": {
               "schema": {
                 "properties": {
+                  "arrivalTime": {
+                    "anyOf": [
+                      {
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "When the car is usually plugged in at home, local 24-hour time. Blank: a plan assumes it is plugged in throughout."
+                  },
                   "batteryKwh": {
                     "exclusiveMinimum": 0,
                     "maximum": 500,
@@ -29764,6 +29790,18 @@
             "application/json": {
               "schema": {
                 "properties": {
+                  "arrivalTime": {
+                    "anyOf": [
+                      {
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "When the car is usually plugged in at home, local 24-hour time. Blank: a plan assumes it is plugged in throughout."
+                  },
                   "batteryKwh": {
                     "exclusiveMinimum": 0,
                     "maximum": 500,
@@ -31616,6 +31654,79 @@
           }
         },
         "summary": "One scenario as it was shown",
+        "tags": [
+          "scenarios"
+        ]
+      }
+    },
+    "/api/properties/{id}/scenarios/{scenarioId}/export.csv": {
+      "get": {
+        "description": "One row per month, today's setup beside the changed one, then the year. The first lines (starting with #) say it is an ESTIMATE from typical days and give the economics with their assumptions. Nothing is recomputed.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "scenarioId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Download one stored what-if as CSV",
         "tags": [
           "scenarios"
         ]

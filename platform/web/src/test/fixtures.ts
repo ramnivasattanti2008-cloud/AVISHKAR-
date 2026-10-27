@@ -159,6 +159,7 @@ export function ev(over: Partial<Ev> = {}): Ev {
     currentSocAt: null,
     departureTime: "07:30",
     departureDays: [0, 1, 2, 3, 4],
+    arrivalTime: null,
     entered: { chargerEfficiency: null },
     effective: { chargerEfficiency: param(0.9, "ASSUMPTION", "A typical figure; no source recorded.") },
     notes: null,

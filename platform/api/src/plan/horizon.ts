@@ -62,15 +62,25 @@ export function windowInHorizon(from: string, to: string, startMs: number, steps
 }
 
 /** The step at which the next departure at a local time on one of the given weekdays (Monday is 0) falls; null if none within 8 days. */
-export function departureStep(time: string, days: number[], startMs: number, steps: number): { step: number; beyondHorizon: boolean } | null {
+export function departureStep(time: string, days: number[], startMs: number, steps: number): { step: number; beyondHorizon: boolean; atMs: number } | null {
   const day0 = localMidnight(startMs);
   for (let k = 0; k < 8; k++) {
     const t = day0 + k * DAY_MS + minutesOf(time) * 60_000;
     if (t <= startMs || !days.includes(local(t).weekday)) continue;
     const step = Math.floor((t - startMs) / HOUR_MS);
-    return step >= steps ? { step: steps, beyondHorizon: true } : { step, beyondHorizon: false };
+    return step >= steps ? { step: steps, beyondHorizon: true, atMs: t } : { step, beyondHorizon: false, atMs: t };
   }
   return null;
+}
+
+/**
+ * The step from which a car that comes home at `time` (local, every day) is plugged in before it leaves at `departureMs`: the last
+ * arrival before the departure, charging from the first whole step after it, and 0 when the car is already home at the start.
+ */
+export function arrivalStep(time: string, departureMs: number, startMs: number): number {
+  let t = localMidnight(departureMs) + minutesOf(time) * 60_000;
+  if (t >= departureMs) t -= DAY_MS;
+  return t <= startMs ? 0 : Math.ceil((t - startMs) / HOUR_MS);
 }
 
 /**

@@ -244,6 +244,7 @@ export function toEvDto(e: Ev) {
     currentSocAt: iso(e.currentSocAt),
     departureTime: e.departureTime,
     departureDays: e.departureDays,
+    arrivalTime: e.arrivalTime,
     entered: { chargerEfficiency: e.chargerEfficiency },
     effective: { chargerEfficiency: param(e.chargerEfficiency, DEFAULTS.ev.chargerEfficiency) },
     notes: e.notes,
@@ -260,6 +261,7 @@ const evData = (v: z.output<typeof EvInput>, now: Date): Prisma.EvUncheckedUpdat
   currentSocAt: v.currentSoc == null ? null : now,
   departureTime: v.departureTime,
   departureDays: [...v.departureDays].sort((a, b) => a - b),
+  arrivalTime: v.arrivalTime ?? null,
   notes: v.notes ?? null,
 });
 
@@ -272,6 +274,7 @@ const evAsInput = (e: Ev): Record<string, unknown> => ({
   currentSoc: e.currentSoc,
   departureTime: e.departureTime,
   departureDays: e.departureDays,
+  arrivalTime: e.arrivalTime,
   notes: e.notes,
 });
 
