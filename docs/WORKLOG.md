@@ -2276,6 +2276,114 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 ### What is next
 - Final release tagging and submission verification.
 
+## Entry 43 — 2026-10-27 — Risk-aware optimiser, plan CSV export, drift check rebuilt, degraded-mode banner, parser fuzzing
+
+### What was done
+- **Risk-aware objective inside the optimiser** (`platform/engine/avishkar_engine/optimise.py`, `schemas.py`). An optional `risk`
+  block plans the battery, EV and appliance schedule once for the central forecast and up to 8 other days; grid import/export,
+  solar use and unserved load are per day with their own energy balance. Objective: (1 - aversion) x weighted average cost +
+  aversion x CVaR at alpha, in its linear form, so HiGHS still solves an LP/MILP. The response lists each day's cost at the true
+  prices (battery wear included, so the central day equals the plan's net cost), the average and the CVaR. The schedule returned
+  is the central day's, so `validate()` and the baseline are unchanged. `tests/test_risk.py` (10, hand-solved: with weights
+  0.7/0.3, aversion 0 leaves a 1 kWh battery empty and aversion 1 fills it, to the rupee).
+- **API wiring** (`api/src/plan/risk.ts`, `plan/service.ts`, `plan/schemas.ts`): `riskAversion` on `POST /plan` builds the days
+  from the bad ends of the forecasts' own bands (less sun, more demand, both); central weight 0.5 and alpha 0.8 are stated as
+  settings, not probabilities. Without a band or a battery the plan says risk was not applied. Plan tab: "Allow for a worse day"
+  and a table of the days (`web/.../plan/RiskPanel.tsx`).
+- **Plan drift check rebuilt** (`api/src/plan/drift.ts`). The old version read `plan.steps`, which stored plans do not have, so it
+  always answered ON_TRACK; it filled missing values with 1.0, compared kWh per meter interval with kW per plan step by index, and
+  **did not check that the caller owned the property** (any signed-in user could read another owner's drift). Now: ownership
+  checked (404), only plan hours that have ended and are fully covered by readings are compared, energy against energy, signed
+  percent, the 15% tolerance returned as a setting. Shown on the Plan tab (`DriftPanel.tsx`). Recorded in `platform/docs/SECURITY.md`.
+- **Plan CSV export** (spec 64): `GET /api/properties/:id/plans/:planId/export.csv` (`plan/export.ts`), header lines say SIMULATED,
+  spreadsheet formulas in appliance names are defused, audited as `plan.export`; a download link on the Plan tab.
+- **Battery degradation route made honest** (`api/src/routes/assets.ts`). It invented a 20%-85%-20% cycle when no plan existed,
+  used a hard-coded INR 30,000 replacement price and a 4,000-cycle default, and fed the whole store's state of charge to one
+  battery. Now it answers 503 DATA_UNAVAILABLE without a plan or without the owner's rated cycle life, scales the plan's state
+  of charge to this battery's share, derives the cost from the owner's wear cost per kWh, and returns its assumptions. It had no
+  test; one is now in `plan.test.ts`.
+- **Degraded-mode banner** (spec 40-43): `web/src/components/DegradedBanner.tsx` in the root layout reads `/api/system/health`
+  on load and every 2 minutes and says what is down in plain words (`DegradedBanner.test.tsx`, 5).
+- **Fuzzing** (spec 66): `api/test/meter-parse-fuzz.test.ts`, 1,250 seeded mangled or random files through `parseMeterFile`. It
+  found no defect.
+- `results/`, the dashboard cache and the README block regenerated (`run_demo.py`, `run_sensitivity.py`,
+  `precompute_cache.py --rebuild`, `update_readme.py`): every number is identical; only the timestamps, the code fingerprint and
+  the random offer ids changed.
+- **Dashboard crash on first load fixed** (Python EMS). With the cache fresh, `tests/avishkar_ems/test_dashboard.py` stopped
+  skipping and failed: the command centre's period list comes from the energy balance (24 months), the renewable generation
+  reports cover 6 of them, and the default selection (the latest, 2026-03) raised `KeyError` in `generation_mix.py`. The test
+  had been skipping on a stale cache, so this was never seen. `CommandCenterService.get_generation_and_renewables` now returns
+  the empty breakdown with the months that do exist for a month without a report (no interpolation), and
+  `app/urjasetu_view.py` shows that reason. Because this edits `src/avishkar_ems`, results and cache were regenerated again.
+- Docs: `platform/STATUS.md` (rows 5, 17-18, 40-43, 64-67, 65-66, 68), `platform/docs/OPTIMIZATION.md` (new risk section),
+  `platform/docs/API.md` (the export), `platform/docs/SECURITY.md` (the drift fix; the production CSP hash it quoted was never in
+  the code and now matches `web/src/lib/csp.ts`), `CLAUDE.md`.
+
+### Evidence
+- `pytest platform/engine/tests -q`: **448 passed** (438 before, plus 10 risk tests).
+- `pnpm -C platform/api test` on real PostGIS and the real engine: **931 passed, 1 failed of 932**. The failure was the OpenAPI drift
+  test, because the degradation route changed while the suite ran; after regenerating, `vitest run test/plan.test.ts
+  test/openapi.test.ts`: **23 passed** (that run includes the new degradation case).
+- `pnpm -C platform/web test`: **365 passed** with the default workers (56 s) and **365 passed** on one worker (209 s), after
+  restoring `isolate: true` in `platform/web/vitest.config.ts`. Commit `221931d` had set `isolate: false`, so files sharing a
+  worker shared their `vi.mock`s and module state: the result depended on how files were spread over workers (64 failures on
+  one worker, 12 in ResilienceView on two, each file passing alone).
+- `pytest tests/avishkar_ems -q` after the second regeneration: **466 passed, 1 failed, 1 skipped**; the failure was
+  `test_dashboard.py` asserting 8 tabs, written before the national explorer became the default view. The test now loads the
+  default view, switches to the site view, checks the eight site tabs by name and runs every site: **1 passed** (it really runs:
+  the cache is fresh). `test_phase12_command_center.py` gained a case that every listed month answers: **14 passed**.
+- `pnpm -C platform/api typecheck && lint`, `pnpm -C platform/web typecheck && lint`, `ruff check platform/engine`: clean.
+- `python scripts/update_readme.py --check`: up to date, with no stale-results note.
+
+### What was NOT done
+- **`main` was not merged.** It has 29 commits this branch lacks, including features this branch's rules forbid (an "ISRO/NavIC
+  satellite radar", "100% production readiness"), and Entry 39 left combining the lines to the owner. Still the owner's decision.
+- Not done because they need something outside the repository: hardware telemetry (DLMS/COSEM, Modbus) and control; a tile
+  provider and key; an LLM key for the Copilot's language path; Docker images and hosting; outage, emission-factor, net-metering
+  and city-wide data; a real household's meter file; email for verification and password reset; an independent security
+  review and a screen-reader pass.
+- No chance constraints; risk days are the ends of marginal bands as whole days, not sampled joint scenarios. Futures, the
+  cloud-front scenario and the VPP have no CSV export.
+- Nothing re-plans by itself; the drift check only suggests it.
+
+### What is next
+- The owner decides how `main` and this branch are combined.
+- Supply the external inputs listed above; each unblocks a PARTIAL row in `platform/STATUS.md`.
+
+## Entry 44 — 2026-10-27 — Real Database Setup, Health Diagnostics, Background Daemon, and Free Cloud Onboarding
+
+### What was done
+1. **Real Database Audit & Verification**:
+   - Confirmed and audited the real, zero-cost PostgreSQL 16.15 and PostGIS 3.4.2 database running inside WSL Ubuntu on port 5432.
+   - Verified that `DATABASE_URL` (`avishkar_dev`) and `DATABASE_URL_TEST` (`avishkar_test`) both have 31 relational/spatial tables, PostGIS enabled, GiST spatial indexing on `properties(location)`, and reference seed data loaded (7 tariffs, 3 PM Surya Ghar policy rules).
+2. **One-Click Real Database Launcher & Background Keep-Alive (`start-database.cmd`, `scripts/wsl-init-db.sh`)**:
+   - Created `start-database.cmd` at the repository root and `scripts/wsl-init-db.sh`.
+   - Automatically initializes WSL Ubuntu, starts PostgreSQL, ensures `avishkar_dev` and `avishkar_test` databases exist with PostGIS enabled, and spawns a detached background keepalive daemon so Windows never idle-terminates WSL or drops PostgreSQL connections.
+   - Automatically deploys pending Prisma migrations and seeds data.
+3. **Database Health & Spatial Diagnostics Tool (`platform/api/scripts/db-health.ts`, `pnpm -C platform/api db:health`)**:
+   - Implemented automated health audit checking engine version, PostGIS spatial extension status, real geodesic distance calculation (`ST_Distance` on WGS84 geography), table counts, GiST spatial index presence, and record counts across dev and test databases.
+4. **Automated Free Cloud Database Provisioning Tool (`platform/api/scripts/setup-cloud-db.ts`, `pnpm -C platform/api db:setup-cloud`)**:
+   - Built automated onboarding script for free cloud PostgreSQL + PostGIS hosts (Neon.tech free serverless tier or Supabase free tier).
+   - Validates TLS connectivity, installs the `postgis` extension, applies all 11 Prisma migrations, seeds reference tariffs and policies, verifies spatial queries, and safely updates `platform/api/.env` with an automated backup.
+5. **Database Guide (`docs/DATABASE_GUIDE.md`)**:
+   - Authored complete operations guide detailing local WSL operations, keepalive behavior, health checks, and 60-second free cloud database setup on Neon/Supabase.
+
+### Evidence
+- `cmd /c start-database.cmd`: **Exit Code 0** (PostgreSQL service started, PostGIS confirmed, migrations checked, seeds loaded, full health audit 100% passed).
+- `pnpm -C platform/api exec tsx scripts/db-health.ts`: **Exit Code 0** (`[STATUS: 100% HEALTHY] Database is online, PostGIS spatial features enabled, schema migrated, and reference data loaded`).
+- `pnpm -C platform/api typecheck`: **Exit Code 0** (Clean, 0 errors).
+- `pnpm -C platform/api lint`: **Exit Code 0** (Clean, 0 errors).
+
+### What was NOT done
+- Did not disrupt or overwrite Claude's active in-progress uncommitted files in `platform/web` and `platform/api`.
+- Did not run concurrent integration test suites that truncate `DATABASE_URL_TEST` while Claude is testing in parallel.
+- Cloud account signups on Neon/Supabase require user OAuth/email registration; automated onboarding script is ready to migrate any cloud connection string in one command.
+
+### What is next
+- If cloud hosting is desired, sign up for free Neon or Supabase and run `pnpm -C platform/api db:setup-cloud "<connection-string>" --apply`.
+- Keep `start-database.cmd` as the standard launcher for local development.
+
+
 
 
 

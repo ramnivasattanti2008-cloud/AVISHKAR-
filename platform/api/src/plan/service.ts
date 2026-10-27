@@ -12,6 +12,7 @@ import { getProperty } from "../properties/service.js";
 import { getTariff, type TariffPlanDto } from "../tariff/service.js";
 import { HOUR_MS, departureStep, istIso, local, planStart, resample, windowInHorizon } from "./horizon.js";
 import { type ScenarioResult, batteryMoves, confidence, headline, scenarioSpecs, windowKwh } from "./explain.js";
+import { CENTRAL_WEIGHT, riskDays, riskRequest, riskSummary } from "./risk.js";
 import type { PlanDto, PlanRequest } from "./schemas.js";
 
 interface Ctx {
@@ -327,13 +328,24 @@ export async function buildPlanInputs(deps: ForecastDeps, userId: string, proper
     mode: req.mode,
   };
 
-  return { at, property, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, bands: { pvLow, pvHigh, loadLow: load.lowKw, loadHigh: load.highKw }, battery, ev, apps, assumptions, request };
+  const days = riskDays({ pvLow, pvHigh, loadLow: load.lowKw, loadHigh: load.highKw }, pv, load.kw);
+  if (req.riskAversion && req.riskAversion > 0) {
+    const risk = battery ? riskRequest(days, req.riskAversion) : null;
+    if (risk) {
+      request.risk = risk;
+      assumptions.push(`Risk-aware: the battery is planned for the central forecast and ${days.length} bad end(s) of the forecasts' own bands at once (central weight ${CENTRAL_WEIGHT}, the rest shared equally: preferences, not probabilities).`);
+    } else {
+      assumptions.push(battery ? "Risk-aware planning was asked for, but no forecast has a band for these hours, so the plan is for the central forecast only." : "Risk-aware planning was asked for, but with no battery there is no decision to make ahead for other days, so it was not applied.");
+    }
+  }
+
+  return { at, property, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, bands: { pvLow, pvHigh, loadLow: load.lowKw, loadHigh: load.highKw }, riskDays: days, battery, ev, apps, assumptions, request };
 }
 
 export async function createPlan(deps: ForecastDeps, userId: string, propertyId: string, req: PlanRequest, ctx: Ctx = {}): Promise<PlanDto> {
   const { db } = deps;
   const engine = requireEngine(deps.engine);
-  const { at, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, bands, battery, ev, apps, assumptions, request } = await buildPlanInputs(deps, userId, propertyId, req, ctx);
+  const { at, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, bands, riskDays: days, battery, ev, apps, assumptions, request } = await buildPlanInputs(deps, userId, propertyId, req, ctx);
 
   const out: OptimiseResponse = await engine.optimise(request, { requestId: ctx.requestId });
 
@@ -409,6 +421,7 @@ export async function createPlan(deps: ForecastDeps, userId: string, propertyId:
     validation: out.validation,
     notes: out.notes,
   };
+  if (out.risk) dto.risk = riskSummary(out.risk, days);
 
   dto.recommendation = await recommend(engine, { request, pv, load, bands, battery, tariff, solarNote, startMs, steps, sch, dto, savings }, ctx);
 
@@ -501,7 +514,7 @@ export async function getPlan(db: Db, userId: string, propertyId: string, id?: s
   return { ...(r.plan as unknown as PlanDto), id: r.id };
 }
 
-async function requireOwner(db: Db, userId: string, propertyId: string): Promise<void> {
+export async function requireOwner(db: Db, userId: string, propertyId: string): Promise<void> {
   const p = await db.property.findFirst({ where: { id: propertyId, ownerId: userId, deletedAt: null }, select: { id: true } });
   if (!p) throw new AppError("NOT_FOUND", "No such property.");
 }

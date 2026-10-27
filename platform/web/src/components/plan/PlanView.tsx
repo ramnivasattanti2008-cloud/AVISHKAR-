@@ -11,7 +11,9 @@ import { PropertyTabs } from "../property/PropertyTabs";
 import { usePropertyData } from "../property/usePropertyData";
 import { AllocationPanel } from "./AllocationPanel";
 import { CloudFrontPanel } from "./CloudFrontPanel";
+import { DriftPanel } from "./DriftPanel";
 import { EnergyFlowDiagram } from "./EnergyFlowDiagram";
+import { RiskPanel } from "./RiskPanel";
 import { RobustnessPanel } from "./RobustnessPanel";
 import { RecommendationCard } from "./RecommendationCard";
 import { BatteryChart, PriceChart, SERIES, SourcesChart } from "./PlanCharts";
@@ -69,6 +71,7 @@ export function PlanView({ id }: { id: string }) {
   const [mode, setMode] = useState<string>("BALANCED");
   const [hours, setHours] = useState<24 | 48>(24);
   const [soc, setSoc] = useState("");
+  const [riskAversion, setRiskAversion] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const ready = Boolean(user && property);
 
@@ -115,7 +118,7 @@ export function PlanView({ id }: { id: string }) {
       return;
     }
     try {
-      const p = await api<Plan>(`/api/properties/${id}/plan`, { method: "POST", body: { mode, hours, startSocPercent: pct } });
+      const p = await api<Plan>(`/api/properties/${id}/plan`, { method: "POST", body: { mode, hours, startSocPercent: pct, riskAversion } });
       setPlan(p);
       setShowAll(false);
       void refreshHistory();
@@ -154,7 +157,7 @@ export function PlanView({ id }: { id: string }) {
 
       <section className="card mt-4 p-4" aria-label="Make a plan">
         <form
-          className="grid gap-3 sm:grid-cols-[1.4fr_1fr_1fr_auto] sm:items-end"
+          className="grid gap-3 sm:grid-cols-[1.4fr_1fr_1fr_1fr_auto] sm:items-end"
           onSubmit={(e) => {
             e.preventDefault();
             void make();
@@ -179,9 +182,22 @@ export function PlanView({ id }: { id: string }) {
             <label htmlFor="plan-soc" className="text-sm font-medium">Battery charge now, % (optional)</label>
             <input id="plan-soc" className="field mt-1" inputMode="decimal" placeholder="not known" value={soc} onChange={(e) => setSoc(e.target.value)} />
           </div>
+          <div>
+            <label htmlFor="plan-risk" className="text-sm font-medium">Allow for a worse day</label>
+            <select id="plan-risk" className="field mt-1" value={riskAversion} onChange={(e) => setRiskAversion(Number(e.target.value))} aria-describedby={riskAversion > 0 ? "plan-risk-about" : undefined}>
+              <option value={0}>No: plan for the forecast</option>
+              <option value={0.5}>Somewhat</option>
+              <option value={1}>As much as possible</option>
+            </select>
+          </div>
           <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "Planning…" : plan ? "Make a new plan" : "Make a plan"}</button>
         </form>
         <p id="plan-mode-about" className="mt-2 text-sm text-muted">{chosen?.about}</p>
+        {riskAversion > 0 && (
+          <p id="plan-risk-about" className="mt-1 text-sm text-muted">
+            The battery is also planned for less sun and more demand than forecast, at the ends of the forecasts&apos; own bands. It may cost a little more on an ordinary day to cost less on a bad one.
+          </p>
+        )}
       </section>
 
       <div aria-live="polite" className="mt-3">
@@ -241,8 +257,15 @@ export function PlanView({ id }: { id: string }) {
                 {r.evShortfallKwh > 0.005 && `The car falls ${formatNumber(r.evShortfallKwh)} kWh short of its target by departure.`}
               </p>
             )}
-            <div className="mt-2"><ProvenanceDetails p={plan.result.provenance} /></div>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <ProvenanceDetails p={plan.result.provenance} />
+              <a className="text-sm font-semibold text-accent underline" href={`/api/properties/${id}/plans/${plan.id}/export.csv`} download>
+                Download this plan (CSV)
+              </a>
+            </div>
           </section>
+          {plan.risk && <RiskPanel risk={plan.risk} />}
+          <DriftPanel id={id} planId={plan.id} />
 
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <section className="card p-4" aria-label="Where the power comes from">

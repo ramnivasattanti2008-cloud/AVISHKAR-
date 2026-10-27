@@ -13187,6 +13187,72 @@
             ],
             "type": "object"
           },
+          "risk": {
+            "additionalProperties": false,
+            "description": "Present when the plan was made risk-aware: what each day planned for would cost with the one battery schedule. Weights are preferences, not probabilities.",
+            "properties": {
+              "alpha": {
+                "type": "number"
+              },
+              "aversion": {
+                "type": "number"
+              },
+              "cvarNetCostInr": {
+                "description": "Average net cost over the worst (1 - alpha) of weight among the days planned for.",
+                "type": "number"
+              },
+              "expectedNetCostInr": {
+                "type": "number"
+              },
+              "scenarios": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "built": {
+                      "type": "string"
+                    },
+                    "importKwh": {
+                      "type": "number"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "netCostInr": {
+                      "type": "number"
+                    },
+                    "unservedKwh": {
+                      "type": "number"
+                    },
+                    "weight": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "built",
+                    "weight",
+                    "netCostInr",
+                    "importKwh",
+                    "unservedKwh"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "statement": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "aversion",
+              "alpha",
+              "scenarios",
+              "expectedNetCostInr",
+              "cvarNetCostInr",
+              "statement"
+            ],
+            "type": "object"
+          },
           "schedule": {
             "additionalProperties": false,
             "properties": {
@@ -13367,6 +13433,7 @@
         "additionalProperties": false,
         "properties": {
           "driftPercent": {
+            "description": "Signed: positive when the meter read more than the plan expected.",
             "type": [
               "number",
               "null"
@@ -13375,8 +13442,35 @@
           "evaluatedAt": {
             "type": "string"
           },
-          "observationsEvaluated": {
-            "type": "number"
+          "hoursCompared": {
+            "description": "Plan hours that have ended and whose meter readings cover them completely.",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "observedKwh": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "planId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "plannedKwh": {
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "reason": {
             "type": "string"
@@ -13392,14 +13486,22 @@
               "INSUFFICIENT_OBSERVATIONS"
             ],
             "type": "string"
+          },
+          "thresholdPercent": {
+            "description": "The tolerance used: a setting, not a property of the home.",
+            "type": "number"
           }
         },
         "required": [
           "status",
+          "planId",
           "driftPercent",
           "replanRecommended",
           "reason",
-          "observationsEvaluated",
+          "hoursCompared",
+          "plannedKwh",
+          "observedKwh",
+          "thresholdPercent",
           "evaluatedAt"
         ],
         "type": "object"
@@ -13407,6 +13509,7 @@
       "PlanDriftInput": {
         "properties": {
           "driftPercent": {
+            "description": "Signed: positive when the meter read more than the plan expected.",
             "type": [
               "number",
               "null"
@@ -13415,8 +13518,35 @@
           "evaluatedAt": {
             "type": "string"
           },
-          "observationsEvaluated": {
-            "type": "number"
+          "hoursCompared": {
+            "description": "Plan hours that have ended and whose meter readings cover them completely.",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "observedKwh": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "planId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "plannedKwh": {
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "reason": {
             "type": "string"
@@ -13432,14 +13562,22 @@
               "INSUFFICIENT_OBSERVATIONS"
             ],
             "type": "string"
+          },
+          "thresholdPercent": {
+            "description": "The tolerance used: a setting, not a property of the home.",
+            "type": "number"
           }
         },
         "required": [
           "status",
+          "planId",
           "driftPercent",
           "replanRecommended",
           "reason",
-          "observationsEvaluated",
+          "hoursCompared",
+          "plannedKwh",
+          "observedKwh",
+          "thresholdPercent",
           "evaluatedAt"
         ],
         "type": "object"
@@ -13819,6 +13957,70 @@
             ],
             "type": "object"
           },
+          "risk": {
+            "description": "Present when the plan was made risk-aware: what each day planned for would cost with the one battery schedule. Weights are preferences, not probabilities.",
+            "properties": {
+              "alpha": {
+                "type": "number"
+              },
+              "aversion": {
+                "type": "number"
+              },
+              "cvarNetCostInr": {
+                "description": "Average net cost over the worst (1 - alpha) of weight among the days planned for.",
+                "type": "number"
+              },
+              "expectedNetCostInr": {
+                "type": "number"
+              },
+              "scenarios": {
+                "items": {
+                  "properties": {
+                    "built": {
+                      "type": "string"
+                    },
+                    "importKwh": {
+                      "type": "number"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "netCostInr": {
+                      "type": "number"
+                    },
+                    "unservedKwh": {
+                      "type": "number"
+                    },
+                    "weight": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "built",
+                    "weight",
+                    "netCostInr",
+                    "importKwh",
+                    "unservedKwh"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "statement": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "aversion",
+              "alpha",
+              "scenarios",
+              "expectedNetCostInr",
+              "cvarNetCostInr",
+              "statement"
+            ],
+            "type": "object"
+          },
           "schedule": {
             "properties": {
               "applianceKw": {
@@ -14022,6 +14224,19 @@
             ],
             "type": "string"
           },
+          "riskAversion": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Plan the battery for the ends of the forecasts' own bands as well as the central forecast: 0 or absent plans for the central forecast only, 1 for the worst of those days only. Needs a forecast band; without one the plan says it was not applied."
+          },
           "startSocPercent": {
             "anyOf": [
               {
@@ -14070,6 +14285,19 @@
               "BALANCED"
             ],
             "type": "string"
+          },
+          "riskAversion": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Plan the battery for the ends of the forecasts' own bands as well as the central forecast: 0 or absent plans for the central forecast only, 1 for the worst of those days only. Needs a forecast band; without one the plan says it was not applied."
           },
           "startSocPercent": {
             "anyOf": [
@@ -27462,6 +27690,7 @@
     },
     "/api/properties/{id}/batteries/{assetId}/degradation": {
       "get": {
+        "description": "Counts the cycles of the battery's planned use in the latest plan (a simulated day, not a measured one), against the rated cycle life you entered and at your wear cost per kWh. 503 DATA_UNAVAILABLE when there is no plan with a battery or no rated cycle life: nothing is assumed in their place.",
         "parameters": [
           {
             "in": "query",
@@ -27501,6 +27730,12 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "assumptions": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
                     "calendarCapacityLossPercent": {
                       "type": "number"
                     },
@@ -27527,6 +27762,11 @@
                     },
                     "estimatedRemainingCycles": {
                       "type": "number"
+                    },
+                    "planId": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
                     },
                     "rainflowCycleCount": {
                       "type": "number"
@@ -27560,7 +27800,9 @@
                     "thermalDerateFactor",
                     "deratedMaxChargeKw",
                     "deratedMaxDischargeKw",
-                    "summaryVerdict"
+                    "summaryVerdict",
+                    "planId",
+                    "assumptions"
                   ],
                   "type": "object"
                 }
@@ -27599,6 +27841,16 @@
             "description": "Default Response"
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
             "content": {
               "application/json": {
                 "schema": {
@@ -30517,6 +30769,7 @@
     },
     "/api/properties/{id}/plan/drift": {
       "get": {
+        "description": "Only plan hours that have ended and are fully covered by imported readings are compared; a partly read hour is left out. A drift beyond the tolerance suggests making a new plan; nothing is re-planned automatically.",
         "parameters": [
           {
             "in": "path",
@@ -30571,7 +30824,7 @@
             "description": "Default Response"
           }
         },
-        "summary": "Check whether real-time observations have drifted from the plan",
+        "summary": "Compare the latest plan's expected demand with the meter readings for the hours that have passed",
         "tags": [
           "plan"
         ]
@@ -30718,6 +30971,79 @@
           }
         },
         "summary": "One plan as it was shown",
+        "tags": [
+          "plan"
+        ]
+      }
+    },
+    "/api/properties/{id}/plans/{planId}/export.csv": {
+      "get": {
+        "description": "One row per step with the numbers exactly as they were shown. The first lines (starting with #) say what the file is: a SIMULATED outcome of forecast inputs, not a measurement. Nothing is recomputed.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Download one stored plan as CSV",
         "tags": [
           "plan"
         ]

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { AuthProvider } from "@/components/AuthProvider";
+import { DegradedBanner } from "@/components/DegradedBanner";
 import { Nav } from "@/components/Nav";
 import { THEME_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </a>
         <AuthProvider>
           <Nav />
+          <DegradedBanner />
           <main id="main" className="flex min-h-0 flex-1 flex-col">
             {children}
           </main>

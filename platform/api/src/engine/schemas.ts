@@ -38,8 +38,18 @@ export interface OptimiseRequest {
   appliances?: { id: string; name: string; powerKw: number; durationSteps: number; earliestStartStep: number; latestFinishStep: number; interruptible: boolean }[];
   mode?: Mode;
   carbonKgPerKwh?: number[] | null;
+  /** Plan once for several possible days (expected cost blended with CVaR); the schedule returned is the central forecast's. */
+  risk?: { scenarios: { label: string; loadKw: number[]; pvKw: number[]; weight: number }[]; centralWeight: number; alpha: number; aversion: number } | null;
   timeLimitS?: number;
 }
+
+export const RiskOut = z.object({
+  alpha: z.number(),
+  aversion: z.number(),
+  scenarios: z.array(z.object({ label: z.string(), weight: z.number(), netCostInr: z.number(), importKwh: z.number(), exportKwh: z.number(), unservedKwh: z.number() })),
+  expectedNetCostInr: z.number(),
+  cvarNetCostInr: z.number(),
+});
 
 const nums = z.array(z.number());
 
@@ -97,6 +107,7 @@ export const OptimiseResponse = z.object({
   ),
   validation: z.object({ valid: z.boolean(), maxBalanceErrorKw: z.number(), problems: z.array(z.string()) }),
   notes: z.array(z.string()),
+  risk: RiskOut.nullish(),
 });
 export type OptimiseResponse = z.infer<typeof OptimiseResponse>;
 

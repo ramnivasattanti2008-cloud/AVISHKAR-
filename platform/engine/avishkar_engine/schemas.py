@@ -112,6 +112,22 @@ class ApplianceIn(Wire):
         return self
 
 
+class RiskScenarioIn(Wire):
+    label: str = Field(min_length=1, max_length=80)
+    load_kw: list[float]
+    pv_kw: list[float]
+    weight: float = Field(gt=0, le=1, description="Relative weight of this day among the scenarios; a weight, not a measured probability.")
+
+
+class RiskIn(Wire):
+    """Plan once for several possible days: the battery, EV and appliance schedule is shared, grid use adapts to each day."""
+
+    scenarios: list[RiskScenarioIn] = Field(min_length=1, max_length=8, description="Other days that could happen, beside the central forecast (the request's own loadKw and pvKw).")
+    central_weight: float = Field(default=0.5, gt=0, le=1, description="Weight of the central forecast among the scenarios.")
+    alpha: float = Field(default=0.8, ge=0.5, le=0.99, description="CVaR level: the tail averaged is the worst (1 - alpha) of weight.")
+    aversion: float = Field(default=0.5, ge=0, le=1, description="0 minimises the weighted average cost only, 1 the tail (CVaR) only.")
+
+
 class OptimiseRequest(Wire):
     step_hours: float
     start_time: str | None = Field(default=None, description="ISO 8601 time of step 0; only used to word the reasons.")
@@ -127,6 +143,7 @@ class OptimiseRequest(Wire):
     appliances: list[ApplianceIn] = Field(default_factory=list, max_length=20)
     mode: Mode = "SAVE_MONEY"
     carbon_kg_per_kwh: list[float] | None = Field(default=None, description="Optional grid carbon intensity per step; weights GREEN mode.")
+    risk: RiskIn | None = Field(default=None, description="Risk-aware planning over several possible days (expected cost blended with CVaR). Absent: plan for the central forecast only.")
     time_limit_s: float = Field(default=20, gt=0, le=120)
 
     @field_validator("step_hours")
@@ -169,6 +186,14 @@ class OptimiseRequest(Wire):
                 raise ValueError(f"{a.name}'s window ends after the horizon")
         if len({a.id for a in self.appliances}) != len(self.appliances):
             raise ValueError("appliance ids must be unique")
+        if self.risk:
+            for s in self.risk.scenarios:
+                if len(s.load_kw) != n or len(s.pv_kw) != n:
+                    raise ValueError(f"scenario '{s.label}' must have {n} values in loadKw and pvKw, like the central forecast")
+                _finite(s.load_kw, f"scenario '{s.label}' loadKw")
+                _finite(s.pv_kw, f"scenario '{s.label}' pvKw")
+                if min(s.load_kw) < 0 or min(s.pv_kw) < 0 or max(s.load_kw) > 1e6 or max(s.pv_kw) > 1e6:
+                    raise ValueError(f"scenario '{s.label}' has a negative or unphysical value")
         return self
 
 
@@ -250,6 +275,23 @@ class Validation(Wire):
     problems: list[str]
 
 
+class RiskScenarioOut(Wire):
+    label: str
+    weight: float = Field(description="Normalised: the weights of all scenarios, the central one included, add to 1.")
+    net_cost_inr: float = Field(description="Cost of this day at the true prices if it happens, with the shared battery, EV and appliance schedule, battery wear included (as in totals).")
+    import_kwh: float
+    export_kwh: float
+    unserved_kwh: float
+
+
+class RiskOut(Wire):
+    alpha: float
+    aversion: float
+    scenarios: list[RiskScenarioOut] = Field(description="The central forecast first, then the scenarios in the order given.")
+    expected_net_cost_inr: float = Field(description="Weighted average of the scenarios' net costs.")
+    cvar_net_cost_inr: float = Field(description="Weighted average net cost over the worst (1 - alpha) of weight.")
+
+
 class OptimiseResponse(Wire):
     mode: Mode
     mode_weights: dict[str, float]
@@ -262,3 +304,4 @@ class OptimiseResponse(Wire):
     decisions: list[Decision]
     validation: Validation
     notes: list[str]
+    risk: RiskOut | None = Field(default=None, description="Present when the request asked for risk-aware planning.")

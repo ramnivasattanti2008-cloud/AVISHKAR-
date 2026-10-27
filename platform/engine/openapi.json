@@ -1210,6 +1210,17 @@
             "title": "Pvkw",
             "type": "array"
           },
+          "risk": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskIn"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Risk-aware planning over several possible days (expected cost blended with CVaR). Absent: plan for the central forecast only."
+          },
           "startTime": {
             "anyOf": [
               {
@@ -1296,6 +1307,17 @@
             },
             "title": "Notes",
             "type": "array"
+          },
+          "risk": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Present when the request asked for risk-aware planning."
           },
           "savingsInr": {
             "anyOf": [
@@ -1430,6 +1452,172 @@
           "azimuthDeg"
         ],
         "title": "PvSystemIn",
+        "type": "object"
+      },
+      "RiskIn": {
+        "additionalProperties": false,
+        "description": "Plan once for several possible days: the battery, EV and appliance schedule is shared, grid use adapts to each day.",
+        "properties": {
+          "alpha": {
+            "default": 0.8,
+            "description": "CVaR level: the tail averaged is the worst (1 - alpha) of weight.",
+            "maximum": 0.99,
+            "minimum": 0.5,
+            "title": "Alpha",
+            "type": "number"
+          },
+          "aversion": {
+            "default": 0.5,
+            "description": "0 minimises the weighted average cost only, 1 the tail (CVaR) only.",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Aversion",
+            "type": "number"
+          },
+          "centralWeight": {
+            "default": 0.5,
+            "description": "Weight of the central forecast among the scenarios.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Centralweight",
+            "type": "number"
+          },
+          "scenarios": {
+            "description": "Other days that could happen, beside the central forecast (the request's own loadKw and pvKw).",
+            "items": {
+              "$ref": "#/components/schemas/RiskScenarioIn"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Scenarios",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scenarios"
+        ],
+        "title": "RiskIn",
+        "type": "object"
+      },
+      "RiskOut": {
+        "additionalProperties": false,
+        "properties": {
+          "alpha": {
+            "title": "Alpha",
+            "type": "number"
+          },
+          "aversion": {
+            "title": "Aversion",
+            "type": "number"
+          },
+          "cvarNetCostInr": {
+            "description": "Weighted average net cost over the worst (1 - alpha) of weight.",
+            "title": "Cvarnetcostinr",
+            "type": "number"
+          },
+          "expectedNetCostInr": {
+            "description": "Weighted average of the scenarios' net costs.",
+            "title": "Expectednetcostinr",
+            "type": "number"
+          },
+          "scenarios": {
+            "description": "The central forecast first, then the scenarios in the order given.",
+            "items": {
+              "$ref": "#/components/schemas/RiskScenarioOut"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          }
+        },
+        "required": [
+          "alpha",
+          "aversion",
+          "scenarios",
+          "expectedNetCostInr",
+          "cvarNetCostInr"
+        ],
+        "title": "RiskOut",
+        "type": "object"
+      },
+      "RiskScenarioIn": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "loadKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Loadkw",
+            "type": "array"
+          },
+          "pvKw": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Pvkw",
+            "type": "array"
+          },
+          "weight": {
+            "description": "Relative weight of this day among the scenarios; a weight, not a measured probability.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "loadKw",
+          "pvKw",
+          "weight"
+        ],
+        "title": "RiskScenarioIn",
+        "type": "object"
+      },
+      "RiskScenarioOut": {
+        "additionalProperties": false,
+        "properties": {
+          "exportKwh": {
+            "title": "Exportkwh",
+            "type": "number"
+          },
+          "importKwh": {
+            "title": "Importkwh",
+            "type": "number"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "netCostInr": {
+            "description": "Cost of this day at the true prices if it happens, with the shared battery, EV and appliance schedule, battery wear included (as in totals).",
+            "title": "Netcostinr",
+            "type": "number"
+          },
+          "unservedKwh": {
+            "title": "Unservedkwh",
+            "type": "number"
+          },
+          "weight": {
+            "description": "Normalised: the weights of all scenarios, the central one included, add to 1.",
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "weight",
+          "netCostInr",
+          "importKwh",
+          "exportKwh",
+          "unservedKwh"
+        ],
+        "title": "RiskScenarioOut",
         "type": "object"
       },
       "Schedule": {

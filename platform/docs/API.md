@@ -181,10 +181,11 @@ The plan: when to charge, discharge, import, export and run flexible loads, chec
 | Method | Path | What it does |
 |---|---|---|
 | GET | `/api/properties/{id}/plan` | The latest plan |
-| GET | `/api/properties/{id}/plan/drift` | Check whether real-time observations have drifted from the plan |
+| GET | `/api/properties/{id}/plan/drift` | Compare the latest plan's expected demand with the meter readings for the hours that have passed |
 | POST | `/api/properties/{id}/plan` | Plan the next day or two |
 | GET | `/api/properties/{id}/plans` | Plans made for a property, newest first |
 | GET | `/api/properties/{id}/plans/{planId}` | One plan as it was shown |
+| GET | `/api/properties/{id}/plans/{planId}/export.csv` | Download one stored plan as CSV |
 | GET | `/api/properties/{id}/resilience` | How long the critical load would last if the grid failed, and how autonomous the plan is |
 | GET | `/api/properties/{id}/today` | Today: generation, use, surplus, weather risk, backup, autonomy, expected value, and what to do next |
 | GET | `/api/properties/{id}/health` | Energy health: efficiency, solar utilisation, peak management, storage utilisation, resilience, grid dependence and flexibility |

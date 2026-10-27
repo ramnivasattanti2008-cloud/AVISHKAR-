@@ -10,6 +10,12 @@ export const PlanRequest = z
     mode: z.enum(MODES).default("BALANCED").describe("What to favour: money, independence from the grid, outage resilience, low carbon, export revenue, or a balance."),
     hours: z.union([z.literal(24), z.literal(48)]).default(24).describe("How far ahead to plan."),
     startSocPercent: z.number().min(0).max(100).nullish().describe("The battery's charge now, if you know it. Otherwise the plan assumes it starts at its reserve (or minimum) level and says so."),
+    riskAversion: z
+      .number()
+      .min(0)
+      .max(1)
+      .nullish()
+      .describe("Plan the battery for the ends of the forecasts' own bands as well as the central forecast: 0 or absent plans for the central forecast only, 1 for the worst of those days only. Needs a forecast band; without one the plan says it was not applied."),
   })
   .meta({ id: "PlanRequest" });
 export type PlanRequest = z.infer<typeof PlanRequest>;
@@ -91,6 +97,17 @@ export const PlanSchema = z
       criticalKw: z.number(),
     }),
     recommendation: RecommendationSchema.optional().describe("Absent on plans made before recommendations existed."),
+    risk: z
+      .object({
+        aversion: z.number(),
+        alpha: z.number(),
+        scenarios: z.array(z.object({ label: z.string(), built: z.string(), weight: z.number(), netCostInr: z.number(), importKwh: z.number(), unservedKwh: z.number() })),
+        expectedNetCostInr: z.number(),
+        cvarNetCostInr: z.number().describe("Average net cost over the worst (1 - alpha) of weight among the days planned for."),
+        statement: z.string(),
+      })
+      .optional()
+      .describe("Present when the plan was made risk-aware: what each day planned for would cost with the one battery schedule. Weights are preferences, not probabilities."),
     assumptions: z.array(z.string()),
     solver: z.object({ status: z.string(), seconds: z.number(), integerVariables: z.number() }),
     validation: z.object({ valid: z.boolean(), maxBalanceErrorKw: z.number(), problems: z.array(z.string()) }),
@@ -107,10 +124,14 @@ export const PlanSummarySchema = z
 export const PlanDriftSchema = z
   .object({
     status: z.enum(["ON_TRACK", "DRIFT_DETECTED", "NO_PLAN", "INSUFFICIENT_OBSERVATIONS"]),
-    driftPercent: z.number().nullable(),
+    planId: z.uuid().nullable(),
+    driftPercent: z.number().nullable().describe("Signed: positive when the meter read more than the plan expected."),
     replanRecommended: z.boolean(),
     reason: z.string(),
-    observationsEvaluated: z.number(),
+    hoursCompared: z.number().int().describe("Plan hours that have ended and whose meter readings cover them completely."),
+    plannedKwh: z.number().nullable(),
+    observedKwh: z.number().nullable(),
+    thresholdPercent: z.number().describe("The tolerance used: a setting, not a property of the home."),
     evaluatedAt: z.string(),
   })
   .meta({ id: "PlanDrift" });

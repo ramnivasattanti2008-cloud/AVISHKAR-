@@ -3553,7 +3553,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Battery degradation analysis (ASTM E1049 Rainflow cycle counting, DoD wear, thermal derating) */
+        /**
+         * Battery degradation analysis (ASTM E1049 Rainflow cycle counting, DoD wear, thermal derating)
+         * @description Counts the cycles of the battery's planned use in the latest plan (a simulated day, not a measured one), against the rated cycle life you entered and at your wear cost per kWh. 503 DATA_UNAVAILABLE when there is no plan with a battery or no rated cycle life: nothing is assumed in their place.
+         */
         get: {
             parameters: {
                 query?: {
@@ -3575,6 +3578,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            assumptions: string[];
                             calendarCapacityLossPercent: number;
                             cycleCapacityLossPercent: number;
                             deratedMaxChargeKw: number;
@@ -3584,6 +3588,8 @@ export interface paths {
                             };
                             equivalentFullCycles: number;
                             estimatedRemainingCycles: number;
+                            /** Format: uuid */
+                            planId: string;
                             rainflowCycleCount: number;
                             stateOfHealthPercent: number;
                             summaryVerdict: string;
@@ -3622,6 +3628,15 @@ export interface paths {
                 };
                 /** @description Default Response */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5985,7 +6000,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Check whether real-time observations have drifted from the plan */
+        /**
+         * Compare the latest plan's expected demand with the meter readings for the hours that have passed
+         * @description Only plan hours that have ended and are fully covered by imported readings are compared; a partly read hour is left out. A drift beyond the tolerance suggests making a new plan; nothing is re-planned automatically.
+         */
         get: {
             parameters: {
                 query?: never;
@@ -6137,6 +6155,75 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["Plan"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/plans/{planId}/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download one stored plan as CSV
+         * @description One row per step with the numbers exactly as they were shown. The first lines (starting with #) say what the file is: a SIMULATED outcome of forecast inputs, not a measurement. Nothing is recomputed.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    planId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
                     };
                 };
                 /** @description Default Response */
@@ -11413,6 +11500,23 @@ export interface components {
                     unservedKwh: number;
                 } | null;
             };
+            /** @description Present when the plan was made risk-aware: what each day planned for would cost with the one battery schedule. Weights are preferences, not probabilities. */
+            risk?: {
+                alpha: number;
+                aversion: number;
+                /** @description Average net cost over the worst (1 - alpha) of weight among the days planned for. */
+                cvarNetCostInr: number;
+                expectedNetCostInr: number;
+                scenarios: {
+                    built: string;
+                    importKwh: number;
+                    label: string;
+                    netCostInr: number;
+                    unservedKwh: number;
+                    weight: number;
+                }[];
+                statement: string;
+            };
             schedule: {
                 applianceKw: {
                     [key: string]: number[];
@@ -11444,22 +11548,36 @@ export interface components {
             };
         };
         PlanDrift: {
+            /** @description Signed: positive when the meter read more than the plan expected. */
             driftPercent: number | null;
             evaluatedAt: string;
-            observationsEvaluated: number;
+            /** @description Plan hours that have ended and whose meter readings cover them completely. */
+            hoursCompared: number;
+            observedKwh: number | null;
+            planId: string | null;
+            plannedKwh: number | null;
             reason: string;
             replanRecommended: boolean;
             /** @enum {string} */
             status: "ON_TRACK" | "DRIFT_DETECTED" | "NO_PLAN" | "INSUFFICIENT_OBSERVATIONS";
+            /** @description The tolerance used: a setting, not a property of the home. */
+            thresholdPercent: number;
         };
         PlanDriftInput: {
+            /** @description Signed: positive when the meter read more than the plan expected. */
             driftPercent: number | null;
             evaluatedAt: string;
-            observationsEvaluated: number;
+            /** @description Plan hours that have ended and whose meter readings cover them completely. */
+            hoursCompared: number;
+            observedKwh: number | null;
+            planId: string | null;
+            plannedKwh: number | null;
             reason: string;
             replanRecommended: boolean;
             /** @enum {string} */
             status: "ON_TRACK" | "DRIFT_DETECTED" | "NO_PLAN" | "INSUFFICIENT_OBSERVATIONS";
+            /** @description The tolerance used: a setting, not a property of the home. */
+            thresholdPercent: number;
         };
         PlanInput: {
             appliances: {
@@ -11550,6 +11668,23 @@ export interface components {
                     unservedKwh: number;
                 } | null;
             };
+            /** @description Present when the plan was made risk-aware: what each day planned for would cost with the one battery schedule. Weights are preferences, not probabilities. */
+            risk?: {
+                alpha: number;
+                aversion: number;
+                /** @description Average net cost over the worst (1 - alpha) of weight among the days planned for. */
+                cvarNetCostInr: number;
+                expectedNetCostInr: number;
+                scenarios: {
+                    built: string;
+                    importKwh: number;
+                    label: string;
+                    netCostInr: number;
+                    unservedKwh: number;
+                    weight: number;
+                }[];
+                statement: string;
+            };
             schedule: {
                 applianceKw: {
                     [key: string]: number[];
@@ -11592,6 +11727,8 @@ export interface components {
              * @enum {string}
              */
             mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            /** @description Plan the battery for the ends of the forecasts' own bands as well as the central forecast: 0 or absent plans for the central forecast only, 1 for the worst of those days only. Needs a forecast band; without one the plan says it was not applied. */
+            riskAversion?: number | null;
             /** @description The battery's charge now, if you know it. Otherwise the plan assumes it starts at its reserve (or minimum) level and says so. */
             startSocPercent?: number | null;
         };
@@ -11607,6 +11744,8 @@ export interface components {
              * @enum {string}
              */
             mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            /** @description Plan the battery for the ends of the forecasts' own bands as well as the central forecast: 0 or absent plans for the central forecast only, 1 for the worst of those days only. Needs a forecast band; without one the plan says it was not applied. */
+            riskAversion?: number | null;
             /** @description The battery's charge now, if you know it. Otherwise the plan assumes it starts at its reserve (or minimum) level and says so. */
             startSocPercent?: number | null;
         };

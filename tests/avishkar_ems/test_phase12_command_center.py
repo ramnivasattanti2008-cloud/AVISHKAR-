@@ -191,6 +191,20 @@ class TestPhase12CommandCenterService:
         # CEA Hydro standard note present
         assert "Small Hydro" in gen_mix.hydro_note
 
+    def test_every_listed_period_answers_and_a_month_without_a_report_is_not_filled_in(self, cmd_service: CommandCenterService):
+        # the period list comes from the energy balance, which covers more months than the renewable generation reports
+        for geo in ("IN", "KA", "AP"):
+            loaded = cmd_service.solar.list_periods_for_region(geo)
+            for period in cmd_service.get_available_periods(geo):
+                gen_mix = cmd_service.get_generation_and_renewables(geo, period)
+                if period in loaded:
+                    assert gen_mix.categories
+                else:
+                    assert gen_mix.categories == [] and gen_mix.cuf_pct is None
+                    assert gen_mix.solar_generation_mu == 0.0
+                    assert f"No renewable generation report is loaded for {geo} in {period}" in gen_mix.denominator_explanation
+                    assert "not interpolated" in gen_mix.caveats[0]
+
     def test_geographic_exploration_view(self, cmd_service: CommandCenterService):
         geo_view = cmd_service.get_geographic_exploration("KA")
 

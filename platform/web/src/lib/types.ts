@@ -52,6 +52,7 @@ export type SolarPerformance = Resp<"/api/properties/{id}/solar-forecast/perform
 export type LoadForecast = Resp<"/api/properties/{id}/load-forecast", "get", 200>;
 export type Plan = components["schemas"]["Plan"];
 export type PlanSummary = components["schemas"]["PlanSummary"];
+export type PlanDrift = components["schemas"]["PlanDrift"];
 export type PlanRequest = components["schemas"]["PlanRequestInput"];
 export type ForecastAccuracy = components["schemas"]["ForecastAccuracy"];
 export type Scenario = components["schemas"]["Scenario"];

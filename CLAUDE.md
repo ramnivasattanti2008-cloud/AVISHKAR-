@@ -126,12 +126,14 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
 
 - **Engine** (`platform/engine`, D1, D15): stateless FastAPI, camelCase on the wire, shared key `x-engine-key`, refuses to start
   open unless `ENGINE_INSECURE_DEV=1`. `optimise.py` is the planner (scipy `milp`/HiGHS; `validate()` re-checks every plan and
-  an invalid one is never shown), `solar.py` (pvlib; the band is learned from the place's own past day-ahead errors) and
+  an invalid one is never shown; an optional `risk` block plans one battery schedule for several days with expected cost + CVaR,
+  the API builds those days from the forecast bands in `api/src/plan/risk.ts` when a plan is asked with `riskAversion`), `solar.py` (pvlib; the band is learned from the place's own past day-ahead errors) and
   `load.py` (baselines against a quantile model on a chronological holdout). The TS side is `api/src/engine` (client, zod
   schemas), `api/src/forecast` (solar and load routes, the Open-Meteo previous-runs provider), `api/src/plan` (builds the
   optimiser input from tariff, forecasts and assets; `horizon.ts` is the local-clock arithmetic, steps are whole IST hours).
   The solar provider's hours sit half an hour off IST: `plan/horizon.ts resample` averages the two it overlaps. Plans are stored
-  whole in `optimization_runs`; forecasts as issued in `forecast_runs`; what-ifs in `scenarios`. Tests that depend on the hour of
+  whole in `optimization_runs` (a stored plan has `schedule.times`/`schedule.loadKw`, not `steps`; `plan/export.ts` is the CSV,
+  `plan/drift.ts` compares a plan with the readings for its passed hours); forecasts as issued in `forecast_runs`; what-ifs in `scenarios`. Tests that depend on the hour of
   day pin the clock. `api/src/scenarios` estimates a year from 24 typical days (a weekday and a weekend day per month) planned with
   a `cyclic` battery, weighted by the next 365 days; money arithmetic is `economics.ts`, and only prices the owner enters are used
   (never a built-in price list or emission factor). `api/src/forecast/evaluate.ts` scores stored load forecasts against readings
@@ -140,7 +142,8 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
   `\b` into a literal backspace in a regex). Write scripts and files with the Write tool, then run them.
 
 - **Web** (`platform/web`): Next 16 App Router, React 19, Tailwind 4, MapLibre, recharts. It only talks to `/api` (same-origin
-  proxy, so the HttpOnly session cookie is first-party and the CSRF token is echoed from the `avk_csrf` cookie). Show every
+  proxy, so the HttpOnly session cookie is first-party and the CSRF token is echoed from the `avk_csrf` cookie; the root layout's
+  `components/DegradedBanner.tsx` polls `/api/system/health` and says on every page what is down). Show every
   number through `components/Provenance.tsx` (`Measure`, `StatusBadge`) so it wears its data label; never print an
   UNAVAILABLE value as a number. Component classes (`.btn`, `.card`, `.field`, `.badge`) are in `@layer components` so
   Tailwind utilities can override them. The lint rule `react-hooks/set-state-in-effect` is on: derive state, do not set it

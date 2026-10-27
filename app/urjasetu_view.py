@@ -368,7 +368,7 @@ def render_urjasetu_dashboard() -> None:
                 st.info("💡 **Physical Decoupling**: Installed capacity (MW) represents physical plant rating. Energy generated (MU) reflects actual metered kilowatt-hours delivered over time. They are measured on separate physical dimensions.")
                 st.caption(f"ℹ️ {gen_mix.hydro_note}")
         else:
-            st.info(f"Generation mix breakdown is not available for '{sel_geo_dict['name']}'.")
+            st.info(f"Generation mix breakdown is not available for '{sel_geo_dict['name']}' in {sel_period}. {' '.join(gen_mix.caveats)}")
 
         # Section D: Explainable Insights Panel
         st.markdown("---")

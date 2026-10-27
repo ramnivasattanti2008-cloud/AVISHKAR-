@@ -35,7 +35,7 @@ the remaining gaps below are unchanged.
   enforced, dev compatibility, and malformed/missing credentials.
 - **The web CSP no longer needs `'unsafe-inline'` for scripts.** The one inline script that existed (the theme picker, which only
   touches our own `localStorage`) is now allowed by its SHA-256 hash instead. Production `script-src` is
-  `script-src 'self' 'sha256-48Z1oJ5T3uQ6v2b3Xy7Yq9WmRnKdL1aVcTpSeGuHh0='`; development keeps `'unsafe-inline' 'unsafe-eval'` for hot reload.
+  `script-src 'self' 'sha256-CziUIgdwQiAXOHBEaXV2OraoUnQkXqcY/0vH3bIKftk='` (as in `web/src/lib/csp.ts`; this line was corrected on 2026-10-27, it had shown a hash that was never in the code); development keeps `'unsafe-inline' 'unsafe-eval'` for hot reload.
   Next.js 16's own hydration scripts are still served, and they carry their own nonce. The hash is computed from the script the layout
   actually renders, and a test pins the two together so a hand-edit cannot drift.
 - **Secrets template is safe and documented.** `secrets_emhass(example).yaml` is a template of placeholders only (every value is a
@@ -45,6 +45,12 @@ the remaining gaps below are unchanged.
   proxy) or `"false"`, and defaults to `false` (never trust forwarded headers). The Compose file sets `"1"` because the web app is the
   only externally-exposed service and is exactly one hop from the API. A forged `X-Forwarded-For` from any other client now has no effect
   unless it arrives on a trusted hop, and `req.ip` used by rate limiting and the audit log is the connection peer when nothing is trusted.
+
+## Fixed on 2026-10-27
+
+- **The plan drift check did not check ownership.** `GET /api/properties/:id/plan/drift` passed only the property id to its
+  service, so any signed-in user could read how another owner's meter readings compared with their latest plan. It now checks
+  `(id, userId)` like every other plan route and answers 404 otherwise (`api/test/plan.test.ts`, the ownership case).
 
 ## What is not done
 

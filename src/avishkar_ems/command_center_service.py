@@ -604,7 +604,8 @@ class CommandCenterService:
     def get_generation_and_renewables(self, geo_code: str, period: str) -> GenerationMixBreakdown:
         """Retrieves verified multi-fuel generation mix and solar metrics."""
         clean_code = geo_code.strip().upper()
-        if clean_code not in {"IN", "KA", "AP"}:
+
+        def unavailable(why: str, caveat: str) -> GenerationMixBreakdown:
             return GenerationMixBreakdown(
                 geo_code=clean_code,
                 period=period,
@@ -616,8 +617,18 @@ class CommandCenterService:
                 solar_generation_mu=0.0,
                 cuf_pct=None,
                 hydro_note=HYDRO_CLASSIFICATION_CEA_NOTE,
-                denominator_explanation="Unavailable for district or utility level.",
-                caveats=["Generation mix statistics are compiled by CEA at state and regional levels only."],
+                denominator_explanation=why,
+                caveats=[caveat],
+            )
+
+        if clean_code not in {"IN", "KA", "AP"}:
+            return unavailable("Unavailable for district or utility level.", "Generation mix statistics are compiled by CEA at state and regional levels only.")
+        loaded = self.solar.list_periods_for_region(clean_code)
+        if period not in loaded:
+            # the energy balance covers more months than the renewable generation reports loaded; a missing month is not filled in
+            return unavailable(
+                f"No renewable generation report is loaded for {clean_code} in {period}.",
+                f"Generation mix is available for {', '.join(loaded) or 'no period'}; other months are not interpolated.",
             )
 
         mix_rep = self.mix.get_mix_report(clean_code, period)

@@ -326,6 +326,98 @@ describeBoth("plans, through the API and the real engine", () => {
     expect(await db().optimizationRun.count({ where: { propertyId: prop } })).toBe(0);
   });
 
+  it("plans risk-aware over the bad ends of the forecast bands when asked, or says why it could not", async () => {
+    await withTariff();
+    await withMeter();
+    await withSolar();
+    await withBattery();
+    const plain = await make({ mode: "SAVE_MONEY" });
+    expect(plain.risk).toBeUndefined();
+    const p = await make({ mode: "SAVE_MONEY", riskAversion: 1 });
+    expect(p.validation.valid).toBe(true);
+    if (p.risk) {
+      expect(p.risk.scenarios[0]).toMatchObject({ label: "central forecast", weight: 0.5 });
+      expect(p.risk.scenarios.length).toBeGreaterThan(1);
+      expect(p.risk.scenarios.reduce((a, s) => a + s.weight, 0)).toBeCloseTo(1, 5); // each weight is rounded to 6 places
+      expect(p.risk.cvarNetCostInr).toBeGreaterThanOrEqual(p.risk.expectedNetCostInr - 1e-6);
+      expect(p.assumptions.join(" ")).toMatch(/^.*Risk-aware: the battery is planned/);
+      // the schedule shown is the central forecast's, so its cost is the central day's
+      expect(p.risk.scenarios[0]!.netCostInr).toBeCloseTo(p.result.value!.netCostInr, 1);
+    } else {
+      expect(p.assumptions.join(" ")).toContain("no forecast has a band for these hours");
+    }
+  });
+
+  it("estimates battery wear only from a plan and the owner's own figures, never from invented ones", async () => {
+    await withTariff();
+    await withMeter();
+    await withSolar();
+    const bare = (await withBattery()).json();
+    const url = (id: string) => `/api/properties/${pid}/batteries/${id}/degradation`;
+    const noCycles = await call("GET", url(bare.id));
+    expect(noCycles.statusCode).toBe(503);
+    expect(noCycles.json().error.message).toMatch(/rated cycle life/);
+    await call("DELETE", `/api/properties/${pid}/batteries/${bare.id}`);
+
+    const b = (await withBattery({ ratedCycles: 6000 })).json();
+    const noPlan = await call("GET", url(b.id));
+    expect(noPlan.statusCode).toBe(503);
+    expect(noPlan.json().error.message).toMatch(/make a plan first/);
+
+    const p = await make({ mode: "SAVE_MONEY" });
+    const res = await call("GET", url(b.id));
+    expect(res.statusCode, res.body).toBe(200);
+    const d = res.json();
+    expect(d.planId).toBe(p.id);
+    expect(d.assumptions.join(" ")).toContain("Rated cycle life 6000, as you entered it.");
+    expect(d.assumptions.join(" ")).toContain("not a measured one");
+    expect(d.stateOfHealthPercent).toBeLessThanOrEqual(100);
+    expect((await call("GET", url(b.id), undefined, await register(t, "wear-other@example.com"))).statusCode).toBe(404);
+  });
+
+  it("exports a stored plan as CSV, one row per hour, to its owner only", async () => {
+    await withTariff();
+    await withMeter();
+    const p = await make();
+    const res = await call("GET", `/api/properties/${pid}/plans/${p.id}/export.csv`);
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["content-type"]).toMatch(/^text\/csv/);
+    expect(res.headers["content-disposition"]).toBe(`attachment; filename="avishkar-plan-${p.id}.csv"`);
+    const data = res.body.trimEnd().split("\r\n").filter((l) => !l.startsWith("#"));
+    expect(data[0]!.startsWith("time,load_kw,")).toBe(true);
+    expect(data).toHaveLength(p.horizon.steps + 1);
+    expect(data[1]!.split(",")[0]).toBe(p.schedule.times[0]);
+    expect(res.body).toContain("# SIMULATED");
+    const other = await register(t, "csv-other@example.com");
+    expect((await call("GET", `/api/properties/${pid}/plans/${p.id}/export.csv`, undefined, other)).statusCode).toBe(404);
+  });
+
+  it("compares the plan's expected demand with the readings for the hours that have passed", async () => {
+    expect((await call("GET", `/api/properties/${pid}/plan/drift`)).json()).toMatchObject({ status: "NO_PLAN", planId: null });
+    await withTariff();
+    await withMeter();
+    const p = await make();
+    expect((await call("GET", `/api/properties/${pid}/plan/drift`)).json()).toMatchObject({ status: "INSUFFICIENT_OBSERVATIONS", hoursCompared: 0, planId: p.id });
+
+    // three hours pass; the meter reads double the plan's demand in 15-minute readings, and the fourth hour is only half read
+    const start = Date.parse(p.horizon.start);
+    t.clock.now = new Date(start + 3.5 * 3_600_000);
+    const rows = [];
+    for (let h = 0; h < 4; h++) {
+      for (let q = 0; q < (h === 3 ? 2 : 4); q++) {
+        rows.push({ propertyId: pid, ts: new Date(start + h * 3_600_000 + q * 900_000), intervalMinutes: 15, importKwh: (p.schedule.loadKw[h]! * 2) / 4 });
+      }
+    }
+    await db().energyObservation.deleteMany({ where: { propertyId: pid, ts: { gte: new Date(start) } } });
+    await db().energyObservation.createMany({ data: rows });
+
+    const d = (await call("GET", `/api/properties/${pid}/plan/drift`)).json();
+    const planned = p.schedule.loadKw.slice(0, 3).reduce((a, b) => a + b, 0);
+    expect(d).toMatchObject({ status: "DRIFT_DETECTED", replanRecommended: true, hoursCompared: 3, driftPercent: 100, thresholdPercent: 15 });
+    expect(d.plannedKwh).toBeCloseTo(planned, 3);
+    expect(d.observedKwh).toBeCloseTo(planned * 2, 3);
+  });
+
   it("is private to its owner, needs a session and the CSRF header, and needs the engine", async () => {
     await withTariff();
     await withMeter();
@@ -334,6 +426,7 @@ describeBoth("plans, through the API and the real engine", () => {
     expect((await call("GET", `/api/properties/${pid}/plan`, undefined, other)).statusCode).toBe(404);
     expect((await call("GET", `/api/properties/${pid}/plans/${p.id}`, undefined, other)).statusCode).toBe(404);
     expect((await call("POST", `/api/properties/${pid}/plan`, {}, other)).statusCode).toBe(404);
+    expect((await call("GET", `/api/properties/${pid}/plan/drift`, undefined, other)).statusCode).toBe(404);
     expect((await t.app.inject({ method: "GET", url: `/api/properties/${pid}/plan` })).statusCode).toBe(401);
     expect((await t.app.inject({ method: "POST", url: `/api/properties/${pid}/plan`, cookies: s.cookies, payload: {} })).statusCode).toBe(403);
     expect((await call("POST", `/api/properties/${pid}/plan`, { hours: 12 })).statusCode).toBe(400);

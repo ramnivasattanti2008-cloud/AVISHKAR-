@@ -10,7 +10,9 @@ vi.mock("../AuthProvider", () => ({ useAuth: () => ({ user: auth.user, loading: 
 const NO_TWIN = { error: { code: "NOT_FOUND", message: "No Energy Twin yet." } };
 const NO_PLAN = { error: { code: "NOT_FOUND", message: "No plan has been made for this property yet." } };
 
-function world(over: { latest?: Response | (() => Response); post?: (body: unknown) => Response; plans?: unknown[] } = {}) {
+const DRIFT = { status: "INSUFFICIENT_OBSERVATIONS", planId: "44444444-4444-4444-8444-444444444444", driftPercent: null, replanRecommended: false, reason: "Only 0 hours of this plan have passed with complete meter readings; at least 2 are needed.", hoursCompared: 0, plannedKwh: null, observedKwh: null, thresholdPercent: 15, evaluatedAt: "2026-10-07T10:10:00.000Z" };
+
+function world(over: { latest?: Response | (() => Response); post?: (body: unknown) => Response; plans?: unknown[]; drift?: unknown } = {}) {
   const api = fakeApi([
     ["GET", `/api/properties/${PROPERTY_ID}`, () => json(property())],
     ["GET", `/api/properties/${PROPERTY_ID}/twin`, () => json(NO_TWIN, 404)],
@@ -20,6 +22,8 @@ function world(over: { latest?: Response | (() => Response); post?: (body: unkno
     ["POST", `/api/properties/${PROPERTY_ID}/plan`, ({ body }) => (over.post ? over.post(body) : json(plan(), 201))],
     // the ledger panel of the page; it has its own tests, and here it only has to not get in the way
     ["GET", `/api/properties/${PROPERTY_ID}/allocation`, () => json({ label: "WHERE EVERY kWh WENT", propertyId: PROPERTY_ID, madeAt: "2026-10-20T10:00:00.000Z", basedOn: null, rule: [], hours: [], totals: { value: null, unit: "kWh", provenance: provenance({ status: "UNAVAILABLE", provider: "avishkar-allocation", dataType: "energy_allocation", notes: ["No plan has been made yet."] }) }, check: { balanced: true, maxHourErrorKwh: 0, note: "nothing to check" }, next: [] })],
+    // and for the comparison with the meter
+    ["GET", `/api/properties/${PROPERTY_ID}/plan/drift`, () => json(over.drift ?? DRIFT)],
     // the same for the panel that puts the plan under a worse day
     ["GET", `/api/properties/${PROPERTY_ID}/robustness`, () => json({ label: "IF THE DAY TURNS OUT DIFFERENTLY", propertyId: PROPERTY_ID, madeAt: "2026-10-20T10:00:00.000Z", basedOn: null, scenarios: [], result: { value: null, unit: "INR", provenance: provenance({ status: "UNAVAILABLE", provider: "avishkar-robustness", dataType: "plan_robustness", notes: ["No plan has been made yet."] }) }, next: [] })],
   ]);
@@ -107,7 +111,7 @@ describe("PlanView", () => {
     expect(screen.getByText(/lowest possible bill, whatever else/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Make a plan" }));
     expect(await screen.findByRole("region", { name: "Plan outcome" })).toBeInTheDocument();
-    expect(sent).toEqual({ mode: "SAVE_MONEY", hours: 48, startSocPercent: 80 });
+    expect(sent).toEqual({ mode: "SAVE_MONEY", hours: 48, startSocPercent: 80, riskAversion: 0 });
     expect(screen.getByRole("button", { name: "Make a new plan" })).toBeInTheDocument();
   });
 
@@ -118,7 +122,34 @@ describe("PlanView", () => {
     await screen.findByText(/No plan yet/);
     await userEvent.click(screen.getByRole("button", { name: "Make a plan" }));
     await screen.findByRole("region", { name: "Plan outcome" });
-    expect(sent).toEqual({ mode: "BALANCED", hours: 24, startSocPercent: null });
+    expect(sent).toEqual({ mode: "BALANCED", hours: 24, startSocPercent: null, riskAversion: 0 });
+  });
+
+  it("asks for a risk-aware plan and shows what each day it was made for would cost", async () => {
+    let sent: unknown;
+    const risk = {
+      aversion: 1,
+      alpha: 0.8,
+      scenarios: [
+        { label: "central forecast", built: "The forecast's central estimate for sun and demand.", weight: 0.5, netCostInr: 41.2, importKwh: 21.5, unservedKwh: 0 },
+        { label: "Less sun than expected", built: "The lower end of the solar forecast's own band; the demand as expected.", weight: 0.5, netCostInr: 48.9, importKwh: 25, unservedKwh: 0 },
+      ],
+      expectedNetCostInr: 45.05,
+      cvarNetCostInr: 48.9,
+      statement: 'One battery schedule was chosen for 2 possible days at once. The weights are preferences, not probabilities.',
+    };
+    world({ post: (b) => ((sent = b), json(plan({ risk }), 201)) });
+    render(<PlanView id={PROPERTY_ID} />);
+    await screen.findByText(/No plan yet/);
+    await userEvent.selectOptions(screen.getByLabelText("Allow for a worse day"), "1");
+    expect(screen.getByText(/also planned for less sun and more demand than forecast/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Make a plan" }));
+    const panel = await screen.findByRole("region", { name: "Days this plan was made for" });
+    expect(sent).toMatchObject({ riskAversion: 1 });
+    expect(within(panel).getByRole("rowheader", { name: /Less sun than expected/ })).toBeInTheDocument();
+    expect(within(panel).getAllByText("₹48.90")).toHaveLength(2);
+    expect(within(panel).getByText("Worst 20% of weight")).toBeInTheDocument();
+    expect(within(panel).getByText(/preferences, not probabilities/)).toBeInTheDocument();
   });
 
   it("does not call the server for a battery charge that cannot be right", async () => {
@@ -155,6 +186,17 @@ describe("PlanView", () => {
     expect(alert).toHaveTextContent("SIMULATION INVALID");
     expect(alert).toHaveTextContent("energy balance broken in step 4");
     expect(screen.queryByRole("region", { name: "Plan outcome" })).not.toBeInTheDocument();
+  });
+
+  it("offers the plan as a CSV download and compares it with the meter", async () => {
+    world({ latest: json(plan()), drift: { ...DRIFT, status: "DRIFT_DETECTED", driftPercent: 40, replanRecommended: true, hoursCompared: 3, plannedKwh: 3, observedKwh: 4.2, reason: "Over 3 hours the meter read 4.2 kWh against 3 kWh planned (40% more); that is beyond the 15% tolerance, so a new plan is suggested." } });
+    render(<PlanView id={PROPERTY_ID} />);
+    const outcome = await screen.findByRole("region", { name: "Plan outcome" });
+    expect(within(outcome).getByRole("link", { name: "Download this plan (CSV)" })).toHaveAttribute("href", `/api/properties/${PROPERTY_ID}/plans/44444444-4444-4444-8444-444444444444/export.csv`);
+    const drift = screen.getByRole("region", { name: "Plan against the meter" });
+    expect(await within(drift).findByText(/40% more\); that is beyond the 15% tolerance/)).toBeInTheDocument();
+    expect(within(drift).getByText("4.2 kWh")).toBeInTheDocument();
+    expect(within(drift).getByText("3")).toBeInTheDocument();
   });
 
   it("keeps the earlier plan on screen when a new one fails", async () => {
