@@ -546,6 +546,135 @@ with st.container():
             unsafe_allow_html=True,
         )
 
+    # Animated Visual Power Flow Routing Diagram
+    pv_active = c_pv > 0.05
+    batt_charging = c_batt < -0.05
+    batt_discharging = c_batt > 0.05
+    grid_exporting = c_grid > 0.05
+    grid_importing = c_grid < -0.05
+    load_active = c_load > 0.05
+
+    solar_color = "#f59e0b" if pv_active else "#475569"
+    solar_pulse = (
+        '<circle r="4" fill="#fbbf24">'
+        '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 230 70 C 290 70, 310 140, 360 140" />'
+        '</circle>'
+        if pv_active else ""
+    )
+
+    if batt_charging:
+        batt_color_line = "#10b981"
+        batt_pulse = (
+            '<circle r="4" fill="#34d399">'
+            '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 360 180 C 310 180, 290 250, 230 250" />'
+            '</circle>'
+        )
+    elif batt_discharging:
+        batt_color_line = "#38bdf8"
+        batt_pulse = (
+            '<circle r="4" fill="#7dd3fc">'
+            '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 230 250 C 290 250, 310 180, 360 180" />'
+            '</circle>'
+        )
+    else:
+        batt_color_line = "#475569"
+        batt_pulse = ""
+
+    if grid_exporting:
+        grid_color_line = "#22c55e"
+        grid_pulse = (
+            '<circle r="4" fill="#4ade80">'
+            '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 540 140 C 590 140, 610 70, 670 70" />'
+            '</circle>'
+        )
+    elif grid_importing:
+        grid_color_line = "#f87171"
+        grid_pulse = (
+            '<circle r="4" fill="#fca5a5">'
+            '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 670 70 C 610 70, 590 140, 540 140" />'
+            '</circle>'
+        )
+    else:
+        grid_color_line = "#475569"
+        grid_pulse = ""
+
+    load_color_line = "#38bdf8" if load_active else "#475569"
+    load_pulse = (
+        '<circle r="4" fill="#67e8f9">'
+        '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 540 180 C 590 180, 610 250, 670 250" />'
+        '</circle>'
+        if load_active else ""
+    )
+
+    total_throughput = max(c_pv, c_load, abs(c_batt), abs(c_grid))
+    pv_sub = "Active Solar Generation" if pv_active else "Night / Twilight"
+    grid_sub = "Export (+₹ Earned)" if grid_exporting else ("Import (-₹ Cost)" if grid_importing else "100% Self-Sufficient")
+    batt_sub = f"{abs(c_batt):.2f} kW Charging" if batt_charging else (f"{c_batt:.2f} kW Discharging" if batt_discharging else "Battery Standby")
+
+    flow_diagram_svg = f"""
+    <div style="background: linear-gradient(135deg, #090d16 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 14px; padding: 14px 18px; margin-top: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">
+                ⚡ Interactive Energy Routing Map • {hours[flow_step].strftime('%I:%M %p')}
+            </span>
+            <span style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid #4f46e5; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                Microgrid Live Balancing
+            </span>
+        </div>
+        <svg viewBox="0 0 900 320" style="width: 100%; height: auto; display: block; font-family: system-ui, -apple-system, sans-serif;">
+            <!-- Background Tracks -->
+            <path d="M 230 70 C 290 70, 310 140, 360 140" fill="none" stroke="#1e293b" stroke-width="4" />
+            <path d="M 230 250 C 290 250, 310 180, 360 180" fill="none" stroke="#1e293b" stroke-width="4" />
+            <path d="M 540 140 C 590 140, 610 70, 670 70" fill="none" stroke="#1e293b" stroke-width="4" />
+            <path d="M 540 180 C 590 180, 610 250, 670 250" fill="none" stroke="#1e293b" stroke-width="4" />
+
+            <!-- Active Animated Flow Lines -->
+            <path d="M 230 70 C 290 70, 310 140, 360 140" fill="none" stroke="{solar_color}" stroke-width="2.5" stroke-dasharray="6 6" />
+            <path d="M 230 250 C 290 250, 310 180, 360 180" fill="none" stroke="{batt_color_line}" stroke-width="2.5" stroke-dasharray="6 6" />
+            <path d="M 540 140 C 590 140, 610 70, 670 70" fill="none" stroke="{grid_color_line}" stroke-width="2.5" stroke-dasharray="6 6" />
+            <path d="M 540 180 C 590 180, 610 250, 670 250" fill="none" stroke="{load_color_line}" stroke-width="2.5" stroke-dasharray="6 6" />
+
+            <!-- Animated Energy Particles -->
+            {solar_pulse}
+            {batt_pulse}
+            {grid_pulse}
+            {load_pulse}
+
+            <!-- Node 1: Solar Rooftop -->
+            <rect x="30" y="25" width="200" height="90" rx="12" fill="#1e1b4b" stroke="{solar_color}" stroke-width="1.8"/>
+            <text x="50" y="55" fill="#fbbf24" font-size="14" font-weight="700">☀️ Solar Rooftop</text>
+            <text x="50" y="85" fill="#fef3c7" font-size="20" font-weight="800">{c_pv:.2f} kW</text>
+            <text x="50" y="103" fill="#cbd5e1" font-size="11">{pv_sub}</text>
+
+            <!-- Node 2: LiFePO4 Battery -->
+            <rect x="30" y="205" width="200" height="90" rx="12" fill="#0f172a" stroke="{batt_color}" stroke-width="1.8"/>
+            <text x="50" y="235" fill="#34d399" font-size="14" font-weight="700">🔋 LiFePO4 Battery</text>
+            <text x="50" y="265" fill="#ecfdf5" font-size="20" font-weight="800">{c_soc:.0f}% SoC</text>
+            <text x="50" y="283" fill="#cbd5e1" font-size="11">{batt_sub}</text>
+
+            <!-- Node 3: Hybrid Inverter (Center Hub) -->
+            <rect x="350" y="100" width="200" height="120" rx="16" fill="#1e293b" stroke="#6366f1" stroke-width="2"/>
+            <text x="375" y="130" fill="#a5b4fc" font-size="14" font-weight="700">⚡ Hybrid Inverter</text>
+            <text x="375" y="155" fill="#f8fafc" font-size="16" font-weight="800">Smart EMS Hub</text>
+            <text x="375" y="180" fill="#94a3b8" font-size="12">Flow: {total_throughput:.2f} kW</text>
+            <text x="375" y="202" fill="#38bdf8" font-size="11" font-weight="600">97.4% Sandia Eff</text>
+
+            <!-- Node 4: Utility Grid -->
+            <rect x="670" y="25" width="200" height="90" rx="12" fill="#1e1b4b" stroke="{grid_color}" stroke-width="1.8"/>
+            <text x="690" y="55" fill="#c084fc" font-size="14" font-weight="700">🌐 DISCOM Grid</text>
+            <text x="690" y="85" fill="#faf5ff" font-size="20" font-weight="800">{abs(c_grid):.2f} kW</text>
+            <text x="690" y="103" fill="#cbd5e1" font-size="11">{grid_sub}</text>
+
+            <!-- Node 5: Home Demand -->
+            <rect x="670" y="205" width="200" height="90" rx="12" fill="#0f172a" stroke="#38bdf8" stroke-width="1.8"/>
+            <text x="690" y="235" fill="#38bdf8" font-size="14" font-weight="700">🏡 Home Load</text>
+            <text x="690" y="265" fill="#f0f9ff" font-size="20" font-weight="800">{c_load:.2f} kW</text>
+            <text x="690" y="283" fill="#cbd5e1" font-size="11">Active Household Demand</text>
+        </svg>
+    </div>
+    """
+    st.markdown(flow_diagram_svg, unsafe_allow_html=True)
+
 # ==============================================================================
 # ARKA — PERSONAL AI SOLAR & ENERGY ASSISTANT (Surya / AI Copilot)
 # ==============================================================================
@@ -1195,24 +1324,61 @@ with tab_storage:
     st.markdown("##### 🛡️ Room-by-Room Family Blackout Survival Planner")
     st.write(f"Your **{site.battery_kwh:.0f} kWh LiFePO4 battery** currently holds **{current_stored_kwh:.2f} kWh of usable energy** (Reserve Floor: **{dv.reserve.floor_soc:.0%}** for {site.backup_hours:.0f}h hard immunity).")
 
-    st.markdown("**Select the appliances your family needs to run during a blackout:**")
+    # 1-Click Quick Outage Presets
+    st.caption("Quickly test your family's appliances during an unscheduled DISCOM power cut:")
+    if "outage_preset" not in st.session_state:
+        st.session_state["outage_preset"] = "standard"
+
+    p_col1, p_col2, p_col3 = st.columns(3)
+    if p_col1.button("🚨 Essential Life Support (230W)", use_container_width=True, help="LEDs, fans, Wi-Fi, and phone charging only"):
+        st.session_state["outage_preset"] = "essential"
+        st.rerun()
+    if p_col2.button("🏡 Standard Household (430W)", use_container_width=True, help="LEDs, fans, Wi-Fi, and refrigerator"):
+        st.session_state["outage_preset"] = "standard"
+        st.rerun()
+    if p_col3.button("❄️ Full Comfort Mode (1230W)", use_container_width=True, help="All appliances including 1-Ton Bedroom AC"):
+        st.session_state["outage_preset"] = "comfort"
+        st.rerun()
+
+    is_essential = st.session_state["outage_preset"] == "essential"
+    is_comfort = st.session_state["outage_preset"] == "comfort"
+
     bk_c1, bk_c2, bk_c3, bk_c4, bk_c5 = st.columns(5)
-    run_lights = bk_c1.checkbox("💡 4 LEDs + 3 Fans (150W)", value=True)
-    run_wifi = bk_c2.checkbox("📶 Wi-Fi + Laptops (80W)", value=True)
-    run_fridge = bk_c3.checkbox("🧊 Refrigerator (200W)", value=True)
-    run_pump = bk_c4.checkbox("💧 Water Pump (400W)", value=False)
-    run_ac = bk_c5.checkbox("❄️ Bedroom AC (800W)", value=False)
+    run_lights = bk_c1.checkbox("💡 4 LEDs + 3 Fans (150W)", value=True, key=f"bk_lights_{key}_{st.session_state['outage_preset']}")
+    run_wifi = bk_c2.checkbox("📶 Wi-Fi + Laptops (80W)", value=True, key=f"bk_wifi_{key}_{st.session_state['outage_preset']}")
+    run_fridge = bk_c3.checkbox("🧊 Refrigerator (200W)", value=not is_essential, key=f"bk_fridge_{key}_{st.session_state['outage_preset']}")
+    run_pump = bk_c4.checkbox("💧 Water Pump (400W)", value=False, key=f"bk_pump_{key}_{st.session_state['outage_preset']}")
+    run_ac = bk_c5.checkbox("❄️ Bedroom AC (800W)", value=is_comfort, key=f"bk_ac_{key}_{st.session_state['outage_preset']}")
 
     selected_load_watts = (150 if run_lights else 0) + (80 if run_wifi else 0) + (200 if run_fridge else 0) + (400 if run_pump else 0) + (800 if run_ac else 0)
     selected_load_kw = max(0.05, selected_load_watts / 1000.0)
     survival_hours = current_stored_kwh / selected_load_kw
 
-    if survival_hours >= 6.0:
-        st.success(f"🟢 **Safe Blackout Coverage**: Selected load is **{selected_load_watts} Watts**. Your home will run uninterrupted for **~{survival_hours:.1f} Hours** on battery!")
-    elif survival_hours >= 3.0:
-        st.warning(f"🟡 **Moderate Coverage**: Selected load is **{selected_load_watts} Watts**. Your home will run for **~{survival_hours:.1f} Hours**. Turn off heavy loads if the outage exceeds 3 hours.")
-    else:
-        st.error(f"🔴 **Heavy Load Alert**: Selected load is **{selected_load_watts} Watts**. Battery will deplete in **~{survival_hours:.1f} Hours**. Turn off AC or water pump.")
+    # Dynamic Outage Assessment & Load-Shedding Matrix
+    g_c1, g_c2, g_c3 = st.columns([2, 1, 1])
+    with g_c1:
+        if survival_hours >= 8.0:
+            st.success(f"🟢 **Full Overnight Coverage**: Selected load is **{selected_load_watts}W**. Battery provides **~{survival_hours:.1f} Hours** of continuous backup!")
+        elif survival_hours >= 4.0:
+            st.warning(f"🟡 **Moderate Coverage**: Selected load is **{selected_load_watts}W**. Battery provides **~{survival_hours:.1f} Hours**. Sufficient for typical evening outages.")
+        else:
+            st.error(f"🔴 **Heavy Load Alert**: Selected load is **{selected_load_watts}W**. Battery will drain in **~{survival_hours:.1f} Hours**.")
+    with g_c2:
+        st.metric("Total Load", f"{selected_load_watts} Watts", f"{selected_load_kw:.2f} kW")
+    with g_c3:
+        st.metric("Battery Survival", f"{survival_hours:.1f} Hours", f"{survival_hours * 60:.0f} mins")
+
+    # Smart Load Shedding Gain Advice
+    if run_ac:
+        ac_off_watts = selected_load_watts - 800
+        ac_off_kw = max(0.05, ac_off_watts / 1000.0)
+        ac_gain_hrs = (current_stored_kwh / ac_off_kw) - survival_hours
+        st.info(f"💡 **Load-Shedding Tip**: Turning off the **Bedroom AC (800W)** extends your family's backup duration by **+{ac_gain_hrs:.1f} Hours** (to {current_stored_kwh/ac_off_kw:.1f}h total)!")
+    elif run_pump:
+        pump_off_watts = selected_load_watts - 400
+        pump_off_kw = max(0.05, pump_off_watts / 1000.0)
+        pump_gain_hrs = (current_stored_kwh / pump_off_kw) - survival_hours
+        st.info(f"💡 **Load-Shedding Tip**: Turning off the **Water Pump (400W)** extends your family's backup duration by **+{pump_gain_hrs:.1f} Hours** (to {current_stored_kwh/pump_off_kw:.1f}h total)!")
 
     # 2. 1-Click Storm / Outage Emergency Reserve Lock
     st.markdown("---")
@@ -1353,20 +1519,80 @@ with tab_citizen:
     with col_t2:
         st.error("🔴 **Avoid During Evening Peak (06:00 PM – 10:00 PM):**  \n- Heavy Air Conditioning below 24°C  \n- Agricultural / Heavy Water Pumps  \n- Electric Vehicle Fast Charging  \n*Peak electricity rate is ₹10.00/unit. Running heavy loads now inflates your bill.*")
 
-    # 4. Appliance Start-Time Scheduler
+    # 4. Appliance Operating Windows & Visual Timeline
     st.markdown("---")
-    st.subheader("⏰ When should I run a big appliance?")
-    st.caption("Calculates the lowest-cost operating window grounded in today's generation forecast and tariff:")
-    a1, a2, a3 = st.columns(3)
-    appl = a1.selectbox("Appliance", ["Geyser (2 kW, 1 h)", "Washing machine (0.5 kW, 1.5 h)", "Water pump (1.5 kW, 2 h)", "EV charger (3.3 kW, 4 h)"])
-    kw_, hrs_ = {"Geyser (2 kW, 1 h)": (2.0, 1.0), "Washing machine (0.5 kW, 1.5 h)": (0.5, 1.5), "Water pump (1.5 kW, 2 h)": (1.5, 2.0), "EV charger (3.3 kW, 4 h)": (3.3, 4.0)}[appl]
-    lo_h = a2.slider("Earliest start hour", 0, 23, 6)
-    hi_h = a3.slider("Must finish by hour", 1, 24, 22)
-    bs = best_start(s, kw_, hrs_, float(lo_h), float(hi_h))
-    if bs.empty:
-        st.warning("That window is too short for this appliance.")
-    else:
-        st.dataframe(bs, use_container_width=True, hide_index=True)
+    st.subheader("⏰ Visual 24-Hour Appliance Schedule & Free Solar Alignment")
+    st.caption("Visual operating windows computed by the optimizer to maximize zero-cost rooftop sunshine and avoid DISCOM evening peak tariffs:")
+
+    appl_specs = [
+        {"name": "🌊 Washing Machine (0.5 kW, 1.5h)", "kw": 0.5, "dur": 1.5, "lo": 6.0, "hi": 22.0, "color": "#10b981"},
+        {"name": "💧 Water Geyser (2.0 kW, 1.0h)", "kw": 2.0, "dur": 1.0, "lo": 6.0, "hi": 22.0, "color": "#06b6d4"},
+        {"name": "⚡ Water Overhead Pump (1.5 kW, 2.0h)", "kw": 1.5, "dur": 2.0, "lo": 6.0, "hi": 22.0, "color": "#3b82f6"},
+        {"name": "🚗 EV Scooter Charger (3.3 kW, 4.0h)", "kw": 3.3, "dur": 4.0, "lo": 6.0, "hi": 22.0, "color": "#8b5cf6"},
+    ]
+
+    sched_rows = []
+    fig_sched = go.Figure()
+
+    for item in appl_specs:
+        bs_df = best_start(s, item["kw"], item["dur"], item["lo"], item["hi"], top=1)
+        if not bs_df.empty:
+            best_t = bs_df.iloc[0]["start"]  # e.g. "11:30"
+            cost_ = bs_df.iloc[0]["cost_inr"]
+            sun_share_ = bs_df.iloc[0]["share_from_sun"]
+            t_parts = best_t.split(":")
+            h_start = int(t_parts[0]) + int(t_parts[1]) / 60.0
+            h_end = h_start + item["dur"]
+            sched_rows.append({
+                "Personal Appliance": item["name"],
+                "Optimal Start Window": f"{best_t} to {int(h_end):02d}:{int(round((h_end % 1) * 60)):02d}",
+                "Duration": f"{item['dur']:.1f} Hours",
+                "Solar Share %": f"{sun_share_:.0%}",
+                "Est. Running Cost": f"₹{cost_:.2f}",
+                "Money Saved vs Peak": f"₹{bs_df.iloc[0]['saving_vs_worst_time_inr']:.2f}",
+            })
+            fig_sched.add_trace(go.Bar(
+                name=item["name"],
+                y=[item["name"]],
+                x=[item["dur"]],
+                base=[h_start],
+                orientation="h",
+                marker=dict(color=item["color"], line=dict(color="#ffffff", width=1)),
+                text=f"{best_t} ({sun_share_:.0%} Sun • ₹{cost_:.1f})",
+                textposition="inside",
+                insidetextanchor="middle",
+                hoverinfo="text",
+                hovertext=f"{item['name']}<br>Optimal Window: {best_t} to {int(h_end):02d}:{int(round((h_end % 1) * 60)):02d}<br>Solar Share: {sun_share_:.0%}<br>Est. Cost: ₹{cost_:.2f}",
+            ))
+
+    # Add background shaded zones
+    fig_sched.add_vrect(x0=10, x1=15, fillcolor="rgba(245, 158, 11, 0.15)", layer="below", line_width=0, annotation_text="☀️ Free Solar Peak Window", annotation_position="top left")
+    fig_sched.add_vrect(x0=18, x1=22, fillcolor="rgba(239, 68, 68, 0.15)", layer="below", line_width=0, annotation_text="🔴 Evening Peak Tariff (₹10/unit)", annotation_position="top right")
+
+    fig_sched.update_layout(
+        xaxis=dict(title="Hour of Day (00:00 to 24:00)", range=[0, 24], dtick=2),
+        yaxis=dict(autorange="reversed"),
+        height=260,
+        margin=dict(l=10, r=10, t=30, b=10),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_sched, use_container_width=True)
+    if sched_rows:
+        st.dataframe(pd.DataFrame(sched_rows), use_container_width=True, hide_index=True)
+
+    # Custom Appliance Start-Time Calculator
+    with st.expander("🔍 Custom Appliance Calculator (Calculate for any wattage & duration)", expanded=False):
+        st.caption("Calculate the lowest-cost operating window for any custom appliance grounded in today's generation forecast and tariff:")
+        a1, a2, a3 = st.columns(3)
+        appl = a1.selectbox("Appliance", ["Geyser (2 kW, 1 h)", "Washing machine (0.5 kW, 1.5 h)", "Water pump (1.5 kW, 2 h)", "EV charger (3.3 kW, 4 h)"])
+        kw_, hrs_ = {"Geyser (2 kW, 1 h)": (2.0, 1.0), "Washing machine (0.5 kW, 1.5 h)": (0.5, 1.5), "Water pump (1.5 kW, 2 h)": (1.5, 2.0), "EV charger (3.3 kW, 4 h)": (3.3, 4.0)}[appl]
+        lo_h = a2.slider("Earliest start hour", 0, 23, 6)
+        hi_h = a3.slider("Must finish by hour", 1, 24, 22)
+        bs = best_start(s, kw_, hrs_, float(lo_h), float(hi_h))
+        if bs.empty:
+            st.warning("That window is too short for this appliance.")
+        else:
+            st.dataframe(bs, use_container_width=True, hide_index=True)
 
     # 5. WhatsApp / SMS Alert Dispatcher
     st.markdown("---")

@@ -3123,3 +3123,56 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 ### What is next
 - Ready to synchronize and push all verified changes to GitHub remote branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
 
+
+
+## Entry 59 — 2026-10-30 — Real-World Usability Overhaul: Interactive Animated Energy Routing Map, Battery Outage Survival Simulator, and 24h Visual Appliance Schedule
+
+### What was done
+- **Interactive Animated Power Flow Routing Diagram (`app/dashboard.py`)**:
+  - Implemented an interactive SVG energy routing schematic positioned directly below the 4 live telemetry cards.
+  - Symmetrically coordinates 5 microgrid nodes:
+    - ☀️ **Solar Rooftop** (Generation in kW, Active Generation vs Night/Twilight status)
+    - 🔋 **LiFePO4 Battery** (State of charge %, Charging/Discharging/Standby status)
+    - ⚡ **Hybrid Inverter & EMS Hub** (Throughput in kW, 97.4% Sandia conversion efficiency)
+    - 🌐 **Utility DISCOM Grid** (Export vs Import in kW, Financial status)
+    - 🏡 **Home Demand** (Active household appliances power draw in kW)
+  - Features real-time animated energy particles using standard SVG `<animateMotion>` along smooth Bezier tracks:
+    - Amber particles pulse along the solar line to the inverter during active generation.
+    - Green particles pulse into the battery when storing solar surplus; sky-blue particles pulse out during evening discharge.
+    - Bright green particles flow to the grid when exporting excess solar; coral-red particles flow from the grid during deficits.
+    - Cyan particles continuously flow from the inverter to supply active home appliances.
+  - Fully responsive and updates synchronously when the homeowner scrubs the 24-hour timeline slider.
+- **Family Blackout Survival Planner & Dynamic Load-Shedding Matrix (Tab 3)**:
+  - Added 3 1-click outage preset scenarios:
+    - `🚨 Essential Life Support (230W)`: LEDs, fans, Wi-Fi, laptops only.
+    - `🏡 Standard Household (430W)`: + Refrigerator.
+    - `❄️ Full Comfort Mode (1230W)`: + 1-Ton Bedroom AC.
+  - Dynamically computes and displays total household wattage, continuous battery survival hours, and power cut status.
+  - Implemented smart **Load-Shedding Gain Advice**: explicitly reveals that turning off high-draw loads (e.g. 800W Bedroom AC or 400W Water Pump) adds **+5.2 Hours** or **+3.1 Hours** of emergency backup runtime for essential family survival.
+- **Visual 24-Hour Appliance Operating Windows Timeline (Tab 5)**:
+  - Replaced raw scheduling text with an interactive horizontal Plotly Gantt/Timeline chart displaying the optimal start windows for 4 primary home appliances:
+    - 🌊 Washing Machine (0.5 kW, 1.5h)
+    - 💧 Water Geyser (2.0 kW, 1.0h)
+    - ⚡ Water Overhead Pump (1.5 kW, 2.0h)
+    - 🚗 EV Scooter Charger (3.3 kW, 4.0h)
+  - Placed background shaded zones indicating **☀️ Free Solar Peak Window (10:00 AM – 03:00 PM)** and **🔴 Evening Peak Tariff Window (06:00 PM – 10:00 PM @ ₹10/unit)**.
+  - Displays solar coverage share %, estimated run cost, and rupee savings compared to running during peak hours.
+  - Preserved custom appliance calculator in a clean collapsible expander.
+- **Verification & Testing**:
+  - `pytest tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_arka_assistant.py -v`: Exit code 0 (**22 passed in 15.51s**).
+  - `pytest tests/avishkar_ems -q`: Exit code 0 (**511 passed, 0 failed in 4m 37s**).
+  - `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (**All checks passed**).
+  - `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+
+### Evidence
+- `pytest tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_arka_assistant.py -v`: Exit code 0 (**22 passed**).
+- `pytest tests/avishkar_ems -q`: Exit code 0 (**511 passed, 0 failed**).
+- `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (0 errors).
+- `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+
+### What was NOT done
+- Did not modify vendored `src/emhass/` upstream code.
+- Physical high-voltage grid switchgear operates in advisory mode with SunSpec Modbus hardware gateway emulation.
+
+### What is next
+- Ready to push all verified commits to remote GitHub repository across branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
