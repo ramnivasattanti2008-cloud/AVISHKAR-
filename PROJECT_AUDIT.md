@@ -13,7 +13,20 @@ AVISHKAR is a hybrid energy management system and decentralized peer-to-peer (P2
 1. **Python Core Engine & Streamlit Interactive Command Center (`src/avishkar_ems/`, `app/dashboard.py`)**: A production-grade solar forecast, LP battery dispatch, tariff modeling, carbon credit accounting, SunSpec Modbus hardware gateway, P2P double-sided auction, and AI copilot (`ARKA`).
 2. **Next-Generation Full-Stack Platform (`platform/`)**: A TypeScript/Node.js + React modern microservice platform with an OpenAPI contract, Fastify API gateway, PostgreSQL + Drizzle ORM data persistence layer, Tailwind/Vite UI, and embedded Python calculation engine.
 
-This audit establishes the baseline before integrating best-in-class features from 13 verified open-source energy management and surplus intelligence repositories.
+This audit establishes the baseline before integrating best-in-class features from 13 verified open-source energy management and surplus intelligence repositories:
+1. `sem-community`: https://github.com/traktore-org/sem-community
+2. `SolarFlow`: https://github.com/lbsanto/SolarFlow
+3. `smart-energy-manager`: https://github.com/jirihelmich/smart-energy-manager
+4. `SunCore`: https://github.com/PXLJAKE/SunCore
+5. `energy_manager`: https://github.com/jyourstone/energy_manager
+6. `homeassistant-ems`: https://github.com/thomasgodon/homeassistant-ems
+7. `emhass`: https://github.com/davidusb-geek/emhass
+8. `solar-battery-dispatch`: https://github.com/Quentinluoqz/solar-battery-dispatch
+9. `microgrid-autopilot`: https://github.com/isahan78/microgrid-autopilot
+10. `GreenGrid-AI`: https://github.com/Sadique-Saifi/GreenGrid-AI
+11. `evcc`: https://github.com/evcc-io/evcc
+12. `solectrus`: https://github.com/solectrus/solectrus
+13. `Flexcomm`: https://github.com/Enpower-project/Flexcomm
 
 ---
 

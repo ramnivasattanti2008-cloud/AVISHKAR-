@@ -24,21 +24,21 @@
 
 All 13 reference repositories were analyzed against verifiable engineering capabilities:
 
-| # | Repository | License | Status | Verified Capabilities | Integration Status |
-| :- | :--- | :--- | :--- | :--- | :--- |
-| **1** | `traktore-org/sem-community` | MIT | Active | Multi-tier surplus allocation hierarchy, priority sorting, configurable hysteresis. | **ADAPTED & VERIFIED WORKING** |
-| **2** | `lbsanto/SolarFlow` | Apache-2.0 | Active | Balcony solar output throttling and zero-export feed-in limiter. | **ADAPTED & VERIFIED WORKING** |
-| **3** | `jirihelmich/smart-energy-manager` | MIT | Active | Inverter-agnostic register mapping, ToD price threshold battery charging. | **ADAPTED & VERIFIED WORKING** |
-| **4** | `PXLJAKE/SunCore` | MIT | Active | Domestic immersion water heater dispatch as flexible load sink. | **ADAPTED & VERIFIED WORKING** |
-| **5** | `jyourstone/energy_manager` | Apache-2.0 | Active | Nordpool spot price battery arbitrage heuristics. | **STUDIED ONLY** |
-| **6** | `thomasgodon/homeassistant-ems` | MIT | Active | Sub-second breaker headroom tracking and EV charge current modulation. | **ADAPTED & VERIFIED WORKING** |
-| **7** | `davidusb-geek/emhass` | MIT | Upstream | Vendored MILP optimizer via PuLP/Coin-OR. Kept strictly immutable. | **IMMUTABLE BASE** |
-| **8** | `Quentinluoqz/solar-battery-dispatch` | MIT | Active | Leakage-safe temporal splits, MAE/RMSE holdout tracking. | **ADAPTED & VERIFIED WORKING** |
-| **9** | `isahan78/microgrid-autopilot` | MIT | Active | Microgrid perturbation testing (monsoon cloud dips, load surges). | **ADAPTED & VERIFIED WORKING** |
-| **10** | `Sadique-Saifi/GreenGrid-AI` | N/A | Inactive | Inactive/unreachable repository under exact name. | **REJECTED** |
-| **11** | `evcc-io/evcc` | Apache-2.0 | Active | Industry-standard EV modes (`STOP`, `FAST`, `MIN_PLUS_PV`, `PV_ONLY`) and contactor protection delays. | **ADAPTED & VERIFIED WORKING** |
-| **12** | `solectrus/solectrus` | MIT | Active | High-resolution power flow diagrams, data freshness indicators. | **ADAPTED & VERIFIED WORKING** |
-| **13** | `Enpower-project/Flexcomm` | GPL-3.0 | Active | Virtual net metering with distribution line loss compensation. | **ADAPTED & VERIFIED WORKING** |
+| # | Repository | Full GitHub URL | License | Status | Verified Capabilities | Integration Status |
+| :- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | `traktore-org/sem-community` | https://github.com/traktore-org/sem-community | MIT | Active | Multi-tier surplus allocation hierarchy, priority sorting, configurable hysteresis. | **ADAPTED & VERIFIED WORKING** |
+| **2** | `lbsanto/SolarFlow` | https://github.com/lbsanto/SolarFlow | Apache-2.0 | Active | Balcony solar output throttling and zero-export feed-in limiter. | **ADAPTED & VERIFIED WORKING** |
+| **3** | `jirihelmich/smart-energy-manager` | https://github.com/jirihelmich/smart-energy-manager | MIT | Active | Inverter-agnostic register mapping, ToD price threshold battery charging. | **ADAPTED & VERIFIED WORKING** |
+| **4** | `PXLJAKE/SunCore` | https://github.com/PXLJAKE/SunCore | MIT | Active | Domestic immersion water heater dispatch as flexible load sink. | **ADAPTED & VERIFIED WORKING** |
+| **5** | `jyourstone/energy_manager` | https://github.com/jyourstone/energy_manager | Apache-2.0 | Active | Nordpool spot price battery arbitrage heuristics. | **STUDIED ONLY** |
+| **6** | `thomasgodon/homeassistant-ems` | https://github.com/thomasgodon/homeassistant-ems | MIT | Active | Sub-second breaker headroom tracking and EV charge current modulation. | **ADAPTED & VERIFIED WORKING** |
+| **7** | `davidusb-geek/emhass` | https://github.com/davidusb-geek/emhass | MIT | Upstream | Vendored MILP optimizer via PuLP/Coin-OR. Kept strictly immutable. | **IMMUTABLE BASE** |
+| **8** | `Quentinluoqz/solar-battery-dispatch` | https://github.com/Quentinluoqz/solar-battery-dispatch | MIT | Active | Leakage-safe temporal splits, MAE/RMSE holdout tracking. | **ADAPTED & VERIFIED WORKING** |
+| **9** | `isahan78/microgrid-autopilot` | https://github.com/isahan78/microgrid-autopilot | MIT | Active | Microgrid perturbation testing (monsoon cloud dips, load surges). | **ADAPTED & VERIFIED WORKING** |
+| **10** | `Sadique-Saifi/GreenGrid-AI` | https://github.com/Sadique-Saifi/GreenGrid-AI | N/A | Inactive | Inactive/unreachable repository under exact name. | **REJECTED** |
+| **11** | `evcc-io/evcc` | https://github.com/evcc-io/evcc | Apache-2.0 | Active | Industry-standard EV modes (`STOP`, `FAST`, `MIN_PLUS_PV`, `PV_ONLY`) and contactor protection delays. | **ADAPTED & VERIFIED WORKING** |
+| **12** | `solectrus/solectrus` | https://github.com/solectrus/solectrus | MIT | Active | High-resolution power flow diagrams, data freshness indicators. | **ADAPTED & VERIFIED WORKING** |
+| **13** | `Enpower-project/Flexcomm` | https://github.com/Enpower-project/Flexcomm | GPL-3.0 | Active | Virtual net metering with distribution line loss compensation. | **ADAPTED & VERIFIED WORKING** |
 
 ---
 
@@ -170,3 +170,4 @@ python -m pytest tests/avishkar_ems/test_master_scenarios.py -v
 | **Code Style & Linting** | Zero Ruff violations with `--no-fix` | 0 errors across entire repository | **PASSED** |
 
 **Final Status:** **VERIFIED WORKING & PRODUCTION READY**
+
