@@ -3176,3 +3176,45 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 
 ### What is next
 - Ready to push all verified commits to remote GitHub repository across branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
+
+
+## Entry 60 — 2026-10-30 — Real-World Financial & Operations Expansion: Loan Engine, Pre-Feasibility Dossier, Bidirectional EV Cycle, UPI Settlement, and Dynamic Soiling Simulator
+
+### What was done
+- **SBI Surya Ghar Concessional Solar Loan & Cashflow Engine (Tab 1)**:
+  - Built an interactive bank loan simulator grounded in the PM Surya Ghar public-sector bank lending guidelines (7.00% p.a. concessional rate).
+  - Added customizable margin money (down payment 0% to 40%), loan repayment tenure (3, 5, 7, 10 years), and bank interest rate inputs.
+  - Dynamically calculates:
+    - Financed bank loan principal vs initial down payment.
+    - Exact monthly bank EMI ($P \times r \times (1+r)^n / ((1+r)^n - 1)$).
+    - Monthly electricity bill savings from free solar generation.
+    - Net monthly in-pocket family cashflow gain (savings minus loan EMI).
+  - High-impact visual callout congratulates positive cashflow from Month 1 when electricity savings exceed the bank loan EMI.
+- **Downloadable PM Surya Ghar Pre-Feasibility Engineering Dossier (Tab 1)**:
+  - Integrated a 1-click `.txt` engineering dossier generator via `st.download_button`.
+  - Compiles consumer ID, DISCOM, sanctioned load, recommended kWp array and LiFePO4 battery size, CEA connectivity compliance, DBT subsidy entitlement (up to ₹78,000), loan repayment schedules, and the 6-step statutory installation journey for the national portal (`pmsuryaghar.gov.in`).
+- **Interactive 24-Hour Bidirectional EV Battery Cycle Plot (Tab 6)**:
+  - Integrated an interactive Plotly timeline chart modeling the full 24-hour state of charge (SoC %) of bidirectional electric vehicles (Tata Nexon EV, Ola, Ather).
+  - Demonstrates morning commute energy draw, free midday solar rooftop top-up (10:00 AM – 04:00 PM), and evening V2H discharge into home loads (18:00 – 22:00) without ever breaching the guaranteed morning commute floor.
+- **Simulated Instant UPI Payment & NPCI Settlement (Tab 9)**:
+  - Converted the static UPI QR code card into an interactive P2P energy settlement simulator.
+  - Added `"📲 Simulate Instant UPI Payment Received"` action button that generates a live simulated NPCI UTR reference number, automates DISCOM technical wire loss & wheeling fee deductions, and confirms credited funds to the seller's UPI VPA.
+- **Dynamic Soiling Loss & Rooftop Cleaning Simulator (Tab 11)**:
+  - Built an interactive dust and soiling analysis tool with a "Days Since Last Cleaning" slider (0 to 45 days) and local ambient environment profile selector (Semi-Arid Dusty, Urban Traffic/Smog, Clean Coastal).
+  - Dynamically models soiling loss %, daily lost generation value (in ₹/day and kWh/day), and monthly cumulative recovery value with smart cleaning recommendations.
+- **Verification & Testing**:
+  - `pytest tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_arka_assistant.py -v`: Exit code 0 (**22 passed in 16.35s**).
+  - `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (**All checks passed**).
+  - `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+
+### Evidence
+- `pytest tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_arka_assistant.py -v`: Exit code 0 (**22 passed in 16.35s**).
+- `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (0 errors).
+- `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+
+### What was NOT done
+- Did not modify vendored `src/emhass/` upstream code.
+- Physical high-voltage grid switchgear operates in advisory mode with SunSpec Modbus hardware gateway emulation.
+
+### What is next
+- Ready to synchronize and push all verified commits across remote GitHub branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).

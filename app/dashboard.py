@@ -891,6 +891,111 @@ with tab_connect:
         r_c3.metric("PM Surya Ghar Subsidy", f"₹{rec_sub:,.0f}", help="Credited directly to your bank account via DBT")
         r_c4.metric("Family Payback Time", f"{payback_calc:.1f} Years", help="Investment recovered through monthly electricity bill savings")
 
+        # SBI Surya Ghar Concessional Solar Loan & Cashflow Simulator
+        st.markdown("---")
+        st.markdown("##### 🏦 SBI Surya Ghar Solar Loan & Cashflow Engine (7.00% p.a.)")
+        st.caption("Under the PM Surya Ghar scheme, public sector banks (SBI, Canara, PNB) provide collateral-free solar loans at a concessional 7.0% interest rate:")
+
+        loan_c1, loan_c2, loan_c3 = st.columns(3)
+        down_pct = loan_c1.slider("Down Payment (%):", 0, 40, 10, 5, help="Minimum 10% recommended under PM Surya Ghar guidelines")
+        loan_tenure_yrs = loan_c2.selectbox("Loan Tenure (Years):", [3, 5, 7, 10], index=1)
+        loan_interest_pct = loan_c3.number_input("Bank Interest Rate (% p.a.):", 6.5, 9.5, 7.0, 0.1)
+
+        loan_principal = net_fam_cost * (1.0 - (down_pct / 100.0))
+        down_amt = net_fam_cost * (down_pct / 100.0)
+
+        # Monthly EMI calculation: P * r * (1+r)^n / ((1+r)^n - 1)
+        monthly_rate = (loan_interest_pct / 100.0) / 12.0
+        n_months = loan_tenure_yrs * 12
+        if loan_principal > 0:
+            emi_inr = loan_principal * (monthly_rate * ((1.0 + monthly_rate) ** n_months)) / (((1.0 + monthly_rate) ** n_months) - 1.0)
+        else:
+            emi_inr = 0.0
+
+        est_monthly_bill_saving = annual_save_est / 12.0
+        net_monthly_cashflow = est_monthly_bill_saving - emi_inr
+
+        em_c1, em_c2, em_c3, em_c4 = st.columns(4)
+        em_c1.metric("Initial Down Payment", f"₹{down_amt:,.0f}", f"₹{loan_principal:,.0f} Financed")
+        em_c2.metric("Monthly Bank EMI", f"₹{emi_inr:,.0f} / mo", f"{loan_tenure_yrs} Years ({loan_interest_pct}%)")
+        em_c3.metric("Monthly Electricity Savings", f"₹{est_monthly_bill_saving:,.0f} / mo", "Free Rooftop Sunshine")
+        em_c4.metric("Net Monthly In-Pocket Gain", f"{'+' if net_monthly_cashflow >= 0 else ''}₹{net_monthly_cashflow:,.0f} / mo", "Savings minus Loan EMI")
+
+        if net_monthly_cashflow >= 0:
+            st.success(
+                f"🎉 **Positive Cashflow from Month 1!** Your electricity bill savings (₹{est_monthly_bill_saving:,.0f}/month) "
+                f"completely cover your bank loan EMI (₹{emi_inr:,.0f}/month) with **+₹{net_monthly_cashflow:,.0f}/month left in your pocket**! "
+                "Going solar pays for itself without any extra burden on your monthly family budget."
+            )
+        else:
+            st.info(
+                f"💡 **Affordable Clean Energy Upgrade**: Your net out-of-pocket payment is only **₹{abs(net_monthly_cashflow):,.0f}/month** during the loan period. "
+                f"After Year {loan_tenure_yrs}, the loan is fully repaid, and your family pockets **₹{est_monthly_bill_saving:,.0f}/month (~₹{annual_save_est:,.0f}/year) in 100% free electricity** for the remaining 20+ years!"
+            )
+
+        # 1-Click Pre-Feasibility Engineering Dossier Download
+        st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+        dossier_text = f"""================================================================================
+PM SURYA GHAR MUFT BIJLI YOJANA — ROOFTOP SOLAR FEASIBILITY DOSSIER
+================================================================================
+Generated for: {my_home['owner_name']}
+Property Category: {h_type}
+Consumer ID: {my_home['consumer_no']}
+DISCOM / Utility: {my_home['discom']} ({my_home['state_name']})
+Location: {my_home['location']}
+Sanctioned Load: {my_home['sanctioned_load_kw']:.1f} kW
+Current Average Monthly Bill: Rs {h_bill:,.0f}
+
+--------------------------------------------------------------------------------
+1. RECOMMENDED SYSTEM ARCHITECTURE & SIZING
+--------------------------------------------------------------------------------
+- Recommended Solar PV Capacity: {rec_kw:.1f} kWp (Mono PERC / DCR Modules)
+- Recommended Battery Storage: {rec_batt:.1f} kWh (LiFePO4 Lithium Iron Phosphate)
+- Required Rooftop Area: ~{int(rec_kw * 100)} sq. ft. unshaded south-facing shadow-free roof
+- Inverter Specification: {rec_kw:.1f} kW Hybrid Solar Inverter with MPPT & Anti-Islanding Protection
+- Central Electricity Authority (CEA) Technical Connectivity Standards: FULLY COMPLIANT
+
+--------------------------------------------------------------------------------
+2. STATUTORY FINANCIAL ENTITLEMENTS & SUBSIDY BREAKDOWN
+--------------------------------------------------------------------------------
+- Total Estimated System Cost: Rs {est_cost:,.0f}
+- PM Surya Ghar Direct Benefit Transfer (DBT) Subsidy: Rs {rec_sub:,.0f}
+- Net Family Investment Required: Rs {net_fam_cost:,.0f}
+- Estimated Annual Electricity Generation: {annual_gen_est:,.0f} kWh (Units)
+- Estimated Annual Bill Savings: Rs {annual_save_est:,.0f} / year
+- Estimated Simple Payback Period: {payback_calc:.1f} Years
+
+--------------------------------------------------------------------------------
+3. SBI SURYA GHAR CONCESSIONAL LOAN DETAILS
+--------------------------------------------------------------------------------
+- Loan Amount Financed: Rs {loan_principal:,.0f} (at {loan_interest_pct}% p.a. interest)
+- Down Payment (Margin Money): Rs {down_amt:,.0f} ({down_pct}%)
+- Repayment Tenure: {loan_tenure_yrs} Years ({n_months} Monthly Installments)
+- Monthly EMI: Rs {emi_inr:,.0f} / month
+- Net Monthly Cashflow Gain: Rs {net_monthly_cashflow:,.0f} / month
+
+--------------------------------------------------------------------------------
+4. STATUTORY NEXT STEPS FOR INSTALLATION
+--------------------------------------------------------------------------------
+Step 1: Register on the National Portal: https://pmsuryaghar.gov.in
+Step 2: Enter Consumer No ({my_home['consumer_no']}) & Select {my_home['discom']}.
+Step 3: Submit Feasibility Approval for {rec_kw:.1f} kWp with {my_home['discom']}.
+Step 4: Select an MNRE-empaneled vendor to execute installation with DCR modules.
+Step 5: DISCOM net meter commissioning and inspection within 15 days SLA.
+Step 6: DBT subsidy of Rs {rec_sub:,.0f} credited directly to your bank account within 30 days.
+
+================================================================================
+Generated by UrjaSetu & AVISHKAR Enterprise Energy Management System
+================================================================================
+"""
+        st.download_button(
+            label="📄 Download PM Surya Ghar Pre-Feasibility Dossier (.txt)",
+            data=dossier_text,
+            file_name=f"UrjaSetu_Solar_Dossier_{key}.txt",
+            mime="text/plain",
+            help="Download your personalized pre-feasibility technical dossier for PM Surya Ghar portal submission",
+        )
+
     # 2. Interactive Single Line Diagram (SLD) Electrical Architecture
     st.markdown("---")
     st.markdown("##### 🔌 Physical Single Line Diagram (SLD) & Electrical Topology")
@@ -1647,6 +1752,51 @@ with tab_ev_grid:
         - **OCPP 2.0.1 Action:** `{v2h_plan.ocpp_charging_action}`
         """)
 
+        # 24-Hour Bidirectional EV Battery Cycle Chart
+        ev_hours = list(range(25))
+        ev_soc_profile = []
+        for hr in ev_hours:
+            if hr < 7:
+                ev_soc_profile.append(cur_soc)
+            elif 7 <= hr <= 9:
+                ev_soc_profile.append(max(commute_soc, cur_soc - 20.0))
+            elif 10 <= hr <= 16:
+                ev_soc_profile.append(min(100.0, cur_soc + (hr - 9) * 3.5))
+            elif 18 <= hr <= 22:
+                discharge_fraction = (hr - 18) / 4.0
+                v2h_soc_val = max(commute_soc, cur_soc - (discharge_fraction * (cur_soc - commute_soc)))
+                ev_soc_profile.append(v2h_soc_val)
+            else:
+                ev_soc_profile.append(commute_soc)
+
+        fig_ev = go.Figure()
+        fig_ev.add_trace(go.Scatter(
+            x=ev_hours,
+            y=ev_soc_profile,
+            mode="lines+markers",
+            name="EV Battery SoC %",
+            line=dict(color="#10b981", width=3),
+            marker=dict(size=4),
+        ))
+        fig_ev.add_hline(
+            y=commute_soc,
+            line_dash="dot",
+            line_color="#f59e0b",
+            annotation_text=f"Commute Floor ({commute_soc:.0f}%)",
+            annotation_position="bottom right",
+        )
+        fig_ev.add_vrect(x0=10, x1=16, fillcolor="rgba(16, 185, 129, 0.12)", layer="below", line_width=0, annotation_text="Free Solar Charge", annotation_position="top left")
+        fig_ev.add_vrect(x0=18, x1=22, fillcolor="rgba(56, 189, 248, 0.12)", layer="below", line_width=0, annotation_text="V2H Peak Shaving", annotation_position="top right")
+        fig_ev.update_layout(
+            title="24-Hour Bidirectional EV Battery State of Charge (SoC %)",
+            xaxis=dict(title="Hour of Day", dtick=3, range=[0, 24]),
+            yaxis=dict(title="Battery SoC %", range=[0, 105]),
+            height=250,
+            margin=dict(l=10, r=10, t=35, b=10),
+            showlegend=False,
+        )
+        st.plotly_chart(fig_ev, use_container_width=True)
+
     with ev_col2:
         st.markdown("##### ⚡ Distribution Transformer (DT) Feeder Thermal Guard")
         st.caption("Protects local 11kV / 415V neighborhood transformers from overheating during simultaneous midday solar backfeed.")
@@ -1952,6 +2102,25 @@ with tab_reg_upi:
         st.code(upi_req.upi_intent_uri, language="text")
         st.caption(f"Status: `{upi_req.status}` | Reference: `{upi_req.transaction_ref}`")
 
+        upi_settled_key = f"upi_settled_{key}"
+        if upi_settled_key not in st.session_state:
+            st.session_state[upi_settled_key] = False
+
+        if st.session_state[upi_settled_key]:
+            st.success(
+                f"✅ **PAYMENT RECEIVED VIA UPI**  \n"
+                f"💰 **₹{legal_res.net_seller_payout_inr:.2f}** credited to `{upi_req.payee_vpa}`  \n"
+                f"🏦 **Bank Ref / UTR:** `NPCI-UPI-2026-88391204`  \n"
+                f"⚡ **DISCOM Settlement:** Wire loss ({cur_rule.wheeling_loss_pct}%) & fee (₹{legal_res.wheeling_fee_inr:.2f}) settled in DISCOM ledger."
+            )
+            if st.button("🔄 Reset / New Transaction", key=f"btn_reset_upi_{key}"):
+                st.session_state[upi_settled_key] = False
+                st.rerun()
+        else:
+            if st.button("📲 Simulate Instant UPI Payment Received", key=f"btn_sim_upi_{key}", use_container_width=True):
+                st.session_state[upi_settled_key] = True
+                st.rerun()
+
 # ==============================================================================
 # TAB 10: FLEET POOLING & MULTI-SITE DISPATCH
 # ==============================================================================
@@ -2011,12 +2180,36 @@ with tab_monitor:
     st.markdown("##### 🧹 Personal Rooftop Solar Panel Cleaning & Dust Advisor")
     st.caption("Calculates generation drop caused by dust and pollen accumulation on your roof:")
 
-    c_col1, c_col2, c_col3 = st.columns(3)
-    c_col1.metric("Rooftop Soiling Status", "🟡 Dust Detected (~8.5% loss)", help="Estimated loss from ambient dust layer")
-    c_col2.metric("Daily Lost Revenue", "₹22.50 / day", help="Money lost today from unwashed solar panels")
-    c_col3.metric("Monthly Recovery Value", "₹675 / month", help="Extra savings from washing your panels regularly")
+    dust_c1, dust_c2 = st.columns([1, 1])
+    with dust_c1:
+        dust_days = st.slider("Days Since Last Rooftop Panel Cleaning:", 0, 45, 12, 1, key=f"dust_slider_{key}")
+    with dust_c2:
+        env_profile = st.selectbox(
+            "Local Ambient Air & Dust Environment:",
+            ["Semi-Arid Dusty (North / West India ~0.6%/day)", "Urban Traffic & Metro Smog (~0.4%/day)", "Clean Green / Monsoon (~0.2%/day)"],
+            index=0 if "Mathura" in my_home["location"] or "Jaipur" in my_home["location"] else 1,
+            key=f"dust_env_{key}",
+        )
 
-    st.info("💡 **Homeowner Cleaning Tip**: Wash your rooftop solar panels with clean water tomorrow morning before 8:00 AM while panels are cool. Regular bi-weekly cleaning recovers ~₹600 to ₹800 every month in free solar energy!")
+    rate_per_day = 0.60 if "Semi-Arid" in env_profile else (0.40 if "Urban" in env_profile else 0.20)
+    current_soiling_loss_pct = min(30.0, dust_days * rate_per_day)
+    daily_lost_kwh = site.dc_kwp * 4.2 * (current_soiling_loss_pct / 100.0)
+    daily_lost_inr = daily_lost_kwh * 7.50
+    monthly_lost_inr = daily_lost_inr * 30.0
+
+    c_col1, c_col2, c_col3 = st.columns(3)
+    c_col1.metric("Current Soiling Loss %", f"{current_soiling_loss_pct:.1f}%", f"{dust_days} Days Unwashed")
+    c_col2.metric("Daily Lost Solar Value", f"₹{daily_lost_inr:.2f} / day", f"-{daily_lost_kwh:.1f} kWh/day")
+    c_col3.metric("Monthly Recovery Value", f"₹{monthly_lost_inr:,.0f} / month", "Clean Water Wash Gain")
+
+    if current_soiling_loss_pct >= 8.0:
+        st.warning(
+            f"🟡 **Cleaning Recommended**: Your rooftop panels have accumulated a **{current_soiling_loss_pct:.1f}% dust layer**, "
+            f"costing your family **₹{daily_lost_inr:.1f}/day (~₹{monthly_lost_inr:,.0f}/month)** in lost generation. "
+            "Wash your panels with a clean water hose tomorrow morning before 8:00 AM while modules are cool to instantly recover this power!"
+        )
+    else:
+        st.success(f"🟢 **Clean Modules**: Panels are generating within 95%+ of peak rated capacity (dust loss only {current_soiling_loss_pct:.1f}%). Next scheduled cleaning in ~{max(1, 14 - dust_days)} days.")
 
     st.markdown("---")
     st.markdown("##### 🔬 String Deviation & Synthetic Fault Simulation")
