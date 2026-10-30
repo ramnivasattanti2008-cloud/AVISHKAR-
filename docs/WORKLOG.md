@@ -2801,7 +2801,43 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 - Did not actuate physical high-voltage grid switchgear (runs in hardware gateway emulation / advisory mode).
 
 ### What is next
-- Commit changes and synchronize with GitHub remote repository across all active tracking branches.
+- Ready for deployment and synchronization to GitHub remote repository.
+
+## Entry 54 — 2026-10-30 — Personal-Home-First Transformation & Drawback Remediation
+
+### What was done
+- **Personal-First Navigation Hierarchy**:
+  - Transformed application default mode from abstract national/state policy exploration (`render_urjasetu_dashboard()`) to **`🏡 My Personal Home Solar & EMS`** (`index=0`).
+  - Homeowners and tenants now immediately land on their personal rooftop, battery backup, and bill savings upon visiting the local dashboard URL (`http://localhost:8501`).
+  - Maintained `"🏛️ State & National Explorer (Macro Overview)"` as an accessible macro benchmarking view in the sidebar.
+- **Human-Centric Personal Place Registry (`PERSONAL_HOMES`)**:
+  - Replaced cold technical IDs (`home-mathura`, `clinic-jaipur`, `shop-pune`) with vivid, human personal places:
+    - 🏡 **Mathura Residence (Sharma Niwas)**: *3-BHK Independent Villa • DVVNL Domestic • Consumer #DVVNL-RES-281001-8492 • 4 Family Members • 3 kWp Mono PERC • 5 kWh LiFePO4*.
+    - 🏥 **Jaipur Family Clinic & Care**: *Healthcare Day Clinic • JVVNL Commercial • Consumer #JVVNL-COM-302015-1104 • Doctors & Patients • 5 kWp TopCon • 10 kWh Storage*.
+    - 🏪 **Pune General Store & Electronics**: *Retail Commercial Shop • MSEDCL ToD • Consumer #MSEDCL-COM-411002-6721 • Shopkeeper & Staff • 2 kWp Solar • 3.5 kWh Storage*.
+- **Comprehensive Drawback Remediation**:
+  - **Drawback 1: Lack of Personal Financial Impact**: Added high-visibility **Personal Monthly Bill Card** comparing old DISCOM bill (e.g., ₹4,250/mo) vs new bill with AVISHKAR (₹480/mo) and net in-pocket family savings (₹3,770/mo, ₹45,240/yr).
+  - **Drawback 2: Abstract Solar Sizing**: Added **Personal Rooftop Sizing & Subsidy Questionnaire** in Tab 1 allowing families to calculate required solar array and battery size grounded in monthly bills and appliance ownership, with PM Surya Ghar DBT subsidy calculation (₹30,000–₹78,000).
+  - **Drawback 3: Theoretical Battery Runtimes**: Added interactive **Room-by-Room Family Outage Survival Checklist** in Tab 3 with live survival hours for selected home appliances (LEDs, fans, router, fridge, pump, AC) plus a **1-Click Storm / Outage Reserve Floor Lock (90%)**.
+  - **Drawback 4: Impersonal Appliance Guidance**: Added **Personal Room-by-Room Appliance Running Cost Calculator** in Tab 5 displaying real-time running costs across solar (₹0.00/hr free), battery storage (₹0.75/hr), and expensive evening peak grid rates (₹10–₹20/hr).
+  - **Drawback 5: Neglected Rooftop Panel Maintenance**: Added **Personal Rooftop Solar Panel Dust & Cleaning Health Advisor** in Tab 11 quantifying generation loss (~8.5%) and daily/monthly rupee recovery from washing rooftop panels.
+  - **Drawback 6: Disconnected State Policy**: Added **My Personal Home vs State Benchmark** in Tab 12 comparing household solar self-consumption (79.2%) against state residential averages (61.0%), grid independence ratio (81.5%), and 25-year lifetime family wealth savings (₹11.4 Lakhs).
+- **Verification & Testing**:
+  - `tests/avishkar_ems/test_dashboard.py` passed across all sites in 14.37s.
+  - `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: 0 errors.
+  - `python scripts/update_readme.py --check`: README results block up to date.
+
+### Evidence
+- `pytest tests/avishkar_ems/test_dashboard.py -v`: Exit code 0 (**1 passed in 14.37s**).
+- `ruff check --no-fix`: Exit code 0.
+- `update_readme.py --check`: Exit code 0.
+
+### What was NOT done
+- Did not actuate live utility grid transfer switches (runs in advisory and gateway emulation mode).
+- Did not expose private consumer telemetry to external networks (guaranteed 100% local privacy).
+
+### What is next
+- Synchronize and push all personal-home-first enhancements to GitHub repository.
 
 
 

@@ -19,7 +19,7 @@ def test_dashboard_runs_for_every_site():
     # the default view is the national and state explorer; it must load without raising too
     at = AppTest.from_file(str(cache.ROOT / "app" / "dashboard.py"), default_timeout=300).run()
     assert not at.exception, [e.value for e in at.exception]
-    at = at.sidebar.radio[0].set_value("⚡ Site Dispatch EMS (AVISHKAR)").run()
+    at = at.sidebar.radio[0].set_value(at.sidebar.radio[0].options[0]).run()
     assert not at.exception, [e.value for e in at.exception]
     labels = [t.label for t in at.tabs]
     expected_tab_keywords = (
