@@ -157,3 +157,30 @@ the real public providers and the real optimiser; `pnpm -C platform/web browser`
 
 **Still not verified here:** the Docker images (`docker/*.Dockerfile`, `docker-compose.yml`) were not built or run; the
 deployment path remains untested. No hardware of any kind was present, so every device path stays simulated and labelled.
+
+
+### Live provider check, 2026-10-30
+
+`pnpm -C platform/api test:live` calls the real public providers. **6 of 7 passed.** Open-Meteo (forecast and
+archive), NASA POWER, Nominatim and Earth Search all answered with usable data.
+
+The one failure is the building footprint, and it is an **environmental blocker, not a defect**: no planet-wide
+Overpass instance is reachable from this container. `overpass-api.de`, `overpass.kumi.systems` and
+`overpass.private.coffee` -- the configured chain -- all fail to connect, so the provider correctly reports
+`BUILDING GEOMETRY UNAVAILABLE` and the page tells the owner they can draw the roof themselves. (The note in
+`CLAUDE.md` about Overpass answering 504 "about one request in three" describes a better network than this one.)
+
+**A fix was attempted and reverted, which is worth recording.** `overpass.osm.ch` answers in about a second from
+here, so it was added to the mirror chain. It is a **Switzerland-only extract**: it returns three buildings
+around Zurich and none around London or Bengaluru. Adding it would have converted an honest outage into a
+confident wrong answer -- the provider would have read the empty 200 as "there is no building at this address"
+for every property in India. It is reverted, and `config.ts` and `.env.example` now say that every mirror must be
+planet-wide and that a candidate should be checked against two distant cities first.
+
+A further note, and a correction to a conclusion drawn here before the Swiss extract was understood: with
+`overpass.osm.ch` briefly in the chain, the provider answered "no building outline within 40 m" for the test's
+point in Bengaluru, and for several other Bengaluru points besides. That looked like evidence that the test's
+premise was wrong -- that it asserts a building where OpenStreetMap has none. **It is not evidence of anything**:
+a Switzerland-only extract returns an empty result for every point in India, whatever is mapped there. Whether
+that test's point has a building in OSM is simply **unknown from this container**, because no planet-wide
+instance can be reached to ask. The test is left exactly as it is.

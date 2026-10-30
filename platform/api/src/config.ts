@@ -59,7 +59,18 @@ const Env = z.object({
 
   BUILDING_FOOTPRINT_PROVIDER: z.enum(["overpass"]).default("overpass"),
   BUILDING_FOOTPRINT_BASE_URL: z.url().default("https://overpass-api.de"),
-  /** Comma-separated Overpass mirrors tried in order when the primary fails (it does, about one request in three at times). */
+  /**
+   * Comma-separated Overpass mirrors tried in order when the primary fails (it does, about one request in three
+   * at times).
+   *
+   * **Every entry must be a planet-wide instance.** A regional extract answers 200 with an empty result for
+   * anywhere outside its region, which this provider can only read as "there is no building here" -- a confident
+   * wrong answer, and worse than the connection error it would have replaced. `overpass.osm.ch` was added here on
+   * 2026-10-30 and reverted for exactly that reason: it returns buildings in Zurich and none in London or
+   * Bengaluru. Check any candidate against two distant cities before adding it.
+   *
+   * The chain's worst case is the sum of the per-request timeouts, so keep the list short.
+   */
   BUILDING_FOOTPRINT_FALLBACK_URLS: z
     .string()
     .default("https://overpass.kumi.systems,https://overpass.private.coffee")

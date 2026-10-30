@@ -61,6 +61,9 @@ secrets_*.yml
 *.dump.sha256
 *.sql.gz
 platform/backups/
+# Runtime logs from start-platform.sh. They are local and contain nothing but this machine's own request lines,
+# but they are output, not source. Three of them were committed by accident on 2026-10-30 and untracked again.
+platform/.logs/
 backups/
 
 # Prisma client is generated (pnpm db:generate), never committed

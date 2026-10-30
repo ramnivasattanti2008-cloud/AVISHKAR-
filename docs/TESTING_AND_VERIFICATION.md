@@ -128,7 +128,12 @@ the pair-level transfers sum to the total loss.
 - **Hardware**: no inverter, meter or Modbus device existed. Every device path is simulated and labelled as such.
   Nothing here supports a claim of electrical certification, anti-islanding validation or grid-code compliance.
 - **The upstream EMHASS suite** (`tests/test_*.py`): needs a separate environment and writes into `data/`; not run.
-- **`pnpm -C platform/api test:live`** (calls the real providers from the API's own tests): not run; the journey
-  exercises the same providers through the running stack instead.
+- **`pnpm -C platform/api test:live`** (calls the real public providers): **run. 6 of 7 passed.** Open-Meteo
+  forecast and archive, NASA POWER, Nominatim and Earth Search all answered with usable data. The failure is the
+  building footprint, and it is environmental: no planet-wide Overpass instance is reachable from this container,
+  so the provider correctly reports `BUILDING GEOMETRY UNAVAILABLE` rather than inventing an outline. A mirror
+  that did answer (`overpass.osm.ch`) turned out to be a Switzerland-only extract and was reverted, because it
+  would have turned an honest outage into "there is no building at this address" for every property in India.
+  `platform/STATUS.md` records that in full.
 - **Load and performance targets** (`pnpm -C platform/api bench`): not run.
 - **Forecast accuracy against reality** beyond the held-out periods already in `data/real`.
