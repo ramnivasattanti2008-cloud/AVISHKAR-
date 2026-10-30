@@ -65,3 +65,8 @@ platform/api/src/generated/
 *.db-journal
 *.sqlite
 
+# Local binaries and tunnel tools (downloaded at runtime)
+tools/
+*.exe
+
+

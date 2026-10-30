@@ -272,7 +272,7 @@ def test_tc2411_migration_safety_auditor() -> None:
     assert migrations_dir.exists(), "Platform prisma migrations directory must exist"
 
     report = MigrationSafetyAuditor.audit_directory(migrations_dir)
-    assert report.total_migrations == 11
+    assert report.total_migrations == 12
     assert report.lockfile_present is True
     # The committed migrations are additive and non-destructive
     assert report.is_safe is True

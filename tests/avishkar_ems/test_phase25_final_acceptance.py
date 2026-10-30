@@ -388,7 +388,7 @@ def test_workflow_i_disaster_recovery_and_migration_safety() -> None:
         # 3. Prisma Migration Safety Audit
         migrations_path = Path("platform/api/prisma/migrations")
         audit_report = MigrationSafetyAuditor.audit_directory(migrations_path)
-        assert audit_report.total_migrations == 11
+        assert audit_report.total_migrations == 12
         assert audit_report.lockfile_present is True
         assert audit_report.is_safe is True
         assert len([f for f in audit_report.findings if f.risk_level == "HIGH"]) == 0

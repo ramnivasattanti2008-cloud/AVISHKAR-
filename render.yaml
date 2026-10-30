@@ -1,0 +1,69 @@
+# Render Infrastructure-as-Code Blueprint for AVISHKAR EMS Platform
+# Deploys Python Optimization Engine, Fastify API, and Next.js Web on Render Free Tier.
+# Uses the verified live Neon.tech Cloud PostgreSQL 18 + PostGIS 3.6 database.
+
+services:
+  # 1. Python Optimization Engine (FastAPI + EMHASS/HiGHS LP Solver)
+  - type: web
+    name: avishkar-engine
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r platform/engine/requirements-runtime.txt
+    startCommand: cd platform/engine && uvicorn avishkar_engine.app:create_app --factory --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENGINE_API_KEY
+        generateValue: true
+
+  # 2. Fastify TypeScript REST API
+  - type: web
+    name: avishkar-api
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install -g pnpm && pnpm -C platform/api install && pnpm -C platform/api build
+    startCommand: cd platform/api && node dist/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ENGINE_URL
+        fromService:
+          type: web
+          name: avishkar-engine
+          property: host
+      - key: ENGINE_API_KEY
+        fromService:
+          type: web
+          name: avishkar-engine
+          envVarKey: ENGINE_API_KEY
+      - key: PROVIDER_USER_AGENT
+        value: "UrjaSetu EMS (+https://github.com/ramnivasattanti2008-cloud/AVISHKAR-)"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: JOBS_ENABLED
+        value: "true"
+
+  # 3. Next.js 16 Web Frontend
+  - type: web
+    name: avishkar-web
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install -g pnpm && pnpm -C platform/web install && pnpm -C platform/web build
+    startCommand: cd platform/web && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: API_URL
+        fromService:
+          type: web
+          name: avishkar-api
+          property: host
