@@ -118,3 +118,4 @@ All 14 comprehensive platform test suites in `tests/avishkar_ems/test_home_platf
 - Skipped: 1 (optional hardware dependency)
 - Failed: 0
 - Ruff linting checks: Passed (0 errors with `--no-fix`).
+
