@@ -116,8 +116,20 @@ export class ConfigError extends Error {
   }
 }
 
+/**
+ * A variable that is present but blank means "not set". `.env.example` leaves every optional key blank on purpose, so
+ * copying it must not make the service refuse to start over an empty API key it never needed; and a container that
+ * passes an unset variable through as "" must behave like one that omits it. Required keys still fail: dropping a blank
+ * `SESSION_SECRET` leaves it missing, which is exactly what it is.
+ */
+function withoutBlanks(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const out: NodeJS.ProcessEnv = {};
+  for (const [k, v] of Object.entries(env)) if (!(typeof v === "string" && v.trim() === "")) out[k] = v;
+  return out;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const parsed = Env.safeParse(env);
+  const parsed = Env.safeParse(withoutBlanks(env));
   if (!parsed.success) {
     throw new ConfigError(parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`));
   }

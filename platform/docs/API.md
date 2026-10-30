@@ -260,6 +260,7 @@ Your properties together, and a simulated virtual power plant of synthetic homes
 | Method | Path | What it does |
 |---|---|---|
 | GET | `/api/community` | Your properties together: surplus, deficit, storage and shiftable load on a typical day |
+| POST | `/api/community/allocate` | Allocate one interval's surplus between properties, and say what stopped it |
 | POST | `/api/vpp/simulate` | Simulate a virtual power plant of 10, 100, 1,000 or 10,000 homes |
 
 ### assets

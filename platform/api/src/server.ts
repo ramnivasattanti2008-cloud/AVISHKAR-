@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createDb } from "./db.js";
@@ -8,7 +9,23 @@ import { DbCache } from "./providers/cache.js";
 import { buildProviders } from "./providers/index.js";
 import { DbRecorder } from "./providers/recorder.js";
 
+/**
+ * `.env` beside the API, as `.env.example` tells you to make and `platform/api/README`'s `pnpm dev` assumes. Only this
+ * entry point reads it: the app factory takes its configuration as an argument, so nothing imported into a test is
+ * affected by a file on disk. Variables already in the environment win, which is what a container or a start script
+ * expects. `process.loadEnvFile` is Node's own reader, so there is no dependency to keep for it.
+ */
+function loadDotEnv(): void {
+  if (!existsSync(".env")) return;
+  try {
+    process.loadEnvFile(".env");
+  } catch (e) {
+    console.error(`.env could not be read: ${e instanceof Error ? e.message : e}`); // eslint-disable-line no-console
+  }
+}
+
 async function main(): Promise<void> {
+  loadDotEnv();
   const config = loadConfig();
   const db = createDb(config.DATABASE_URL);
   const cache = new DbCache(db);
