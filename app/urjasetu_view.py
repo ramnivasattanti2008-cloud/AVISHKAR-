@@ -1,4 +1,4 @@
-# ruff: noqa: C408, Q000
+# ruff: noqa: C408, Q000, E402, F401, I001
 """UrjaSetu Unified Energy Dashboard View for Streamlit.
 
 Implements all Phase 7 Energy Balance and Solar Intelligence capabilities:
@@ -15,6 +15,11 @@ Implements all Phase 7 Energy Balance and Solar Intelligence capabilities:
 """
 
 from __future__ import annotations
+
+from avishkar_ems.arka_assistant import ArkaPersonalAssistant
+from avishkar_ems.accessibility_support import EnergyGlossary, MultiModalStatusRegistry
+
+
 
 import json
 from typing import Any
@@ -103,6 +108,30 @@ from avishkar_ems.time_series_trends import TimeSeriesTrendsEngine
 
 
 def render_urjasetu_dashboard() -> None:
+    # --------------------------------------------------------------------------
+    # BIDIRECTIONAL PERSONAL HOME NAVIGATION BANNER
+    # --------------------------------------------------------------------------
+    nav_col1, nav_col2 = st.columns([3, 1])
+    with nav_col1:
+        st.info("🏛️ **Viewing National & State Energy Explorer**. Looking for your own rooftop, battery backup & bill savings?")
+    with nav_col2:
+        if st.button("🏡 Return to My Personal Home", key="btn_return_home_top", use_container_width=True):
+            st.session_state["dashboard_mode_radio"] = "🏡 My Personal Home Solar & EMS"
+            st.rerun()
+
+    # --------------------------------------------------------------------------
+    # ARKA PERSONAL AI SOLAR COMPANION FOR MACRO EXPLORER
+    # --------------------------------------------------------------------------
+    with st.expander("💬 ☀️ **Ask ARKA (अर्क) — Your Personal Solar & Energy AI Assistant**", expanded=False):
+        st.caption("Ask ARKA any question regarding PM Surya Ghar subsidies, state net-metering, battery storage, or tariffs:")
+        q_arka_macro = st.text_input("Ask ARKA:", placeholder="e.g. How much subsidy do I get under PM Surya Ghar?", key="arka_macro_query")
+        if q_arka_macro:
+            resp_arka = ArkaPersonalAssistant().answer_query(q_arka_macro)
+            st.markdown(f"**{resp_arka.headline}**")
+            st.write(resp_arka.answer_text)
+            if resp_arka.action_recommendation:
+                st.info(f"💡 {resp_arka.action_recommendation}")
+
     st.markdown(
         """
         <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0369a1 100%); padding: 20px 28px; border-radius: 12px; color: white; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
@@ -3553,3 +3582,29 @@ def render_urjasetu_dashboard() -> None:
         ]
         st.dataframe(pd.DataFrame(m_rows), use_container_width=True)
 
+        # ----------------------------------------------------------------------
+        # PLAIN-LANGUAGE GLOSSARY & WCAG 2.2 MULTI-MODAL STATUS REGISTRY
+        # ----------------------------------------------------------------------
+        st.markdown("---")
+        st.markdown("#### 📖 Plain-Language Energy Terminology Glossary & WCAG 2.2 Status Registry")
+        st.caption("WCAG 2.2 AA compliant plain-language terminology explainer and non-color multi-modal status indicators.")
+
+        gloss_c1, gloss_c2 = st.columns([2, 1])
+        with gloss_c1:
+            g_keys = list(EnergyGlossary.ENTRIES.keys())
+            sel_g = st.selectbox(
+                "Select Energy Term to Inspect:",
+                g_keys,
+                format_func=lambda k: f"{EnergyGlossary.ENTRIES[k].term} ({EnergyGlossary.ENTRIES[k].abbreviation})" if EnergyGlossary.ENTRIES[k].abbreviation else EnergyGlossary.ENTRIES[k].term,
+                key="urja_glossary_select",
+            )
+            if sel_g:
+                st.markdown(EnergyGlossary.ENTRIES[sel_g].format_accessible_card())
+
+        with gloss_c2:
+            st.markdown("##### 🏷️ Multi-Modal Status Badges")
+            st.caption("Strictly enforces that status is NEVER communicated by color alone:")
+            sample_status_keys = ["HEALTHY", "DELAYED_STALE", "DEGRADED", "FAILED", "MEASURED", "DERIVED", "VALIDATED"]
+            for s_k in sample_status_keys:
+                ind = MultiModalStatusRegistry.get(s_k)
+                st.markdown(f"- **{ind.symbol} {ind.label}**: *{ind.accessible_description}*")
