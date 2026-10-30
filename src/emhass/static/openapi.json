@@ -101,7 +101,7 @@
       "post": {
         "summary": "Run an EMHASS action",
         "externalDocs": {
-          "description": "Plan output field reference",
+          "description": "Output schema and documentation for optimization action results",
           "url": "https://github.com/davidusb-geek/emhass/blob/master/docs/plan_output_schema.md"
         },
         "parameters": [
@@ -115,6 +115,7 @@
           }
         ],
         "requestBody": {
+          "required": false,
           "content": {
             "application/json": {
               "schema": {
@@ -223,13 +224,13 @@
             "type": "string",
             "default": "sensor.power_photovoltaics",
             "title": "Sensor power photovoltaic",
-            "description": "This is the name of the photovoltaic power-produced sensor in Watts from Home Assistant. For example: ‘sensor.power_photovoltaics’."
+            "description": "This is the name of the photovoltaic power-produced sensor in Watts from Home Assistant. For example: \u2018sensor.power_photovoltaics\u2019."
           },
           "sensor_power_photovoltaics_forecast": {
             "type": "string",
             "default": "sensor.p_pv_forecast",
             "title": "Sensor power photovoltaic forecast",
-            "description": "This is the name of the photovoltaic forecast sensor in Watts from Home Assistant. For example: ‘sensor.p_pv_forecast’."
+            "description": "This is the name of the photovoltaic forecast sensor in Watts from Home Assistant. For example: \u2018sensor.p_pv_forecast\u2019."
           },
           "sensor_power_battery": {
             "type": "array",
@@ -238,7 +239,7 @@
               "default": "sensor.power_battery"
             },
             "title": "Sensor signed battery power",
-            "description": "The name of the signed AC-side battery power sensor in Watts from Home Assistant, used by battery self-identification. Either sign convention works (it is auto-detected). Only retrieved when set_use_battery_identification is true. For example: ‘sensor.power_battery’. With number_of_batteries > 1, provide a list of exactly number_of_batteries entity ids, one per battery, index-matched to the battery config lists; a single sensor is never broadcast to more than one battery."
+            "description": "The name of the signed AC-side battery power sensor in Watts from Home Assistant, used by battery self-identification. Either sign convention works (it is auto-detected). Only retrieved when set_use_battery_identification is true. For example: \u2018sensor.power_battery\u2019. With number_of_batteries > 1, provide a list of exactly number_of_batteries entity ids, one per battery, index-matched to the battery config lists; a single sensor is never broadcast to more than one battery."
           },
           "sensor_battery_state_of_charge": {
             "type": "array",
@@ -247,13 +248,13 @@
               "default": "sensor.battery_state_of_charge"
             },
             "title": "Sensor battery state of charge",
-            "description": "The name of the measured battery state of charge sensor in percent from Home Assistant, used by battery self-identification. Only retrieved when set_use_battery_identification is true. For example: ‘sensor.battery_state_of_charge’. With number_of_batteries > 1, provide a list of exactly number_of_batteries entity ids, one per battery, index-matched to the battery config lists; a single sensor is never broadcast to more than one battery."
+            "description": "The name of the measured battery state of charge sensor in percent from Home Assistant, used by battery self-identification. Only retrieved when set_use_battery_identification is true. For example: \u2018sensor.battery_state_of_charge\u2019. With number_of_batteries > 1, provide a list of exactly number_of_batteries entity ids, one per battery, index-matched to the battery config lists; a single sensor is never broadcast to more than one battery."
           },
           "sensor_power_load_no_var_loads": {
             "type": "string",
             "default": "sensor.power_load_no_var_loads",
             "title": "Sensor power loads with no variable loads",
-            "description": "The name of the household power consumption sensor in Watts from Home Assistant. The deferrable loads that we will want to include in the optimization problem should be subtracted from this sensor in HASS. For example: ‘sensor.power_load_no_var_loads’"
+            "description": "The name of the household power consumption sensor in Watts from Home Assistant. The deferrable loads that we will want to include in the optimization problem should be subtracted from this sensor in HASS. For example: \u2018sensor.power_load_no_var_loads\u2019"
           },
           "sensor_replace_zero": {
             "type": "array",
@@ -455,7 +456,7 @@
             ],
             "default": "typical",
             "title": "Load forecast method",
-            "description": "The load forecast method that will be used. The options are ‘csv’ to load a CSV file or ‘naive’ for a simple 1-day persistence model."
+            "description": "The load forecast method that will be used. The options are \u2018csv\u2019 to load a CSV file or \u2018naive\u2019 for a simple 1-day persistence model."
           },
           "mlforecaster_weather_features": {
             "type": "array",
@@ -576,8 +577,8 @@
             "type": "number",
             "default": 0.0,
             "title": "Hybrid Inverter Stress Cost",
-            "x-unit": "¤/kWh",
-            "description": "A virtual cost (Currency/kWh) applied at the inverter's nominal power to penalise high loads. Currently implemented as a quadratic curve (Cost ∝ Power²), incentivising 'low and slow' operation to reduce thermal stress and smooth power flows. (unit: ¤/kWh)"
+            "x-unit": "\u00a4/kWh",
+            "description": "A virtual cost (Currency/kWh) applied at the inverter's nominal power to penalise high loads. Currently implemented as a quadratic curve (Cost \u221d Power\u00b2), incentivising 'low and slow' operation to reduce thermal stress and smooth power flows. (unit: \u00a4/kWh)"
           },
           "inverter_stress_segments": {
             "type": "integer",
@@ -600,7 +601,7 @@
             ],
             "default": "hp_hc_periods",
             "title": "Load cost method",
-            "description": "Define the method that will be used for load cost forecast. The options are ‘hp_hc_periods’ for peak and non-peak hours contracts, and ‘csv’ to load custom cost from CSV file."
+            "description": "Define the method that will be used for load cost forecast. The options are \u2018hp_hc_periods\u2019 for peak and non-peak hours contracts, and \u2018csv\u2019 to load custom cost from CSV file."
           },
           "load_peak_hour_periods": {
             "type": "array",
@@ -624,15 +625,15 @@
             "type": "number",
             "default": 0.1907,
             "title": "Peak hours electrical energy cost",
-            "x-unit": "¤/kWh",
-            "description": "The cost of the electrical energy during peak hours (unit: ¤/kWh)"
+            "x-unit": "\u00a4/kWh",
+            "description": "The cost of the electrical energy during peak hours (unit: \u00a4/kWh)"
           },
           "load_offpeak_hours_cost": {
             "type": "number",
             "default": 0.1419,
             "title": "Off-peak hours electrical energy cost",
-            "x-unit": "¤/kWh",
-            "description": "The cost of the electrical energy during off-peak hours (unit: ¤/kWh)"
+            "x-unit": "\u00a4/kWh",
+            "description": "The cost of the electrical energy during off-peak hours (unit: \u00a4/kWh)"
           },
           "production_price_forecast_method": {
             "type": "string",
@@ -642,14 +643,14 @@
             ],
             "default": "constant",
             "title": "PV power production price forecast method",
-            "description": "Define the method that will be used for PV power production price forecast. This is the price that is paid by the utility for energy injected into the grid. The options are ‘constant’ for a constant fixed value or ‘csv’ to load custom price forecasts from a CSV file."
+            "description": "Define the method that will be used for PV power production price forecast. This is the price that is paid by the utility for energy injected into the grid. The options are \u2018constant\u2019 for a constant fixed value or \u2018csv\u2019 to load custom price forecasts from a CSV file."
           },
           "photovoltaic_production_sell_price": {
             "type": "number",
             "default": 0.1419,
             "title": "Constant PV power production price",
-            "x-unit": "¤/kWh",
-            "description": "The paid price for energy injected to the grid from excess PV production in currency/kWh. (unit: ¤/kWh)"
+            "x-unit": "\u00a4/kWh",
+            "description": "The paid price for energy injected to the grid from excess PV production in currency/kWh. (unit: \u00a4/kWh)"
           },
           "set_use_pv": {
             "type": "boolean",
@@ -687,8 +688,8 @@
             "type": "integer",
             "default": 10,
             "title": "Solar elevation threshold",
-            "x-unit": "°",
-            "description": "This is the solar elevation threshold parameter used to identify the early morning or late evening periods. Defaults to 10. (unit: °)"
+            "x-unit": "\u00b0",
+            "description": "This is the solar elevation threshold parameter used to identify the early morning or late evening periods. Defaults to 10. (unit: \u00b0)"
           },
           "adjusted_pv_model_max_age": {
             "type": "integer",
@@ -745,8 +746,8 @@
               "default": 30
             },
             "title": "The PV panel tilt",
-            "x-unit": "°",
-            "description": "The tilt angle of your solar panels. Defaults to 30. This parameter can be a list of items to enable the simulation of mixed orientation systems. (unit: °)"
+            "x-unit": "\u00b0",
+            "description": "The tilt angle of your solar panels. Defaults to 30. This parameter can be a list of items to enable the simulation of mixed orientation systems. (unit: \u00b0)"
           },
           "surface_azimuth": {
             "type": "array",
@@ -755,8 +756,8 @@
               "default": 205
             },
             "title": "The PV azimuth (direction)",
-            "x-unit": "°",
-            "description": "The azimuth of your PV installation. Defaults to 205. This parameter can be a list of items to enable the simulation of mixed orientation systems. (unit: °)"
+            "x-unit": "\u00b0",
+            "description": "The azimuth of your PV installation. Defaults to 205. This parameter can be a list of items to enable the simulation of mixed orientation systems. (unit: \u00b0)"
           },
           "modules_per_string": {
             "type": "array",
@@ -874,8 +875,8 @@
               "default": 0.0
             },
             "title": "Deferrable load max cost",
-            "x-unit": "¤",
-            "description": "Maximum acceptable cost for scheduling each deferrable load. If the cost to schedule the load (including startup penalty) exceeds this threshold, the load will not be scheduled. Set to 0 to disable and make load scheduling mandatory. (unit: ¤)"
+            "x-unit": "\u00a4",
+            "description": "Maximum acceptable cost for scheduling each deferrable load. If the cost to schedule the load (including startup penalty) exceeds this threshold, the load will not be scheduled. Set to 0 to disable and make load scheduling mandatory. (unit: \u00a4)"
           },
           "set_deferrable_max_startups": {
             "type": "array",
@@ -915,7 +916,7 @@
             },
             "title": "Deferrable start timestamp",
             "x-unit": "timesteps",
-            "description": "The timestep as from which each deferrable load is allowed to operate (if you don’t want the deferrable load to use the whole optimization time window). If you specify a value of 0 (or negative), the deferrable load will be optimized as from the beginning of the complete prediction horizon window. (unit: timesteps)"
+            "description": "The timestep as from which each deferrable load is allowed to operate (if you don\u2019t want the deferrable load to use the whole optimization time window). If you specify a value of 0 (or negative), the deferrable load will be optimized as from the beginning of the complete prediction horizon window. (unit: timesteps)"
           },
           "end_timesteps_of_each_deferrable_load": {
             "type": "array",
@@ -962,7 +963,7 @@
             "type": "boolean",
             "default": false,
             "title": "Set Battery dynamic (dis)charge power limiting",
-            "description": "Set a power dynamic limiting condition to the battery power. This is an additional constraint on the battery dynamic in power per unit of time (timestep), which allows you to set a percentage of the battery’s nominal full power as the maximum power allowed for (dis)charge."
+            "description": "Set a power dynamic limiting condition to the battery power. This is an additional constraint on the battery dynamic in power per unit of time (timestep), which allows you to set a percentage of the battery\u2019s nominal full power as the maximum power allowed for (dis)charge."
           },
           "battery_dynamic_max": {
             "type": "number",
@@ -985,8 +986,8 @@
               "default": 0.0
             },
             "title": "Add cost weight for battery discharge",
-            "x-unit": "¤/kWh",
-            "description": "An additional weight (currency/ kWh) applied in the cost function to battery usage for discharging. With number_of_batteries > 1, accepts a scalar (broadcast) or a list of one entry per battery, each entry itself a scalar or a time series - see docs/config.md for the nesting rules. (unit: ¤/kWh)"
+            "x-unit": "\u00a4/kWh",
+            "description": "An additional weight (currency/ kWh) applied in the cost function to battery usage for discharging. With number_of_batteries > 1, accepts a scalar (broadcast) or a list of one entry per battery, each entry itself a scalar or a time series - see docs/config.md for the nesting rules. (unit: \u00a4/kWh)"
           },
           "weight_battery_charge": {
             "type": "array",
@@ -995,8 +996,8 @@
               "default": 0.0
             },
             "title": "Add cost weight for battery charge",
-            "x-unit": "¤/kWh",
-            "description": "An additional weight (currency/ kWh) applied in the cost function to battery usage for charging. With number_of_batteries > 1, accepts a scalar (broadcast) or a list of one entry per battery, each entry itself a scalar or a time series - see docs/config.md for the nesting rules. (unit: ¤/kWh)"
+            "x-unit": "\u00a4/kWh",
+            "description": "An additional weight (currency/ kWh) applied in the cost function to battery usage for charging. With number_of_batteries > 1, accepts a scalar (broadcast) or a list of one entry per battery, each entry itself a scalar or a time series - see docs/config.md for the nesting rules. (unit: \u00a4/kWh)"
           },
           "battery_discharge_power_max": {
             "type": "array",
@@ -1097,8 +1098,8 @@
               "default": 0.0
             },
             "title": "Battery Stress Cost",
-            "x-unit": "¤/kWh",
-            "description": "A virtual cost (Currency/kWh) applied at the battery's nominal power to penalise high loads. Currently implemented as a quadratic curve (Cost ∝ Power²), incentivising 'low and slow' operation to reduce thermal stress and smooth power flows. With number_of_batteries > 1, accepts a scalar (broadcast to every battery) or a list of exactly number_of_batteries entries. (unit: ¤/kWh)"
+            "x-unit": "\u00a4/kWh",
+            "description": "A virtual cost (Currency/kWh) applied at the battery's nominal power to penalise high loads. Currently implemented as a quadratic curve (Cost \u221d Power\u00b2), incentivising 'low and slow' operation to reduce thermal stress and smooth power flows. With number_of_batteries > 1, accepts a scalar (broadcast to every battery) or a list of exactly number_of_batteries entries. (unit: \u00a4/kWh)"
           },
           "battery_stress_segments": {
             "type": "integer",
@@ -1150,8 +1151,8 @@
               "default": 0.0
             },
             "title": "Capacity (demand) charge cost",
-            "x-unit": "¤/kW",
-            "description": "Cost in currency per kW applied once to the modelled capacity/demand peak. 0 (default) disables the feature. With capacity_charge_interval_timesteps=1 the peak is the highest eligible positive-import timestep; with N>1 it is the highest eligible completed tariff-interval average. Set this to the marginal billed cost of increasing the applicable peak by 1 kW. A list of two or more rates prices that many independent capacity/demand components in one optimisation (see docs/cookbook/tariff_demand_charge.md, issue #540). (unit: ¤/kW)"
+            "x-unit": "\u00a4/kW",
+            "description": "Cost in currency per kW applied once to the modelled capacity/demand peak. 0 (default) disables the feature. With capacity_charge_interval_timesteps=1 the peak is the highest eligible positive-import timestep; with N>1 it is the highest eligible completed tariff-interval average. Set this to the marginal billed cost of increasing the applicable peak by 1 kW. A list of two or more rates prices that many independent capacity/demand components in one optimisation (see docs/cookbook/tariff_demand_charge.md, issue #540). (unit: \u00a4/kW)"
           },
           "capacity_charge_interval_timesteps": {
             "type": "array",
@@ -1344,7 +1345,7 @@
             "items": {
               "type": "object"
             },
-            "description": "Per-timestep optimization records (one object per timestep; columns per docs/plan_output_schema.md, plus a 'timestamp' field). Each record's 'timestamp' is an ISO 8601 UTC instant (Z suffix), the same instant the CSV export and HA publish use, not the configured local timezone — align consumers on UTC, like generated_at. Null when status='no-run'."
+            "description": "Per-timestep optimization records (one object per timestep; columns per docs/plan_output_schema.md, plus a 'timestamp' field). Each record's 'timestamp' is an ISO 8601 UTC instant (Z suffix), the same instant the CSV export and HA publish use, not the configured local timezone \u2014 align consumers on UTC, like generated_at. Null when status='no-run'."
           }
         },
         "allOf": [

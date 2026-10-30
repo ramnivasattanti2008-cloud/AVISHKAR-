@@ -139,6 +139,7 @@ curl -sf http://127.0.0.1:8080/api/health
 3. Verify the restored database:
    ```bash
    wsl -d Ubuntu -e bash -c "PGPASSWORD='avishkar' psql -h 127.0.0.1 -U avishkar -d avishkar_restore_test -c 'SELECT count(*) FROM information_schema.tables WHERE table_schema=\"public\";'"
+
    ```
 
 ---
@@ -421,6 +422,7 @@ To ensure absolute transparency and prevent misleading claims, all platform capa
 | **3. Tested with Real External Service** | Live external HTTP calls verified against real APIs outside test mocks. | • Open-Meteo Weather (forecast & archive APIs)<br/>• NASA POWER Solar Resource API<br/>• OpenStreetMap Overpass (building footprints)<br/>• Earth Search STAC (Sentinel-2 satellite metadata)<br/>• Nominatim Geocoding API |
 | **4. Blocked by Missing Credentials** | Code implemented with deterministic fallback; requires owner commercial keys. | • Commercial Map Tile Provider key (MapTiler/Stadia)<br/>• Anthropic API Key (AI Copilot conversational mode)<br/>• Production TLS certificate & custom domain |
 | **5. Requiring Physical Hardware / Real Data** | Simulated in software; requires real-world physical devices to claim live operation. | • Hardware Inverter & Battery Control (Simulated records only; no hardware inverter actuated)<br/>• Smart Meter AMR telemetry (CSV upload only; no live DLMS/COSEM meter push)<br/>• Grid Outage telemetry (Modelled assumptions; no DISCOM outage API feed)<br/>• UPI Payment Settlement (Simulated Beckn protocol; no live banking gateway integration) |
+
 
 > [!CAUTION]
 > UrjaSetu EMS currently records control proposals and approvals in an append-only database audit log. **No physical inverter or battery hardware is actuated.** Never represent software optimization models or simulated Beckn offer messages as physical electrical device actuation.

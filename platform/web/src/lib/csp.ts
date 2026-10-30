@@ -9,7 +9,7 @@
 
 export const TILE_HOSTS = ["https://tile.openstreetmap.org", "https://server.arcgisonline.com", "https://*.tile.opentopomap.org"] as const;
 
-/** The origin of a tile URL the deployment chose (NEXT_PUBLIC_OSM_TILE_URL), so switching provider does not blank the map. */
+/** The origin of a tile URL the deployment chose (NEXT_PUBLIC_OSM_TILE_URL / NEXT_PUBLIC_MAP_TILE_URL), so switching provider does not blank the map. */
 export function tileOrigin(url: string | undefined): string | null {
   if (!url) return null;
   try {

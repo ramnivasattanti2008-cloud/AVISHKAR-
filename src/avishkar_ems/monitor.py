@@ -88,7 +88,7 @@ def validate_readings(df: pd.DataFrame) -> None:
 def enhanced_monitor(df: pd.DataFrame) -> pd.DataFrame:
     """Aggregate all deviation flags into a diagnostic DataFrame.
 
-    Validates the input, then runs the underlying flaggers.  This function performs
+    Validates the input, then runs the underlying flaggers. This function performs
     static data-quality checks first so that downstream logic never operates on
     malformed telemetry.
     """
@@ -97,6 +97,7 @@ def enhanced_monitor(df: pd.DataFrame) -> pd.DataFrame:
     stuck = detect_sensor_stuck(df)
     off = detect_inverter_off(df)
 
+    # Determine primary fault mode per row
     mode = pd.Series("NORMAL", index=df.index)
     mode[base["flag"]] = DEVIATION_MODES.UNDERPERFORMANCE.value
     mode[stuck] = DEVIATION_MODES.SENSOR_STUCK.value

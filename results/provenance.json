@@ -1,6 +1,6 @@
 {
   "run_demo": {
-    "generated_at": "2026-10-27 07:22 UTC",
+    "generated_at": "2026-10-30 04:25 UTC",
     "python": "3.12.10",
     "libraries": {
       "numpy": "2.2.6",
@@ -11,7 +11,7 @@
       "cvxpy": "1.7.5",
       "skforecast": "0.22.0"
     },
-    "fingerprint": "3d32141ca1a08c6a",
+    "fingerprint": "b6c960d69ae54390",
     "every_days": 7,
     "quick": false,
     "sampled_days": {
@@ -41,7 +41,7 @@
     }
   },
   "run_sensitivity": {
-    "generated_at": "2026-10-27 07:28 UTC",
+    "generated_at": "2026-10-30 04:31 UTC",
     "python": "3.12.10",
     "libraries": {
       "numpy": "2.2.6",
@@ -52,7 +52,7 @@
       "cvxpy": "1.7.5",
       "skforecast": "0.22.0"
     },
-    "fingerprint": "3d32141ca1a08c6a",
+    "fingerprint": "b6c960d69ae54390",
     "every_days": 28
   }
 }

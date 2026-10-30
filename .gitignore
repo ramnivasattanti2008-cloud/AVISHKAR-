@@ -29,6 +29,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 coverage/
+
 # Environment files and secrets (never commit secrets)
 .env
 .env.*
@@ -53,6 +54,9 @@ secrets_*.yml
 *.dump.gpg.sha256
 *.dump.enc
 *.dump.enc.sha256
+# Database backups and recovery dumps
+*.dump
+*.dump.sha256
 *.sql.gz
 platform/backups/
 backups/
@@ -70,3 +74,8 @@ tools/
 *.exe
 
 
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
