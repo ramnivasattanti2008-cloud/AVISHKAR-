@@ -129,7 +129,7 @@ def test_fingerprint_ignores_modules_that_cannot_change_results(tmp_path):
     """Editing report/lifetime/mysite/explain/summary text must not make cached results and results/ look stale."""
     root = _tree(tmp_path)
     base = cache.fingerprint(root)
-    for name in ("report.py", "mysite.py", "lifetime.py", "explain.py", "summary.py"):
+    for name in ("report.py", "mysite.py", "lifetime.py", "explain.py", "summary.py", "arka_assistant.py"):
         (root / "src" / "avishkar_ems" / name).write_text("# presentation only\n")
         assert cache.fingerprint(root) == base, name
     (root / "src" / "avishkar_ems" / "planner.py").write_text("# a computing module\n")
