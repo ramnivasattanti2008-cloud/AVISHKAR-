@@ -1,7 +1,7 @@
 import { type ReactElement } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PROPERTY_ID, adminAudit, adminJobs, adminOverview, community, demoWorld, fakeApi, json, property, resilienceReport, today, vppSimulation } from "@/test/fixtures";
+import { PROPERTY_ID, adminAudit, adminJobs, adminOverview, community, communityAllocation, demoWorld, fakeApi, json, property, resilienceReport, today, vppSimulation } from "@/test/fixtures";
 import { energyHealth, energyWaste } from "@/test/insight-fixtures";
 import { energyFutures } from "@/test/futures-fixtures";
 import { RULES_JSDOM_CANNOT_RUN, a11yViolations, describeViolations } from "@/test/a11y";
@@ -94,6 +94,7 @@ const cases: { name: string; render: () => void; ready: () => Promise<unknown> }
     render: () => {
       stub([
         ["GET", "/api/community", () => json(community())],
+        ["POST", "/api/community/allocate", () => json(communityAllocation())],
         ["POST", "/api/vpp/simulate", () => json(vppSimulation())],
       ]);
       page(<CommunityView />);

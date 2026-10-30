@@ -4444,6 +4444,1431 @@
         ],
         "type": "object"
       },
+      "CommunityAllocateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "dayType": {
+            "enum": [
+              "weekday",
+              "weekend"
+            ],
+            "type": "string"
+          },
+          "hour": {
+            "description": "Hour of the typical day (IST) to take generation and demand from, when using propertyIds. Default: the current hour.",
+            "maximum": 23,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/CommunityLimitsInput"
+          },
+          "members": {
+            "description": "The properties to allocate between, described in full.",
+            "items": {
+              "$ref": "#/components/schemas/CommunityMemberInput"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "month": {
+            "description": "Month of that typical day. Default: this month.",
+            "maximum": 12,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "overrides": {
+            "additionalProperties": {
+              "additionalProperties": false,
+              "properties": {
+                "battery": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CommunityBatteryInput"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "criticalKw": {
+                  "default": 0,
+                  "description": "The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "demandKw": {
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "exportLimitKw": {
+                  "default": 100000,
+                  "description": "Most this property may push past its meter: the smaller of its inverter and what its connection permits.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "generationKw": {
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "importLimitKw": {
+                  "default": 100000,
+                  "description": "Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "lineLossFraction": {
+                  "default": 0,
+                  "description": "Fraction lost on this property's own leg to the shared node.",
+                  "maximum": 0.5,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "name": {
+                  "maxLength": 120,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "description": "Changes to apply to the figures built from your properties, keyed by property id: what you want to ask 'what if' about.",
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "propertyIds": {
+            "description": "Your own properties to allocate between instead, at the hour given by `hour`.",
+            "items": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "required": [
+          "limits"
+        ],
+        "type": "object"
+      },
+      "CommunityAllocateRequestInput": {
+        "properties": {
+          "dayType": {
+            "enum": [
+              "weekday",
+              "weekend"
+            ],
+            "type": "string"
+          },
+          "hour": {
+            "description": "Hour of the typical day (IST) to take generation and demand from, when using propertyIds. Default: the current hour.",
+            "maximum": 23,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/CommunityLimitsInputInput",
+            "default": {}
+          },
+          "members": {
+            "description": "The properties to allocate between, described in full.",
+            "items": {
+              "$ref": "#/components/schemas/CommunityMemberInputInput"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "month": {
+            "description": "Month of that typical day. Default: this month.",
+            "maximum": 12,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "overrides": {
+            "additionalProperties": {
+              "properties": {
+                "battery": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CommunityBatteryInputInput"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "criticalKw": {
+                  "default": 0,
+                  "description": "The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "demandKw": {
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "exportLimitKw": {
+                  "default": 100000,
+                  "description": "Most this property may push past its meter: the smaller of its inverter and what its connection permits.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "generationKw": {
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "importLimitKw": {
+                  "default": 100000,
+                  "description": "Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "lineLossFraction": {
+                  "default": 0,
+                  "description": "Fraction lost on this property's own leg to the shared node.",
+                  "maximum": 0.5,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "name": {
+                  "maxLength": 120,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "description": "Changes to apply to the figures built from your properties, keyed by property id: what you want to ask 'what if' about.",
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "propertyIds": {
+            "description": "Your own properties to allocate between instead, at the hour given by `hour`.",
+            "items": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CommunityAllocateResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "inputs": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "basis": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "basis"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "label": {
+            "const": "COMMUNITY ALLOCATION SIMULATION",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "result": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "check": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "balanced": {
+                            "type": "boolean"
+                          },
+                          "communityErrorKw": {
+                            "type": "number"
+                          },
+                          "maxMemberErrorKw": {
+                            "type": "number"
+                          },
+                          "note": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "balanced",
+                          "maxMemberErrorKw",
+                          "communityErrorKw",
+                          "note"
+                        ],
+                        "type": "object"
+                      },
+                      "comparison": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "basis": {
+                                "type": "string"
+                              },
+                              "savingInr": {
+                                "type": "number"
+                              },
+                              "withSharingInr": {
+                                "type": "number"
+                              },
+                              "withoutSharingInr": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "withoutSharingInr",
+                              "withSharingInr",
+                              "savingInr",
+                              "basis"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "decisions": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "feederBinding": {
+                        "type": "boolean"
+                      },
+                      "feederFlowKw": {
+                        "type": "number"
+                      },
+                      "limits": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "batteryPolicy": {
+                            "enum": [
+                              "SHARE_FIRST",
+                              "BATTERY_FIRST"
+                            ],
+                            "type": "string"
+                          },
+                          "feederLimitKw": {
+                            "type": "number"
+                          },
+                          "networkLossFraction": {
+                            "type": "number"
+                          },
+                          "rule": {
+                            "enum": [
+                              "PROPORTIONAL",
+                              "EQUAL_SHARE",
+                              "CRITICAL_FIRST",
+                              "NEAREST_FIRST"
+                            ],
+                            "type": "string"
+                          },
+                          "stepHours": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "feederLimitKw",
+                          "networkLossFraction",
+                          "rule",
+                          "batteryPolicy",
+                          "stepHours"
+                        ],
+                        "type": "object"
+                      },
+                      "members": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "allocatedKw": {
+                              "type": "number"
+                            },
+                            "batteryChargeKw": {
+                              "type": "number"
+                            },
+                            "batteryDischargeKw": {
+                              "type": "number"
+                            },
+                            "batterySocKwh": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "binding": {
+                              "enum": [
+                                "NONE",
+                                "EXPORT_LIMIT",
+                                "IMPORT_LIMIT",
+                                "FEEDER_LIMIT",
+                                "NO_TAKER",
+                                "NO_SUPPLY",
+                                "BATTERY_FULL",
+                                "BATTERY_EMPTY"
+                              ],
+                              "type": "string"
+                            },
+                            "curtailedKw": {
+                              "type": "number"
+                            },
+                            "demandKw": {
+                              "type": "number"
+                            },
+                            "explanation": {
+                              "type": "string"
+                            },
+                            "generationKw": {
+                              "type": "number"
+                            },
+                            "gridExportKw": {
+                              "type": "number"
+                            },
+                            "gridImportKw": {
+                              "type": "number"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "offeredKw": {
+                              "type": "number"
+                            },
+                            "receivedKw": {
+                              "type": "number"
+                            },
+                            "requestedKw": {
+                              "type": "number"
+                            },
+                            "selfUseKw": {
+                              "type": "number"
+                            },
+                            "sentKw": {
+                              "type": "number"
+                            },
+                            "status": {
+                              "enum": [
+                                "SURPLUS",
+                                "DEFICIT",
+                                "BALANCED"
+                              ],
+                              "type": "string"
+                            },
+                            "unservedKw": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "generationKw",
+                            "demandKw",
+                            "selfUseKw",
+                            "batteryDischargeKw",
+                            "batteryChargeKw",
+                            "batterySocKwh",
+                            "offeredKw",
+                            "sentKw",
+                            "requestedKw",
+                            "allocatedKw",
+                            "receivedKw",
+                            "gridImportKw",
+                            "gridExportKw",
+                            "curtailedKw",
+                            "unservedKw",
+                            "status",
+                            "binding",
+                            "explanation"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "totals": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "batteryChargeKw": {
+                            "type": "number"
+                          },
+                          "batteryDischargeKw": {
+                            "type": "number"
+                          },
+                          "curtailedKw": {
+                            "type": "number"
+                          },
+                          "demandKw": {
+                            "type": "number"
+                          },
+                          "generationKw": {
+                            "type": "number"
+                          },
+                          "gridExportKw": {
+                            "type": "number"
+                          },
+                          "gridImportKw": {
+                            "type": "number"
+                          },
+                          "members": {
+                            "type": "number"
+                          },
+                          "offeredKw": {
+                            "type": "number"
+                          },
+                          "requestedKw": {
+                            "type": "number"
+                          },
+                          "selfConsumption": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "selfSufficiency": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "selfUseKw": {
+                            "type": "number"
+                          },
+                          "sharedDeliveredKw": {
+                            "type": "number"
+                          },
+                          "sharedSentKw": {
+                            "type": "number"
+                          },
+                          "transferLossKw": {
+                            "type": "number"
+                          },
+                          "unservedKw": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "members",
+                          "generationKw",
+                          "demandKw",
+                          "selfUseKw",
+                          "offeredKw",
+                          "requestedKw",
+                          "sharedSentKw",
+                          "sharedDeliveredKw",
+                          "transferLossKw",
+                          "batteryChargeKw",
+                          "batteryDischargeKw",
+                          "gridImportKw",
+                          "gridExportKw",
+                          "curtailedKw",
+                          "unservedKw",
+                          "selfSufficiency",
+                          "selfConsumption"
+                        ],
+                        "type": "object"
+                      },
+                      "transfers": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "deliveredKw": {
+                              "type": "number"
+                            },
+                            "fromId": {
+                              "type": "string"
+                            },
+                            "fromName": {
+                              "type": "string"
+                            },
+                            "lossKw": {
+                              "type": "number"
+                            },
+                            "sentKw": {
+                              "type": "number"
+                            },
+                            "toId": {
+                              "type": "string"
+                            },
+                            "toName": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "fromId",
+                            "fromName",
+                            "toId",
+                            "toName",
+                            "sentKw",
+                            "deliveredKw",
+                            "lossKw"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "members",
+                      "transfers",
+                      "totals",
+                      "limits",
+                      "feederBinding",
+                      "feederFlowKw",
+                      "check",
+                      "decisions",
+                      "comparison"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "source": {
+            "description": "Whether the figures were supplied in the request or built from your own properties.",
+            "enum": [
+              "MEMBERS_GIVEN",
+              "YOUR_PROPERTIES"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "source",
+          "result",
+          "inputs",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "CommunityAllocateResponseInput": {
+        "properties": {
+          "inputs": {
+            "items": {
+              "properties": {
+                "basis": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "basis"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "label": {
+            "const": "COMMUNITY ALLOCATION SIMULATION",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "result": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "check": {
+                        "properties": {
+                          "balanced": {
+                            "type": "boolean"
+                          },
+                          "communityErrorKw": {
+                            "type": "number"
+                          },
+                          "maxMemberErrorKw": {
+                            "type": "number"
+                          },
+                          "note": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "balanced",
+                          "maxMemberErrorKw",
+                          "communityErrorKw",
+                          "note"
+                        ],
+                        "type": "object"
+                      },
+                      "comparison": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "basis": {
+                                "type": "string"
+                              },
+                              "savingInr": {
+                                "type": "number"
+                              },
+                              "withSharingInr": {
+                                "type": "number"
+                              },
+                              "withoutSharingInr": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "withoutSharingInr",
+                              "withSharingInr",
+                              "savingInr",
+                              "basis"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "decisions": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "feederBinding": {
+                        "type": "boolean"
+                      },
+                      "feederFlowKw": {
+                        "type": "number"
+                      },
+                      "limits": {
+                        "properties": {
+                          "batteryPolicy": {
+                            "enum": [
+                              "SHARE_FIRST",
+                              "BATTERY_FIRST"
+                            ],
+                            "type": "string"
+                          },
+                          "feederLimitKw": {
+                            "type": "number"
+                          },
+                          "networkLossFraction": {
+                            "type": "number"
+                          },
+                          "rule": {
+                            "enum": [
+                              "PROPORTIONAL",
+                              "EQUAL_SHARE",
+                              "CRITICAL_FIRST",
+                              "NEAREST_FIRST"
+                            ],
+                            "type": "string"
+                          },
+                          "stepHours": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "feederLimitKw",
+                          "networkLossFraction",
+                          "rule",
+                          "batteryPolicy",
+                          "stepHours"
+                        ],
+                        "type": "object"
+                      },
+                      "members": {
+                        "items": {
+                          "properties": {
+                            "allocatedKw": {
+                              "type": "number"
+                            },
+                            "batteryChargeKw": {
+                              "type": "number"
+                            },
+                            "batteryDischargeKw": {
+                              "type": "number"
+                            },
+                            "batterySocKwh": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "binding": {
+                              "enum": [
+                                "NONE",
+                                "EXPORT_LIMIT",
+                                "IMPORT_LIMIT",
+                                "FEEDER_LIMIT",
+                                "NO_TAKER",
+                                "NO_SUPPLY",
+                                "BATTERY_FULL",
+                                "BATTERY_EMPTY"
+                              ],
+                              "type": "string"
+                            },
+                            "curtailedKw": {
+                              "type": "number"
+                            },
+                            "demandKw": {
+                              "type": "number"
+                            },
+                            "explanation": {
+                              "type": "string"
+                            },
+                            "generationKw": {
+                              "type": "number"
+                            },
+                            "gridExportKw": {
+                              "type": "number"
+                            },
+                            "gridImportKw": {
+                              "type": "number"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "offeredKw": {
+                              "type": "number"
+                            },
+                            "receivedKw": {
+                              "type": "number"
+                            },
+                            "requestedKw": {
+                              "type": "number"
+                            },
+                            "selfUseKw": {
+                              "type": "number"
+                            },
+                            "sentKw": {
+                              "type": "number"
+                            },
+                            "status": {
+                              "enum": [
+                                "SURPLUS",
+                                "DEFICIT",
+                                "BALANCED"
+                              ],
+                              "type": "string"
+                            },
+                            "unservedKw": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "generationKw",
+                            "demandKw",
+                            "selfUseKw",
+                            "batteryDischargeKw",
+                            "batteryChargeKw",
+                            "batterySocKwh",
+                            "offeredKw",
+                            "sentKw",
+                            "requestedKw",
+                            "allocatedKw",
+                            "receivedKw",
+                            "gridImportKw",
+                            "gridExportKw",
+                            "curtailedKw",
+                            "unservedKw",
+                            "status",
+                            "binding",
+                            "explanation"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "totals": {
+                        "properties": {
+                          "batteryChargeKw": {
+                            "type": "number"
+                          },
+                          "batteryDischargeKw": {
+                            "type": "number"
+                          },
+                          "curtailedKw": {
+                            "type": "number"
+                          },
+                          "demandKw": {
+                            "type": "number"
+                          },
+                          "generationKw": {
+                            "type": "number"
+                          },
+                          "gridExportKw": {
+                            "type": "number"
+                          },
+                          "gridImportKw": {
+                            "type": "number"
+                          },
+                          "members": {
+                            "type": "number"
+                          },
+                          "offeredKw": {
+                            "type": "number"
+                          },
+                          "requestedKw": {
+                            "type": "number"
+                          },
+                          "selfConsumption": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "selfSufficiency": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "selfUseKw": {
+                            "type": "number"
+                          },
+                          "sharedDeliveredKw": {
+                            "type": "number"
+                          },
+                          "sharedSentKw": {
+                            "type": "number"
+                          },
+                          "transferLossKw": {
+                            "type": "number"
+                          },
+                          "unservedKw": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "members",
+                          "generationKw",
+                          "demandKw",
+                          "selfUseKw",
+                          "offeredKw",
+                          "requestedKw",
+                          "sharedSentKw",
+                          "sharedDeliveredKw",
+                          "transferLossKw",
+                          "batteryChargeKw",
+                          "batteryDischargeKw",
+                          "gridImportKw",
+                          "gridExportKw",
+                          "curtailedKw",
+                          "unservedKw",
+                          "selfSufficiency",
+                          "selfConsumption"
+                        ],
+                        "type": "object"
+                      },
+                      "transfers": {
+                        "items": {
+                          "properties": {
+                            "deliveredKw": {
+                              "type": "number"
+                            },
+                            "fromId": {
+                              "type": "string"
+                            },
+                            "fromName": {
+                              "type": "string"
+                            },
+                            "lossKw": {
+                              "type": "number"
+                            },
+                            "sentKw": {
+                              "type": "number"
+                            },
+                            "toId": {
+                              "type": "string"
+                            },
+                            "toName": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "fromId",
+                            "fromName",
+                            "toId",
+                            "toName",
+                            "sentKw",
+                            "deliveredKw",
+                            "lossKw"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "members",
+                      "transfers",
+                      "totals",
+                      "limits",
+                      "feederBinding",
+                      "feederFlowKw",
+                      "check",
+                      "decisions",
+                      "comparison"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "source": {
+            "description": "Whether the figures were supplied in the request or built from your own properties.",
+            "enum": [
+              "MEMBERS_GIVEN",
+              "YOUR_PROPERTIES"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "source",
+          "result",
+          "inputs",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "CommunityBatteryInput": {
+        "additionalProperties": false,
+        "properties": {
+          "maxChargeKw": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "maxDischargeKw": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "reserveKwh": {
+            "default": 0,
+            "description": "The part kept back for backup. Discharging stops here.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "roundTripEfficiency": {
+            "default": 0.9,
+            "description": "Charged on the way in: putting x kWh in stores x times this.",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "socKwh": {
+            "description": "Energy stored now, counted within that usable band.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "usableKwh": {
+            "description": "Capacity that may be cycled: the usable band above the depth-of-discharge floor.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "usableKwh",
+          "socKwh",
+          "reserveKwh",
+          "maxChargeKw",
+          "maxDischargeKw",
+          "roundTripEfficiency"
+        ],
+        "type": "object"
+      },
+      "CommunityBatteryInputInput": {
+        "properties": {
+          "maxChargeKw": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "maxDischargeKw": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "reserveKwh": {
+            "default": 0,
+            "description": "The part kept back for backup. Discharging stops here.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "roundTripEfficiency": {
+            "default": 0.9,
+            "description": "Charged on the way in: putting x kWh in stores x times this.",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "socKwh": {
+            "description": "Energy stored now, counted within that usable band.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "usableKwh": {
+            "description": "Capacity that may be cycled: the usable band above the depth-of-discharge floor.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "usableKwh",
+          "socKwh",
+          "maxChargeKw",
+          "maxDischargeKw"
+        ],
+        "type": "object"
+      },
+      "CommunityLimitsInput": {
+        "additionalProperties": false,
+        "properties": {
+          "batteryPolicy": {
+            "default": "SHARE_FIRST",
+            "description": "Whether a property in surplus fills its own battery before offering anything.",
+            "enum": [
+              "SHARE_FIRST",
+              "BATTERY_FIRST"
+            ],
+            "type": "string"
+          },
+          "feederLimitKw": {
+            "default": 1000000,
+            "description": "Most that may pass through the shared node at once: the feeder or the transformer, whichever is smaller.",
+            "maximum": 1000000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "networkLossFraction": {
+            "default": 0,
+            "description": "Fraction lost in the shared network itself. Charged once, on the pool.",
+            "maximum": 0.5,
+            "minimum": 0,
+            "type": "number"
+          },
+          "rule": {
+            "default": "PROPORTIONAL",
+            "description": "How the pool is divided when the askers want more than it holds.",
+            "enum": [
+              "PROPORTIONAL",
+              "EQUAL_SHARE",
+              "CRITICAL_FIRST",
+              "NEAREST_FIRST"
+            ],
+            "type": "string"
+          },
+          "stepHours": {
+            "default": 1,
+            "description": "Length of the interval, hours. Converts kW to the kWh a charge level moves by.",
+            "exclusiveMinimum": 0,
+            "maximum": 24,
+            "type": "number"
+          }
+        },
+        "required": [
+          "feederLimitKw",
+          "networkLossFraction",
+          "rule",
+          "batteryPolicy",
+          "stepHours"
+        ],
+        "type": "object"
+      },
+      "CommunityLimitsInputInput": {
+        "properties": {
+          "batteryPolicy": {
+            "default": "SHARE_FIRST",
+            "description": "Whether a property in surplus fills its own battery before offering anything.",
+            "enum": [
+              "SHARE_FIRST",
+              "BATTERY_FIRST"
+            ],
+            "type": "string"
+          },
+          "feederLimitKw": {
+            "default": 1000000,
+            "description": "Most that may pass through the shared node at once: the feeder or the transformer, whichever is smaller.",
+            "maximum": 1000000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "networkLossFraction": {
+            "default": 0,
+            "description": "Fraction lost in the shared network itself. Charged once, on the pool.",
+            "maximum": 0.5,
+            "minimum": 0,
+            "type": "number"
+          },
+          "rule": {
+            "default": "PROPORTIONAL",
+            "description": "How the pool is divided when the askers want more than it holds.",
+            "enum": [
+              "PROPORTIONAL",
+              "EQUAL_SHARE",
+              "CRITICAL_FIRST",
+              "NEAREST_FIRST"
+            ],
+            "type": "string"
+          },
+          "stepHours": {
+            "default": 1,
+            "description": "Length of the interval, hours. Converts kW to the kWh a charge level moves by.",
+            "exclusiveMinimum": 0,
+            "maximum": 24,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "CommunityMemberInput": {
+        "additionalProperties": false,
+        "properties": {
+          "battery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommunityBatteryInput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "criticalKw": {
+            "default": 0,
+            "description": "The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "demandKw": {
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "exportLimitKw": {
+            "default": 100000,
+            "description": "Most this property may push past its meter: the smaller of its inverter and what its connection permits.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "generationKw": {
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "importLimitKw": {
+            "default": 100000,
+            "description": "Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "lineLossFraction": {
+            "default": 0,
+            "description": "Fraction lost on this property's own leg to the shared node.",
+            "maximum": 0.5,
+            "minimum": 0,
+            "type": "number"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "generationKw",
+          "demandKw",
+          "criticalKw",
+          "battery",
+          "exportLimitKw",
+          "importLimitKw",
+          "lineLossFraction"
+        ],
+        "type": "object"
+      },
+      "CommunityMemberInputInput": {
+        "properties": {
+          "battery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommunityBatteryInputInput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "criticalKw": {
+            "default": 0,
+            "description": "The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "demandKw": {
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "exportLimitKw": {
+            "default": 100000,
+            "description": "Most this property may push past its meter: the smaller of its inverter and what its connection permits.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "generationKw": {
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "importLimitKw": {
+            "default": 100000,
+            "description": "Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "lineLossFraction": {
+            "default": 0,
+            "description": "Fraction lost on this property's own leg to the shared node.",
+            "maximum": 0.5,
+            "minimum": 0,
+            "type": "number"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "generationKw",
+          "demandKw"
+        ],
+        "type": "object"
+      },
       "CommunitySimulation": {
         "additionalProperties": false,
         "properties": {
@@ -23910,6 +25335,107 @@
           }
         },
         "summary": "Your properties together: surplus, deficit, storage and shiftable load on a typical day",
+        "tags": [
+          "community"
+        ]
+      }
+    },
+    "/api/community/allocate": {
+      "post": {
+        "description": "Works out, for a single interval, which property's surplus can meet which other's deficit: own generation first, then own battery, then the shared node divided by the rule you choose, then the grid. Transfer limits, the feeder limit and line and network losses are all applied and reported, and each property says which cap bound it and why. Supply `members` to allocate between figures you give (pure arithmetic, nothing measured), or `propertyIds` to allocate between your own properties at one hour of a typical day, built from their entered systems and imported readings, with `overrides` for asking what if. Energy is conserved and the response carries the check that proves it. AVISHKAR does not move electricity and makes no claim that sharing between these properties is permitted.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommunityAllocateRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunityAllocateResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Allocate one interval's surplus between properties, and say what stopped it",
         "tags": [
           "community"
         ]

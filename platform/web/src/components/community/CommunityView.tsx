@@ -10,6 +10,7 @@ import { useApi } from "@/lib/useApi";
 import { useAuth } from "../AuthProvider";
 import { Field, SelectField, num } from "../assets/fields";
 import { StatusBadge } from "../Provenance";
+import { AllocationWorkbench } from "./AllocationWorkbench";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const hour = (h: number) => `${String(h).padStart(2, "0")}:00`;
@@ -298,6 +299,10 @@ export function CommunityView() {
         {community.error && <p role="alert" className="mt-2 text-sm text-[color:var(--tone-unavailable-fg)]">{community.error}</p>}
         {community.data && <CommunitySection c={community.data} />}
       </section>
+
+      <div className="card mt-4 p-4">
+        <AllocationWorkbench />
+      </div>
 
       <section className="card mt-4 p-4" aria-label="Virtual power plant">
         <h2 className="text-lg font-semibold">Simulate a virtual power plant</h2>

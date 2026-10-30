@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PROPERTY_ID, community, fakeApi, json, property, vppSimulation } from "@/test/fixtures";
+import { PROPERTY_ID, community, communityAllocation, fakeApi, json, property, vppSimulation } from "@/test/fixtures";
 import { CommunityView } from "./CommunityView";
 
 const auth = vi.hoisted(() => ({ user: { id: "u1", email: "me@example.com", role: "USER", displayName: null } as { id: string; email: string; role: string; displayName: string | null } | null }));
@@ -12,6 +12,7 @@ function world(over: { community?: ReturnType<typeof community>; vpp?: (body: un
     ["GET", "/api/community", () => json(over.community ?? community())],
     ["GET", "/api/properties", () => json({ properties: over.properties ?? [property({ name: "Home" })] })],
     ["POST", "/api/vpp/simulate", ({ body }) => (over.vpp ? over.vpp(body) : json(vppSimulation()))],
+    ["POST", "/api/community/allocate", () => json(communityAllocation())],
   ]);
   vi.stubGlobal("fetch", api.fetch);
   return api;

@@ -1228,6 +1228,112 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/community/allocate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Allocate one interval's surplus between properties, and say what stopped it
+         * @description Works out, for a single interval, which property's surplus can meet which other's deficit: own generation first, then own battery, then the shared node divided by the rule you choose, then the grid. Transfer limits, the feeder limit and line and network losses are all applied and reported, and each property says which cap bound it and why. Supply `members` to allocate between figures you give (pure arithmetic, nothing measured), or `propertyIds` to allocate between your own properties at one hour of a typical day, built from their entered systems and imported readings, with `overrides` for asking what if. Energy is conserved and the response carries the check that proves it. AVISHKAR does not move electricity and makes no claim that sharing between these properties is permitted.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CommunityAllocateRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CommunityAllocateResponse"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/copilot/tools": {
         parameters: {
             query?: never;
@@ -9577,6 +9683,437 @@ export interface components {
                     };
                 } | null;
             };
+        };
+        CommunityAllocateRequest: {
+            /** @enum {string} */
+            dayType?: "weekday" | "weekend";
+            /** @description Hour of the typical day (IST) to take generation and demand from, when using propertyIds. Default: the current hour. */
+            hour?: number;
+            limits: components["schemas"]["CommunityLimitsInput"];
+            /** @description The properties to allocate between, described in full. */
+            members?: components["schemas"]["CommunityMemberInput"][];
+            /** @description Month of that typical day. Default: this month. */
+            month?: number;
+            /** @description Changes to apply to the figures built from your properties, keyed by property id: what you want to ask 'what if' about. */
+            overrides?: {
+                [key: string]: {
+                    /** @default null */
+                    battery: components["schemas"]["CommunityBatteryInput"] | null;
+                    /**
+                     * @description The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.
+                     * @default 0
+                     */
+                    criticalKw: number;
+                    demandKw?: number;
+                    /**
+                     * @description Most this property may push past its meter: the smaller of its inverter and what its connection permits.
+                     * @default 100000
+                     */
+                    exportLimitKw: number;
+                    generationKw?: number;
+                    /**
+                     * @description Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.
+                     * @default 100000
+                     */
+                    importLimitKw: number;
+                    /**
+                     * @description Fraction lost on this property's own leg to the shared node.
+                     * @default 0
+                     */
+                    lineLossFraction: number;
+                    name?: string;
+                };
+            };
+            /** @description Your own properties to allocate between instead, at the hour given by `hour`. */
+            propertyIds?: string[];
+        };
+        CommunityAllocateRequestInput: {
+            /** @enum {string} */
+            dayType?: "weekday" | "weekend";
+            /** @description Hour of the typical day (IST) to take generation and demand from, when using propertyIds. Default: the current hour. */
+            hour?: number;
+            /** @default {} */
+            limits: components["schemas"]["CommunityLimitsInputInput"];
+            /** @description The properties to allocate between, described in full. */
+            members?: components["schemas"]["CommunityMemberInputInput"][];
+            /** @description Month of that typical day. Default: this month. */
+            month?: number;
+            /** @description Changes to apply to the figures built from your properties, keyed by property id: what you want to ask 'what if' about. */
+            overrides?: {
+                [key: string]: {
+                    /** @default null */
+                    battery: components["schemas"]["CommunityBatteryInputInput"] | null;
+                    /**
+                     * @description The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.
+                     * @default 0
+                     */
+                    criticalKw: number;
+                    demandKw?: number;
+                    /**
+                     * @description Most this property may push past its meter: the smaller of its inverter and what its connection permits.
+                     * @default 100000
+                     */
+                    exportLimitKw: number;
+                    generationKw?: number;
+                    /**
+                     * @description Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.
+                     * @default 100000
+                     */
+                    importLimitKw: number;
+                    /**
+                     * @description Fraction lost on this property's own leg to the shared node.
+                     * @default 0
+                     */
+                    lineLossFraction: number;
+                    name?: string;
+                };
+            };
+            /** @description Your own properties to allocate between instead, at the hour given by `hour`. */
+            propertyIds?: string[];
+        };
+        CommunityAllocateResponse: {
+            inputs: {
+                basis: string[];
+                id: string;
+                name: string;
+            }[];
+            /** @constant */
+            label: "COMMUNITY ALLOCATION SIMULATION";
+            notes: string[];
+            result: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    check: {
+                        balanced: boolean;
+                        communityErrorKw: number;
+                        maxMemberErrorKw: number;
+                        note: string;
+                    };
+                    comparison: {
+                        basis: string;
+                        savingInr: number;
+                        withSharingInr: number;
+                        withoutSharingInr: number;
+                    } | null;
+                    decisions: string[];
+                    feederBinding: boolean;
+                    feederFlowKw: number;
+                    limits: {
+                        /** @enum {string} */
+                        batteryPolicy: "SHARE_FIRST" | "BATTERY_FIRST";
+                        feederLimitKw: number;
+                        networkLossFraction: number;
+                        /** @enum {string} */
+                        rule: "PROPORTIONAL" | "EQUAL_SHARE" | "CRITICAL_FIRST" | "NEAREST_FIRST";
+                        stepHours: number;
+                    };
+                    members: {
+                        allocatedKw: number;
+                        batteryChargeKw: number;
+                        batteryDischargeKw: number;
+                        batterySocKwh: number | null;
+                        /** @enum {string} */
+                        binding: "NONE" | "EXPORT_LIMIT" | "IMPORT_LIMIT" | "FEEDER_LIMIT" | "NO_TAKER" | "NO_SUPPLY" | "BATTERY_FULL" | "BATTERY_EMPTY";
+                        curtailedKw: number;
+                        demandKw: number;
+                        explanation: string;
+                        generationKw: number;
+                        gridExportKw: number;
+                        gridImportKw: number;
+                        id: string;
+                        name: string;
+                        offeredKw: number;
+                        receivedKw: number;
+                        requestedKw: number;
+                        selfUseKw: number;
+                        sentKw: number;
+                        /** @enum {string} */
+                        status: "SURPLUS" | "DEFICIT" | "BALANCED";
+                        unservedKw: number;
+                    }[];
+                    totals: {
+                        batteryChargeKw: number;
+                        batteryDischargeKw: number;
+                        curtailedKw: number;
+                        demandKw: number;
+                        generationKw: number;
+                        gridExportKw: number;
+                        gridImportKw: number;
+                        members: number;
+                        offeredKw: number;
+                        requestedKw: number;
+                        selfConsumption: number | null;
+                        selfSufficiency: number | null;
+                        selfUseKw: number;
+                        sharedDeliveredKw: number;
+                        sharedSentKw: number;
+                        transferLossKw: number;
+                        unservedKw: number;
+                    };
+                    transfers: {
+                        deliveredKw: number;
+                        fromId: string;
+                        fromName: string;
+                        lossKw: number;
+                        sentKw: number;
+                        toId: string;
+                        toName: string;
+                    }[];
+                } | null;
+            };
+            /**
+             * @description Whether the figures were supplied in the request or built from your own properties.
+             * @enum {string}
+             */
+            source: "MEMBERS_GIVEN" | "YOUR_PROPERTIES";
+        };
+        CommunityAllocateResponseInput: {
+            inputs: {
+                basis: string[];
+                id: string;
+                name: string;
+            }[];
+            /** @constant */
+            label: "COMMUNITY ALLOCATION SIMULATION";
+            notes: string[];
+            result: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    check: {
+                        balanced: boolean;
+                        communityErrorKw: number;
+                        maxMemberErrorKw: number;
+                        note: string;
+                    };
+                    comparison: {
+                        basis: string;
+                        savingInr: number;
+                        withSharingInr: number;
+                        withoutSharingInr: number;
+                    } | null;
+                    decisions: string[];
+                    feederBinding: boolean;
+                    feederFlowKw: number;
+                    limits: {
+                        /** @enum {string} */
+                        batteryPolicy: "SHARE_FIRST" | "BATTERY_FIRST";
+                        feederLimitKw: number;
+                        networkLossFraction: number;
+                        /** @enum {string} */
+                        rule: "PROPORTIONAL" | "EQUAL_SHARE" | "CRITICAL_FIRST" | "NEAREST_FIRST";
+                        stepHours: number;
+                    };
+                    members: {
+                        allocatedKw: number;
+                        batteryChargeKw: number;
+                        batteryDischargeKw: number;
+                        batterySocKwh: number | null;
+                        /** @enum {string} */
+                        binding: "NONE" | "EXPORT_LIMIT" | "IMPORT_LIMIT" | "FEEDER_LIMIT" | "NO_TAKER" | "NO_SUPPLY" | "BATTERY_FULL" | "BATTERY_EMPTY";
+                        curtailedKw: number;
+                        demandKw: number;
+                        explanation: string;
+                        generationKw: number;
+                        gridExportKw: number;
+                        gridImportKw: number;
+                        id: string;
+                        name: string;
+                        offeredKw: number;
+                        receivedKw: number;
+                        requestedKw: number;
+                        selfUseKw: number;
+                        sentKw: number;
+                        /** @enum {string} */
+                        status: "SURPLUS" | "DEFICIT" | "BALANCED";
+                        unservedKw: number;
+                    }[];
+                    totals: {
+                        batteryChargeKw: number;
+                        batteryDischargeKw: number;
+                        curtailedKw: number;
+                        demandKw: number;
+                        generationKw: number;
+                        gridExportKw: number;
+                        gridImportKw: number;
+                        members: number;
+                        offeredKw: number;
+                        requestedKw: number;
+                        selfConsumption: number | null;
+                        selfSufficiency: number | null;
+                        selfUseKw: number;
+                        sharedDeliveredKw: number;
+                        sharedSentKw: number;
+                        transferLossKw: number;
+                        unservedKw: number;
+                    };
+                    transfers: {
+                        deliveredKw: number;
+                        fromId: string;
+                        fromName: string;
+                        lossKw: number;
+                        sentKw: number;
+                        toId: string;
+                        toName: string;
+                    }[];
+                } | null;
+            };
+            /**
+             * @description Whether the figures were supplied in the request or built from your own properties.
+             * @enum {string}
+             */
+            source: "MEMBERS_GIVEN" | "YOUR_PROPERTIES";
+        };
+        CommunityBatteryInput: {
+            maxChargeKw: number;
+            maxDischargeKw: number;
+            /**
+             * @description The part kept back for backup. Discharging stops here.
+             * @default 0
+             */
+            reserveKwh: number;
+            /**
+             * @description Charged on the way in: putting x kWh in stores x times this.
+             * @default 0.9
+             */
+            roundTripEfficiency: number;
+            /** @description Energy stored now, counted within that usable band. */
+            socKwh: number;
+            /** @description Capacity that may be cycled: the usable band above the depth-of-discharge floor. */
+            usableKwh: number;
+        };
+        CommunityBatteryInputInput: {
+            maxChargeKw: number;
+            maxDischargeKw: number;
+            /**
+             * @description The part kept back for backup. Discharging stops here.
+             * @default 0
+             */
+            reserveKwh: number;
+            /**
+             * @description Charged on the way in: putting x kWh in stores x times this.
+             * @default 0.9
+             */
+            roundTripEfficiency: number;
+            /** @description Energy stored now, counted within that usable band. */
+            socKwh: number;
+            /** @description Capacity that may be cycled: the usable band above the depth-of-discharge floor. */
+            usableKwh: number;
+        };
+        CommunityLimitsInput: {
+            /**
+             * @description Whether a property in surplus fills its own battery before offering anything.
+             * @default SHARE_FIRST
+             * @enum {string}
+             */
+            batteryPolicy: "SHARE_FIRST" | "BATTERY_FIRST";
+            /**
+             * @description Most that may pass through the shared node at once: the feeder or the transformer, whichever is smaller.
+             * @default 1000000
+             */
+            feederLimitKw: number;
+            /**
+             * @description Fraction lost in the shared network itself. Charged once, on the pool.
+             * @default 0
+             */
+            networkLossFraction: number;
+            /**
+             * @description How the pool is divided when the askers want more than it holds.
+             * @default PROPORTIONAL
+             * @enum {string}
+             */
+            rule: "PROPORTIONAL" | "EQUAL_SHARE" | "CRITICAL_FIRST" | "NEAREST_FIRST";
+            /**
+             * @description Length of the interval, hours. Converts kW to the kWh a charge level moves by.
+             * @default 1
+             */
+            stepHours: number;
+        };
+        CommunityLimitsInputInput: {
+            /**
+             * @description Whether a property in surplus fills its own battery before offering anything.
+             * @default SHARE_FIRST
+             * @enum {string}
+             */
+            batteryPolicy: "SHARE_FIRST" | "BATTERY_FIRST";
+            /**
+             * @description Most that may pass through the shared node at once: the feeder or the transformer, whichever is smaller.
+             * @default 1000000
+             */
+            feederLimitKw: number;
+            /**
+             * @description Fraction lost in the shared network itself. Charged once, on the pool.
+             * @default 0
+             */
+            networkLossFraction: number;
+            /**
+             * @description How the pool is divided when the askers want more than it holds.
+             * @default PROPORTIONAL
+             * @enum {string}
+             */
+            rule: "PROPORTIONAL" | "EQUAL_SHARE" | "CRITICAL_FIRST" | "NEAREST_FIRST";
+            /**
+             * @description Length of the interval, hours. Converts kW to the kWh a charge level moves by.
+             * @default 1
+             */
+            stepHours: number;
+        };
+        CommunityMemberInput: {
+            /** @default null */
+            battery: components["schemas"]["CommunityBatteryInput"] | null;
+            /**
+             * @description The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.
+             * @default 0
+             */
+            criticalKw: number;
+            demandKw: number;
+            /**
+             * @description Most this property may push past its meter: the smaller of its inverter and what its connection permits.
+             * @default 100000
+             */
+            exportLimitKw: number;
+            generationKw: number;
+            id: string;
+            /**
+             * @description Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.
+             * @default 100000
+             */
+            importLimitKw: number;
+            /**
+             * @description Fraction lost on this property's own leg to the shared node.
+             * @default 0
+             */
+            lineLossFraction: number;
+            name: string;
+        };
+        CommunityMemberInputInput: {
+            /** @default null */
+            battery: components["schemas"]["CommunityBatteryInputInput"] | null;
+            /**
+             * @description The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.
+             * @default 0
+             */
+            criticalKw: number;
+            demandKw: number;
+            /**
+             * @description Most this property may push past its meter: the smaller of its inverter and what its connection permits.
+             * @default 100000
+             */
+            exportLimitKw: number;
+            generationKw: number;
+            id: string;
+            /**
+             * @description Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.
+             * @default 100000
+             */
+            importLimitKw: number;
+            /**
+             * @description Fraction lost on this property's own leg to the shared node.
+             * @default 0
+             */
+            lineLossFraction: number;
+            name: string;
         };
         CommunitySimulation: {
             /** @enum {string} */
