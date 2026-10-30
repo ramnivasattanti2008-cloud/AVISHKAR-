@@ -5,8 +5,8 @@
     "action": "catalog/publish",
     "bppId": "sellerapp.example.com",
     "bppUri": "http://sellerapp.example.com/bpp/receiver",
-    "transactionId": "fa4f430d-71ae-4c16-a87f-69a8d59b5b48",
-    "messageId": "c52dc031-02a9-4884-a92e-41c252aa88e3",
+    "transactionId": "803c114e-1034-4dbc-8506-fd2eb45d31b8",
+    "messageId": "5d57990f-71eb-431b-984d-45b21aa62d42",
     "timestamp": "2023-01-14T12:30:00Z",
     "schemaContext": [
       "https://schema.nfh.global/EnergyTradeOffer/v2.0/context.jsonld",

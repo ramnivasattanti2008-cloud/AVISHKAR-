@@ -3218,3 +3218,73 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 
 ### What is next
 - Ready to synchronize and push all verified commits across remote GitHub branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
+
+
+## Entry 61 — 2026-10-30 — Master Solar Energy Management & Surplus Intelligence Platform: Phase 0 through Phase 11 Full-Spectrum Delivery
+
+### What was done
+- **Phase 0 Baseline & Architecture Audit (`PROJECT_AUDIT.md`)**:
+  - Conducted full-spectrum architectural and operational audit across all 56 Python core modules, Streamlit UI, platform API/web architecture, baseline test suites, and data honesty invariants.
+  - Formally documented working capabilities, architectural layers, technical debt, and risk mitigations.
+- **Phase 1 External Repository Research & Capability Analysis (`docs/REPOSITORY_RESEARCH.md` & `docs/FEATURE_INTEGRATION_MATRIX.md`)**:
+  - Investigated and verified 13 external open-source solar and energy management repositories:
+    1. `traktore-org/sem-community` (Multi-tier surplus allocation hierarchy, priority sorting, configurable hysteresis) -> **ADAPTED**
+    2. `lbsanto/SolarFlow` (Zero-export inverter power limiting setpoints) -> **ADAPTED**
+    3. `jirihelmich/smart-energy-manager` (Dynamic price battery charging thresholds & inverter abstraction) -> **ADAPTED**
+    4. `PXLJAKE/SunCore` (Immersion heater / thermal boiler dispatch as secondary flexible load) -> **ADAPTED**
+    5. `jyourstone/energy_manager` (Nordpool spot-price battery arbitrage) -> **STUDIED**
+    6. `thomasgodon/homeassistant-ems` (Sub-second headroom calculation & EV charge current modulation) -> **ADAPTED**
+    7. `davidusb-geek/emhass` (Vendored MILP LP optimizer) -> **PRESERVED IMMUTABLE**
+    8. `Quentinluoqz/solar-battery-dispatch` (Leakage-safe temporal splits & holdout evaluation) -> **ADAPTED**
+    9. `isahan78/microgrid-autopilot` (What-If scenario resilience & stress-testing) -> **ADAPTED**
+    10. `Sadique-Saifi/GreenGrid-AI` (Inactive / unreachable repository under exact name) -> **REJECTED**
+    11. `evcc-io/evcc` (Industry-benchmark EV solar surplus charging state machine & contactor protection) -> **ADAPTED**
+    12. `solectrus/solectrus` (High-resolution power flow visualization & data freshness tagging) -> **ADAPTED**
+    13. `Enpower-project/Flexcomm` (Energy community virtual net metering & distribution wire loss compensation) -> **ADAPTED**
+  - Mapped all 12 candidate features into `docs/FEATURE_INTEGRATION_MATRIX.md` with explicit dependencies, acceptance criteria, and test coverage.
+- **Phase 2 & 3 Intelligent Surplus Energy Engine (`src/avishkar_ems/surplus_engine.py`)**:
+  - Enforced strict physical separation between instantaneous power (kW) and cumulative energy (kWh) via `PowerMeasurement` and `EnergyMeasurement` dataclasses.
+  - Implemented 7-tier hierarchical dispatch chain:
+    $$\text{Essential Loads} \to \text{BESS Battery Storage} \to \text{Flexible Schedulable Loads} \to \text{EV Smart Charger} \to \text{Thermal Immersion Storage} \to \text{Grid / P2P Export} \to \text{Inverter Active Curtailment}$$
+  - Implemented anti-hunting `HysteresisController` with configurable minimum runtime ($t_{\text{min\_run}} = 180\text{s}$), minimum cooldown ($t_{\text{cooldown}} = 180\text{s}$), and sustained enable delay ($t_{\text{enable\_delay}} = 60\text{s}$) to eliminate relay chatter and mechanical wear.
+  - Implemented `evcc`-standard EV charging modes (`STOP`, `FAST`, `MIN_PLUS_PV`, `PV_ONLY`).
+  - Implemented LiFePO4 hard protective bounds: charge lockout at $\text{SoC} \ge 98\%$, discharge lockout at emergency reserve floor $\text{SoC} \le 20\%$.
+  - Implemented dynamic zero-export setpoint limiter for non-net-metered systems.
+  - Implemented multi-building virtual net metering with technical distribution line loss calculation ($P_{\text{sent}} = P_{\text{received}} + P_{\text{loss}}$).
+  - Implemented fail-closed hardware command execution with explicit timeout detection (`TIMEOUT_FAILED` without false success).
+  - Implemented idempotent telemetry deduplication policy.
+  - Implemented persistence clear-sky fallback on forecast API outage.
+  - Implemented deterministic greedy self-consumption fallback on LP solver infeasibility.
+  - Implemented statutory Central Electricity Authority (CEA) 2026 cybersecurity HMAC-SHA256 nonce authentication.
+  - Enforced data honesty tagging via `MetricStatus` (`MEASURED`, `ESTIMATED`, `MODELED_BASELINE`, `SIMULATED`, `MISSING_DATA`).
+- **Phase 9 Master 12-Scenario Automated Verification Suite (`tests/avishkar_ems/test_master_scenarios.py`)**:
+  - Implemented rigorous unit test coverage for all 12 operational scenarios from Section 10 of the Master Execution Prompt.
+  - 100% of scenarios passing:
+    1. Scenario 1: 10 kW PV, 6 kW demand -> 4 kW surplus (PASSED).
+    2. Scenario 2: 3 kW PV, 7 kW demand -> 4 kW deficit (PASSED).
+    3. Scenario 3: Battery at max SoC -> charging prohibited (PASSED).
+    4. Scenario 4: Battery at reserve floor -> discharge prohibited (PASSED).
+    5. Scenario 5: Rapid PV fluctuation -> hysteresis prevents rapid cycling (PASSED).
+    6. Scenario 6: Forecast service outage -> graceful fallback to safe baseline (PASSED).
+    7. Scenario 7: Device command timeout -> reported failure without false success (PASSED).
+    8. Scenario 8: Duplicate timestamp readings -> deduplication policy (PASSED).
+    9. Scenario 9: Infeasible optimization -> safe fallback invoked (PASSED).
+    10. Scenario 10: Multi-building surplus/deficit matching with line loss (PASSED).
+    11. Scenario 11: Unauthorized hardware command -> audited rejection (PASSED).
+    12. Scenario 12: Missing historical measurements -> explicit missing indicator (PASSED).
+- **Phase 10 & 11 Documentation & Final Verification**:
+  - Created `docs/EXECUTION_STATUS.md` recording status across all 11 phases and Modules A through N.
+  - Full codebase verified with zero linter errors (`ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix` -> clean).
+
+### Evidence
+- `python -m pytest tests/avishkar_ems/test_master_scenarios.py -v`: Exit code 0 (**12 passed in 0.09s**).
+- `python -m pytest tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_arka_assistant.py -v`: Exit code 0 (**21 passed, 1 skipped in 1.03s**).
+- `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (**0 errors, all checks passed**).
+- `PROJECT_AUDIT.md`, `docs/REPOSITORY_RESEARCH.md`, `docs/FEATURE_INTEGRATION_MATRIX.md`, `docs/EXECUTION_STATUS.md` written and validated.
+
+### What was NOT done
+- Did not modify vendored `src/emhass/` upstream code.
+- Physical high-voltage grid switchgear operates in advisory mode with SunSpec Modbus hardware gateway emulation.
+
+### What is next
+- Ready to synchronize and push all verified commits across remote GitHub branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).

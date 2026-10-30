@@ -1,6 +1,6 @@
 {
   "run_demo": {
-    "generated_at": "2026-10-30 08:11 UTC",
+    "generated_at": "2026-10-30 16:32 UTC",
     "python": "3.12.10",
     "libraries": {
       "numpy": "2.2.6",
@@ -11,7 +11,7 @@
       "cvxpy": "1.7.5",
       "skforecast": "0.22.0"
     },
-    "fingerprint": "cdce981b20055d27",
+    "fingerprint": "c52ef002f5699d48",
     "every_days": 7,
     "quick": false,
     "sampled_days": {
