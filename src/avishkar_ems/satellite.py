@@ -256,7 +256,11 @@ def build_microgrid_map_deck(
     trades: list[Any] | None = None,
     pitch: int = 40,
 ) -> Any:
-    """Build a high-definition 3D PyDeck visualization of Indian solar microgrids and P2P trade arcs."""
+    """Build a 3D PyDeck view of the Indian microgrid nodes, and of any real matched trades given.
+
+    `trades` are drawn as arcs between two nodes; nothing is drawn when none are given, and none are
+    invented. Each is a mapping with `from` and `to` (keys of INDIAN_SATELLITE_HUBS), `kwh` and `price`.
+    """
     if pdk is None:
         raise ImportError("pydeck is required for 3D map visualization. Install with 'pip install pydeck'.")
     site_records = []
@@ -264,9 +268,11 @@ def build_microgrid_map_deck(
         is_active = k in active_sites
         is_selected = k == selected_key
 
+        # Only a configured site has a solar array and a battery AVISHKAR knows the size of. For the rest the
+        # hover says so, rather than printing a plausible number nobody entered.
         site_obj = active_sites.get(k)
-        kwp = site_obj.dc_kwp if site_obj else (15.0 if "shop" in k else 3.0 if "home" in k else 30.0)
-        batt_kwh = site_obj.battery_kwh if site_obj else (20.0 if "shop" in k else 5.0 if "home" in k else 40.0)
+        kwp = site_obj.dc_kwp if site_obj else None
+        batt_kwh = site_obj.battery_kwh if site_obj else None
 
         # Color coding: Green = active solar generator, Orange = selected, Blue = microgrid node
         if is_selected:
@@ -326,41 +332,23 @@ def build_microgrid_map_deck(
         size_max_pixels=15,
     )
 
-    # 3. Simulated P2P Trade Arcs Layer between Indian Regional Hubs
+    # 3. Matched-trade arcs. Only real trades are drawn: this block used to hold three with invented
+    # energies and prices between real cities, which asserted a market that does not exist. The EMS publishes
+    # offers -- a seller, an hour, an amount and a price -- and never matches them to a buyer, so there is
+    # usually nothing to draw. A trade naming a node this map does not know is skipped, not guessed at.
     arc_data = [
-        # Pune Shop (commercial surplus) -> Mathura Home (rural backup deficit)
         {
-            "from_name": "Pune Commercial Hub",
-            "from_lon": 73.8567,
-            "from_lat": 18.5204,
-            "to_name": "Mathura Rural Home",
-            "to_lon": 77.6737,
-            "to_lat": 27.4924,
-            "flow_kwh": 6.8,
-            "price_inr": 7.25,
-        },
-        # Jaipur Clinic (health critical solar) -> Delhi NCR Cluster
-        {
-            "from_name": "Jaipur Healthcare Clinic",
-            "from_lon": 75.7873,
-            "from_lat": 26.9124,
-            "to_name": "Delhi NCR Solar Cluster",
-            "to_lon": 77.2090,
-            "to_lat": 28.6139,
-            "flow_kwh": 12.4,
-            "price_inr": 8.10,
-        },
-        # Ahmedabad Solar City -> Pune Commercial Hub
-        {
-            "from_name": "Ahmedabad Solar City",
-            "from_lon": 72.5714,
-            "from_lat": 23.0225,
-            "to_name": "Pune Commercial Hub",
-            "to_lon": 73.8567,
-            "to_lat": 18.5204,
-            "flow_kwh": 9.5,
-            "price_inr": 7.50,
-        },
+            "from_name": INDIAN_SATELLITE_HUBS[t["from"]]["name"],
+            "from_lon": INDIAN_SATELLITE_HUBS[t["from"]]["lon"],
+            "from_lat": INDIAN_SATELLITE_HUBS[t["from"]]["lat"],
+            "to_name": INDIAN_SATELLITE_HUBS[t["to"]]["name"],
+            "to_lon": INDIAN_SATELLITE_HUBS[t["to"]]["lon"],
+            "to_lat": INDIAN_SATELLITE_HUBS[t["to"]]["lat"],
+            "flow_kwh": t["kwh"],
+            "price_inr": t["price"],
+        }
+        for t in (trades or [])
+        if t["from"] in INDIAN_SATELLITE_HUBS and t["to"] in INDIAN_SATELLITE_HUBS
     ]
 
     arc_layer = pdk.Layer(
@@ -417,7 +405,16 @@ def build_microgrid_plotly_map(
     selected_key: str,
     trades: list[Any] | None = None,
 ) -> Any:
-    """Build a high-performance, dark-mode Plotly map for Indian microgrid clusters and P2P trade flows."""
+    """Build a dark-mode Plotly map of the Indian microgrid nodes, and of any real matched trades given.
+
+    `trades` are drawn as lines between two nodes. Nothing is drawn when none are given, and none are
+    invented: this function used to hardcode three trades with made-up energies and prices and draw them
+    between real cities, which asserted a market that does not exist. The EMS publishes *offers* -- a seller,
+    an hour, an amount and a price -- and never matches them to a buyer, so there is usually no trade to draw.
+
+    Each trade is a mapping with `from` and `to` (keys of INDIAN_SATELLITE_HUBS), `kwh`, and `price` in INR
+    per kWh. A trade naming a node this map does not know is skipped rather than guessed at.
+    """
     import plotly.graph_objects as go
 
     site_records = []
@@ -425,9 +422,11 @@ def build_microgrid_plotly_map(
         is_active = k in active_sites
         is_selected = k == selected_key
 
+        # Only a configured site has a solar array and a battery AVISHKAR knows the size of. For the rest the
+        # hover says so, rather than printing a plausible number nobody entered.
         site_obj = active_sites.get(k)
-        kwp = site_obj.dc_kwp if site_obj else (15.0 if "shop" in k else 3.0 if "home" in k else 30.0)
-        batt_kwh = site_obj.battery_kwh if site_obj else (20.0 if "shop" in k else 5.0 if "home" in k else 40.0)
+        kwp = site_obj.dc_kwp if site_obj else None
+        batt_kwh = site_obj.battery_kwh if site_obj else None
 
         site_records.append({
             "key": k,
@@ -447,18 +446,14 @@ def build_microgrid_plotly_map(
 
     fig = go.Figure()
 
-    trade_flows = [
-        {"from": "shop-pune", "to": "home-mathura", "kwh": 6.8, "price": 7.25},
-        {"from": "clinic-jaipur", "to": "hub-delhi", "kwh": 12.4, "price": 8.10},
-        {"from": "hub-ahmedabad", "to": "shop-pune", "kwh": 9.5, "price": 7.50},
-    ]
-
     use_scattermap = hasattr(go, "Scattermap")
 
-    for flow in trade_flows:
+    for flow in trades or []:
+        if flow["from"] not in INDIAN_SATELLITE_HUBS or flow["to"] not in INDIAN_SATELLITE_HUBS:
+            continue
         s_from = INDIAN_SATELLITE_HUBS[flow["from"]]
         s_to = INDIAN_SATELLITE_HUBS[flow["to"]]
-        flow_text = f"⚡ P2P Trade Flow: {flow['kwh']} kWh @ ₹{flow['price']}/kWh<br>{s_from['name']} ➔ {s_to['name']}"
+        flow_text = f"⚡ Matched trade: {flow['kwh']} kWh @ ₹{flow['price']}/kWh<br>{s_from['name']} ➔ {s_to['name']}"
         if use_scattermap:
             fig.add_trace(go.Scattermap(
                 lat=[s_from["lat"], s_to["lat"]],
@@ -490,10 +485,16 @@ def build_microgrid_plotly_map(
         subset = [r for r in site_records if r["status"] == cat]
         if not subset:
             continue
+        def _equipment(rec: dict[str, Any]) -> str:
+            """What AVISHKAR holds about a node's equipment, saying so plainly when it holds nothing."""
+            solar = f"{rec['kwp']} kWp" if rec["kwp"] is not None else "not configured in AVISHKAR"
+            battery = f"{rec['batt_kwh']} kWh" if rec["batt_kwh"] is not None else "not configured"
+            return f"Solar: {solar} | Battery: {battery}"
+
         hover_texts = [
             f"<b>{r['name']}</b> ({r['state']})<br>"
             f"DISCOM: {r['discom']} | Status: {r['status']}<br>"
-            f"Solar: {r['kwp']} kWp | Battery: {r['batt_kwh']} kWh<br>"
+            f"{_equipment(r)}<br>"
             f"Avg Insolation: {r['insolation']} kWh/m²/day<br>"
             f"🛰️ Satellite: {r['satellite']}"
             for r in subset

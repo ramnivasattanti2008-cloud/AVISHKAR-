@@ -25,6 +25,10 @@ class IntervalTelemetry:
     grid_export_price_inr: float | None = None
     is_stale: bool = False
     timestamp: str = "2026-10-30T12:00:00"
+    #: Where *this* reading came from, when it differs from how the home is normally read. A home wired to a
+    #: meter may still be asked a "what if" question with made-up figures, and the answer must not be labelled
+    #: HARDWARE_MEASURED because the home usually is. Left None, the home's own mode applies.
+    measurement_mode: MeasurementMode | None = None
 
 
 @dataclass
@@ -301,7 +305,8 @@ class HomeEnergyBalanceEngine:
             is_balanced=is_balanced,
             energy_balance_error_kw=round(balance_error, 4),
             interval_energy_kwh=interval_kwh,
-            measurement_mode=self.profile.measurement_mode,
+            # This reading's own mode when it has one, otherwise how the home is normally read.
+            measurement_mode=telemetry.measurement_mode or self.profile.measurement_mode,
             status="OPTIMAL" if is_balanced else "BALANCE_MISMATCH",
             recommendation_text=rec_text,
             assumptions=assumptions,
@@ -424,3 +429,199 @@ class HomeEnergyBalanceEngine:
             else:
                 action = f"Drawing {grid_imp:.2f}kW from grid to meet household demand."
             return f"Goal [{goal.value}]: Generation deficit of {load_kw - pv_kw:.2f}kW. {action}"
+
+
+# --------------------------------------------------------------------------------------
+# Peer-to-peer exchange between two homes
+# --------------------------------------------------------------------------------------
+
+#: Lowest feeder voltage worth modelling. Below this the single-phase current calculation
+#: stops meaning anything and the caller has almost certainly passed the wrong unit.
+_MIN_FEEDER_VOLTAGE_V = 50.0
+
+
+def route_community_exchange(
+    *,
+    seller_home_id: str,
+    surplus_kw: float,
+    seller_opted_in: bool,
+    buyer_home_id: str,
+    buyer_opted_in: bool,
+    buyer_deficit_kw: float,
+    feeder_resistance_ohms: float,
+    feeder_voltage_v: float,
+    community_clearing_price_inr: float,
+    discom_retail_tariff_inr: float,
+    discom_export_tariff_inr: float,
+    transfer_limit_kw: float | None = None,
+    duration_hours: float = 1.0,
+) -> dict[str, object]:
+    """Route one home's surplus to one neighbour's deficit over a modelled feeder.
+
+    This is a calculation, not a transfer. AVISHKAR does not move electricity between
+    properties and says nothing about whether doing so is permitted: a peer-to-peer
+    arrangement needs a distribution licensee's consent, a metering arrangement and the
+    wiring to carry it. The result says so in ``notes``.
+
+    What is actually modelled, and what is not:
+
+    * The transfer is the smaller of what the seller has spare, what the buyer is short of,
+      and ``transfer_limit_kw`` when one is given. Energy is never counted twice: whatever
+      the buyer receives is subtracted from the deficit it still has to buy.
+    * The loss is resistive, worked out from the current the transfer draws:
+      ``I = kW x 1000 / V`` and ``loss = I^2 R``. That assumes a single-phase feeder at
+      unity power factor with the whole line as one lumped resistance, and it ignores the
+      voltage drop along that line (which would itself change the current), reactive power,
+      and the three-phase case. It is the standard first approximation and no more.
+    * Money: without the exchange the seller would export its surplus at the DISCOM export
+      tariff and the buyer would buy its deficit at the retail tariff. With it, the seller is
+      paid the clearing price for what leaves its meter and the buyer pays the clearing price
+      for what arrives. The loss between them is paid for by neither, so its value is
+      reported on its own line as what the network absorbs.
+
+    Every price is the caller's. Nothing here consults a built-in tariff.
+
+    Returns a dict (the dashboard renders it directly), with ``transferred_kw``,
+    ``delivered_to_buyer_kw``, ``line_loss_kw`` and ``combined_social_benefit_inr`` among
+    the keys, plus the reason when nothing was transferred.
+    """
+    if feeder_voltage_v < _MIN_FEEDER_VOLTAGE_V:
+        raise ValueError(
+            f"feeder_voltage_v is {feeder_voltage_v}: below {_MIN_FEEDER_VOLTAGE_V:g} V the single-phase "
+            "current calculation is meaningless. Pass the line voltage in volts."
+        )
+    if feeder_resistance_ohms < 0:
+        raise ValueError(f"feeder_resistance_ohms is {feeder_resistance_ohms}: a resistance cannot be negative.")
+    if duration_hours <= 0:
+        raise ValueError(f"duration_hours is {duration_hours}: an interval must be longer than zero.")
+
+    surplus_kw = max(0.0, float(surplus_kw))
+    buyer_deficit_kw = max(0.0, float(buyer_deficit_kw))
+    notes: list[str] = [
+        "A calculation over one interval, not a measurement, and not a record of electricity that moved.",
+        "AVISHKAR does not move electricity between properties. Whether a surplus may be sent to a neighbour "
+        "depends on the law, the distribution licensee's rules, the metering arrangement and the wiring where "
+        "those properties are.",
+        "The loss is I^2R for a single-phase feeder at unity power factor, taking the line as one lumped "
+        "resistance: it ignores the voltage drop along the line, reactive power and the three-phase case.",
+    ]
+    assumptions: list[str] = [
+        f"Community clearing price INR {community_clearing_price_inr:.2f}/kWh: a price you entered, not one anybody has agreed.",
+        f"Feeder modelled as {feeder_resistance_ohms:g} ohm at {feeder_voltage_v:g} V.",
+    ]
+
+    def nothing(reason: str) -> dict[str, object]:
+        """No transfer, and why. Both homes simply do what they would have done alone."""
+        return {
+            "seller_home_id": seller_home_id,
+            "buyer_home_id": buyer_home_id,
+            "eligible": False,
+            "reason": reason,
+            "offered_surplus_kw": round(surplus_kw, 6),
+            "buyer_deficit_kw": round(buyer_deficit_kw, 6),
+            "transferred_kw": 0.0,
+            "delivered_to_buyer_kw": 0.0,
+            "line_loss_kw": 0.0,
+            "line_current_a": 0.0,
+            "transfer_limit_kw": transfer_limit_kw,
+            "binding_constraint": "NOT_ELIGIBLE",
+            "buyer_residual_grid_import_kw": round(buyer_deficit_kw, 6),
+            "seller_residual_grid_export_kw": round(surplus_kw, 6),
+            "seller_benefit_inr": 0.0,
+            "buyer_benefit_inr": 0.0,
+            "combined_social_benefit_inr": 0.0,
+            "network_absorbed_loss_inr": 0.0,
+            "duration_hours": duration_hours,
+            "notes": notes,
+            "assumptions": assumptions,
+        }
+
+    if not seller_opted_in or not buyer_opted_in:
+        who = (
+            "Neither home has opted in to community sharing"
+            if not seller_opted_in and not buyer_opted_in
+            else f"{seller_home_id} has not opted in to community sharing"
+            if not seller_opted_in
+            else f"{buyer_home_id} has not opted in to community sharing"
+        )
+        return nothing(f"{who}, so nothing is shared. Each home keeps working on its own.")
+    if surplus_kw <= 0:
+        return nothing(f"{seller_home_id} has no surplus to offer in this interval.")
+    if buyer_deficit_kw <= 0:
+        return nothing(f"{buyer_home_id} is not short of anything in this interval.")
+
+    # What leaves the seller's meter: the least of what it has, what the buyer needs, and any cap.
+    caps: list[tuple[float, str]] = [(surplus_kw, "SELLER_SURPLUS"), (buyer_deficit_kw, "BUYER_DEFICIT")]
+    if transfer_limit_kw is not None:
+        caps.append((max(0.0, float(transfer_limit_kw)), "TRANSFER_LIMIT"))
+    transferred_kw, binding = min(caps, key=lambda c: c[0])
+    if transferred_kw <= 0:
+        return nothing("The transfer limit for this pair is zero, so nothing may be sent.")
+
+    # I^2R over the modelled feeder.
+    current_a = transferred_kw * 1000.0 / feeder_voltage_v
+    loss_kw = current_a**2 * feeder_resistance_ohms / 1000.0
+
+    # A loss at or above what was sent means this transfer cannot physically deliver anything: say so
+    # rather than reporting a negative delivery.
+    if loss_kw >= transferred_kw:
+        return nothing(
+            f"Sending {transferred_kw:.2f} kW over {feeder_resistance_ohms:g} ohm at {feeder_voltage_v:g} V "
+            f"would lose {loss_kw:.2f} kW, which is all of it or more: the modelled feeder cannot carry this "
+            "transfer at all."
+        )
+
+    delivered_kw = transferred_kw - loss_kw
+
+    # Money, per the convention in the docstring. Everything is per interval, at the caller's prices.
+    seller_benefit_inr = transferred_kw * duration_hours * (community_clearing_price_inr - discom_export_tariff_inr)
+    buyer_benefit_inr = delivered_kw * duration_hours * (discom_retail_tariff_inr - community_clearing_price_inr)
+    network_loss_inr = loss_kw * duration_hours * community_clearing_price_inr
+
+    if community_clearing_price_inr < discom_export_tariff_inr:
+        assumptions.append(
+            "The clearing price is below the DISCOM export tariff, so the seller is worse off sharing than "
+            "exporting: the benefit below is negative, and is reported rather than hidden."
+        )
+    if community_clearing_price_inr > discom_retail_tariff_inr:
+        assumptions.append(
+            "The clearing price is above the retail tariff, so the buyer is worse off buying from a neighbour "
+            "than from the DISCOM: the benefit below is negative, and is reported rather than hidden."
+        )
+
+    reason = (
+        f"{seller_home_id} sent {transferred_kw:.2f} kW to {buyer_home_id}; {delivered_kw:.2f} kW arrived and "
+        f"{loss_kw:.3f} kW was lost in the feeder ({current_a:.1f} A through {feeder_resistance_ohms:g} ohm). "
+        + {
+            "SELLER_SURPLUS": "The seller had no more to give.",
+            "BUYER_DEFICIT": "The buyer needed no more.",
+            "TRANSFER_LIMIT": f"The transfer limit of {transfer_limit_kw} kW stopped it going further.",
+        }[binding]
+    )
+
+    return {
+        "seller_home_id": seller_home_id,
+        "buyer_home_id": buyer_home_id,
+        "eligible": True,
+        "reason": reason,
+        "offered_surplus_kw": round(surplus_kw, 6),
+        "buyer_deficit_kw": round(buyer_deficit_kw, 6),
+        # These three are rounded alike and finely, so that transferred == delivered + loss still holds for
+        # anyone who checks it. The page formats them for display itself.
+        "transferred_kw": round(transferred_kw, 6),
+        "delivered_to_buyer_kw": round(delivered_kw, 6),
+        "line_loss_kw": round(loss_kw, 6),
+        "line_current_a": round(current_a, 2),
+        "transfer_limit_kw": transfer_limit_kw,
+        "binding_constraint": binding,
+        # What each home still has to do with the grid: the transfer is never counted twice.
+        "buyer_residual_grid_import_kw": round(buyer_deficit_kw - delivered_kw, 6),
+        "seller_residual_grid_export_kw": round(surplus_kw - transferred_kw, 6),
+        "seller_benefit_inr": round(seller_benefit_inr, 2),
+        "buyer_benefit_inr": round(buyer_benefit_inr, 2),
+        "combined_social_benefit_inr": round(seller_benefit_inr + buyer_benefit_inr, 2),
+        "network_absorbed_loss_inr": round(network_loss_inr, 2),
+        "duration_hours": duration_hours,
+        "notes": notes,
+        "assumptions": assumptions,
+    }

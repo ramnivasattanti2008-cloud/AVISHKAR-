@@ -16,6 +16,7 @@ from pathlib import Path
 
 import plotly.graph_objects as go
 import streamlit as st
+from app.ui_html import html_block
 
 from avishkar_ems.home_balance import (
     HomeEnergyBalanceEngine,
@@ -64,8 +65,7 @@ def render_home_management_view() -> None:
 
     opt_in_badge = "🌐 Community Opt-In: ACTIVE" if profile.community_opt_in else "🛡️ Standalone Mode: 100% AUTONOMOUS"
 
-    st.markdown(
-        f"""
+    st.markdown(html_block(f"""
         <div style="background: linear-gradient(90deg, #0d1b2a, #1b263b); border: 1px solid #415a77; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
             <div>
                 <strong style="color: #00e5ff; font-size: 16px;">🏠 {profile.home_name}</strong>
@@ -76,7 +76,7 @@ def render_home_management_view() -> None:
                 <span style="background: {'#1b4332' if profile.community_opt_in else '#4a154b'}; color: {'#74c69d' if profile.community_opt_in else '#ff99c8'}; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold;">{opt_in_badge}</span>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -367,8 +367,7 @@ def render_home_management_view() -> None:
             st.write(f"• **Roundtrip Efficiency:** `{(profile.battery.charge_efficiency * profile.battery.discharge_efficiency) * 100.0:.1f}%`")
             st.write(f"• **Hardware Protection:** `{'Verified Modbus Gateway' if profile.battery.is_verified_hardware else 'Simulation Sandbox'}`")
 
-            st.markdown(
-                """
+            st.markdown(html_block("""
                 <div style="background: #112233; padding: 14px; border-radius: 6px; border-left: 4px solid #00e5ff; margin-top: 15px;">
                     <strong style="color: #00e5ff;">Non-Contradictory Command Guarantee:</strong><br/>
                     <span style="font-size: 13px; color: #cbd5e1;">
@@ -376,7 +375,7 @@ def render_home_management_view() -> None:
                     Simultaneous charging and discharging commands are structurally prohibited, preventing inverter bridge fault conditions.
                     </span>
                 </div>
-                """,
+                """),
                 unsafe_allow_html=True,
             )
 

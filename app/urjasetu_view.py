@@ -27,6 +27,7 @@ from typing import Any
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from app.ui_html import html_block
 
 from avishkar_ems.ai_copilot import (
     AICopilotService,
@@ -159,8 +160,7 @@ def render_urjasetu_dashboard() -> None:
         if active_query:
             resp_arka = ArkaPersonalAssistant().answer_query(active_query)
             clean_html = resp_arka.answer_text.replace("\n", "<br/>")
-            st.markdown(
-                f"""
+            st.markdown(html_block(f"""
                 <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #38bdf8; border-radius: 12px; padding: 16px 20px; margin-top: 10px; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                         <span style="font-weight: 700; color: #38bdf8; font-size: 15px;">
@@ -174,7 +174,7 @@ def render_urjasetu_dashboard() -> None:
                         {clean_html}
                     </div>
                 </div>
-                """,
+                """),
                 unsafe_allow_html=True,
             )
             if resp_arka.action_recommendation:
@@ -182,8 +182,7 @@ def render_urjasetu_dashboard() -> None:
             if resp_arka.statutory_grounding:
                 st.caption(f"📜 **Grounded Reference:** {resp_arka.statutory_grounding}")
 
-    st.markdown(
-        """
+    st.markdown(html_block("""
         <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0369a1 100%); padding: 20px 28px; border-radius: 12px; color: white; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -198,7 +197,7 @@ def render_urjasetu_dashboard() -> None:
                 </div>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -300,20 +299,19 @@ def render_urjasetu_dashboard() -> None:
             )
 
         with cmd_f3:
-            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            st.markdown(html_block("<div style='height: 28px;'></div>"), unsafe_allow_html=True)
             if st.button("🔄 Reset View", key="cmd_reset_btn"):
                 st.rerun()
 
         # Active Filters Status Banner
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; color: #94a3b8;">
                 Active Filters: Scope: <strong style="color: #38bdf8;">{sel_geo_dict['name']} ({sel_geo})</strong> |
                 Period: <strong style="color: #38bdf8;">{sel_period}</strong> |
                 Level: <strong style="color: #4ade80;">{sel_geo_dict['level']}</strong> |
                 Boundary Integrity: <span style="color: #4ade80;">Anti-Disaggregation Guard Enforced</span>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
@@ -352,8 +350,7 @@ def render_urjasetu_dashboard() -> None:
 
         # Energy Balance Status Callout
         balance_color = "#38bdf8" if overview.energy_balance_status in {"BALANCED", "SURPLUS"} else ("#f87171" if overview.energy_balance_status == "DEFICIT" else "#94a3b8")
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: rgba(30, 41, 59, 0.7); padding: 14px 18px; border-radius: 8px; border-left: 5px solid {balance_color}; margin: 16px 0;">
                 <h4 style="margin: 0; color: {balance_color}; font-size: 16px;">
                     Energy Balance Status: {overview.energy_balance_status} — {overview.energy_gap_explanation}
@@ -362,7 +359,7 @@ def render_urjasetu_dashboard() -> None:
                     Coverage: {overview.coverage_summary} • Telemetry Freshness: <strong style="color: {'#4ade80' if overview.freshness_status == 'HEALTHY' else '#facc15'};">{overview.freshness_status}</strong>
                 </div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
@@ -457,8 +454,7 @@ def render_urjasetu_dashboard() -> None:
         if insights:
             for ins in insights:
                 with st.container():
-                    st.markdown(
-                        f"""
+                    st.markdown(html_block(f"""
                         <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.12); padding: 14px 18px; border-radius: 8px; margin-bottom: 12px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <h4 style="margin: 0; color: #38bdf8; font-size: 16px;">{ins.headline}</h4>
@@ -469,7 +465,7 @@ def render_urjasetu_dashboard() -> None:
                                 <span>Method: <code>{ins.calculation_method}</code> | Result: <strong>{ins.result}</strong></span>
                             </div>
                         </div>
-                        """,
+                        """),
                         unsafe_allow_html=True,
                     )
                     with st.expander(f"🔍 Calculation Lineage & Audit: {ins.title}"):
@@ -536,12 +532,11 @@ def render_urjasetu_dashboard() -> None:
                 mime="text/csv",
                 key="cmd_dl_csv",
             )
-            st.markdown(
-                """
+            st.markdown(html_block("""
                 <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); padding: 10px; border-radius: 6px; font-size: 11px; color: #94a3b8; margin-top: 10px;">
                     🛡️ <strong>Export Protection</strong>: All cell entries starting with <code>=</code>, <code>+</code>, <code>-</code>, or <code>@</code> are sanitized to prevent formula injection. Private household statements are excluded from public exports.
                 </div>
-                """,
+                """),
                 unsafe_allow_html=True,
             )
 
@@ -662,13 +657,12 @@ def render_urjasetu_dashboard() -> None:
         gap_calc = analytics_svc.get_energy_balance(bal_geo, p_chosen)
 
         interp_color = "#38bdf8" if gap_calc.is_balanced else ("#f87171" if gap_calc.gap_mu > 0 else "#4ade80")
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: rgba(30, 41, 59, 0.7); padding: 18px; border-radius: 8px; border-left: 5px solid {interp_color}; margin-bottom: 16px;">
                 <h4 style="margin: 0; color: {interp_color};">Energy Gap = {gap_calc.gap_mu:,.1f} MU ({gap_calc.gap_percentage:.2f}%) — {gap_calc.interpretation_type}</h4>
                 <p style="margin: 6px 0 0 0; font-size: 14px; color: #cbd5e1;">{gap_calc.explanation}</p>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
@@ -995,8 +989,7 @@ def render_urjasetu_dashboard() -> None:
 
                     rel_pct_str = f"{anom.relative_deviation_pct:+.1f}%" if anom.relative_deviation_pct is not None else "N/A"
                     with st.container():
-                        st.markdown(
-                            f"""
+                        st.markdown(html_block(f"""
                             <div style="background: rgba(15, 23, 42, 0.85); border-left: 4px solid {sev_color}; border-top: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 14px 18px; border-radius: 6px; margin-bottom: 12px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <h4 style="margin: 0; color: #f8fafc;">Period <code>{anom.period}</code> ({anom.geo_code}) — Observed: <strong>{anom.observed_value:,.1f} MU</strong> (Expected: {anom.expected_value:,.1f} MU)</h4>
@@ -1007,7 +1000,7 @@ def render_urjasetu_dashboard() -> None:
                                     <span>Method: <code>{anom.method}</code> | Deviation: <strong>{anom.absolute_deviation:+,.1f} MU ({rel_pct_str})</strong> | Alert ID: <code>{anom.anomaly_id}</code></span>
                                 </div>
                             </div>
-                            """,
+                            """),
                             unsafe_allow_html=True,
                         )
                         with st.expander(f"🛠️ Recommended Operational Verification Steps for {anom.period}"):
@@ -1021,8 +1014,7 @@ def render_urjasetu_dashboard() -> None:
         comp_insights = analytics_svc.get_entity_insights(f_geo, latest_period)
         for ins in comp_insights:
             with st.container():
-                st.markdown(
-                    f"""
+                st.markdown(html_block(f"""
                     <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.12); padding: 14px 18px; border-radius: 8px; margin-bottom: 12px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <h4 style="margin: 0; color: #38bdf8;">{ins.title}</h4>
@@ -1033,7 +1025,7 @@ def render_urjasetu_dashboard() -> None:
                             <span>Scope: <code>{ins.geographic_scope}</code> | Period: <code>{ins.comparison_period}</code> | Confidence: <strong>{ins.confidence}</strong></span>
                         </div>
                     </div>
-                    """,
+                    """),
                     unsafe_allow_html=True,
                 )
                 with st.expander(f"🔍 Calculation Lineage for: {ins.title}"):
@@ -1147,8 +1139,7 @@ def render_urjasetu_dashboard() -> None:
 
         # Provider Integration Status Banner
         auth_method = prof.auth_metadata.get("authMethod", "MANUAL_STATEMENTS")
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px 18px; border-radius: 8px; margin: 16px 0;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
@@ -1168,7 +1159,7 @@ def render_urjasetu_dashboard() -> None:
                     UrjaSetu never scrapes private credentials or stores DISCOM passwords. Automatic synchronization is restricted to verified OAuth tokens or on-demand consumer OTPs.
                 </p>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
@@ -1445,15 +1436,14 @@ def render_urjasetu_dashboard() -> None:
             sc2.metric("Total Net Export", f"{solar_summary['total_net_export_kwh']:.1f} kWh", "Billed Export")
             sc3.metric("Solar Credits Earned", f"₹{solar_summary['total_solar_credits_inr']:,.2f}", "Net Savings")
 
-            st.markdown(
-                f"""
+            st.markdown(html_block(f"""
                 <div style="background: rgba(30, 41, 59, 0.7); border-left: 4px solid #facc15; padding: 12px 18px; border-radius: 4px; margin: 16px 0;">
                     <strong style="color: #facc15; font-size: 13px;">PHYSICS NOTICE: CAPACITY VS. GENERATION DECOUPLING</strong>
                     <p style="margin: 4px 0 0 0; font-size: 13px; color: #cbd5e1;">
                         {solar_summary['physics_disclaimer']}
                     </p>
                 </div>
-                """,
+                """),
                 unsafe_allow_html=True,
             )
 
@@ -1614,8 +1604,7 @@ def render_urjasetu_dashboard() -> None:
                 effort_badge = {"LOW": "🟢 Low Effort", "MEDIUM": "🟡 Medium Effort", "HIGH": "🔴 High CapEx"}.get(r.effort_level.value, r.effort_level.value)
 
                 with st.container():
-                    st.markdown(
-                        f"""
+                    st.markdown(html_block(f"""
                         <div style="background: rgba(15, 23, 42, 0.85); border-left: 4px solid {status_color}; border-top: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 16px 20px; border-radius: 8px; margin-bottom: 14px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <h4 style="margin: 0; color: #f8fafc; font-size: 17px;">{r.title}</h4>
@@ -1632,7 +1621,7 @@ def render_urjasetu_dashboard() -> None:
                                 <span style="color: #cbd5e1;">🛠️ {effort_badge}</span>
                             </div>
                         </div>
-                        """,
+                        """),
                         unsafe_allow_html=True,
                     )
 
@@ -2138,8 +2127,7 @@ def render_urjasetu_dashboard() -> None:
             st.write(f"Showing **{len(pub_list['items'])}** of **{pub_list['total_records']}** approved public reports:")
             for p_rep in pub_list["items"]:
                 with st.container():
-                    st.markdown(
-                        f"""
+                    st.markdown(html_block(f"""
                         <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 14px; margin-bottom: 12px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                                 <strong style="font-size: 16px; color: #38bdf8;">{p_rep['title']}</strong>
@@ -2153,7 +2141,7 @@ def render_urjasetu_dashboard() -> None:
                                 🛡️ <em>Citizen Community Observation (Unverified user report, not official statutory record)</em>
                             </div>
                         </div>
-                        """,
+                        """),
                         unsafe_allow_html=True,
                     )
         else:
@@ -2280,7 +2268,7 @@ def render_urjasetu_dashboard() -> None:
             prop_ids = [p.property_id for p in all_props] if all_props else ["prop-ka-blr-01"]
             selected_prop_id = st.selectbox("Authorized Property ID", prop_ids, key="copilot_prop_id")
         with sec3:
-            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            st.markdown(html_block("<div style='height: 28px;'></div>"), unsafe_allow_html=True)
             st.success(f"🔐 Identity Bound: `{copilot_user_id}` (Scope: `{selected_prop_id}`)")
 
         st.markdown("---")
@@ -2338,12 +2326,11 @@ def render_urjasetu_dashboard() -> None:
                 st.metric("Detected Intent", resp.intent.value, f"Lat: {resp.latency_ms:.1f}ms")
 
             # Answer Card
-            st.markdown(
-                f"""
+            st.markdown(html_block(f"""
                 <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); padding: 18px; border-radius: 8px; margin: 12px 0;">
                     <div style="font-size: 15px; color: #f8fafc; line-height: 1.6;">{resp.answer_text}</div>
                 </div>
-                """,
+                """),
                 unsafe_allow_html=True,
             )
 
@@ -2419,39 +2406,36 @@ def render_urjasetu_dashboard() -> None:
         # Invariant Cards
         inv1, inv2, inv3 = st.columns(3)
         with inv1:
-            st.markdown(
-                """
+            st.markdown(html_block("""
                 <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); padding: 14px; border-radius: 8px;">
                     <h5 style="margin: 0; color: #38bdf8;">🛡️ Server-Side Auth</h5>
                     <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">
                         Principal identity & property scope resolved securely on backend. Client cannot forge household IDs to access foreign data.
                     </p>
                 </div>
-                """,
+                """),
                 unsafe_allow_html=True,
             )
         with inv2:
-            st.markdown(
-                """
+            st.markdown(html_block("""
                 <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); padding: 14px; border-radius: 8px;">
                     <h5 style="margin: 0; color: #4ade80;">🎯 Numerical Grounding</h5>
                     <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">
                         Numerical Grounding Guard scans LLM answers. Any ungrounded number triggers safe deterministic template fallback.
                     </p>
                 </div>
-                """,
+                """),
                 unsafe_allow_html=True,
             )
         with inv3:
-            st.markdown(
-                """
+            st.markdown(html_block("""
                 <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); padding: 14px; border-radius: 8px;">
                     <h5 style="margin: 0; color: #f59e0b;">🔒 Injection Defense</h5>
                     <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">
                         Untrusted content sanitized. Jailbreak attempts, instruction overrides, and SQL injection strings blocked before tool execution.
                     </p>
                 </div>
-                """,
+                """),
                 unsafe_allow_html=True,
             )
 

@@ -114,6 +114,12 @@ class BatteryConfig:
     discharge_efficiency: float = 0.95
     preferred_backup_reserve_pct: float = 25.0
     is_verified_hardware: bool = False
+    #: What the cells are, as the owner states it from the datasheet: "LFP", "NMC", "Lead-acid".
+    #: It defaults to NOT_STATED rather than to a common chemistry, because guessing one would be
+    #: claiming something about somebody's battery that nobody has said. Nothing in the engine reads
+    #: it: no depth-of-discharge or cycle life is inferred from it. It is shown so the owner can see
+    #: what AVISHKAR holds about their equipment.
+    chemistry: str = "NOT_STATED"
 
     def validate(self) -> None:
         if self.capacity_kwh < 0.0:

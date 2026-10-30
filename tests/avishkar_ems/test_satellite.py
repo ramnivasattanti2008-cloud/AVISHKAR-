@@ -67,6 +67,32 @@ def test_build_microgrid_plotly_map():
         system_cost_inr=1150000.0,
         tariff=COMMERCIAL_TOD,
     )
+    # With no trades given, the map draws the node categories and nothing else. It used to hardcode three
+    # trades with invented energies and prices and draw them between real cities; nothing is invented now.
     fig = build_microgrid_plotly_map({"shop-pune": mock_site}, selected_key="shop-pune")
-    assert len(fig.data) >= 4  # 3 trade flows + at least 1-3 node categories
+    assert len(fig.data) >= 1
+    traces_without_trades = len(fig.data)
+    assert not any("Matched trade" in str(t.text or "") for t in fig.data)
+
+    # A real matched trade adds exactly one line, and names the two ends.
+    with_trade = build_microgrid_plotly_map(
+        {"shop-pune": mock_site},
+        selected_key="shop-pune",
+        trades=[{"from": "shop-pune", "to": "home-mathura", "kwh": 6.8, "price": 7.25}],
+    )
+    assert len(with_trade.data) == traces_without_trades + 1
+    assert any("Matched trade" in str(t.text or "") for t in with_trade.data)
+
+    # A trade naming somewhere this map does not know is skipped, not guessed at.
+    unknown = build_microgrid_plotly_map(
+        {"shop-pune": mock_site},
+        selected_key="shop-pune",
+        trades=[{"from": "atlantis", "to": "home-mathura", "kwh": 1.0, "price": 1.0}],
+    )
+    assert len(unknown.data) == traces_without_trades
+
+    # A node AVISHKAR holds no equipment for says so, instead of showing a plausible size nobody entered.
+    hovers = " ".join(str(t.hovertext) for t in fig.data)
+    assert "not configured in AVISHKAR" in hovers
+    assert "15.0 kWp" in hovers  # the configured site's real size is still shown
 

@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from app.ui_html import html_block
 from app.home_setup_view import render_home_management_view
 from app.integrations_view import render_integrations_dashboard
 from app.urjasetu_view import render_urjasetu_dashboard
@@ -88,8 +89,7 @@ st.set_page_config(
 )
 
 # Custom High-End Styling for UrjaSetu & Personal Home Solar EMS
-st.markdown(
-    """
+st.markdown(html_block("""
     <style>
     /* Ultra-Premium Executive Dark Theme */
     .stApp {
@@ -193,7 +193,7 @@ st.markdown(
         font-size: 14px;
     }
     </style>
-    """,
+    """),
     unsafe_allow_html=True,
 )
 
@@ -409,13 +409,12 @@ st.sidebar.markdown("---")
 # Multi-Modal System Status Badge (WCAG 2.2 AA Non-Color Enforced)
 status_ind = MultiModalStatusRegistry.get("HEALTHY")
 prov_ind = MultiModalStatusRegistry.get("MEASURED")
-st.sidebar.markdown(
-    f"""
+st.sidebar.markdown(html_block(f"""
     <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;">
         <span style="color: #34d399; font-size: 13px; font-weight: 700;">{status_ind.format_badge_text()}</span> • <span style="color: #6ee7b7; font-size: 12px;">{prov_ind.format_badge_text()}</span><br/>
         <span style="color: #94a3b8; font-size: 11px;">100% Local On-Device • Zero Cloud Data Leaks</span>
     </div>
-    """,
+    """),
     unsafe_allow_html=True,
 )
 
@@ -461,8 +460,7 @@ st.markdown(
     f"##### *Personal Home Energy Intelligence • {my_home['location']} ({my_home['discom']})*"
 )
 
-st.markdown(
-    f"""
+st.markdown(html_block(f"""
     <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #4338ca; border-radius: 16px; padding: 20px 24px; margin-bottom: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.35);">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
             <div>
@@ -496,7 +494,7 @@ st.markdown(
             <span>💰 <b>Annual Cash Kept:</b> <b style="color: #34d399;">₹{annual_save:,.0f}/year</b></span>
         </div>
     </div>
-    """,
+    """),
     unsafe_allow_html=True,
 )
 
@@ -555,47 +553,43 @@ with st.container():
     # 4 Sleek Status Cards
     fc1, fc2, fc3, fc4 = st.columns(4)
     with fc1:
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 12px 16px;">
                 <span style="color: #fbbf24; font-size: 11px; font-weight: 700; text-transform: uppercase;">☀️ Solar Rooftop</span><br/>
                 <span style="color: #fef3c7; font-size: 22px; font-weight: 800;">{c_pv:.2f} kW</span><br/>
                 <span style="color: #fde68a; font-size: 12px;">{'Active Generation' if c_pv > 0.1 else 'Night / Twilight'}</span>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
     with fc2:
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 12px 16px;">
                 <span style="color: #38bdf8; font-size: 11px; font-weight: 700; text-transform: uppercase;">🏡 Home Load</span><br/>
                 <span style="color: #f0f9ff; font-size: 22px; font-weight: 800;">{c_load:.2f} kW</span><br/>
                 <span style="color: #bae6fd; font-size: 12px;">Active Appliances</span>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
     with fc3:
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 12px 16px;">
                 <span style="color: #34d399; font-size: 11px; font-weight: 700; text-transform: uppercase;">🔋 Battery Storage</span><br/>
                 <span style="color: #ecfdf5; font-size: 22px; font-weight: 800;">{c_soc:.0f}% <span style="font-size: 14px; font-weight: 600;">SoC</span></span><br/>
                 <span style="color: {batt_color}; font-size: 12px; font-weight: 600;">{batt_status}</span>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
     with fc4:
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: rgba(167, 139, 250, 0.12); border: 1px solid rgba(167, 139, 250, 0.4); border-radius: 12px; padding: 12px 16px;">
                 <span style="color: #c084fc; font-size: 11px; font-weight: 700; text-transform: uppercase;">🌐 Utility Grid</span><br/>
                 <span style="color: #faf5ff; font-size: 22px; font-weight: 800;">{abs(c_grid):.2f} kW</span><br/>
                 <span style="color: {grid_color}; font-size: 12px; font-weight: 600;">{grid_status}</span>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
@@ -700,12 +694,12 @@ with st.container():
         </svg>
     </div>
     """
-    st.markdown(flow_diagram_svg, unsafe_allow_html=True)
+    st.markdown(html_block(flow_diagram_svg), unsafe_allow_html=True)
 
 # ==============================================================================
 # ARKA — PERSONAL AI SOLAR & ENERGY ASSISTANT (Surya / AI Copilot)
 # ==============================================================================
-st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
+st.markdown(html_block("<div style='margin-top: 14px;'></div>"), unsafe_allow_html=True)
 arka_exp = st.expander("💬 ☀️ **Ask ARKA (अर्क) — Your Personal Solar & Energy AI Assistant** [Click to chat]", expanded=False)
 with arka_exp:
     c_top1, c_top2 = st.columns([3, 1])
@@ -827,14 +821,12 @@ with arka_exp:
             clean_ans_html = r_obj.answer_text.replace("\n", "<br/>")
 
             # User message bubble
-            st.markdown(
-                f'<div class="chat-user-bubble">👤 <b>You:</b> {q_str}</div>',
+            st.markdown(html_block(f'<div class="chat-user-bubble">👤 <b>You:</b> {q_str}</div>'),
                 unsafe_allow_html=True,
             )
 
             # ARKA response card
-            st.markdown(
-                f"""
+            st.markdown(html_block(f"""
                 <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #38bdf8; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                         <span style="font-weight: 700; color: #38bdf8; font-size: 15px;">
@@ -848,7 +840,7 @@ with arka_exp:
                         {clean_ans_html}
                     </div>
                 </div>
-                """,
+                """),
                 unsafe_allow_html=True,
             )
 
@@ -969,7 +961,7 @@ with tab_connect:
             )
 
         # 1-Click Pre-Feasibility Engineering Dossier Download
-        st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+        st.markdown(html_block("<div style='height: 8px;'></div>"), unsafe_allow_html=True)
         dossier_text = f"""================================================================================
 PM SURYA GHAR MUFT BIJLI YOJANA — ROOFTOP SOLAR FEASIBILITY DOSSIER
 ================================================================================
@@ -1151,7 +1143,7 @@ Generated by UrjaSetu & AVISHKAR Enterprise Energy Management System
       </svg>
     </div>
     """
-    st.markdown(sld_svg, unsafe_allow_html=True)
+    st.markdown(html_block(sld_svg), unsafe_allow_html=True)
 
     with st.expander("📑 Key CEA Engineering Specifications & Safety Standards"):
         st.markdown(
@@ -1293,7 +1285,7 @@ with tab_sat:
             format_func=lambda k: f"{INDIAN_SATELLITE_HUBS[k]['name']} ({INDIAN_SATELLITE_HUBS[k]['state']}) — {INDIAN_SATELLITE_HUBS[k]['discom']} [{INDIAN_SATELLITE_HUBS[k]['primary_satellite']}]",
         )
     with h_col2:
-        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        st.markdown(html_block("<div style='height: 28px;'></div>"), unsafe_allow_html=True)
         if st.button("🔄 Refresh Radar Feed"):
             st.cache_data.clear()
             st.rerun()
@@ -1303,8 +1295,7 @@ with tab_sat:
     now_ist = pd.Timestamp.now(tz="Asia/Kolkata")
 
     if sat_rep.is_night:
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: linear-gradient(90deg, #1e1b4b 0%, #0f172a 100%); padding: 14px 20px; border-radius: 12px; border: 1px solid #3730a3; margin-bottom: 16px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                     <div>
@@ -1316,12 +1307,11 @@ with tab_sat:
                     </div>
                 </div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
     else:
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: linear-gradient(90deg, #78350f 0%, #0f172a 100%); padding: 14px 20px; border-radius: 12px; border: 1px solid #b45309; margin-bottom: 16px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                     <div>
@@ -1333,7 +1323,7 @@ with tab_sat:
                     </div>
                 </div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
@@ -1410,23 +1400,21 @@ with tab_sat:
             tc1, tc2 = st.columns([2, 1])
             with tc1:
                 champ_badge = "🏆 Champion Forecaster" if not tourn_res.is_baseline_champion else "🛡️ Robust Baseline Retained"
-                st.markdown(
-                    f"""
+                st.markdown(html_block(f"""
                     <div style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 14px 18px; margin-bottom: 12px;">
                         <span style="color: #38bdf8; font-weight: 700; font-size: 15px;">{champ_badge}: {tourn_res.champion_model_name} (v{tourn_res.champion_model_version})</span><br/>
                         <span style="color: #f1f5f9; font-size: 13px; line-height: 1.5;">{tourn_res.selection_reason}</span>
                     </div>
-                    """,
+                    """),
                     unsafe_allow_html=True,
                 )
             with tc2:
-                st.markdown(
-                    f"""
+                st.markdown(html_block(f"""
                     <div style="background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 10px; padding: 14px 18px; margin-bottom: 12px;">
                         <span style="color: #c084fc; font-weight: 700; font-size: 13px;">Uncertainty Methodology</span><br/>
                         <span style="color: #f1f5f9; font-size: 12px;">{tourn_res.uncertainty_method}</span>
                     </div>
-                    """,
+                    """),
                     unsafe_allow_html=True,
                 )
 
@@ -2066,8 +2054,7 @@ with tab_offers:
     st.caption("Share and trade surplus clean solar energy with neighboring homes on the Open Network for Digital Commerce (ONDC / Beckn DEG v2.0).")
 
     if not dv.offers or st.session_state.storm_lock:
-        st.markdown(
-            f"""
+        st.markdown(html_block(f"""
             <div style="background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%); padding: 14px 20px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 16px;">
                 <div style="display: flex; align-items: flex-start; gap: 14px;">
                     <span style="font-size: 26px;">🛡️</span>
@@ -2079,7 +2066,7 @@ with tab_offers:
                     </div>
                 </div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
@@ -2225,7 +2212,7 @@ with tab_reg_upi:
             trade_id="TRD-2026-US-88",
         )
 
-        st.markdown(upi_req.qr_svg_html, unsafe_allow_html=True)
+        st.markdown(html_block(upi_req.qr_svg_html), unsafe_allow_html=True)
         st.code(upi_req.upi_intent_uri, language="text")
         st.caption(f"Status: `{upi_req.status}` | Reference: `{upi_req.transaction_ref}`")
 

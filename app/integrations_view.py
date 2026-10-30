@@ -8,6 +8,7 @@ EV solar charging, battery arbitrage, and community energy sharing.
 from __future__ import annotations
 
 import streamlit as st
+from app.ui_html import html_block
 
 from avishkar_ems.integrations import (
     ArbitrageAction,
@@ -35,8 +36,7 @@ def render_integrations_dashboard() -> None:
     """Renders the clean, premium Surplus Intelligence Command Center."""
 
     # Executive Header
-    st.markdown(
-        """
+    st.markdown(html_block("""
         <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
                     border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; padding: 20px 24px; margin-bottom: 24px;
                     backdrop-filter: blur(12px); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
@@ -61,7 +61,7 @@ def render_integrations_dashboard() -> None:
                 </div>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
