@@ -2958,6 +2958,47 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 ### What is next
 - Ready to synchronize and push all verified changes to GitHub remote branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
 
+## Entry 58 — 2026-10-30 — Real-World Usability Overhaul: Live Power Flow Telemetry, De-cluttered ARKA, and Responsive Tabs
+
+### What was done
+- **Real-World Live Household Power Flow & Grid Telemetry (`app/dashboard.py`)**:
+  - Implemented an interactive **Live Power Flow & Energy Dispatch Visualizer** positioned prominently above the tabs.
+  - Built an interactive 24-hour timeline scrubber (`flow_step_{key}_{day}`) letting users inspect their microgrid power balance at any 15-minute interval throughout the day.
+  - Real-time 4-card telemetry display:
+    - ☀️ **Solar Rooftop**: Live PV generation (`pv_kw`), labeled `"Active Generation"` or `"Night / Twilight"`.
+    - 🏡 **Home Load**: Active household appliance power draw (`load_kw`).
+    - 🔋 **Battery Storage**: State of charge (`soc * 100%`) with dynamic sign-aware status indicators: `⚡ Charging (+{abs(batt_kw)} kW)` when storing solar surplus, `🔋 Discharging (-{batt_kw} kW)` during evening peak, or `⏸️ Battery Idle`.
+    - 🌐 **Utility Grid Exchange**: Net grid interaction with financial annotations: `💰 Exporting (+{grid_kw} kW to DISCOM)`, `🔌 Importing (-{abs(grid_kw)} kW from Grid)`, or `🛡️ 100% Grid Self-Sufficient`.
+  - Scoped timeline widget key with `f"flow_step_{key}_{day}"` and integer-based indexing (`iloc[flow_step]`), eliminating cross-site `KeyError` state persistence bugs when switching between Mathura, Jaipur, and Pune.
+- **De-cluttered & Ergonomic ARKA AI Assistant Interface**:
+  - Eliminated the visual clutter of 16 giant buttons stacked in 4 columns that previously dominated the top of the viewport.
+  - Set the ARKA expander to collapsed by default (`expanded=False`), preserving immediate screen space for real solar telemetry.
+  - Organized questions into an intuitive 4-topic pill selector:
+    - `💰 Subsidies & Bills` (4 clean action chips)
+    - `🔋 Battery & Blackouts` (4 clean action chips)
+    - `⏰ Appliances & EV` (4 clean action chips)
+    - `🛠️ Technical & Grid` (4 clean action chips)
+  - Users can now select a topic and tap context-specific questions without screen overload.
+- **Responsive Horizontal Tab Scrolling (`CSS`)**:
+  - Injected CSS rules (`div[data-baseweb="tab-list"] { overflow-x: auto !important; flex-wrap: nowrap !important; }`) ensuring all 12 tabs scroll smoothly horizontally without clumsy wrapping or layout breaks on laptops, tablets, or smaller viewports.
+- **Verification & Testing**:
+  - `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (**All checks passed**).
+  - `pytest tests/avishkar_ems/test_arka_assistant.py tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_cache.py -v`: Exit code 0 (**32 passed, 0 failed in 15.39s**).
+  - `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+
+### Evidence
+- `pytest tests/avishkar_ems/test_arka_assistant.py tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_cache.py -v`: Exit code 0 (**32 passed in 15.39s**).
+- `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (0 errors).
+- `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+
+### What was NOT done
+- Did not modify vendored `src/emhass/` upstream code.
+- Physical high-voltage grid switchgear operates in advisory mode with SunSpec Modbus hardware gateway emulation.
+
+### What is next
+- Ready to synchronize and push all verified changes to GitHub remote branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
+
+
 ## Entry 57 — 2026-10-30 — "Best of the Best" Overhaul: Conversational ARKA Copilot, 5 New Scenarios (17 Total), Premium Dark UI, and Full Verification
 
 ### What was done
@@ -3002,10 +3043,83 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 ### What is next
 - Ready to synchronize and push all verified changes to GitHub remote branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
 
+## Entry 58 — 2026-10-30 — Real-World Usability Overhaul: Live Power Flow Telemetry, De-cluttered ARKA, and Responsive Tabs
 
+### What was done
+- **Real-World Live Household Power Flow & Grid Telemetry (`app/dashboard.py`)**:
+  - Implemented an interactive **Live Power Flow & Energy Dispatch Visualizer** positioned prominently above the tabs.
+  - Built an interactive 24-hour timeline scrubber (`flow_step_{key}_{day}`) letting users inspect their microgrid power balance at any 15-minute interval throughout the day.
+  - Real-time 4-card telemetry display:
+    - ☀️ **Solar Rooftop**: Live PV generation (`pv_kw`), labeled `"Active Generation"` or `"Night / Twilight"`.
+    - 🏡 **Home Load**: Active household appliance power draw (`load_kw`).
+    - 🔋 **Battery Storage**: State of charge (`soc * 100%`) with dynamic sign-aware status indicators: `⚡ Charging (+{abs(batt_kw)} kW)` when storing solar surplus, `🔋 Discharging (-{batt_kw} kW)` during evening peak, or `⏸️ Battery Idle`.
+    - 🌐 **Utility Grid Exchange**: Net grid interaction with financial annotations: `💰 Exporting (+{grid_kw} kW to DISCOM)`, `🔌 Importing (-{abs(grid_kw)} kW from Grid)`, or `🛡️ 100% Grid Self-Sufficient`.
+  - Scoped timeline widget key with `f"flow_step_{key}_{day}"` and integer-based indexing (`iloc[flow_step]`), eliminating cross-site `KeyError` state persistence bugs when switching between Mathura, Jaipur, and Pune.
+- **De-cluttered & Ergonomic ARKA AI Assistant Interface**:
+  - Eliminated the visual clutter of 16 giant buttons stacked in 4 columns that previously dominated the top of the viewport.
+  - Set the ARKA expander to collapsed by default (`expanded=False`), preserving immediate screen space for real solar telemetry.
+  - Organized questions into an intuitive 4-topic pill selector:
+    - `💰 Subsidies & Bills` (4 clean action chips)
+    - `🔋 Battery & Blackouts` (4 clean action chips)
+    - `⏰ Appliances & EV` (4 clean action chips)
+    - `🛠️ Technical & Grid` (4 clean action chips)
+  - Users can now select a topic and tap context-specific questions without screen overload.
+- **Responsive Horizontal Tab Scrolling (`CSS`)**:
+  - Injected CSS rules (`div[data-baseweb="tab-list"] { overflow-x: auto !important; flex-wrap: nowrap !important; }`) ensuring all 12 tabs scroll smoothly horizontally without clumsy wrapping or layout breaks on laptops, tablets, or smaller viewports.
+- **Verification & Testing**:
+  - `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (**All checks passed**).
+  - `pytest tests/avishkar_ems/test_arka_assistant.py tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_cache.py -v`: Exit code 0 (**32 passed, 0 failed in 15.39s**).
+  - `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
 
+### Evidence
+- `pytest tests/avishkar_ems/test_arka_assistant.py tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_cache.py -v`: Exit code 0 (**32 passed in 15.39s**).
+- `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (0 errors).
+- `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
 
+### What was NOT done
+- Did not modify vendored `src/emhass/` upstream code.
+- Physical high-voltage grid switchgear operates in advisory mode with SunSpec Modbus hardware gateway emulation.
 
+### What is next
+- Ready to synchronize and push all verified changes to GitHub remote branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
 
+## Entry 58 — 2026-10-30 — Real-World Usability Overhaul: Live Power Flow Telemetry, De-cluttered ARKA, and Responsive Tabs
 
+### What was done
+- **Real-World Live Household Power Flow & Grid Telemetry (`app/dashboard.py`)**:
+  - Implemented an interactive **Live Power Flow & Energy Dispatch Visualizer** positioned prominently above the tabs.
+  - Built an interactive 24-hour timeline scrubber (`flow_step_{key}_{day}`) letting users inspect their microgrid power balance at any 15-minute interval throughout the day.
+  - Real-time 4-card telemetry display:
+    - ☀️ **Solar Rooftop**: Live PV generation (`pv_kw`), labeled `"Active Generation"` or `"Night / Twilight"`.
+    - 🏡 **Home Load**: Active household appliance power draw (`load_kw`).
+    - 🔋 **Battery Storage**: State of charge (`soc * 100%`) with dynamic sign-aware status indicators: `⚡ Charging (+{abs(batt_kw)} kW)` when storing solar surplus, `🔋 Discharging (-{batt_kw} kW)` during evening peak, or `⏸️ Battery Idle`.
+    - 🌐 **Utility Grid Exchange**: Net grid interaction with financial annotations: `💰 Exporting (+{grid_kw} kW to DISCOM)`, `🔌 Importing (-{abs(grid_kw)} kW from Grid)`, or `🛡️ 100% Grid Self-Sufficient`.
+  - Scoped timeline widget key with `f"flow_step_{key}_{day}"` and integer-based indexing (`iloc[flow_step]`), eliminating cross-site `KeyError` state persistence bugs when switching between Mathura, Jaipur, and Pune.
+- **De-cluttered & Ergonomic ARKA AI Assistant Interface**:
+  - Eliminated the visual clutter of 16 giant buttons stacked in 4 columns that previously dominated the top of the viewport.
+  - Set the ARKA expander to collapsed by default (`expanded=False`), preserving immediate screen space for real solar telemetry.
+  - Organized questions into an intuitive 4-topic pill selector:
+    - `💰 Subsidies & Bills` (4 clean action chips)
+    - `🔋 Battery & Blackouts` (4 clean action chips)
+    - `⏰ Appliances & EV` (4 clean action chips)
+    - `🛠️ Technical & Grid` (4 clean action chips)
+  - Users can now select a topic and tap context-specific questions without screen overload.
+- **Responsive Horizontal Tab Scrolling (`CSS`)**:
+  - Injected CSS rules (`div[data-baseweb="tab-list"] { overflow-x: auto !important; flex-wrap: nowrap !important; }`) ensuring all 12 tabs scroll smoothly horizontally without clumsy wrapping or layout breaks on laptops, tablets, or smaller viewports.
+- **Verification & Testing**:
+  - `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (**All checks passed**).
+  - `pytest tests/avishkar_ems/test_arka_assistant.py tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_cache.py -v`: Exit code 0 (**32 passed, 0 failed in 15.39s**).
+  - `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+
+### Evidence
+- `pytest tests/avishkar_ems/test_arka_assistant.py tests/avishkar_ems/test_dashboard.py tests/avishkar_ems/test_cache.py -v`: Exit code 0 (**32 passed in 15.39s**).
+- `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (0 errors).
+- `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+
+### What was NOT done
+- Did not modify vendored `src/emhass/` upstream code.
+- Physical high-voltage grid switchgear operates in advisory mode with SunSpec Modbus hardware gateway emulation.
+
+### What is next
+- Ready to synchronize and push all verified changes to GitHub remote branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
 

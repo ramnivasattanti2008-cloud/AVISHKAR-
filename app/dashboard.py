@@ -90,6 +90,13 @@ st.markdown(
         color: #f1f5f9;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
+    /* Tab Horizontal Scrollbar */
+    div[data-baseweb="tab-list"] {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        scrollbar-width: thin !important;
+        padding-bottom: 4px !important;
+    }
     /* Tab Styling */
     button[data-baseweb="tab"] {
         font-size: 13px !important;
@@ -444,9 +451,106 @@ st.markdown(
 st.info(plain_summary(dv, site.backup_hours, lang))
 
 # ==============================================================================
+# LIVE POWER FLOW & ENERGY DISPATCH (Real-Time Grid & Home Telemetry)
+# ==============================================================================
+with st.container():
+    pf_c1, pf_c2 = st.columns([3, 1])
+    with pf_c1:
+        st.markdown("### ⚡ **Live Household Power Flow & Grid Telemetry**")
+        st.caption("Real-time balance of rooftop generation, household appliances, battery charge/discharge, and grid exchange.")
+    with pf_c2:
+        flow_step = st.select_slider(
+            "🕒 Timeline Scrubber:",
+            options=list(range(len(hours))),
+            value=min(48, len(hours) - 1),
+            format_func=lambda i: hours[i].strftime("%I:%M %p"),
+            key=f"flow_step_{key}_{day}",
+            label_visibility="collapsed",
+        )
+        st.caption(f"Selected Time: **{hours[flow_step].strftime('%I:%M %p')}**")
+
+    # Current telemetry slice
+    c_pv = float(ex["pv_kw"].iloc[flow_step])
+    c_load = float(ex["load_kw"].iloc[flow_step])
+    c_batt = float(ex["batt_kw"].iloc[flow_step])
+    c_grid = float(ex["grid_kw"].iloc[flow_step])
+    c_soc = float(ex["soc"].iloc[flow_step]) * 100.0
+
+    # Human-friendly flow statuses
+    # In AVISHKAR EMS: batt_kw < 0 means charging into battery, batt_kw > 0 means discharging to home
+    if c_batt < -0.05:
+        batt_status = f"⚡ Charging (+{abs(c_batt):.2f} kW)"
+        batt_color = "#34d399"
+    elif c_batt > 0.05:
+        batt_status = f"🔋 Discharging (-{c_batt:.2f} kW)"
+        batt_color = "#38bdf8"
+    else:
+        batt_status = "⏸️ Battery Idle"
+        batt_color = "#94a3b8"
+
+    # grid_kw > 0 means export to grid, grid_kw < 0 means import from grid
+    if c_grid > 0.05:
+        grid_status = f"💰 Exporting (+{c_grid:.2f} kW to DISCOM)"
+        grid_color = "#34d399"
+    elif c_grid < -0.05:
+        grid_status = f"🔌 Importing (-{abs(c_grid):.2f} kW from Grid)"
+        grid_color = "#f87171"
+    else:
+        grid_status = "🛡️ 100% Grid Self-Sufficient"
+        grid_color = "#a78bfa"
+
+    # 4 Sleek Status Cards
+    fc1, fc2, fc3, fc4 = st.columns(4)
+    with fc1:
+        st.markdown(
+            f"""
+            <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 12px 16px;">
+                <span style="color: #fbbf24; font-size: 11px; font-weight: 700; text-transform: uppercase;">☀️ Solar Rooftop</span><br/>
+                <span style="color: #fef3c7; font-size: 22px; font-weight: 800;">{c_pv:.2f} kW</span><br/>
+                <span style="color: #fde68a; font-size: 12px;">{'Active Generation' if c_pv > 0.1 else 'Night / Twilight'}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with fc2:
+        st.markdown(
+            f"""
+            <div style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 12px 16px;">
+                <span style="color: #38bdf8; font-size: 11px; font-weight: 700; text-transform: uppercase;">🏡 Home Load</span><br/>
+                <span style="color: #f0f9ff; font-size: 22px; font-weight: 800;">{c_load:.2f} kW</span><br/>
+                <span style="color: #bae6fd; font-size: 12px;">Active Appliances</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with fc3:
+        st.markdown(
+            f"""
+            <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 12px 16px;">
+                <span style="color: #34d399; font-size: 11px; font-weight: 700; text-transform: uppercase;">🔋 Battery Storage</span><br/>
+                <span style="color: #ecfdf5; font-size: 22px; font-weight: 800;">{c_soc:.0f}% <span style="font-size: 14px; font-weight: 600;">SoC</span></span><br/>
+                <span style="color: {batt_color}; font-size: 12px; font-weight: 600;">{batt_status}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with fc4:
+        st.markdown(
+            f"""
+            <div style="background: rgba(167, 139, 250, 0.12); border: 1px solid rgba(167, 139, 250, 0.4); border-radius: 12px; padding: 12px 16px;">
+                <span style="color: #c084fc; font-size: 11px; font-weight: 700; text-transform: uppercase;">🌐 Utility Grid</span><br/>
+                <span style="color: #faf5ff; font-size: 22px; font-weight: 800;">{abs(c_grid):.2f} kW</span><br/>
+                <span style="color: {grid_color}; font-size: 12px; font-weight: 600;">{grid_status}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+# ==============================================================================
 # ARKA — PERSONAL AI SOLAR & ENERGY ASSISTANT (Surya / AI Copilot)
 # ==============================================================================
-arka_exp = st.expander("💬 ☀️ **Ask ARKA (अर्क) — Your Personal Solar AI Assistant**", expanded=True)
+st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
+arka_exp = st.expander("💬 ☀️ **Ask ARKA (अर्क) — Your Personal Solar & Energy AI Assistant** [Click to chat]", expanded=False)
 with arka_exp:
     c_top1, c_top2 = st.columns([3, 1])
     with c_top1:
@@ -460,47 +564,55 @@ with arka_exp:
             st.session_state.arka_query_input = ""
             st.rerun()
 
-    # 16 Thematic Quick-Action Suggestion Chips (4 Rows of 4)
-    chip_col1, chip_col2, chip_col3, chip_col4 = st.columns(4)
+    # Sleek Categorized Preset Selector (Clean & Uncluttered)
+    arka_cat = st.radio(
+        "Explore Common Questions by Topic:",
+        ["💰 Subsidies & Bills", "🔋 Battery & Blackouts", "⏰ Appliances & EV", "🛠️ Technical & Grid"],
+        horizontal=True,
+        key="arka_topic_radio",
+    )
+
     q_preset = None
-    if chip_col1.button("💰 Monthly Bill & Savings", help="How much money will I save on my bill this month?", use_container_width=True):
-        q_preset = "How much money will I save on my electricity bill every month?"
-    if chip_col2.button("🛡️ Blackout Protection Hours", help="Will my battery survive an 8-hour blackout tonight?", use_container_width=True):
-        q_preset = "Will my battery survive an 8-hour blackout tonight?"
-    if chip_col3.button("⏰ Washing Machine & Geyser", help="When should I run my washing machine and water geyser?", use_container_width=True):
-        q_preset = "When should I run my washing machine and water geyser?"
-    if chip_col4.button("🏛️ PM Surya Ghar Subsidy", help="How do I claim my ₹78,000 PM Surya Ghar subsidy?", use_container_width=True):
-        q_preset = "How much subsidy do I get under PM Surya Ghar and what size do I need?"
-
-    chip_col5, chip_col6, chip_col7, chip_col8 = st.columns(4)
-    if chip_col5.button("🧹 Rooftop Dust & Cleaning", help="Why is my generation lower? Do my panels need cleaning?", use_container_width=True):
-        q_preset = "Why is my generation lower? Do my rooftop solar panels need cleaning?"
-    if chip_col6.button("🚗 EV V2H Peak Shaving", help="Can I charge my EV scooter with free solar and use V2H?", use_container_width=True):
-        q_preset = "Can I charge my EV scooter with free solar and use V2H in the evening?"
-    if chip_col7.button("🤝 Sell Solar to Neighbors (UPI)", help="How do I sell surplus solar to neighbors and receive UPI payments?", use_container_width=True):
-        q_preset = "How do I sell surplus solar to neighbors and receive UPI payments?"
-    if chip_col8.button("🔌 Inverter & Grid Safety", help="Is my inverter safe from grid faults and anti-islanding?", use_container_width=True):
-        q_preset = "Is my inverter safe from grid faults and anti-islanding?"
-
-    chip_col9, chip_col10, chip_col11, chip_col12 = st.columns(4)
-    if chip_col9.button("📐 Roof Area & Tilt Angle", help="How much roof area do I need and what is the optimal tilt angle for my panels?", use_container_width=True):
-        q_preset = "How much roof area do I need and what is the optimal tilt angle for my panels?"
-    if chip_col10.button("🏦 SBI Solar Loan & EMI", help="Can I get an SBI Surya Ghar solar loan and what is the EMI?", use_container_width=True):
-        q_preset = "Can I get an SBI Surya Ghar solar loan and what is the EMI?"
-    if chip_col11.button("🛠️ Inverter Fault Diagnostics", help="Why is my inverter showing a red light or Riso isolation fault?", use_container_width=True):
-        q_preset = "Why is my inverter showing a red light and Riso isolation fault?"
-    if chip_col12.button("💼 Clinic & Store Tax Shield", help="What accelerated depreciation and tax benefits does a clinic or store get under Section 32?", use_container_width=True):
-        q_preset = "What accelerated depreciation and tax benefits does a clinic get under Section 32?"
-
-    chip_col13, chip_col14, chip_col15, chip_col16 = st.columns(4)
-    if chip_col13.button("🌧️ Monsoon & Rain Backup", help="Will my solar panels work during rainy season and monsoon clouds?", use_container_width=True):
-        q_preset = "Will my solar panels work during rainy season and monsoon clouds?"
-    if chip_col14.button("⚡ Earthing & Lightning (< 5 Ω)", help="Do I need earthing pits and a lightning arrester for my rooftop solar?", use_container_width=True):
-        q_preset = "Do I need earthing pits and a lightning arrester for my rooftop solar?"
-    if chip_col15.button("⏱️ Net Metering SLA & ₹500/d", help="Why is my DISCOM delaying my net meter installation and what is the SLA?", use_container_width=True):
-        q_preset = "Why is my DISCOM delaying my net meter installation and what is the SLA?"
-    if chip_col16.button("🏢 Apartments & Virtual Solar", help="Can tenants and apartment societies install solar under virtual net metering?", use_container_width=True):
-        q_preset = "Can tenants and apartment societies install solar under virtual net metering?"
+    if arka_cat == "💰 Subsidies & Bills":
+        ch1, ch2, ch3, ch4 = st.columns(4)
+        if ch1.button("💰 Monthly Bill & Savings", use_container_width=True):
+            q_preset = "How much money will I save on my electricity bill every month?"
+        if ch2.button("🏛️ PM Surya Ghar Subsidy", use_container_width=True):
+            q_preset = "How much subsidy do I get under PM Surya Ghar and what size do I need?"
+        if ch3.button("🏦 SBI Solar Loan & EMI", use_container_width=True):
+            q_preset = "Can I get an SBI Surya Ghar solar loan and what is the EMI?"
+        if ch4.button("💼 Commercial & Clinic Tax", use_container_width=True):
+            q_preset = "What accelerated depreciation and tax benefits does a clinic get under Section 32?"
+    elif arka_cat == "🔋 Battery & Blackouts":
+        ch1, ch2, ch3, ch4 = st.columns(4)
+        if ch1.button("🛡️ Blackout Protection Hours", use_container_width=True):
+            q_preset = "Will my battery survive an 8-hour blackout tonight?"
+        if ch2.button("🌧️ Monsoon & Rain Backup", use_container_width=True):
+            q_preset = "Will my solar panels work during rainy season and monsoon clouds?"
+        if ch3.button("🛡️ Warranties & Insurance", use_container_width=True):
+            q_preset = "What warranties and insurance protect my solar panels and inverter?"
+        if ch4.button("🧹 Rooftop Dust & Cleaning", use_container_width=True):
+            q_preset = "Why is my generation lower? Do my rooftop solar panels need cleaning?"
+    elif arka_cat == "⏰ Appliances & EV":
+        ch1, ch2, ch3, ch4 = st.columns(4)
+        if ch1.button("⏰ Washing Machine & Geyser", use_container_width=True):
+            q_preset = "When should I run my washing machine and water geyser?"
+        if ch2.button("🚗 EV V2H Peak Shaving", use_container_width=True):
+            q_preset = "Can I charge my EV scooter with free solar and use V2H in the evening?"
+        if ch3.button("🤝 Sell Solar to Neighbors", use_container_width=True):
+            q_preset = "How do I sell surplus solar to neighbors and receive UPI payments?"
+        if ch4.button("🏢 Apartments & Virtual Solar", use_container_width=True):
+            q_preset = "Can tenants and apartment societies install solar under virtual net metering?"
+    else:  # 🛠️ Technical & Grid
+        ch1, ch2, ch3, ch4 = st.columns(4)
+        if ch1.button("📐 Roof Area & Tilt Angle", use_container_width=True):
+            q_preset = "How much roof area do I need and what is the optimal tilt angle for my panels?"
+        if ch2.button("🛠️ Inverter Fault Diagnostics", use_container_width=True):
+            q_preset = "Why is my inverter showing a red light and Riso isolation fault?"
+        if ch3.button("⚡ Earthing & Lightning (< 5 Ω)", use_container_width=True):
+            q_preset = "Do I need earthing pits and a lightning arrester for my rooftop solar?"
+        if ch4.button("⏱️ Net Metering SLA & ₹500/d", use_container_width=True):
+            q_preset = "Why is my DISCOM delaying my net meter installation and what is the SLA?"
 
     if "arka_chat_history" not in st.session_state:
         st.session_state.arka_chat_history = []
