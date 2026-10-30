@@ -14,8 +14,19 @@ export interface Basemap {
   maxzoom: number;
 }
 
-const osm = process.env.NEXT_PUBLIC_MAP_TILE_URL ?? process.env.NEXT_PUBLIC_OSM_TILE_URL ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const sat = process.env.NEXT_PUBLIC_SATELLITE_TILE_URL ?? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+/**
+ * A variable that is present but blank means "not set".
+ *
+ * `??` falls through only on null and undefined, so an empty string used to become the tile URL. That is exactly
+ * what `docker-compose.yml` passes when the operator has not chosen a tile service
+ * (`NEXT_PUBLIC_OSM_TILE_URL: ${NEXT_PUBLIC_OSM_TILE_URL:-}`), and the result was a map that asked its own origin
+ * for `/{z}/{x}/{y}.png`, got Next's 404 page, and failed to decode it as an image about twenty times over -- a
+ * blank basemap in every containerised deployment. Found on 2026-10-30, the first time the images were run.
+ */
+const fromEnv = (...values: (string | undefined)[]): string | undefined => values.find((v) => v !== undefined && v.trim() !== "");
+
+const osm = fromEnv(process.env.NEXT_PUBLIC_MAP_TILE_URL, process.env.NEXT_PUBLIC_OSM_TILE_URL) ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const sat = fromEnv(process.env.NEXT_PUBLIC_SATELLITE_TILE_URL) ?? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
 export const BASEMAPS: Basemap[] = [
   { id: "standard", label: "Standard", tiles: [osm], attribution: "© OpenStreetMap contributors", maxzoom: 19 },

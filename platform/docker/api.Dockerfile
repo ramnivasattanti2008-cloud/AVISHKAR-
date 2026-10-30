@@ -1,4 +1,9 @@
-# UNTESTED AS AN IMAGE: written on a machine whose Docker engine could not run, so `docker build` has never been run on this file.
+# BUILT AND RUN on 2026-10-30: `docker build` succeeds on this file and the image serves. The whole stack was brought up
+# with `docker compose up -d` (db, engine, api, web all healthy), migrated and seeded, and then verified end to end:
+# `pnpm -C platform/web journey` 41/41 over HTTP and `pnpm -C platform/web browser` 21/21 in Chromium against it.
+# One caveat about where that was done, not about this file: the sandbox it ran in intercepts TLS, so each build needed
+# `--network=host` and a temporary layer trusting the proxy's CA. That shim is not committed and is not needed where
+# outbound TLS is not intercepted.
 # The commands in it are the ones DEPLOYMENT.md says were run on the development machine: pnpm install, `pnpm build`,
 # `node dist/server.js`, `pnpm db:migrate`.
 #

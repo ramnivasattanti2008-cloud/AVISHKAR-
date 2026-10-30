@@ -103,3 +103,25 @@ describe("staticSecurityHeaders", () => {
     expect(staticSecurityHeaders().map((x: { key: string }) => x.key)).not.toContain("Content-Security-Policy");
   });
 });
+
+describe("a tile URL that is present but blank", () => {
+  /**
+   * `docker-compose.yml` passes `NEXT_PUBLIC_OSM_TILE_URL: ${NEXT_PUBLIC_OSM_TILE_URL:-}`, which is an empty
+   * string when the operator has not chosen a tile service. An empty string used to become the tile URL, so the
+   * map asked its own origin for `/{z}/{x}/{y}.png`, got Next's 404 page, and could not decode it as an image:
+   * a blank basemap in every containerised deployment. The policy has to keep covering the real hosts whichever
+   * way the variable arrives.
+   */
+  it("leaves the public tile hosts in the policy", () => {
+    const csp = contentSecurityPolicy({ development: false, tileUrl: ["", "   "] });
+    expect(directive(csp, "img-src")).toContain("https://tile.openstreetmap.org");
+    expect(directive(csp, "connect-src")).toContain("https://tile.openstreetmap.org");
+  });
+
+  it("adds no empty or whitespace origin to the policy", () => {
+    const csp = contentSecurityPolicy({ development: false, tileUrl: ["", "   ", "not a url"] });
+    for (const d of ["img-src", "connect-src", "font-src"]) {
+      expect(directive(csp, d).filter((v) => v.trim() === "")).toEqual([]);
+    }
+  });
+});
