@@ -89,20 +89,20 @@ Payback in years, lower is better (best of the first three in bold):
 
 | Site | EMS | Battery idle | Fixed-rule battery | Perfect foresight |
 |---|---|---|---|---|
-| 3 kWp home, Mathura | 19.94 | 21.74 | **19.89** | 19.36 |
+| 3 kWp home, Mathura | 19.93 | 21.74 | **19.89** | 19.36 |
 | 15 kWp shop, Pune | **8.59** | 8.91 | 8.68 | 8.55 |
 | 30 kWp clinic, Jaipur | 7.69 | 7.83 | **7.69** | 7.66 |
 
-With the PM Surya Ghar subsidy (Rs 78,000 for a 3 kW home, if you qualify) the Mathura EMS payback drops from 19.94 to 14.84 years. The shop and clinic are commercial, so no subsidy is applied.
+With the PM Surya Ghar subsidy (Rs 78,000 for a 3 kW home, if you qualify) the Mathura EMS payback drops from 19.93 to 14.84 years. The shop and clinic are commercial, so no subsidy is applied.
 
-- Against a battery left idle the EMS earns 9.1%, 3.8% and 1.9% more a year. Against a fixed-rule battery it loses by 0.2% at Mathura, wins by 1.1% at Pune and ties at Jaipur (0.0%). So the honest summary is: the optimiser's edge over a sensible simple rule is small on these tariffs. Its clearer value is the reserve, the offers and the settlement.
+- Against a battery left idle the EMS earns 9.1%, 3.7% and 1.9% more a year. Against a fixed-rule battery it loses by 0.2% at Mathura, wins by 1.1% at Pune and ties at Jaipur (0.0%). So the honest summary is: the optimiser's edge over a sensible simple rule is small on these tariffs. Its clearer value is the reserve, the offers and the settlement.
 - Backup: critical load left without power during cuts was 0.08 / 0.00 / 0.00 kWh with the EMS, against 0.08 / 0.00 / 0.00 with an idle battery and 0.08 / 0.00 / 0.00 with the fixed rule. The Mathura figure is the same for all three because the meter is not recording during a cut and the home has a small battery.
 - The noon re-plan (`intraday.py`) changed yearly benefit by -0.1% to +0.0% versus the EMS, so it did not help once execution was reactive. It is kept as an option and is off in the headline numbers.
-- Forecast bands (80% target): generation covered 86% / 86% / 84%. Load covered 78% at Mathura (measured), and 89% / 90% at the shop and clinic, where the near-repeating factory profile makes the bands too wide ([results/forecast_quality.csv](results/forecast_quality.csv)).
+- Forecast bands (80% target): generation covered 86% / 86% / 84%. Load covered 76% at Mathura (measured), and 89% / 91% at the shop and clinic, where the near-repeating factory profile makes the bands too wide ([results/forecast_quality.csv](results/forecast_quality.csv)).
 - Sensitivity ([results/sensitivity.csv](results/sensitivity.csv)): a battery sized like ours adds 10.2% at Mathura, 4.2% at Pune and 2.0% at Jaipur compared with having none. With the export (net-metering) rate raised by Rs 2 the battery's gain becomes -4.3% at Mathura, +1.7% at Pune and +0.4% at Jaipur, so at Mathura the battery is a backup purchase, not a savings one.
-- P2P volume across the sampled days, delivered of committed: 8.7 of 8.7 kWh at Mathura, 12.4 of 13.5 kWh at Pune and 3.2 of 3.2 kWh at Jaipur (small, because real load absorbs most of the surplus).
+- P2P volume across the sampled days, delivered of committed: 8.8 of 8.8 kWh at Mathura, 11.3 of 12.4 kWh at Pune and 4.2 of 4.2 kWh at Jaipur (small, because real load absorbs most of the surplus).
 
-_Generated 2026-10-30 16:32 UTC by `examples/run_demo.py` and `examples/run_sensitivity.py`: one in every 7 held-out days, annualised (Mathura 33, Pune 52, Jaipur 52 sampled days). Python 3.12.10, numpy 2.2.6, pandas 2.3.3, pvlib 0.16.1; the full set is in `requirements-lock.txt`. This block is generated: run `python scripts/update_readme.py`._
+_Generated 2026-10-30 21:14 UTC by `examples/run_demo.py` and `examples/run_sensitivity.py`: one in every 7 held-out days, annualised (Mathura 33, Pune 52, Jaipur 52 sampled days). Python 3.12.3, numpy 2.2.6, pandas 2.3.3, pvlib 0.16.1; the full set is in `requirements-lock.txt`. This block is generated: run `python scripts/update_readme.py`._
 <!-- results:end -->
 
 How the numbers were improved along the way (history, not results):

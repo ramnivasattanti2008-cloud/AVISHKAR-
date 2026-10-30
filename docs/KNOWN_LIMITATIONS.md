@@ -44,3 +44,54 @@
 - **Limitation:** Natural-language dynamic rewording via Anthropic Claude requires a user-supplied `ANTHROPIC_API_KEY`.
 - **Behavior:** When the key is absent, the Copilot falls back gracefully to deterministic, grounded factual templates with 100% numerical accuracy.
 
+
+---
+
+## Added 2026-10-30, after starting both applications in a fresh container
+
+These are boundaries found by running the software, not by reading it. The per-issue detail is in
+[KNOWN_ISSUES.md](KNOWN_ISSUES.md) items 24-29 and the 2026-10-30 section of
+[../platform/STATUS.md](../platform/STATUS.md).
+
+### Deployment has never been executed
+`platform/docker/*.Dockerfile` and `platform/docker-compose.yml` are written but have never been built or run,
+here or anywhere recorded. Docker's engine is not usable in this container. The documented way to run the stack
+is `./start-platform.sh` (new) or `start-platform.cmd`, both of which run the services directly. **Treat the
+container images as unverified.**
+
+### Peer-to-peer allocation is a calculation, not a transfer
+`platform/api/src/community/allocate.ts` and `avishkar_ems.home_balance.route_community_exchange` work out which
+property's surplus could meet which other's deficit, what the network would lose carrying it, and what each side
+would gain. They move no electricity. Whether a surplus may be sent to a neighbour at all depends on the law, the
+distribution licensee's rules, the metering arrangement and the wiring where those properties are — none of which
+this software knows or asserts. Every response carries that statement, and the pages repeat it.
+
+Two further limits of those models, stated in the code:
+- The order of steps (own generation, own battery, the shared node, the grid) is an **accounting convention**, not
+  something an optimiser discovered. A pooled node cannot say which kW of one property's surplus reached which
+  neighbour, so the pair-by-pair figures divide each sender over the receivers in the proportion they were served.
+- The I²R loss in the Python path assumes a single-phase feeder at unity power factor with the whole line as one
+  lumped resistance. It ignores the voltage drop along that line (which would itself change the current), reactive
+  power and the three-phase case.
+
+### No sanctioned load is held, so no import limit is applied by default
+The platform schema has no field for a property's sanctioned load. When an allocation is built from the owner's own
+properties, the response says `import limit: not known` in that member's `basis` and applies none. That is not a
+statement that there is no limit — it is a statement that AVISHKAR does not know it. Pass one in the request to see
+what it would do.
+
+### A fresh install is not the environment the published numbers came from
+`pip install -e ".[app,test]"` resolves `pandas>=2.2.0` to pandas 3.0.5. The numbers in the README and under
+`results/` come from `requirements-lock.txt` (pandas 2.3.3, numpy 2.2.6, scipy 1.18.1, scikit-learn 1.9.1,
+pvlib 0.16.1, highspy 1.15.1). Reproducing them to the stated 1e-11 INR needs that file.
+
+### The documented test runtime assumes a warm cache
+`CLAUDE.md` gives the EMS suite as about 100 seconds. From an empty `data/cache/` it took **41 minutes 27 seconds**
+here, because every test needing a prepared site trains the quantile models from scratch. The same suite then ran
+in 90 seconds. Run `python scripts/precompute_cache.py` first, or expect the long run.
+
+### Still simulated, and labelled as such
+No inverter, meter, Modbus device or gateway was present. Every device path — `hardware_modbus.py`,
+`inverter_adapters.py`, `anti_islanding.py`, `api/src/control` — is simulated, and an approval in the control
+module is a record and nothing more. Nothing in this repository supports a claim of electrical certification,
+anti-islanding validation, grid-code compliance or hardware testing, and nothing in it makes one.

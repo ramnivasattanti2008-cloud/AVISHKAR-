@@ -31,6 +31,7 @@ specification) is tracked separately in [../platform/STATUS.md](../platform/STAT
 | 27 | Plotly puts a text label at -Infinity on one chart (console warning only) | 1 | 1 | 4 | 4 | Open (2026-10-30) |
 | 28 | The documented EMS test runtime assumes a warm cache | 1 | 2 | 1 | 15 | Documented (2026-10-30) |
 | 29 | A fresh install resolves pandas 3, not the environment `results/` came from | 2 | 3 | 2 | 20 | Documented (2026-10-30) |
+| 30 | Determinism needs an identical interpreter too; the lock file pins only packages | 2 | 2 | 5 | 4 | Documented (2026-10-30); claim corrected |
 
 ## Details
 
@@ -201,9 +202,28 @@ Test: `tests/avishkar_ems/test_satellite.py::test_build_microgrid_plotly_map`.
 
 **27. One chart asks Plotly to place a label at -Infinity.**  Opening the dashboard in Chromium leaves two
 console errors, `<text> attribute y: Expected length, "-Infinity"`, raised inside Plotly's own bundle.  The
-page renders, no Streamlit exception is raised, and no figure on it is wrong.  The chart was not identified:
-the offending `<text>` elements are gone by the time the page settles, and the two plots without axis types
-are map traces whose tile host is reachable from here, so it is not a tile failure.  Open, and cosmetic.
+page renders, no Streamlit exception is raised, and no figure on it is wrong.
+
+What was established: the plot is the `indicator` (gauge) trace, which is the SoC gauge at
+`app/home_setup_view.py:344` -- the only `go.Indicator` in the repository.  The same gauge rendered on its own
+in a one-file Streamlit app produces **no** error, so neither its values nor its step ranges are at fault, and
+giving it more height (300 px, larger top margin) did not change anything either.  Carto's tile host is
+reachable from here, so it is not a tile failure.  The remaining explanation is that Plotly lays the chart out
+while its container has no size -- a chart inside a collapsed `st.expander` or an inactive `st.tabs` panel is
+in the DOM with `display: none` -- and computes a text position from a zero-height box; it re-lays out
+correctly once that panel is opened, which is why nothing on screen is wrong.  That was not confirmed: the
+isolation app for it would not start in the time available.
+
+Open, cosmetic, and **not** worth code changes until confirmed.  Nothing in AVISHKAR's own arithmetic produces
+the value: `-Infinity` is computed inside Plotly's layout code from the size of the box it is given.
+
+**One latent defect was found while looking, and is left alone deliberately.**  The gauge builds its coloured
+bands assuming `0 <= min_soc_pct <= preferred_backup_reserve_pct <= max_soc_pct <= 100`, and
+`BatteryConfig.validate()` does not check the reserve against the other two.  A home whose backup reserve is
+set below its minimum SoC floor would give Plotly a reversed band.  The shipped defaults (15 / 25 / 95) are
+ordered, so nothing is wrong today.  Adding that check to `validate()` would be correct -- a reserve below the
+floor is meaningless, since the floor already protects more -- but it would reject profiles already saved to
+disk, so it belongs in a change that also migrates them.
 
 **28. The documented test runtime assumes a warm cache.**  `CLAUDE.md` gives the EMS suite as about 100 s.
 With an empty `data/cache/` it took **41 minutes 27 seconds** here (554 passed, 1 skipped), because every
@@ -215,3 +235,33 @@ resolves `pandas>=2.2.0` to pandas 3.0.5, which emits `Pandas4Warning` deprecati
 pvlib (101 warnings, all harmless here).  `requirements-lock.txt` is the environment `results/*.csv` and the
 README's numbers came from, and reproducing them to the stated 1e-11 INR needs that file, not the pyproject
 ranges.  Install with `pip install -r requirements-lock.txt` when reproducing results.
+
+
+**30. Determinism needs a genuinely identical environment, and the lock file does not pin all of it.**
+Issue 1 says the pipeline reproduces, and in an identical environment it does: two independent
+`examples/run_demo.py` runs here produced **bit-identical** `payback.csv` and `forecast_quality.csv` (0 differing
+fields out of 15 rows and 10 rows).
+
+But the `results/` committed earlier on 2026-10-30 differed from a regeneration here in the fifth significant
+figure -- Mathura's EMS annual benefit 15298.23 against 15300.00 INR, about 0.01%, and the README's payback moving
+19.94 to 19.93 -- and the differences fell **only** on the variants the linear programme plans (`EMS`,
+`EMS + noon re-plan`, `perfect foresight`), never on `battery idle` or `fixed-rule battery`, which do not go
+through it. Forecast band coverage at Mathura moved from 78% to 76%.
+
+Every library version in `results/provenance.json` matched the regeneration exactly, so this is not library
+drift. What differed is recorded in the same file: **Python 3.12.10 before, 3.12.3 now.**
+`requirements-lock.txt` pins the packages but not the interpreter, and `.python-version` says only `3.12`. A
+different interpreter build can change the order of floating-point accumulation in the model fit, which moves the
+optimiser's inputs by a hair and occasionally changes which of two near-equal schedules HiGHS returns -- which is
+exactly the pattern observed. A different CPU or BLAS would do the same; neither can be separated from the
+interpreter difference with what was recorded, and no stronger claim is made here than the evidence supports.
+
+Nothing is wrong with either set of numbers, and no conclusion in the README turns on the fifth figure: the
+optimiser's small edge over a fixed rule, the battery being a backup purchase at Mathura, and the band coverage
+being wide at the commercial sites all stand unchanged. What was wrong was the claim. `CLAUDE.md` said "a rebuild
+is bit-identical" with no qualifier and now states what identical has to include. `results/` and the README block
+were regenerated here in the locked environment so that the committed numbers, the code fingerprint and
+`scripts/update_readme.py --check` agree again.
+
+**If the exact published numbers matter to you**, pin the interpreter as well as the packages. Recording
+`python: 3.12.10` in `provenance.json` was what made this diagnosable at all, and that was already being done.

@@ -1,7 +1,7 @@
 {
   "run_demo": {
-    "generated_at": "2026-10-30 16:32 UTC",
-    "python": "3.12.10",
+    "generated_at": "2026-10-30 21:14 UTC",
+    "python": "3.12.3",
     "libraries": {
       "numpy": "2.2.6",
       "pandas": "2.3.3",
@@ -11,7 +11,7 @@
       "cvxpy": "1.7.5",
       "skforecast": "0.22.0"
     },
-    "fingerprint": "c52ef002f5699d48",
+    "fingerprint": "a01f9452acbfe8ab",
     "every_days": 7,
     "quick": false,
     "sampled_days": {
@@ -22,27 +22,27 @@
     "p2p": {
       "home-mathura": {
         "offers": 13,
-        "committed_kwh": 8.69333480351615,
-        "delivered_kwh": 8.69333480351615,
+        "committed_kwh": 8.813898537211749,
+        "delivered_kwh": 8.813898537211749,
         "shortfall_kwh": 0.0
       },
       "shop-pune": {
-        "offers": 10,
-        "committed_kwh": 13.510426173070275,
-        "delivered_kwh": 12.433654767348266,
-        "shortfall_kwh": 1.076771405722009
+        "offers": 9,
+        "committed_kwh": 12.350181625748052,
+        "delivered_kwh": 11.275482825616592,
+        "shortfall_kwh": 1.0746988001314588
       },
       "clinic-jaipur": {
-        "offers": 1,
-        "committed_kwh": 3.2494035630491993,
-        "delivered_kwh": 3.2494035630491993,
+        "offers": 2,
+        "committed_kwh": 4.159789722905299,
+        "delivered_kwh": 4.159789722905299,
         "shortfall_kwh": 0.0
       }
     }
   },
   "run_sensitivity": {
-    "generated_at": "2026-10-30 08:17 UTC",
-    "python": "3.12.10",
+    "generated_at": "2026-10-30 21:24 UTC",
+    "python": "3.12.3",
     "libraries": {
       "numpy": "2.2.6",
       "pandas": "2.3.3",
@@ -52,7 +52,7 @@
       "cvxpy": "1.7.5",
       "skforecast": "0.22.0"
     },
-    "fingerprint": "cdce981b20055d27",
+    "fingerprint": "a01f9452acbfe8ab",
     "every_days": 28
   }
 }

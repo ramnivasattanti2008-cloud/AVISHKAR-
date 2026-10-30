@@ -5,8 +5,8 @@
     "action": "catalog/publish",
     "bppId": "sellerapp.example.com",
     "bppUri": "http://sellerapp.example.com/bpp/receiver",
-    "transactionId": "803c114e-1034-4dbc-8506-fd2eb45d31b8",
-    "messageId": "5d57990f-71eb-431b-984d-45b21aa62d42",
+    "transactionId": "59d0f704-7d80-47ce-ade7-593c878798f2",
+    "messageId": "cfa9343d-5f1f-48b2-8a43-810f213772d9",
     "timestamp": "2023-01-14T12:30:00Z",
     "schemaContext": [
       "https://schema.nfh.global/EnergyTradeOffer/v2.0/context.jsonld",
@@ -61,7 +61,7 @@
             "id": "offer-shop-pune-20230115T1100-0",
             "descriptor": {
               "name": "Solar surplus 11:00-16:00 IST",
-              "shortDesc": "14.7 kWh from 15 kWp + battery"
+              "shortDesc": "15.1 kWh from 15 kWp + battery"
             },
             "resourceIds": [
               "energy-resource-shop-pune"
@@ -131,7 +131,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          2.0
+                          1.96
                         ]
                       }
                     ]
@@ -148,7 +148,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          3.922
+                          4.343
                         ]
                       }
                     ]
@@ -165,7 +165,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          3.982
+                          3.988
                         ]
                       }
                     ]
@@ -182,7 +182,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          3.026
+                          3.035
                         ]
                       }
                     ]
@@ -199,7 +199,7 @@
                       {
                         "type": "AVAILABLE_QTY",
                         "values": [
-                          1.733
+                          1.726
                         ]
                       }
                     ]

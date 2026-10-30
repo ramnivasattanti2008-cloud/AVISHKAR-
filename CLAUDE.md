@@ -24,7 +24,7 @@ current `results/*.csv` came from). Below, `python` means that interpreter. `run
 has ₹ and Hindi text); do the same when you launch the dashboard another way.
 
 ```bash
-python -m pytest tests/avishkar_ems -q -p no:cacheprovider    # project tests, ~100 s
+python -m pytest tests/avishkar_ems -q -p no:cacheprovider    # project tests, ~100 s WITH a warm cache; 40+ min from cold
 python -m pytest tests/avishkar_ems/test_pipeline.py::test_plan_never_dips_below_reserve_floor   # a single test
 python -m ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix          # lint (ruff is in the venv)
 python scripts/update_readme.py [--check]  # regenerate (or verify) the README results block from results/
@@ -112,7 +112,9 @@ pnpm -C platform/web gen:api                  # regenerate web/src/lib/api-types
 pnpm -C platform/web typecheck && pnpm -C platform/web lint && pnpm -C platform/web test && pnpm -C platform/web build
 pnpm -C platform/web smoke [url]      # a RUNNING production build: pages, the map worker files, the security headers
 pnpm -C platform/web journey [url] [--no-providers]   # end-to-end over HTTP through a running stack; --no-providers is what CI runs
-pnpm -C platform/web browser [url]    # real Chromium (playwright): the map draws and pans, pages render, skip link, theme
+pnpm -C platform/web browser [url]    # real Chromium (playwright): the map draws and pans, pages render, skip link, theme,
+                                      # and the allocation workbench recalculates. PLAYWRIGHT_CHROMIUM_PATH=<binary> to use
+                                      # a browser the image already ships instead of Playwright's own download.
 pnpm -C platform/web dev                      # web on :3000, proxies /api to API_URL (default http://127.0.0.1:8080)
 
 # the Python engine (platform/engine), same venv as the EMS; routes that need it answer 503 ENGINE_UNAVAILABLE without it
@@ -141,6 +143,16 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
 - Tool-shell traps seen again: a heredoc containing `\b`, `\d` or a curly apostrophe is mangled (a Python `'''` string turned
   `\b` into a literal backspace in a regex). Write scripts and files with the Write tool, then run them.
 
+- **Community allocation** (`api/src/community`, `POST /api/community/allocate`, the workbench on the web Community page):
+  `allocate.ts` is pure arithmetic over one interval -- own generation, then own battery, then the shared node, then the grid, in
+  that stated order -- applying per-member export and import limits, a shared feeder limit, line losses per member and one network
+  loss on the pool (each charged once), and battery reserve floors, power limits and round-trip efficiency on the charge leg. Four
+  rules (proportional, equal share, critical first, nearest first) and two battery policies. Each member reports which cap bound it;
+  unserved demand and curtailed generation are reported, not smoothed away; every result carries an energy-balance check.
+  `service.ts` builds members from the request, or from the owner's own properties (solar from their entered systems via the engine,
+  demand from their imported readings' pattern, export limit from the entered inverter) and says in `basis` where each figure came
+  from and which it does not hold. It moves no electricity and says so in every response.
+
 - **Web** (`platform/web`): Next 16 App Router, React 19, Tailwind 4, MapLibre, recharts. It only talks to `/api` (same-origin
   proxy, so the HttpOnly session cookie is first-party and the CSRF token is echoed from the `avk_csrf` cookie; the root layout's
   `components/DegradedBanner.tsx` polls `/api/system/health` and says on every page what is down). Show every
@@ -154,12 +166,19 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
   `scripts/copy-maplibre-worker.mjs` (run by `pnpm build` and `pnpm dev`) copies the worker and its shared chunk to the git-ignored
   `public/maplibre/`, and `MapCanvas.tsx` calls `setWorkerUrl`. After changing the map library, check a production build in a browser.
   The web app also sends a CSP and other security headers (`src/lib/csp.ts`): a new outside host (a tile server) must be added there.
+  **Scripts run by a per-request nonce**, which `web/src/proxy.ts` makes and Next puts on its own script tags; the root layout
+  reads it from `x-nonce` for the theme script. Do not put a Content-Security-Policy in `next.config.ts` as well -- two are both
+  enforced, and a nonce-less one blocks everything the nonced one allows. A fixed script *hash* cannot work here: Next's hydration
+  scripts differ per page and per build, and listing one left the whole production app non-interactive while serving HTTP 200
+  (`platform/STATUS.md`, the 2026-10-30 findings). `pnpm smoke` cannot see that; `pnpm browser` can. Using a nonce means every
+  page renders per request, which is why none is prerendered.
 - **Database on this machine**: Docker's engine is not usable, so PostgreSQL 16 + PostGIS 3.4 run inside WSL Ubuntu
   (databases `avishkar_dev`, `avishkar_test`; credentials only in the git-ignored `platform/api/.env`). WSL stops idle
   distros and takes Postgres with it: keep it alive with
   `wsl -d Ubuntu -u root -- bash -lc "service postgresql start; exec sleep infinity"` (run it in the background), or
   `start-database.cmd` (runs `scripts/wsl-init-db.sh`, then migrates and seeds `DATABASE_URL`); `start-platform.cmd` starts the
-  engine, API and web. `DATABASE_URL` may point at a Neon cloud database (`docs/DATABASE_GUIDE.md`, `pnpm -C platform/api
+  engine, API and web on Windows and **`./start-platform.sh`** does the same on Linux or macOS (`--dev` for the development web
+  server; it checks `platform/api/.env`, the venv and the ports before starting anything, and stops all three on Ctrl-C). `DATABASE_URL` may point at a Neon cloud database (`docs/DATABASE_GUIDE.md`, `pnpm -C platform/api
   db:health`), so `db:migrate` and `db:seed` can write to the cloud; tests always use the local `DATABASE_URL_TEST`. Every
   password and key is read from `platform/api/.env`: never write one into a script or a doc.
 - Prisma 7.10 (CLI pinned; `latest` resolves to an 8.0 release candidate) and TypeScript 5.9 (typescript-eslint does not
@@ -210,7 +229,12 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
   flag an injected fault there. Use `pv_clear_kw` when you need a clear-sky reference.
 - Held-out periods differ per site: Mathura Jul 2020 to Feb 2021 (trained Jun 2019 to Jun 2020), Pune and Jaipur 2023. Sites do
   not overlap in time except Pune and Jaipur, so fleet pooling only has two real members on 2023 dates.
-- The pipeline is deterministic in a fixed environment (a rebuild is bit-identical), and since 2026-10-07 the README,
+- The pipeline is deterministic **in a genuinely identical environment**: two independent `run_demo.py` runs here on
+  2026-10-30 gave bit-identical `payback.csv` and `forecast_quality.csv`. "Identical" includes the Python patch version, which
+  `requirements-lock.txt` does not pin -- the `results/` committed earlier that day came from Python 3.12.10 and the
+  regeneration from 3.12.3, with every pinned library version equal, and the figures moved in the fifth significant figure.
+  The differences fell only on the variants the LP plans, not on the fixed-rule or idle baselines (`docs/KNOWN_ISSUES.md` #30).
+  Since 2026-10-07 the README,
   `results/` and the dashboard default agree to 1e-11 INR (`docs/KNOWN_ISSUES.md` #1). `requirements-lock.txt` is the
   environment they came from. Sampled replay days that are not consecutive each start from the same battery state.
 - Entry points log warnings (`logging.basicConfig`); EMHASS's `get_logger` adds a handler per call, so the planner uses one
@@ -220,6 +244,12 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
   text). Write files with the Write/Edit tools; if a script is needed, write it to a file first, then run it.
 - Offer ids contain a random uuid, so offers are not byte-reproducible across runs.
 - Strings shown to users come in English/Hindi pairs (`explain.py`, `summary.py`, `advisor.py`); keep both when editing.
+- Pass every block of HTML through `app/ui_html.py`'s `html_block()` before `st.markdown(..., unsafe_allow_html=True)`.
+  Markdown still runs first and reads a blank line followed by an indented line as a *code block*, so indented markup is printed
+  as text on the page; this stripped the indentation at 42 call sites after 36 blocks were found leaking raw `<path>` elements.
+- `tests/avishkar_ems/test_app_imports.py` imports every view and resolves every name they import. It needs no cache and never
+  skips, unlike `test_dashboard.py`, which skips itself without a fresh cache -- which is how a dashboard that could not start at
+  all passed 554 tests.
 
 When you change a command, the architecture, a data path or a known issue, update this file and `docs/KNOWN_ISSUES.md` in the
 same change so the next session does not have to rediscover it.
