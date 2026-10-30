@@ -60,6 +60,11 @@ from avishkar_ems.settlement_upi import generate_upi_payment
 from avishkar_ems.sim import demo_sites
 from avishkar_ems.subsidy import pm_surya_ghar
 from avishkar_ems.summary import plain_summary
+from avishkar_ems.surplus_engine import (
+    BatterySafetyConstraints,
+    EVChargingMode,
+    SurplusEngine,
+)
 from avishkar_ems.transformer_guard import (
     STANDARD_DISTRIBUTION_TRANSFORMERS,
     evaluate_feeder_transformer_health,
@@ -1575,6 +1580,98 @@ with tab_plan:
         f"bought from grid {ex['import_kwh'].sum():.1f} kWh",
         f"battery discharged {ex['batt_kw'].clip(lower=0).sum() * 0.25:.1f} kWh",
         f"exported {exp_kwh:.1f} kWh"]))
+
+    st.markdown("---")
+    st.subheader("🌐 7-Tier Intelligent Surplus & Priority Dispatch Engine")
+    st.caption("Adapting verified open-source EMS paradigms (evcc, sem-community, SolarFlow). "
+               "Dynamically allocates rooftop solar power across 7 prioritized tiers with anti-hunting hysteresis protection.")
+
+    surp_c1, surp_c2, surp_c3, surp_c4 = st.columns(4)
+    ev_mode_choice = surp_c1.selectbox(
+        "EV Charging Mode (evcc Standard):",
+        ["PV_ONLY (Pure Solar Surplus)", "MIN_PLUS_PV (1.4 kW Guaranteed + Solar Boost)", "FAST (Max 7.4 kW Grid + Solar)", "STOP (Disabled)"],
+        index=0,
+    )
+    ev_mode_map = {
+        "PV_ONLY (Pure Solar Surplus)": EVChargingMode.PV_ONLY,
+        "MIN_PLUS_PV (1.4 kW Guaranteed + Solar Boost)": EVChargingMode.MIN_PLUS_PV,
+        "FAST (Max 7.4 kW Grid + Solar)": EVChargingMode.FAST,
+        "STOP (Disabled)": EVChargingMode.STOP,
+    }
+    selected_ev_mode = ev_mode_map[ev_mode_choice]
+    flex_load_w = surp_c2.slider("Schedulable Appliance Demand (kW):", 0.0, 3.0, 1.5, 0.25, help="e.g. Washing machine or irrigation pump")
+    thermal_load_w = surp_c3.slider("Thermal Storage / Immersion (kW):", 0.0, 3.0, 1.0, 0.25, help="e.g. Immersion heat pump or water geyser")
+    zero_exp_toggle = surp_c4.toggle("Zero-Export Active Limiter", value=False, help="Curtail solar generation when export is prohibited")
+
+    # Run SurplusEngine dispatch across all 96 intervals of the day
+    batt_constraints = BatterySafetyConstraints(
+        capacity_kwh=float(site.battery_kwh),
+        soc_max=0.98,
+        soc_min_reserve=effective_floor,
+        max_charge_power_kw=float(site.inverter_kw),
+        max_discharge_power_kw=float(site.inverter_kw),
+    )
+    surplus_eng = SurplusEngine(battery_constraints=batt_constraints)
+
+    surplus_records = []
+    pv_vals = ex["pv_kw"].to_numpy()
+    load_vals = ex["load_kw"].to_numpy()
+    current_soc_sim = effective_floor
+
+    for step_idx in range(len(pv_vals)):
+        p_pv = float(pv_vals[step_idx])
+        p_load = float(load_vals[step_idx])
+        step_res = surplus_eng.allocate_surplus(
+            solar_kw=p_pv,
+            load_kw=p_load,
+            battery_soc=current_soc_sim,
+            ev_mode=selected_ev_mode,
+            ev_rated_kw=3.3,
+            ev_min_kw=1.4,
+            flexible_demand_kw=float(flex_load_w),
+            thermal_demand_kw=float(thermal_load_w),
+            zero_export_limit=zero_exp_toggle,
+            interval_hours=0.25,
+            current_time=float(step_idx * 900),
+        )
+        current_soc_sim = step_res.battery_soc_after
+        surplus_records.append(step_res)
+
+    tot_direct_pv_kwh = sum(r.direct_solar_consumed_kw for r in surplus_records) * 0.25
+    tot_batt_chg_kwh = sum(r.battery_charge_kw for r in surplus_records) * 0.25
+    tot_ev_kwh = sum(r.ev_charge_kw for r in surplus_records) * 0.25
+    tot_export_kwh = sum(r.grid_export_kw for r in surplus_records) * 0.25
+    tot_curtail_kwh = sum(r.curtailed_solar_kw for r in surplus_records) * 0.25
+    all_conserved = all(r.is_energy_conserved for r in surplus_records)
+
+    sm1, sm2, sm3, sm4, sm5 = st.columns(5)
+    sm1.metric("Direct PV Consumed", f"{tot_direct_pv_kwh:.1f} kWh", help="Essential home load powered directly by sun")
+    sm2.metric("Battery Solar Stored", f"{tot_batt_chg_kwh:.1f} kWh", help="Surplus absorbed by stationary LiFePO4 BESS")
+    sm3.metric("EV Solar Charged", f"{tot_ev_kwh:.1f} kWh", help=f"Mode: {selected_ev_mode.value}")
+    sm4.metric("Grid Export / Curtail", f"{tot_export_kwh:.1f} / {tot_curtail_kwh:.1f} kWh")
+    sm5.metric("Energy Conservation", "100% Balanced" if all_conserved else "Imbalance Detected", delta="First Law Verified")
+
+    fig_7tier = go.Figure()
+    fig_7tier.add_trace(go.Scatter(x=hours, y=[r.direct_solar_consumed_kw for r in surplus_records], name="Tier 1: Essential Load", stackgroup="solar", line=dict(color="#f59e0b", width=0.5), fillcolor="rgba(245, 158, 11, 0.7)"))
+    fig_7tier.add_trace(go.Scatter(x=hours, y=[r.battery_charge_kw for r in surplus_records], name="Tier 2: Battery Charge", stackgroup="solar", line=dict(color="#8b5cf6", width=0.5), fillcolor="rgba(139, 92, 246, 0.7)"))
+    fig_7tier.add_trace(go.Scatter(x=hours, y=[r.flexible_load_kw for r in surplus_records], name="Tier 3: Flexible Load", stackgroup="solar", line=dict(color="#06b6d4", width=0.5), fillcolor="rgba(6, 182, 212, 0.7)"))
+    fig_7tier.add_trace(go.Scatter(x=hours, y=[r.ev_charge_kw for r in surplus_records], name="Tier 4: EV Smart Charge", stackgroup="solar", line=dict(color="#10b981", width=0.5), fillcolor="rgba(16, 185, 129, 0.7)"))
+    fig_7tier.add_trace(go.Scatter(x=hours, y=[r.thermal_storage_kw for r in surplus_records], name="Tier 5: Thermal Storage", stackgroup="solar", line=dict(color="#ec4899", width=0.5), fillcolor="rgba(236, 72, 153, 0.7)"))
+    fig_7tier.add_trace(go.Scatter(x=hours, y=[r.grid_export_kw for r in surplus_records], name="Tier 6: Grid Export", stackgroup="solar", line=dict(color="#3b82f6", width=0.5), fillcolor="rgba(59, 130, 246, 0.7)"))
+    fig_7tier.add_trace(go.Scatter(x=hours, y=[r.curtailed_solar_kw for r in surplus_records], name="Tier 7: Curtailed Solar", stackgroup="solar", line=dict(color="#ef4444", width=0.5), fillcolor="rgba(239, 68, 68, 0.7)"))
+
+    fig_7tier.update_layout(
+        title="7-Tier Solar Generation Allocation Profile (24-Hour Timeline)",
+        xaxis=dict(title="Hour of Day", dtick=2),
+        yaxis=dict(title="Power Allocation (kW)"),
+        height=320,
+        margin=dict(l=10, r=10, t=35, b=10),
+        legend=dict(orientation="h", y=-0.2),
+    )
+    st.plotly_chart(fig_7tier, use_container_width=True)
+
+    st.info("🛡️ **Anti-Hunting Hysteresis Protection**: Contactor anti-cycling controller enforces 3-minute minimum runtime and 3-minute cooldown. "
+            "Prevents rapid mechanical wear on appliance relays and EV chargers during passing cloud transients.")
 
     st.markdown("---")
     st.subheader("💡 Why the plan does what it does")

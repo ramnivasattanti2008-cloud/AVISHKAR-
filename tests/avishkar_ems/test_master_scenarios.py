@@ -261,3 +261,98 @@ def test_scenario_12_missing_historical_measurements(engine: SurplusEngine) -> N
     assert surplus_meas.status == MetricStatus.MISSING_DATA
     assert deficit_meas.status == MetricStatus.MISSING_DATA
     assert surplus_meas.power_kw == 0.0
+
+
+# ==============================================================================
+# ADDITIONAL RIGOROUS BOUNDARY & SAFETY VALIDATORS (PHASE 12)
+# ==============================================================================
+
+def test_energy_conservation_law_across_operating_modes(engine: SurplusEngine) -> None:
+    """Verifies that First Law of Thermodynamics holds strictly across diverse scenarios."""
+    scenarios = [
+        # (solar, load, soc, ev_mode, zero_export)
+        (10.0, 3.0, 0.50, EVChargingMode.STOP, False),
+        (2.0, 8.0, 0.70, EVChargingMode.STOP, False),
+        (8.0, 2.0, 0.98, EVChargingMode.FAST, False),
+        (6.0, 4.0, 0.20, EVChargingMode.MIN_PLUS_PV, False),
+        (9.0, 2.0, 0.50, EVChargingMode.PV_ONLY, True),  # zero-export curtailment
+        (0.0, 5.0, 0.10, EVChargingMode.FAST, False),    # deep deficit + fast EV
+    ]
+    for solar, load, soc, ev_m, z_exp in scenarios:
+        res = engine.allocate_surplus(
+            solar_kw=solar,
+            load_kw=load,
+            battery_soc=soc,
+            ev_mode=ev_m,
+            zero_export_limit=z_exp,
+        )
+        assert res.is_energy_conserved, f"Energy not conserved for scenario: {solar=}, {load=}, {soc=}"
+
+
+def test_replay_attack_prevention(engine: SurplusEngine) -> None:
+    """Verifies that a valid nonce cannot be re-used within the validity window."""
+    now = time.time()
+    nonce = f"{now}:unique_token_xyz"
+    payload = f"TRIP_BREAKER:{nonce}".encode()
+    sig = hmac.new(engine.secret_key.encode(), payload, hashlib.sha256).hexdigest()
+
+    # First attempt: accepted
+    assert engine.verify_cea_security_nonce("TRIP_BREAKER", nonce, sig) is True
+
+    # Replay attempt with identical nonce & signature: rejected
+    assert engine.verify_cea_security_nonce("TRIP_BREAKER", nonce, sig) is False
+
+
+def test_negative_input_sanitization(engine: SurplusEngine) -> None:
+    """Verifies that negative physical sensor values are safely clamped to 0.0."""
+    res = engine.allocate_surplus(
+        solar_kw=-5.0,
+        load_kw=-2.0,
+        battery_soc=-0.5,
+    )
+    assert res.solar_generation_kw == 0.0
+    assert res.essential_load_kw == 0.0
+    assert res.battery_soc_after >= 0.0
+    assert res.is_energy_conserved
+
+
+def test_invalid_line_loss_fraction_raises_error(engine: SurplusEngine) -> None:
+    """Line loss fraction must be in [0.0, 1.0)."""
+    with pytest.raises(ValueError, match="Invalid line_loss_fraction"):
+        engine.route_community_sharing(10.0, 5.0, line_loss_fraction=1.0)
+    with pytest.raises(ValueError, match="Invalid line_loss_fraction"):
+        engine.route_community_sharing(10.0, 5.0, line_loss_fraction=-0.1)
+
+
+def test_negative_energy_duration_raises_error() -> None:
+    """Energy interval duration cannot be negative."""
+    from avishkar_ems.surplus_engine import PowerMeasurement
+    meas = PowerMeasurement(5.0, "2026-10-30T12:00:00Z", MetricStatus.MEASURED)
+    with pytest.raises(ValueError, match="duration_hours cannot be negative"):
+        meas.to_interval_energy(-1.0)
+
+
+def test_ev_modes_dispatch_accuracy(engine: SurplusEngine) -> None:
+    """Verifies evcc-style EV charging modes."""
+    # PV_ONLY with abundant surplus (8 kW surplus)
+    res_pv = engine.allocate_surplus(
+        solar_kw=10.0, load_kw=2.0, battery_soc=0.98,
+        ev_mode=EVChargingMode.PV_ONLY, ev_rated_kw=3.3, ev_min_kw=1.4,
+    )
+    assert res_pv.is_energy_conserved
+
+    # MIN_PLUS_PV mode with guaranteed baseline + boost
+    res_min_pv = engine.allocate_surplus(
+        solar_kw=10.0, load_kw=2.0, battery_soc=0.98,
+        ev_mode=EVChargingMode.MIN_PLUS_PV, ev_rated_kw=7.4, ev_min_kw=1.4,
+    )
+    assert res_min_pv.ev_charge_kw == 7.4  # Fully boosted by solar surplus
+    assert res_min_pv.is_energy_conserved
+
+    # FAST mode with maximum power
+    res_fast = engine.allocate_surplus(
+        solar_kw=10.0, load_kw=2.0, battery_soc=0.98,
+        ev_mode=EVChargingMode.FAST, ev_rated_kw=7.4, ev_min_kw=1.4,
+    )
+    assert res_fast.ev_charge_kw == 7.4
+    assert res_fast.is_energy_conserved

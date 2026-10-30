@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import os
 import time
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -59,6 +60,8 @@ class PowerMeasurement:
 
     def to_interval_energy(self, duration_hours: float) -> EnergyMeasurement:
         """Converts instantaneous power (kW) over duration (h) to energy (kWh)."""
+        if duration_hours < 0.0:
+            raise ValueError("duration_hours cannot be negative")
         return EnergyMeasurement(
             energy_kwh=round(self.power_kw * duration_hours, 4),
             duration_hours=duration_hours,
@@ -187,6 +190,21 @@ class DispatchResult:
     status: MetricStatus
     warnings: list[str] = field(default_factory=list)
 
+    @property
+    def is_energy_conserved(self) -> bool:
+        """Verifies physical first law of thermodynamics: Total Power In == Total Power Out."""
+        total_in = self.solar_generation_kw + self.grid_import_kw + self.battery_discharge_kw
+        total_out = (
+            self.essential_load_kw
+            + self.battery_charge_kw
+            + self.flexible_load_kw
+            + self.ev_charge_kw
+            + self.thermal_storage_kw
+            + self.grid_export_kw
+            + self.curtailed_solar_kw
+        )
+        return abs(total_in - total_out) < 1e-4
+
 
 class SurplusEngine:
     """Unified surplus energy management and multi-objective dispatch coordinator."""
@@ -195,12 +213,13 @@ class SurplusEngine:
         self,
         battery_constraints: BatterySafetyConstraints | None = None,
         hysteresis_controller: HysteresisController | None = None,
-        secret_key: str = "urjasetu-statutory-cea-2026-auth-key",
+        secret_key: str | None = None,
     ):
         self.battery = battery_constraints or BatterySafetyConstraints()
         self.hysteresis = hysteresis_controller or HysteresisController()
-        self.secret_key = secret_key
+        self.secret_key = secret_key or os.getenv("CEA_HMAC_SECRET_KEY", "urjasetu-statutory-cea-2026-auth-key")
         self._seen_telemetry_timestamps: set[str] = set()
+        self._seen_nonces: set[str] = set()
 
     def deduplicate_telemetry(self, timestamp: str) -> bool:
         """Returns True if timestamp is new; False if duplicate."""
@@ -212,6 +231,8 @@ class SurplusEngine:
     def verify_cea_security_nonce(self, command: str, nonce: str, signature: str, max_age_s: float = 30.0) -> bool:
         """Verifies HMAC-SHA256 signature and nonce freshness under CEA regulations."""
         try:
+            if nonce in self._seen_nonces:
+                return False
             parts = nonce.split(":")
             if len(parts) != 2:
                 return False
@@ -221,7 +242,10 @@ class SurplusEngine:
                 return False
             payload = f"{command}:{nonce}".encode()
             expected_sig = hmac.new(self.secret_key.encode(), payload, hashlib.sha256).hexdigest()
-            return hmac.compare_digest(expected_sig, signature)
+            if hmac.compare_digest(expected_sig, signature):
+                self._seen_nonces.add(nonce)
+                return True
+            return False
         except Exception:
             return False
 
@@ -274,6 +298,11 @@ class SurplusEngine:
         """
         warnings: list[str] = []
         now = time.time() if current_time is None else current_time
+
+        # Sanitize physical inputs against malformed/negative values
+        solar_kw = max(0.0, float(solar_kw if solar_kw is not None else 0.0))
+        load_kw = max(0.0, float(load_kw if load_kw is not None else 0.0))
+        battery_soc = min(1.0, max(0.0, float(battery_soc if battery_soc is not None else 0.0)))
 
         # Step 1: Essential Load Supply
         pv_direct = min(solar_kw, load_kw)
@@ -402,6 +431,11 @@ class SurplusEngine:
         Returns:
             (sent_from_donor_kw, received_by_recipient_kw, technical_loss_kw)
         """
+        if not (0.0 <= line_loss_fraction < 1.0):
+            raise ValueError(f"Invalid line_loss_fraction {line_loss_fraction}: must be in range [0.0, 1.0)")
+        if donor_surplus_kw <= 0.0 or recipient_deficit_kw <= 0.0:
+            return (0.0, 0.0, 0.0)
+
         transfer_needed = recipient_deficit_kw / (1.0 - line_loss_fraction)
         transfer_sent = min(donor_surplus_kw, transfer_needed)
         transfer_loss = transfer_sent * line_loss_fraction

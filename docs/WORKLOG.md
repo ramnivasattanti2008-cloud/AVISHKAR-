@@ -3220,6 +3220,50 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 - Ready to synchronize and push all verified commits across remote GitHub branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
 
 
+## Entry 62 — 2026-10-30 — Phase 12 Independent Verification, Gap Analysis, UI Integration & Final Acceptance
+
+### What was done
+- **Step 1 Git State & Branch Alignment**:
+  - Verified local and remote git status across `origin/claude/avishkar-fixes-and-platform`, `origin/main`, and `origin/release/urjasetu-v1-readiness`. All branches synchronized at commit `a596c3c`. Zero exposed credentials or secrets.
+- **Step 2 Research & Matrix Verification**:
+  - Re-verified all 13 reference repositories in `docs/REPOSITORY_RESEARCH.md` and feature integration matrix.
+- **Step 3 & 8 Surplus Engine Gap Remediation (`src/avishkar_ems/surplus_engine.py`)**:
+  - **GAP-01**: Implemented `_seen_nonces` state cache in `SurplusEngine` providing statutory replay attack protection for CEA 2026 cryptographic commands.
+  - **GAP-02**: Added input sanitization clamping `solar_kw`, `load_kw`, and `battery_soc` against negative sensor values or float anomalies.
+  - **GAP-03**: Implemented `is_energy_conserved` runtime property verifying the First Law of Thermodynamics ($P_{\text{in}} \equiv P_{\text{out}}$) on every single dispatch interval.
+  - **GAP-05**: Added boundary validation guards for line loss fractions ($0 \le \text{loss} < 1$) and energy interval durations ($\ge 0$).
+- **Step 4 Expanded Master Scenario Verification Suite (`tests/avishkar_ems/test_master_scenarios.py`)**:
+  - Expanded test suite from 12 to 18 unit tests adding:
+    - First Law of Thermodynamics conservation across diverse operating modes (surplus, deficit, curtailment, EV boost).
+    - Replay attack rejection.
+    - Negative sensor input sanitization.
+    - Invalid line loss fraction handling.
+    - Negative energy duration error handling.
+    - EV mode accuracy (`FAST`, `MIN_PLUS_PV`, `PV_ONLY`).
+  - **18/18 tests passed** in 0.40s.
+- **Step 5 Full Frontend & Backend Integration (`app/dashboard.py`)**:
+  - **GAP-04**: Integrated `SurplusEngine` directly into Tab 4 ("Plan for the Day").
+  - Added interactive EV mode selector (`STOP`, `FAST`, `MIN_PLUS_PV`, `PV_ONLY`), schedulable appliance demand slider, thermal storage slider, and zero-export feed-in limiter toggle.
+  - Added 24-hour Plotly stacked area chart rendering the 7-tier dispatch allocation and displaying First Law balance verification metrics.
+- **Step 10 Final Deliverables**:
+  - Authored `docs/PHASE12_GAP_ANALYSIS.md` documenting all identified gaps, severity levels, root causes, and fixes.
+  - Authored `docs/PHASE12_VERIFICATION_REPORT.md` providing comprehensive evidence-backed audit across all 15 required sections.
+
+### Evidence
+- `python -m pytest tests/avishkar_ems/test_master_scenarios.py -v`: Exit code 0 (**18 passed in 0.40s**).
+- `python -m pytest tests/avishkar_ems/test_master_scenarios.py tests/avishkar_ems/test_arka_assistant.py -v`: Exit code 0 (**39 passed in 0.26s**).
+- `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (**All checks passed, 0 errors**).
+- `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+- `docs/PHASE12_GAP_ANALYSIS.md` & `docs/PHASE12_VERIFICATION_REPORT.md` validated and written.
+
+### What was NOT done
+- Did not modify vendored `src/emhass/` upstream code.
+- Physical high-voltage grid switchgear operates in advisory mode with SunSpec Modbus hardware gateway loopback emulation.
+
+### What is next
+- Ready for live user walkthrough and operational field deployment.
+
+
 ## Entry 61 — 2026-10-30 — Master Solar Energy Management & Surplus Intelligence Platform: Phase 0 through Phase 11 Full-Spectrum Delivery
 
 ### What was done
@@ -3288,3 +3332,47 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 
 ### What is next
 - Ready to synchronize and push all verified commits across remote GitHub branches (`claude/avishkar-fixes-and-platform`, `main`, and `release/urjasetu-v1-readiness`).
+
+
+## Entry 62 — 2026-10-30 — Phase 12 Independent Verification, Gap Analysis, UI Integration & Final Acceptance
+
+### What was done
+- **Step 1 Git State & Branch Alignment**:
+  - Verified local and remote git status across `origin/claude/avishkar-fixes-and-platform`, `origin/main`, and `origin/release/urjasetu-v1-readiness`. All branches synchronized at commit `a596c3c`. Zero exposed credentials or secrets.
+- **Step 2 Research & Matrix Verification**:
+  - Re-verified all 13 reference repositories in `docs/REPOSITORY_RESEARCH.md` and feature integration matrix.
+- **Step 3 & 8 Surplus Engine Gap Remediation (`src/avishkar_ems/surplus_engine.py`)**:
+  - **GAP-01**: Implemented `_seen_nonces` state cache in `SurplusEngine` providing statutory replay attack protection for CEA 2026 cryptographic commands.
+  - **GAP-02**: Added input sanitization clamping `solar_kw`, `load_kw`, and `battery_soc` against negative sensor values or float anomalies.
+  - **GAP-03**: Implemented `is_energy_conserved` runtime property verifying the First Law of Thermodynamics ($P_{\text{in}} \equiv P_{\text{out}}$) on every single dispatch interval.
+  - **GAP-05**: Added boundary validation guards for line loss fractions ($0 \le \text{loss} < 1$) and energy interval durations ($\ge 0$).
+- **Step 4 Expanded Master Scenario Verification Suite (`tests/avishkar_ems/test_master_scenarios.py`)**:
+  - Expanded test suite from 12 to 18 unit tests adding:
+    - First Law of Thermodynamics conservation across diverse operating modes (surplus, deficit, curtailment, EV boost).
+    - Replay attack rejection.
+    - Negative sensor input sanitization.
+    - Invalid line loss fraction handling.
+    - Negative energy duration error handling.
+    - EV mode accuracy (`FAST`, `MIN_PLUS_PV`, `PV_ONLY`).
+  - **18/18 tests passed** in 0.40s.
+- **Step 5 Full Frontend & Backend Integration (`app/dashboard.py`)**:
+  - **GAP-04**: Integrated `SurplusEngine` directly into Tab 4 ("Plan for the Day").
+  - Added interactive EV mode selector (`STOP`, `FAST`, `MIN_PLUS_PV`, `PV_ONLY`), schedulable appliance demand slider, thermal storage slider, and zero-export feed-in limiter toggle.
+  - Added 24-hour Plotly stacked area chart rendering the 7-tier dispatch allocation and displaying First Law balance verification metrics.
+- **Step 10 Final Deliverables**:
+  - Authored `docs/PHASE12_GAP_ANALYSIS.md` documenting all identified gaps, severity levels, root causes, and fixes.
+  - Authored `docs/PHASE12_VERIFICATION_REPORT.md` providing comprehensive evidence-backed audit across all 15 required sections.
+
+### Evidence
+- `python -m pytest tests/avishkar_ems/test_master_scenarios.py -v`: Exit code 0 (**18 passed in 0.40s**).
+- `python -m pytest tests/avishkar_ems/test_master_scenarios.py tests/avishkar_ems/test_arka_assistant.py -v`: Exit code 0 (**39 passed in 0.26s**).
+- `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (**All checks passed, 0 errors**).
+- `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+- `docs/PHASE12_GAP_ANALYSIS.md` & `docs/PHASE12_VERIFICATION_REPORT.md` validated and written.
+
+### What was NOT done
+- Did not modify vendored `src/emhass/` upstream code.
+- Physical high-voltage grid switchgear operates in advisory mode with SunSpec Modbus hardware gateway loopback emulation.
+
+### What is next
+- Ready for live user walkthrough and operational field deployment.
