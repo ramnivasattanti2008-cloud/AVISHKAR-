@@ -144,7 +144,10 @@ that matter most to anyone picking this up:
 2. **Peer-to-peer allocation is a calculation, not a transfer**, and says so everywhere. Whether it may happen at
    all depends on the law, the licensee, the metering and the wiring.
 3. **One defect is open**: a cosmetic Plotly console warning on the dashboard (issue 27). The page renders and no
-   figure on it is wrong. The evidence gathered, and what was ruled out, is written down.
+   figure on it is wrong, and nothing in AVISHKAR's own arithmetic produces the value — Plotly computes it from
+   the box it is given. Four hypotheses were tested by experiment and all four fail: the gauge's values, its
+   height, a tile failure, and a chart laid out inside a hidden container. It appears on both view modes, which
+   share no charts. Left alone deliberately rather than guessed at.
 4. **Determinism needs an identical interpreter, which the lock file does not pin.** Two independent runs of
    `examples/run_demo.py` here were **bit-identical**, so the pipeline is deterministic as documented. But the
    `results/` committed earlier the same day differed in the fifth significant figure — and only for the

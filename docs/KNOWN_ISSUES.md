@@ -200,30 +200,29 @@ node with no configured site.  Fixed: both draw only the trades they are given, 
 they do not know, and report equipment as "not configured in AVISHKAR" rather than guessing a size.
 Test: `tests/avishkar_ems/test_satellite.py::test_build_microgrid_plotly_map`.
 
-**27. One chart asks Plotly to place a label at -Infinity.**  Opening the dashboard in Chromium leaves two
-console errors, `<text> attribute y: Expected length, "-Infinity"`, raised inside Plotly's own bundle.  The
-page renders, no Streamlit exception is raised, and no figure on it is wrong.
+**27. Something asks Plotly to place a text label at -Infinity.**  Opening the dashboard in Chromium leaves two
+console errors, `<text> attribute y: Expected length, "-Infinity"`, raised inside Plotly's own bundle.  The page
+renders, no Streamlit exception is raised, and no figure on it is wrong.  Nothing in AVISHKAR's own arithmetic
+produces the value: `-Infinity` is computed inside Plotly's layout code from the size of the box it is given.
 
-What was established: the plot is the `indicator` (gauge) trace, which is the SoC gauge at
-`app/home_setup_view.py:344` -- the only `go.Indicator` in the repository.  The same gauge rendered on its own
-in a one-file Streamlit app produces **no** error, so neither its values nor its step ranges are at fault, and
-giving it more height (300 px, larger top margin) did not change anything either.  Carto's tile host is
-reachable from here, so it is not a tile failure.  The remaining explanation is that Plotly lays the chart out
-while its container has no size -- a chart inside a collapsed `st.expander` or an inactive `st.tabs` panel is
-in the DOM with `display: none` -- and computes a text position from a zero-height box; it re-lays out
-correctly once that panel is opened, which is why nothing on screen is wrong.  That was not confirmed: the
-isolation app for it would not start in the time available.
+What was ruled out, each by an experiment rather than by reasoning:
 
-Open, cosmetic, and **not** worth code changes until confirmed.  Nothing in AVISHKAR's own arithmetic produces
-the value: `-Infinity` is computed inside Plotly's layout code from the size of the box it is given.
+- **Not the SoC gauge's values or step ranges.**  The plot without axis types is an `indicator` trace, and the only
+  `go.Indicator` in the repository is the battery gauge at `app/home_setup_view.py:344`.  Rendered on its own in a
+  one-file Streamlit app, with the same values and the same four coloured bands, it produces **no** error.
+- **Not its height.**  Raising it from 240 px to 300 px with a larger top margin changed nothing.
+- **Not a tile failure.**  Carto's tile host answers 200 from this container.
+- **Not a chart laid out inside a hidden container.**  A chart in a collapsed `st.expander` and a chart in an
+  inactive `st.tabs` panel, in a one-file app, produce **no** error either.  (An earlier version of this entry
+  offered that as the likely explanation; it is wrong, and the experiment is why.)
 
-**One latent defect was found while looking, and is left alone deliberately.**  The gauge builds its coloured
-bands assuming `0 <= min_soc_pct <= preferred_backup_reserve_pct <= max_soc_pct <= 100`, and
-`BatteryConfig.validate()` does not check the reserve against the other two.  A home whose backup reserve is
-set below its minimum SoC floor would give Plotly a reversed band.  The shipped defaults (15 / 25 / 95) are
-ordered, so nothing is wrong today.  Adding that check to `validate()` would be correct -- a reserve below the
-floor is meaningless, since the floor already protects more -- but it would reject profiles already saved to
-disk, so it belongs in a change that also migrates them.
+It is also **not specific to one view**: both console errors appear on the personal-home view and again on the
+State & National Explorer, which share no charts.  Two errors each time is consistent with one `gauge+number`
+indicator emitting one for its title and one for its number, but the only indicator in the repository is on the
+home view, so that does not fit either.
+
+Open, cosmetic, and deliberately left alone: four hypotheses have been tested and none holds, so any change now
+would be a guess at code that is not misbehaving in any way a reader can see.
 
 **28. The documented test runtime assumes a warm cache.**  `CLAUDE.md` gives the EMS suite as about 100 s.
 With an empty `data/cache/` it took **41 minutes 27 seconds** here (554 passed, 1 skipped), because every
