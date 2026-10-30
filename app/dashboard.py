@@ -90,63 +90,106 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Premium Modern Dark Theme */
+    /* Ultra-Premium Executive Dark Theme */
     .stApp {
-        background-color: #0b0f19;
-        color: #f1f5f9;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: radial-gradient(circle at 50% 0%, #0f172a 0%, #070b14 100%);
+        color: #f8fafc;
+        font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-    /* Tab Horizontal Scrollbar */
+    /* Tab Horizontal Navigation Bar */
     div[data-baseweb="tab-list"] {
         overflow-x: auto !important;
         flex-wrap: nowrap !important;
         scrollbar-width: thin !important;
-        padding-bottom: 4px !important;
+        padding-bottom: 6px !important;
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-radius: 12px !important;
+        padding: 4px !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
     }
     /* Tab Styling */
     button[data-baseweb="tab"] {
         font-size: 13px !important;
         font-weight: 600 !important;
-        padding: 8px 14px !important;
-        border-radius: 8px 8px 0 0 !important;
-        transition: all 0.2s ease !important;
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        color: #94a3b8 !important;
+    }
+    button[data-baseweb="tab"]:hover {
+        color: #38bdf8 !important;
+        background: rgba(56, 189, 248, 0.08) !important;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
-        background: rgba(56, 189, 248, 0.15) !important;
-        border-bottom: 2px solid #38bdf8 !important;
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.1) 100%) !important;
+        border: 1px solid rgba(56, 189, 248, 0.4) !important;
         color: #38bdf8 !important;
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15) !important;
     }
-    /* Modern Rounded Buttons with Hover Elevation */
+    /* Modern Glass Metric Cards */
+    div[data-testid="stMetric"] {
+        background: rgba(30, 41, 59, 0.45) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 14px !important;
+        padding: 16px 20px !important;
+        backdrop-filter: blur(12px) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+        transition: transform 0.2s ease, border-color 0.2s ease !important;
+    }
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-2px) !important;
+        border-color: rgba(56, 189, 248, 0.3) !important;
+    }
+    div[data-testid="stMetricLabel"] {
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        color: #94a3b8 !important;
+    }
+    div[data-testid="stMetricValue"] {
+        font-weight: 800 !important;
+        font-size: 26px !important;
+        color: #f8fafc !important;
+        letter-spacing: -0.5px !important;
+    }
+    /* Modern Rounded Buttons */
     .stButton > button {
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         font-weight: 600 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
         transition: all 0.2s ease-in-out !important;
     }
     .stButton > button:hover {
         transform: translateY(-1px) !important;
-        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25) !important;
+        box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25) !important;
+        border-color: rgba(56, 189, 248, 0.4) !important;
     }
-    /* Metric Cards */
-    div[data-testid="stMetricValue"] {
-        font-weight: 800 !important;
+    /* Containers & Expanders */
+    div[data-testid="stVerticalBlock"] > div[data-testid="stContainer"] {
+        background: rgba(15, 23, 42, 0.5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-radius: 14px !important;
+        padding: 16px !important;
+        backdrop-filter: blur(10px) !important;
     }
-    /* Expander Aesthetics */
     .streamlit-expanderHeader {
         font-weight: 700 !important;
         font-size: 14px !important;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
+        background: rgba(30, 41, 59, 0.3) !important;
     }
     /* Chat Bubbles */
     .chat-user-bubble {
         background: rgba(59, 130, 246, 0.15);
         border: 1px solid rgba(59, 130, 246, 0.35);
         border-radius: 12px;
-        padding: 10px 16px;
+        padding: 12px 18px;
         margin-top: 8px;
         margin-bottom: 8px;
         color: #93c5fd;
         font-weight: 600;
-        font-size: 13.5px;
+        font-size: 14px;
     }
     </style>
     """,
@@ -850,19 +893,19 @@ with arka_exp:
 # TABS ARCHITECTURE (ORDERED 12-STAGE SOLAR LIFECYCLE)
 # ==============================================================================
 tab_connect, tab_sat, tab_storage, tab_plan, tab_citizen, tab_ev_grid, tab_hardware, tab_offers, tab_reg_upi, tab_fleet, tab_monitor, tab_payback, tab_integrations = st.tabs([
-    "⚡ 1. Solar Connection & Smart Meter",
-    "🛰️ 2. Satellite Radar & Generation",
-    "🔋 3. Battery Storage & Advisor",
-    "📊 4. Plan for the Day",
-    "🚦 5. Smart Appliances & Citizen Guide",
-    "🚗 6. EV V2H & Feeder Guard",
-    "🔌 7. Hardware Inverter Gateway",
-    "🤝 8. Offers & Beckn DEG",
-    "⚖️ 9. Wheeling & UPI Settlement",
-    "🌐 10. Fleet Pooling (Multi-Site)",
-    "🔍 11. Fault Monitoring & Flex",
-    "💰 12. Payback & Carbon Credits",
-    "🚀 13. Surplus Intelligence (Multi-Repo)",
+    "⚡ Rooftop Sizing",
+    "🛰️ Solar Radar",
+    "🔋 Battery Storage",
+    "📊 Daily Plan",
+    "🚦 Smart Appliances",
+    "🚗 EV Charging",
+    "🔌 Inverter Gateway",
+    "🤝 P2P Trading",
+    "⚖️ UPI Settlement",
+    "🌐 Fleet Pooling",
+    "🔍 Health Monitor",
+    "💰 Lifetime Savings",
+    "🚀 Surplus Engine",
 ])
 
 # ==============================================================================
