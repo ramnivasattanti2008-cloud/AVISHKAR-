@@ -26,8 +26,10 @@ def sample_context() -> dict:
         "monthly_save": 3770.0,
         "clean_kwh": 14.5,
         "state_name": "Uttar Pradesh",
+        # What the dashboard now passes: this site's own computed figures. No state average, because
+        # AVISHKAR holds no sourced one (see tests/avishkar_ems/test_no_invented_figures.py).
         "self_consumption_pct": 79.2,
-        "avg_state_pct": 61.0,
+        "annual_save": 15529.0,
     }
 
 
@@ -117,11 +119,51 @@ def test_arka_carbon_and_ccts_scenario(arka: ArkaPersonalAssistant, sample_conte
 
 
 def test_arka_state_benchmark_scenario(arka: ArkaPersonalAssistant, sample_context: dict):
+    """Asked to compare the home against its state, ARKA reports the home's own figures and refuses to rank it.
+
+    This test used to assert the opposite: that the reply contained "79.2%" and that `community_rank` held
+    "Top 12%". Both were constants written into the reply, alongside an 81.5% "reduction in utility coal
+    imports" and INR 11.4 lakh of "family wealth", none of which had a source. The test was locking in the
+    invention, so it has been rewritten along with the handler.
+    """
     resp = arka.answer_query("How does my home compare to the average solar home in Uttar Pradesh?", sample_context)
     assert resp.intent == "STATE_COMPARISON"
     assert "Uttar Pradesh" in resp.headline or "Uttar Pradesh" in resp.answer_text
-    assert "79.2%" in resp.answer_text
-    assert "Top 12%" in resp.key_metrics["community_rank"]
+
+    # It reports what it was given about this home, computed elsewhere from the replay.
+    assert "79.2%" in resp.answer_text  # the caller's own figure, passed in through the context
+    assert "15,529" in resp.answer_text  # the replay's annual benefit
+
+    # And it says plainly that there is nothing to compare against, rather than inventing one.
+    assert "holds no sourced residential average" in resp.answer_text
+    assert "invention" in resp.answer_text
+    assert resp.key_metrics["state_average_pct"] is None
+    assert resp.key_metrics["community_rank"] is None
+    assert "Top 12%" not in resp.answer_text
+
+
+def test_arka_state_benchmark_says_what_it_does_not_know(arka: ArkaPersonalAssistant):
+    """With no figures in the context at all, it says so instead of falling back to a plausible number."""
+    resp = arka.answer_query("How does my home compare to the state average?", {"state_name": "Rajasthan"})
+    assert resp.intent == "STATE_COMPARISON"
+    assert resp.answer_text.count("not known") >= 2
+    assert resp.key_metrics["self_consumption_pct"] is None
+    assert resp.key_metrics["annual_benefit_inr"] is None
+
+
+def test_arka_state_benchmark_refuses_to_rank_in_hindi_too(arka: ArkaPersonalAssistant, sample_context: dict):
+    """Strings shown to people come in English/Hindi pairs, and so must the refusal to invent a benchmark.
+
+    The question is put in English because the intent classifier matches on English keywords only
+    (`compare|benchmark|state average|district|<state name>`); a Hindi phrasing of the same question falls
+    through to the general handler. That is a pre-existing limit of the classifier, not of this reply, and it is
+    noted here so the next reader does not mistake one for the other. `lang="hi"` is what selects the Hindi text.
+    """
+    resp = arka.answer_query("How does my home compare to the state average?", sample_context, lang="hi")
+    assert resp.intent == "STATE_COMPARISON"
+    assert resp.language == "hi"
+    assert "AVISHKAR के पास नहीं है" in resp.answer_text
+    assert "शीर्ष 12%" not in resp.answer_text
 
 
 def test_arka_hindi_multilingual_response(arka: ArkaPersonalAssistant, sample_context: dict):

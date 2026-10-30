@@ -201,6 +201,12 @@ st.markdown(html_block("""
 # ==============================================================================
 # PERSONAL HOME & PLACE REGISTRY (Human-Centric Residential & Micro-Commercial)
 # ==============================================================================
+# Each entry describes a real demo site: its place, its distribution company, its sanctioned load and the
+# equipment it has. It holds **no money and no consumer number**. It used to carry a monthly bill, a monthly
+# saving, an annual saving and a DISCOM consumer id, all invented -- the Mathura entry claimed INR 45,240 a year
+# where the engine's own replay of that site computes about INR 15,300, three times less, and the consumer id
+# was a realistic-looking fake. Every figure in money is now worked out from the replay (`get_payback`), and a
+# consumer number is something only the household can supply.
 PERSONAL_HOMES = {
     "home-mathura": {
         "short_title": "🏡 My Home (Mathura, UP)",
@@ -208,20 +214,14 @@ PERSONAL_HOMES = {
         "home_type": "3-BHK Independent Villa",
         "location": "Krishna Nagar, Mathura, Uttar Pradesh",
         "discom": "DVVNL (Dakshinanchal Vidyut)",
-        "consumer_no": "DVVNL-RES-281001-8492",
         "sanctioned_load_kw": 3.0,
         "family_size": "4 Family Members (Parents + 2 Kids)",
         "solar_setup": "3 kWp Rooftop Solar (6 Mono PERC Panels)",
         "battery_setup": "5 kWh LiFePO4 Inverter Storage (51.2V 100Ah)",
-        "pre_solar_bill_inr": 4250.0,
-        "current_avg_bill_inr": 480.0,
-        "monthly_savings_inr": 3770.0,
-        "annual_savings_inr": 45240.0,
         "emergency_devices": "LED Lights, Fans, Refrigerator, Wi-Fi, Laptops",
         "heavy_shiftable": "Washing Machine, Geyser, 1.5-Ton Inverter AC",
         "state_name": "Uttar Pradesh",
         "state_code": "UP",
-        "avg_state_solar_self_consume_pct": 61.0,
     },
     "clinic-jaipur": {
         "short_title": "🏥 My Day Clinic (Jaipur, RJ)",
@@ -229,20 +229,14 @@ PERSONAL_HOMES = {
         "home_type": "Healthcare Day Clinic",
         "location": "Malviya Nagar, Jaipur, Rajasthan",
         "discom": "JVVNL (Jaipur Vidyut)",
-        "consumer_no": "JVVNL-COM-302015-1104",
         "sanctioned_load_kw": 5.0,
         "family_size": "Staff (3 Doctors, 4 Nurses) + Daily Patients",
         "solar_setup": "5 kWp High-Efficiency Solar (10 TopCon Panels)",
         "battery_setup": "10 kWh LiFePO4 Commercial BESS",
-        "pre_solar_bill_inr": 8500.0,
-        "current_avg_bill_inr": 1150.0,
-        "monthly_savings_inr": 7350.0,
-        "annual_savings_inr": 88200.0,
         "emergency_devices": "Vaccine Chillers, Diagnostic Monitors, OT Lights",
         "heavy_shiftable": "Clinic Autoclave Sterilizer, 2x 1.5-Ton Split ACs",
         "state_name": "Rajasthan",
         "state_code": "RJ",
-        "avg_state_solar_self_consume_pct": 65.0,
     },
     "shop-pune": {
         "short_title": "🏪 My Shop / Retail Store (Pune, MH)",
@@ -250,20 +244,14 @@ PERSONAL_HOMES = {
         "home_type": "Retail Commercial Shop",
         "location": "Kothrud, Pune, Maharashtra",
         "discom": "MSEDCL (Mahavitaran)",
-        "consumer_no": "MSEDCL-COM-411002-6721",
         "sanctioned_load_kw": 2.5,
         "family_size": "Shopkeeper + 2 Staff + Customers",
         "solar_setup": "2 kWp Rooftop PV Array (4 Panels)",
         "battery_setup": "3.5 kWh LiFePO4 Smart Battery",
-        "pre_solar_bill_inr": 5400.0,
-        "current_avg_bill_inr": 720.0,
-        "monthly_savings_inr": 4680.0,
-        "annual_savings_inr": 56160.0,
         "emergency_devices": "Beverage Display Coolers, POS Billing, CCTV, Lights",
         "heavy_shiftable": "Deep Freezer, 1-Ton Shop AC, Neon Signage",
         "state_name": "Maharashtra",
         "state_code": "MH",
-        "avg_state_solar_self_consume_pct": 58.0,
     },
 }
 
@@ -442,6 +430,26 @@ with st.sidebar.expander("🛡️ System Safety & Deployment Health", expanded=F
 
 st.sidebar.caption("🔒 **Privacy Guarantee**: All household smart meter readings and device usage remain 100% on this local personal instance. Zero private telemetry is shared outside.")
 
+#: Length of one replay step, hours. The pipeline is 15-minute throughout (see `execute.DT`).
+DT_HOURS = 0.25
+#: Days between sampled days for the banner's replay. It matches the Payback tab's own default, so both read the
+#: same cached result rather than computing the year twice.
+PAYBACK_EVERY_DEFAULT = 28
+
+
+def solar_self_consumption(steps) -> float | None:
+    """Share of the energy the panels made that was used on site rather than exported, over a replay.
+
+    Taken from the replay's own columns: `export_kwh` is what left the meter, and the panels' energy is
+    `pv_kw` over the step length. Returns None when the panels made nothing, rather than dividing by zero.
+    """
+    pv_kwh = float(steps["pv_kw"].sum()) * DT_HOURS
+    if pv_kwh <= 0:
+        return None
+    exported_kwh = float(steps["export_kwh"].sum()) if "export_kwh" in steps else 0.0
+    return max(0.0, min(1.0, (pv_kwh - exported_kwh) / pv_kwh))
+
+
 # --- Primary Day Simulation (Ultra-Fast Cached) ---
 dv = get_cached_day_view(key, str(day), soc0)
 s, ex = dv.plan.steps, dv.ems.steps
@@ -450,10 +458,17 @@ hours = s.index
 # ==============================================================================
 # PERSONAL HOME COMMAND BANNER (Vivid, Warm & Personal)
 # ==============================================================================
-pre_bill = my_home["pre_solar_bill_inr"]
-cur_bill = my_home["current_avg_bill_inr"]
-monthly_save = my_home["monthly_savings_inr"]
-annual_save = my_home["annual_savings_inr"]
+# The money on this banner comes from replaying the held-out year for this site with the EMS against the bill
+# the household would have paid with no system at all: `bill_without_system` is every kWh of its measured load
+# bought at its own tariff, and `benefit` is what the system saved against that. A month is 365/12 days, and the
+# sampled days are annualised, so both figures are scaled the same way and the difference between them is exact.
+_pb_table, _pb_totals, _pb_trades = get_payback(key, PAYBACK_EVERY_DEFAULT)
+_pb_days = max(_pb_totals.days, 1)
+_DAYS_PER_MONTH = 365.0 / 12.0
+annual_save = _pb_totals.annual_benefit()
+monthly_save = annual_save / 12.0
+pre_bill = _pb_totals.bill_without_system / _pb_days * _DAYS_PER_MONTH
+cur_bill = pre_bill - monthly_save
 
 st.title(f"⚡ {my_home['owner_name']}")
 st.markdown(
@@ -465,7 +480,7 @@ st.markdown(html_block(f"""
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
             <div>
                 <span style="background: #312e81; color: #a5b4fc; font-weight: 700; padding: 4px 12px; border-radius: 20px; font-size: 12px; border: 1px solid #4338ca;">
-                    {my_home['home_type']} • Consumer ID: {my_home['consumer_no']}
+                    {my_home['home_type']} • {my_home['discom']}
                 </span>
                 <div style="font-size: 24px; font-weight: 800; color: #f8fafc; margin-top: 8px;">
                     {my_home['owner_name']}
@@ -787,8 +802,8 @@ with arka_exp:
             "annual_save": float(annual_save),
             "clean_kwh": float(ex["pv_kw"].sum() * 0.25),
             "state_name": my_home["state_name"],
-            "self_consumption_pct": 79.2,
-            "avg_state_pct": my_home.get("avg_state_solar_self_consume_pct", 61.0),
+            # Computed from the replay, not a constant. None when the panels made nothing on the replayed day.
+            "self_consumption_pct": (lambda v: None if v is None else v * 100.0)(solar_self_consumption(ex)),
         }
         res = arka_assistant.answer_query(q_text, arka_context, lang=lang)
         st.session_state.arka_chat_history.append({"query": q_text, "response": res})
@@ -899,7 +914,9 @@ with tab_connect:
 
         q_col1, q_col2, q_col3 = st.columns(3)
         h_type = q_col1.selectbox("Property Type:", ["1-BHK / Small Apartment", "2-BHK / Independent Floor", "3-BHK Villa / Townhouse", "Commercial Day Clinic / Shop", "Large Bungalow / Farmhouse"], index=2)
-        h_bill = q_col2.slider("Average Monthly DISCOM Bill (₹):", 1000, 15000, int(my_home["pre_solar_bill_inr"]), 250)
+        # Starts from what this site's own replay says it would pay with no system, rounded to the slider's step.
+        _bill_start = int(min(15000, max(1000, round(pre_bill / 250.0) * 250)))
+        h_bill = q_col2.slider("Average Monthly DISCOM Bill (₹):", 1000, 15000, _bill_start, 250)
         h_ac = q_col3.selectbox("Do you have Air Conditioning / EV?", ["No AC (Ceiling Fans Only)", "1 Split AC (Used at Night)", "2-3 Split ACs (Day & Night)", "ACs + Electric Vehicle (EV)"], index=2)
 
         # Recommendation logic grounded in monthly bill and loads
@@ -967,7 +984,7 @@ PM SURYA GHAR MUFT BIJLI YOJANA — ROOFTOP SOLAR FEASIBILITY DOSSIER
 ================================================================================
 Generated for: {my_home['owner_name']}
 Property Category: {h_type}
-Consumer ID: {my_home['consumer_no']}
+Consumer ID: (not held by AVISHKAR -- write your own from your DISCOM bill)
 DISCOM / Utility: {my_home['discom']} ({my_home['state_name']})
 Location: {my_home['location']}
 Sanctioned Load: {my_home['sanctioned_load_kw']:.1f} kW
@@ -1005,7 +1022,7 @@ Current Average Monthly Bill: Rs {h_bill:,.0f}
 4. STATUTORY NEXT STEPS FOR INSTALLATION
 --------------------------------------------------------------------------------
 Step 1: Register on the National Portal: https://pmsuryaghar.gov.in
-Step 2: Enter Consumer No ({my_home['consumer_no']}) & Select {my_home['discom']}.
+Step 2: Enter your own Consumer No, as printed on your {my_home['discom']} bill, and select {my_home['discom']}.
 Step 3: Submit Feasibility Approval for {rec_kw:.1f} kWp with {my_home['discom']}.
 Step 4: Select an MNRE-empaneled vendor to execute installation with DCR modules.
 Step 5: DISCOM net meter commissioning and inspection within 15 days SLA.
@@ -2364,17 +2381,43 @@ with tab_payback:
     st.subheader(f"💰 12. Lifetime Payback, PM Surya Ghar & State Comparison ({my_home['owner_name']})")
     st.caption(f"Financial savings for {my_home['owner_name']}, payback years with subsidy, hold-out forecast calibration, and comparison with {my_home['state_name']} state averages.")
 
-    # 1. My Home vs State Benchmark
-    st.markdown(f"##### 🏡 My Home vs {my_home['state_name']} State Average Benchmark")
+    # 1. What this site's own replay says. Every figure below is computed from the held-out days; there is no
+    # comparison with a state or district average, because no sourced figure for one exists here. This block
+    # previously showed a self-consumption of 79.2%, a grid-import reduction of 81.5% with "Top 12% Cleanest
+    # Homes in District", and 78 tons of CO2 "equivalent to 3,500 trees" -- every one of them a constant typed
+    # into the page, and the carbon figure resting on an emission factor this project has no source for.
+    st.markdown("##### 🏡 What the replay of this site actually shows")
+    _sc = solar_self_consumption(ex)
+    _import_cut = (1.0 - (_pb_totals.import_cost / _pb_totals.bill_without_system)) * 100.0 if _pb_totals.bill_without_system > 0 else None
     b_col1, b_col2, b_col3, b_col4 = st.columns(4)
-    b_col1.metric("My Solar Self-Consumption", "79.2%", f"+{79.2 - my_home['avg_state_solar_self_consume_pct']:.1f}% vs State Avg ({my_home['avg_state_solar_self_consume_pct']}%)")
-    b_col2.metric("Grid Import Reduction", "81.5%", "Top 12% Cleanest Homes in District")
-    b_col3.metric("25-Year Lifetime Savings", f"₹{(annual_save * 25.0):,.0f}", "Net Wealth Created for Family")
-    b_col4.metric("CO₂ Displaced (25-Yr)", "78 Tons CO₂", "Equivalent to 3,500 trees")
+    b_col1.metric(
+        "Solar used on site (this day)",
+        "—" if _sc is None else f"{_sc * 100.0:.1f}%",
+        help="Of the energy the panels made on the replayed day, the share the household and its battery used instead of exporting it. Computed from the replay, for one day: it is not a yearly figure and not a comparison with anyone else.",
+    )
+    b_col2.metric(
+        "Less spent on imported energy",
+        "—" if _import_cut is None else f"{_import_cut:.1f}%",
+        help="How much smaller the cost of bought energy is than the bill this household would have paid with no system at all, over the sampled days. A money figure, not an energy one.",
+    )
+    b_col3.metric(
+        "25-year saving, undiscounted",
+        f"₹{annual_save * 25.0:,.0f}",
+        help="The replay's annual benefit multiplied by 25. It applies no discount rate, no tariff escalation and no equipment degradation; the Battery tab's lifetime view does that properly.",
+    )
+    b_col4.metric(
+        "CO₂ displaced",
+        "Not stated",
+        help="AVISHKAR holds no sourced emission factor for this grid, so it will not put a number here. A figure in tons would be an invention.",
+    )
+    st.caption(
+        f"These are this site's own numbers, from {_pb_totals.days} sampled days of its held-out period. "
+        f"AVISHKAR holds no state or district average for {my_home['state_name']}, so nothing here is ranked against one."
+    )
 
     st.markdown("---")
     st.markdown("##### 📊 Financial Analysis vs Baselines")
-    every = st.select_slider("Replay detail (days between sampled days)", options=[28, 14, 7], value=28)
+    every = st.select_slider("Replay detail (days between sampled days)", options=[28, 14, 7], value=PAYBACK_EVERY_DEFAULT)
     table, ems_totals, trades = get_payback(key, every)
     show = table.copy()
     show["annual_benefit_inr"] = show["annual_benefit_inr"].round(0)

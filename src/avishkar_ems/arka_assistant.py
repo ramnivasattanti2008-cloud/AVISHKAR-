@@ -761,30 +761,46 @@ class ArkaPersonalAssistant:
         )
 
     def _handle_state_comparison(self, query: str, ctx: dict[str, Any], is_hi: bool) -> ArkaResponse:
-        state = str(ctx.get("state_name", "Uttar Pradesh"))
-        self_cons = float(ctx.get("self_consumption_pct", 79.2))
-        avg_state = float(ctx.get("avg_state_pct", 61.0))
+        """What this home's own replay shows, and plainly that there is nothing to compare it against.
+
+        This used to answer with a district ranking ("Top 12% cleanest homes"), a grid-independence ratio of
+        81.5%, a state residential average, and 25-year wealth of INR 11.4 lakh -- all of them constants written
+        into the reply, in both languages, with no source behind any of them. AVISHKAR holds no state or district
+        benchmark for residential solar self-consumption, so the only honest answer names what this site's own
+        replay says and states that no comparison is available.
+        """
+        state = str(ctx.get("state_name", "your state"))
+        self_cons = ctx.get("self_consumption_pct")
+        annual_save = ctx.get("annual_save")
+
+        def _pct(v: Any) -> str:
+            return "not known" if v is None else f"{float(v):.1f}%"
+
+        def _money(v: Any) -> str:
+            return "not known" if v is None else f"₹{float(v):,.0f}"
 
         if is_hi:
-            headline = f"🏛️ {state} राज्य तुलना: आपका घर जिले के शीर्ष 12% स्वच्छ घरों में"
+            headline = "🏛️ आपके घर के अपने आंकड़े (राज्य औसत उपलब्ध नहीं)"
             text = (
-                f"आपके घर का प्रदर्शन {state} के औसत आवासीय सौर उपभोक्ताओं की तुलना में:\n\n"
-                f"- **आपका सौर स्व-उपभोग (Self-Consumption):** **{self_cons:.1f}%** ({state} का औसत: {avg_state:.1f}%)\n"
-                "- **ग्रिड निर्भरता में कमी:** **81.5%** कम बिजली ग्रिड से ली गई\n"
-                "- **जिले में रैंकिंग:** आप अपने जिले के **शीर्ष 12% सबसे कुशल सौर घरों** में हैं!\n"
-                "- **25 साल की शुद्ध पारिवारिक संपत्ति निर्माण:** **₹11.4 लाख** की संचयी बचत।"
+                f"आपके घर के बारे में जो मापा और गणना किया गया है, वही नीचे है:\n\n"
+                f"- **आपका सौर स्व-उपभोग (इस दिन):** **{_pct(self_cons)}**\n"
+                f"- **इस प्रणाली से वार्षिक लाभ:** **{_money(annual_save)}** प्रति वर्ष "
+                "(बिना प्रणाली वाले बिल की तुलना में, आपके ही टैरिफ पर)\n\n"
+                f"**{state} या आपके जिले का कोई प्रमाणित औसत AVISHKAR के पास नहीं है**, इसलिए न कोई तुलना "
+                "दी जा रही है और न कोई रैंकिंग। ऐसा कोई आंकड़ा बताना अनुमान होगा, तथ्य नहीं।"
             )
-            action = "अधिक जानकारी के लिए साइडबार में 'State & National Explorer' चुनें।"
+            action = "अपने ही आंकड़े विस्तार से देखने के लिए 'Payback' टैब खोलें।"
         else:
-            headline = f"🏛️ {state} Benchmark: Your Home Ranks in the Top 12% Cleanest in District"
+            headline = "🏛️ What your own home shows (no state average is held)"
             text = (
-                f"Here is how your home compares against residential benchmarks across {state}:\n\n"
-                f"- **Your Solar Self-Consumption:** **{self_cons:.1f}%** ({state} Residential Average: {avg_state:.1f}%)\n"
-                "- **Grid Independence Ratio:** **81.5%** reduction in utility coal imports\n"
-                "- **District Community Standing:** You rank in the **Top 12% most efficient solar homes** in your DISCOM area!\n"
-                "- **25-Year Lifetime Wealth Created:** Over **₹11.4 Lakhs** in cumulative family wealth preserved."
+                f"Here is what has been measured and computed for your home:\n\n"
+                f"- **Your solar used on site (this day):** **{_pct(self_cons)}**\n"
+                f"- **Annual benefit from this system:** **{_money(annual_save)}** a year, "
+                "against the bill you would have paid with no system, at your own tariff\n\n"
+                f"**AVISHKAR holds no sourced residential average for {state} or for your district**, so no "
+                "comparison and no ranking is given here. Quoting one would be an invention, not a fact."
             )
-            action = "Toggle to 'State & National Explorer' in the sidebar to view district and state policy comparisons."
+            action = "Open the Payback tab to see your own figures in full, with the days they came from."
 
         return ArkaResponse(
             query=query,
@@ -792,8 +808,13 @@ class ArkaPersonalAssistant:
             headline=headline,
             answer_text=text,
             action_recommendation=action,
-            key_metrics={"self_consumption_pct": self_cons, "state_avg_pct": avg_state, "community_rank": "Top 12%"},
-            statutory_grounding="State Nodal Agency Renewable Energy Progress Report.",
+            key_metrics={
+                "self_consumption_pct": self_cons,
+                "annual_benefit_inr": annual_save,
+                "state_average_pct": None,
+                "community_rank": None,
+            },
+            statutory_grounding=None,
             suggested_followups=[
                 "What state net-metering rules apply in my jurisdiction?",
                 "How much will I save over 25 years with solar?",
