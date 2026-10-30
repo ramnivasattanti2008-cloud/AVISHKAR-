@@ -4,9 +4,10 @@ A fresh container, nothing pre-built. Both applications were installed, started 
 number below was printed by a command run here; where something was not checked, this report says so rather than
 implying it.
 
-**Verdict: the software now works and is demonstrable. It is not deployable, and nothing about hardware is
-verified.** That was also true before this session; what changed is that it is now *true and checked*, where
-before two of the three applications did not run at all while the documents said they did.
+**Verdict: the software works, is demonstrable, and now deploys as container images. Nothing about hardware is
+verified, and it has not been run on a real host behind TLS.** What changed in this session is that these claims
+are *checked*: before it, two of the three applications did not run at all and the images had never been built,
+while the documents said otherwise.
 
 ## What was implemented
 
@@ -147,7 +148,10 @@ In [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md), with the per-issue detail in
 [KNOWN_ISSUES.md](KNOWN_ISSUES.md) (items 24-29) and [../platform/STATUS.md](../platform/STATUS.md). The ones
 that matter most to anyone picking this up:
 
-1. **Deployment is unverified.** The container images have never been built.
+1. **Deployment is verified as images, not as a deployment.** All three images build, `docker compose up` brings
+   db, engine, api and web to healthy, and the containerised stack passes the journey, the browser checks and
+   smoke. It has not been run on a real host: TLS termination, a domain and a tile service with a usage policy
+   are still the operator's to supply.
 2. **Peer-to-peer allocation is a calculation, not a transfer**, and says so everywhere. Whether it may happen at
    all depends on the law, the licensee, the metering and the wiring.
 3. **One defect is open**: a cosmetic Plotly console warning on the dashboard (issue 27). The page renders and no

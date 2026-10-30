@@ -21,7 +21,8 @@ container proves the behaviour, and the row says which.
 | Streamlit dashboard starts | `VERIFIED` | `./run-dashboard.sh`; opened in Chromium, no exception. Was crashing on import (issue 24). |
 | Web production build serves a working app | `VERIFIED` | `pnpm browser` 21/21. Was 1/21: the CSP blocked hydration and every page was dead at HTTP 200. |
 | Database schema and migrations | `VERIFIED` | 11+ migrations applied to a real PostGIS 3.4; 994 API tests run against it. |
-| Deployment (Docker) | `BLOCKED` | Docker's engine is not usable here; images never built or run. |
+| Deployment (Docker images) | `VERIFIED` | All three images build; `docker compose up` brings db, engine, api and web to `healthy`; migrate and seed work; the containerised stack passes journey 41/41, browser 21/21 and smoke 12/12. Two defects found and fixed in the doing (the seeder could not reach the tariff and policy data; the map was blank in every container). |
+| Deployment on a real host, behind TLS, with a tile provider | `IMPLEMENTED_NOT_FULLY_VERIFIED` | Built and run in this container only. TLS, a domain and a tile service with a usage policy remain the operator's to supply. |
 
 ## Individual home
 

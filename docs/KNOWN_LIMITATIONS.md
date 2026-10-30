@@ -53,11 +53,21 @@ These are boundaries found by running the software, not by reading it. The per-i
 [KNOWN_ISSUES.md](KNOWN_ISSUES.md) items 24-29 and the 2026-10-30 section of
 [../platform/STATUS.md](../platform/STATUS.md).
 
-### Deployment has never been executed
-`platform/docker/*.Dockerfile` and `platform/docker-compose.yml` are written but have never been built or run,
-here or anywhere recorded. Docker's engine is not usable in this container. The documented way to run the stack
-is `./start-platform.sh` (new) or `start-platform.cmd`, both of which run the services directly. **Treat the
-container images as unverified.**
+### Deployment: the images are verified, a deployment is not
+*Corrected later on 2026-10-30.* `dockerd` does run in this container, so the images were built and the whole
+stack was brought up for the first time: all four services reach `healthy`, the documented migrate-and-seed
+sequence works, and the containerised stack passes the journey (41/41), the browser checks (21/21) and smoke
+(12/12). Two defects that only a built image could show were found and fixed -- `db:seed` could not reach the
+tariff and policy files, and the map was blank in every container.
+
+What remains unverified is a **deployment**, as opposed to the images: it has not been run on a real host, behind
+TLS, with a domain and a tile service of the operator's own. The session cookie is `Secure` in production, which
+browsers honour only over https or on localhost, so TLS in front of the web app is not optional. A tile service
+also has a usage policy: the public OpenStreetMap server is for development and light use, and a deployment
+should point `NEXT_PUBLIC_MAP_TILE_URL` at its own or a commercial one.
+
+The builds in this container needed `--network=host` and a temporary layer trusting the sandbox's TLS-intercepting
+proxy. That shim is not committed and is not needed where outbound TLS is not intercepted.
 
 ### Peer-to-peer allocation is a calculation, not a transfer
 `platform/api/src/community/allocate.ts` and `avishkar_ems.home_balance.route_community_exchange` work out which

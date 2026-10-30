@@ -146,10 +146,41 @@ creates a throwaway account and writes real rows, so it is a development-server 
 Every target the specification sets is met, with the optimiser an order of magnitude inside its 3-second budget.
 The map-load target (under 3 s) is a browser measurement the bench does not make.
 
+## The containerised stack
+
+The deployment files had never been built or run. `dockerd` runs here, so they were.
+
+| Step | Result |
+|---|---|
+| `docker build` the engine, API and web images | all three build |
+| `docker compose up -d` | db, engine, api, web all reach `healthy` |
+| `docker compose run --rm api pnpm db:migrate` | all migrations applied |
+| `docker compose run --rm api pnpm db:seed` | **failed first**, then worked: see below |
+| `pnpm -C platform/web journey` against the containers | **41/41** |
+| `PLAYWRIGHT_CHROMIUM_PATH=... pnpm -C platform/web browser` against the containers | **21/21** |
+| `pnpm -C platform/web smoke` against the containers | **12/12** |
+
+Two defects were found by doing it, both fixed:
+
+1. **`db:seed` could not reach the tariff and policy files.** The seeder resolves `data/` relative to its own
+   compiled location, which is `/data` inside the image; those files live at the repository root, outside the
+   build context, so they are not in the image. A deployed instance would have had no tariff plans and no policy
+   rules at all. The api service now mounts the repository's `data/` read-only and sets `SEED_DATA_DIR`.
+2. **The map was blank in every container.** `basemaps.ts` chose its tile URL with `??`, and the compose file
+   passes `NEXT_PUBLIC_OSM_TILE_URL` as an empty string when the operator has not chosen a tile service; `??`
+   falls through only on null and undefined, so the empty string became the tile template and the map asked its
+   own origin for `/{z}/{x}/{y}.png`, received Next's 404 page and failed to decode it as an image. Measured on
+   the running container: **0 tile requests, 22 decode errors, a 12 KB canvas** before, and **41 tile requests, 0
+   decode errors, a 569 KB canvas** after.
+
+The builds needed `--network=host` and a temporary layer trusting this sandbox's TLS-intercepting proxy. That
+shim is not committed and is not needed where outbound TLS is not intercepted.
+
 ## What was NOT verified
 
-- **Deployment**: the Dockerfiles and `docker-compose.yml` were never built or run. Docker's engine is not usable
-  here.
+- **Deployment on a real host**: the images were built and the whole stack was run **in this container** (see
+  below), but not on a real host behind TLS with a real tile provider. TLS termination, a domain and a tile
+  service with a usage policy remain the operator's to supply.
 - **Hardware**: no inverter, meter or Modbus device existed. Every device path is simulated and labelled as such.
   Nothing here supports a claim of electrical certification, anti-islanding validation or grid-code compliance.
 - **The upstream EMHASS suite** (`tests/test_*.py`): needs a separate environment and writes into `data/`; not run.

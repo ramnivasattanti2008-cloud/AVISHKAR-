@@ -155,8 +155,15 @@ A fresh container, a real PostgreSQL 16 + PostGIS 3.4, the real engine, and Chro
 `pnpm -C platform/web smoke` **12/12**; `pnpm -C platform/web journey` **41/41** over HTTP through the running stack against
 the real public providers and the real optimiser; `pnpm -C platform/web browser` **21/21** in Chromium.
 
-**Still not verified here:** the Docker images (`docker/*.Dockerfile`, `docker-compose.yml`) were not built or run; the
-deployment path remains untested. No hardware of any kind was present, so every device path stays simulated and labelled.
+**Deployment, later the same day:** the Docker daemon does run in this container, so the images were built and the stack was
+brought up for the first time. All four services come up healthy; the documented migrate-and-seed sequence works; and the
+running stack passes the journey 41/41, the browser checks 21/21 and smoke 12/12. Two defects that only a built image could
+show were found and fixed: `db:seed` could not reach the tariff and policy files, and the map was blank in every container.
+Both are described in the deployment files' own headers and in the commit. The builds needed `--network=host` and a
+temporary CA layer because this sandbox intercepts TLS; that shim is not committed and is not needed elsewhere.
+
+**Still not verified here:** no hardware of any kind was present, so every device path stays simulated and labelled. The
+images were built and run in this container only -- not on a real host, behind TLS, with a real tile provider.
 
 
 ### Live provider check, 2026-10-30
@@ -200,3 +207,15 @@ instance can be reached to ask. The test is left exactly as it is.
 Every target the specification sets is met, the optimiser by more than an order of magnitude. The map-load
 target (under 3 s) is a browser measurement the bench does not make. Full table in
 [../docs/TESTING_AND_VERIFICATION.md](../docs/TESTING_AND_VERIFICATION.md).
+
+
+### Deployment, 2026-10-30
+
+| Item | Status | Evidence |
+|---|---|---|
+| `docker build` for the engine, API and web images | **DONE** | All three build. The headers that said "UNTESTED AS AN IMAGE" are corrected. |
+| `docker compose up` | **DONE** | db, engine, api and web all reach `healthy`. |
+| The documented migrate-and-seed sequence | **DONE**, after a fix | `db:seed` failed with ENOENT: the seeder resolves `data/` to `/data` inside the image, and those files live at the repository root, outside the build context. A deployed instance would have had no tariff plans and no policy rules. The api service now mounts `../data` read-only and sets `SEED_DATA_DIR`. |
+| The containerised stack end to end | **DONE** | `journey` 41/41, `browser` 21/21, `smoke` 12/12 against the containers. |
+| The map in a containerised deployment | **DONE**, after a fix | It was **blank in every container**. `basemaps.ts` chose its tile URL with `??`, and this compose file passes `NEXT_PUBLIC_OSM_TILE_URL` as an empty string when no tile service is chosen; `??` falls through only on null and undefined, so the empty string became the tile template and the map asked its own origin for `/{z}/{x}/{y}.png`. Measured on the running container: 0 tile requests, 22 decode errors, a 12 KB canvas; after the fix 41 requests, 0 errors, a 569 KB canvas. 10 new tests in `web/src/lib/basemaps.test.ts`. |
+| On a real host, behind TLS, with a tile provider | **NOT VERIFIED** | Built and run in this container only. TLS termination, a domain, and a tile service with a usage policy are still the operator's to supply. |
