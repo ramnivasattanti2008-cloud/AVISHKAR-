@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from app.home_setup_view import render_home_management_view
 from app.integrations_view import render_integrations_dashboard
 from app.urjasetu_view import render_urjasetu_dashboard
 from plotly.subplots import make_subplots
@@ -869,7 +870,8 @@ with arka_exp:
 # ==============================================================================
 # TABS ARCHITECTURE (ORDERED 12-STAGE SOLAR LIFECYCLE)
 # ==============================================================================
-tab_connect, tab_sat, tab_storage, tab_plan, tab_citizen, tab_ev_grid, tab_hardware, tab_offers, tab_reg_upi, tab_fleet, tab_monitor, tab_payback, tab_integrations = st.tabs([
+tab_home, tab_connect, tab_sat, tab_storage, tab_plan, tab_citizen, tab_ev_grid, tab_hardware, tab_offers, tab_reg_upi, tab_fleet, tab_monitor, tab_payback, tab_integrations = st.tabs([
+    "🏡 My Home EMS",
     "⚡ Rooftop Sizing",
     "🛰️ Solar Radar",
     "🔋 Battery Storage",
@@ -884,6 +886,12 @@ tab_connect, tab_sat, tab_storage, tab_plan, tab_citizen, tab_ev_grid, tab_hardw
     "💰 Lifetime Savings",
     "🚀 Surplus Engine",
 ])
+
+# ==============================================================================
+# TAB 0: RESIDENTIAL HOME ENERGY MANAGEMENT & BENCHMARK (PHASE 1 - 8)
+# ==============================================================================
+with tab_home:
+    render_home_management_view()
 
 # ==============================================================================
 # TAB 1: SOLAR PRE-FEASIBILITY, ELECTRICAL CONNECTION & PM SURYA GHAR
