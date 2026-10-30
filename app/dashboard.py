@@ -296,11 +296,14 @@ def get_cached_day_view(site_key: str, day_str: str, soc_init: float):
 @st.cache_data(show_spinner=False)
 def get_cached_fleet_offers(day_str: str, soc_init: float):
     fleet_dict = {}
+    d_ts = pd.Timestamp(day_str)
     for s_key in real_sites():
         try:
-            dv_s = get_cached_day_view(s_key, day_str, soc_init)
-            if dv_s.offers:
-                fleet_dict[s_key] = dv_s.offers
+            p_s = cache.prepared(s_key)
+            if p_s.test_start <= d_ts <= p_s.test_end:
+                dv_s = get_cached_day_view(s_key, day_str, soc_init)
+                if dv_s.offers:
+                    fleet_dict[s_key] = dv_s.offers
         except Exception:
             pass
     return fleet_dict
@@ -604,56 +607,30 @@ with st.container():
     load_active = c_load > 0.05
 
     solar_color = "#f59e0b" if pv_active else "#475569"
-    solar_pulse = (
-        '<circle r="4" fill="#fbbf24">'
-        '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 230 70 C 290 70, 310 140, 360 140" />'
-        '</circle>'
-        if pv_active else ""
-    )
+    solar_pulse = '<circle cx="295" cy="105" r="5" fill="#fbbf24" opacity="0.9" />' if pv_active else ""
 
     if batt_charging:
         batt_color_line = "#10b981"
-        batt_pulse = (
-            '<circle r="4" fill="#34d399">'
-            '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 360 180 C 310 180, 290 250, 230 250" />'
-            '</circle>'
-        )
+        batt_pulse = '<circle cx="295" cy="215" r="5" fill="#34d399" opacity="0.9" />'
     elif batt_discharging:
         batt_color_line = "#38bdf8"
-        batt_pulse = (
-            '<circle r="4" fill="#7dd3fc">'
-            '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 230 250 C 290 250, 310 180, 360 180" />'
-            '</circle>'
-        )
+        batt_pulse = '<circle cx="295" cy="215" r="5" fill="#7dd3fc" opacity="0.9" />'
     else:
         batt_color_line = "#475569"
         batt_pulse = ""
 
     if grid_exporting:
         grid_color_line = "#22c55e"
-        grid_pulse = (
-            '<circle r="4" fill="#4ade80">'
-            '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 540 140 C 590 140, 610 70, 670 70" />'
-            '</circle>'
-        )
+        grid_pulse = '<circle cx="605" cy="105" r="5" fill="#4ade80" opacity="0.9" />'
     elif grid_importing:
         grid_color_line = "#f87171"
-        grid_pulse = (
-            '<circle r="4" fill="#fca5a5">'
-            '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 670 70 C 610 70, 590 140, 540 140" />'
-            '</circle>'
-        )
+        grid_pulse = '<circle cx="605" cy="105" r="5" fill="#fca5a5" opacity="0.9" />'
     else:
         grid_color_line = "#475569"
         grid_pulse = ""
 
     load_color_line = "#38bdf8" if load_active else "#475569"
-    load_pulse = (
-        '<circle r="4" fill="#67e8f9">'
-        '<animateMotion dur="2.2s" repeatCount="indefinite" path="M 540 180 C 590 180, 610 250, 670 250" />'
-        '</circle>'
-        if load_active else ""
-    )
+    load_pulse = '<circle cx="605" cy="215" r="5" fill="#67e8f9" opacity="0.9" />' if load_active else ""
 
     total_throughput = max(c_pv, c_load, abs(c_batt), abs(c_grid))
     pv_sub = "Active Solar Generation" if pv_active else "Night / Twilight"
@@ -1365,7 +1342,7 @@ with tab_sat:
     with map_head_col:
         st.markdown("##### 🗺️ 3D Indian Solar Microgrid & Peer-to-Peer Energy Flow Network")
     with map_eng_col:
-        map_engine = st.radio("Map Engine:", ["🌐 3D PyDeck Mesh (WebGL)", "🗺️ High-Definition Plotly Radar"], horizontal=True, index=0)
+        map_engine = st.radio("Map Engine:", ["🗺️ High-Definition Plotly Radar", "🌐 3D PyDeck Mesh (WebGL)"], horizontal=True, index=0)
 
     active_sites_map = {k: v[0] for k, v in demo_sites().items()}
 
