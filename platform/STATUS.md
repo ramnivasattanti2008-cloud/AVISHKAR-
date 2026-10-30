@@ -184,3 +184,19 @@ premise was wrong -- that it asserts a building where OpenStreetMap has none. **
 a Switzerland-only extract returns an empty result for every point in India, whatever is mapped there. Whether
 that test's point has a building in OSM is simply **unknown from this container**, because no planet-wide
 instance can be reached to ask. The test is left exactly as it is.
+
+
+### Performance against the specification's targets, 2026-10-30
+
+`pnpm -C platform/api bench` had never been run either. Against the running stack, median of 3:
+
+| Measurement | Median | Slowest | Target | |
+|---|---|---|---|---|
+| Cached property query | 10 ms | 24 ms | under 500 ms (§77) | **met** |
+| Properties list, energy summary, Energy DNA, latest twin, Today | 7-17 ms | up to 43 ms | under 500 ms (§77) | **met** |
+| 24-hour plan (the optimiser, with the recommendation's re-plans) | 174 ms | 747 ms | under 3 s (§77) | **met** |
+| One-year what-if (24 typical days) | 841 ms | 974 ms | under 5 s (§77) | **met** |
+
+Every target the specification sets is met, the optimiser by more than an order of magnitude. The map-load
+target (under 3 s) is a browser measurement the bench does not make. Full table in
+[../docs/TESTING_AND_VERIFICATION.md](../docs/TESTING_AND_VERIFICATION.md).

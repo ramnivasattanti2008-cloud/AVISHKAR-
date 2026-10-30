@@ -121,6 +121,31 @@ battery policies asserts that every case balances, that nothing received exceeds
 exceeds what was offered, and that the feeder limit is never exceeded. Losses are charged exactly once each and
 the pair-level transfers sum to the total loss.
 
+## Performance against the specification's targets
+
+`pnpm -C platform/api bench` against the running stack, 3 runs each, median and slowest in milliseconds. It
+creates a throwaway account and writes real rows, so it is a development-server command.
+
+| Measurement | Median | Slowest | Target | |
+|---|---|---|---|---|
+| GET property (cached query) | 10 | 24 | under 500 ms | met |
+| GET properties list | 7 | 9 | under 500 ms | met |
+| GET energy summary | 15 | 21 | under 500 ms | met |
+| GET energy DNA | 8 | 9 | under 500 ms | met |
+| GET latest twin | 11 | 22 | under 500 ms | met |
+| GET today (stored forecasts and plan) | 17 | 43 | under 500 ms | met |
+| POST plan, 24 h (the optimiser, with the recommendation's re-plans) | 174 | 747 | under 3 s | met |
+| POST what-if, one year (24 typical days) | 841 | 974 | under 5 s | met |
+| GET solar forecast (engine) | 77 | 1100 | none set | |
+| GET load forecast (engine) | 34 | 627 | none set | |
+| GET resilience | 83 | 120 | none set | |
+| POST cloud-front scenario (two plans) | 131 | 136 | none set | |
+| POST copilot question | 15 | 54 | none set | |
+| GET report (Markdown) | 28 | 36 | none set | |
+
+Every target the specification sets is met, with the optimiser an order of magnitude inside its 3-second budget.
+The map-load target (under 3 s) is a browser measurement the bench does not make.
+
 ## What was NOT verified
 
 - **Deployment**: the Dockerfiles and `docker-compose.yml` were never built or run. Docker's engine is not usable
@@ -135,5 +160,5 @@ the pair-level transfers sum to the total loss.
   that did answer (`overpass.osm.ch`) turned out to be a Switzerland-only extract and was reverted, because it
   would have turned an honest outage into "there is no building at this address" for every property in India.
   `platform/STATUS.md` records that in full.
-- **Load and performance targets** (`pnpm -C platform/api bench`): not run.
+- **Load testing** (`pnpm -C platform/api load-test`): not run.
 - **Forecast accuracy against reality** beyond the held-out periods already in `data/real`.

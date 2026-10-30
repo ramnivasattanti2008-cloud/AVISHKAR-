@@ -95,9 +95,16 @@ duplicate landmark name the workbench introduced (found by axe); the OpenAPI con
 refused to pass until the new route was listed in `platform/docs/API.md`; and the map test, which had been
 asserting that the fabricated trade lines existed.
 
+**Also run, after this report was first drafted:** `pnpm -C platform/api test:live` against the real public
+providers (**6 of 7**; the failure is the building footprint, because no planet-wide Overpass instance is
+reachable here, and a mirror that did answer turned out to be a Switzerland-only extract and was reverted rather
+than left to answer "no building at this address" for every Indian property); and
+`pnpm -C platform/api bench`, which **meets every performance target the specification sets** — cached queries
+at 10 ms against 500, a 24-hour plan at 174 ms against 3 s, a one-year what-if at 841 ms against 5 s.
+
 **Blocked or not run:** the Docker images (no usable Docker engine); the upstream EMHASS suite (needs its own
-environment and writes into `data/`); `pnpm -C platform/api test:live`; `pnpm -C platform/api bench`. No test
-was deleted or skipped to produce a green result.
+environment and writes into `data/`); `pnpm -C platform/api load-test`. No test was deleted or skipped to
+produce a green result.
 
 ## Does it build? Does it start?
 
