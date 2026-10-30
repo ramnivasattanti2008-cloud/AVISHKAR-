@@ -15,6 +15,8 @@ data/adjust_pv_regressor.pkl
 data/debug-*.csv
 # Scratch copy of a meter file uploaded in the dashboard:
 data/real/uploaded_*.csv
+# Temporary external clone repositories:
+tmp_repos/
 # examples/analyze_my_site.py output:
 my_site_report.md
 .streamlit/credentials.toml

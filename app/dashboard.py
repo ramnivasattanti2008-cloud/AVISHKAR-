@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from app.integrations_view import render_integrations_dashboard
 from app.urjasetu_view import render_urjasetu_dashboard
 from plotly.subplots import make_subplots
 
@@ -848,7 +849,7 @@ with arka_exp:
 # ==============================================================================
 # TABS ARCHITECTURE (ORDERED 12-STAGE SOLAR LIFECYCLE)
 # ==============================================================================
-tab_connect, tab_sat, tab_storage, tab_plan, tab_citizen, tab_ev_grid, tab_hardware, tab_offers, tab_reg_upi, tab_fleet, tab_monitor, tab_payback = st.tabs([
+tab_connect, tab_sat, tab_storage, tab_plan, tab_citizen, tab_ev_grid, tab_hardware, tab_offers, tab_reg_upi, tab_fleet, tab_monitor, tab_payback, tab_integrations = st.tabs([
     "⚡ 1. Solar Connection & Smart Meter",
     "🛰️ 2. Satellite Radar & Generation",
     "🔋 3. Battery Storage & Advisor",
@@ -861,6 +862,7 @@ tab_connect, tab_sat, tab_storage, tab_plan, tab_citizen, tab_ev_grid, tab_hardw
     "🌐 10. Fleet Pooling (Multi-Site)",
     "🔍 11. Fault Monitoring & Flex",
     "💰 12. Payback & Carbon Credits",
+    "🚀 13. Surplus Intelligence (Multi-Repo)",
 ])
 
 # ==============================================================================
@@ -2391,3 +2393,9 @@ with tab_payback:
     st.markdown("##### 📈 Held-Out Year Forecast Calibration & Band Quality")
     st.dataframe(get_cached_forecast_quality(key), use_container_width=True)
     st.caption("Forecast quality on the held-out year. band80_coverage should sit near 0.80.")
+
+# ==============================================================================
+# TAB 13: MULTI-REPO OPEN-SOURCE SURPLUS INTELLIGENCE & INTEGRATIONS
+# ==============================================================================
+with tab_integrations:
+    render_integrations_dashboard()

@@ -504,3 +504,152 @@ class SurplusEngine:
             soc = res.battery_soc_after
             results.append(res)
         return results
+
+    # ---------------------------------------------------------------------------
+    # Unified Facades for External Open-Source Integrations
+    # ---------------------------------------------------------------------------
+
+    def calculate_proportional_flows(
+        self,
+        solar_kw: float,
+        grid_import_kw: float,
+        battery_discharge_kw: float,
+        home_load_kw: float,
+        battery_charge_kw: float,
+        ev_charge_kw: float,
+        grid_export_kw: float,
+    ) -> Any:
+        """SEM-Community: Proportionally allocated source-to-destination power flows."""
+        from avishkar_ems.integrations.sem_coordinator import SemCommunityCoordinator
+        coord = SemCommunityCoordinator()
+        return coord.calculate_proportional_flows(
+            solar_kw=solar_kw,
+            grid_import_kw=grid_import_kw,
+            battery_discharge_kw=battery_discharge_kw,
+            home_load_kw=home_load_kw,
+            battery_charge_kw=battery_charge_kw,
+            ev_charge_kw=ev_charge_kw,
+            grid_export_kw=grid_export_kw,
+        )
+
+    def calculate_evcc_charge(
+        self,
+        mode: str,
+        available_surplus_kw: float,
+        current_time: float | None = None,
+    ) -> Any:
+        """EVCC: 4-mode EV charging state machine with contactor protection."""
+        from avishkar_ems.integrations.evcc_controller import (
+            EvccChargerController,
+            EvccMode,
+        )
+        ctrl = EvccChargerController(enable_delay_s=0.0, disable_delay_s=0.0)
+        return ctrl.dispatch(
+            mode=EvccMode(mode.lower()),
+            available_surplus_kw=available_surplus_kw,
+            current_time=current_time,
+        )
+
+    def calculate_zero_export_setpoint(
+        self,
+        current_solar_kw: float,
+        current_grid_export_kw: float,
+        target_export_kw: float = 0.0,
+    ) -> Any:
+        """SolarFlow: Closed-loop PI zero-export grid limiting."""
+        from avishkar_ems.integrations.solarflow_limiter import SolarFlowLimiter
+        limiter = SolarFlowLimiter(target_export_kw=target_export_kw)
+        return limiter.calculate_inverter_setpoint(
+            current_solar_kw=current_solar_kw,
+            current_grid_export_kw=current_grid_export_kw,
+        )
+
+    def find_cheapest_tariff_window(
+        self,
+        hourly_prices: list[float],
+        required_hours: int = 3,
+    ) -> Any:
+        """Smart Energy Manager: 24h cheapest contiguous window discovery."""
+        from avishkar_ems.integrations.smart_battery_scheduler import SmartBatteryScheduler
+        scheduler = SmartBatteryScheduler()
+        return scheduler.find_cheapest_charging_window(
+            hourly_prices=hourly_prices,
+            required_hours=required_hours,
+        )
+
+    def plan_arbitrage_schedule(
+        self,
+        slots: list[Any],
+        initial_soc_kwh: float,
+    ) -> list[Any]:
+        """Energy Manager: Multi-cycle spot price arbitrage & peak grouping."""
+        from avishkar_ems.integrations.energy_arbitrage import EnergyArbitrageScheduler
+        scheduler = EnergyArbitrageScheduler()
+        return scheduler.plan_day_schedule(slots=slots, initial_soc_kwh=initial_soc_kwh)
+
+    def calculate_breaker_headroom(
+        self,
+        phase_currents_a: list[float],
+        main_fuse_rating_a: float = 35.0,
+    ) -> Any:
+        """HomeAssistant EMS: Sub-second breaker headroom & EV current modulation."""
+        from avishkar_ems.integrations.breaker_headroom import BreakerHeadroomGuard
+        guard = BreakerHeadroomGuard(main_fuse_rating_a=main_fuse_rating_a)
+        return guard.calculate_headroom(phase_currents_a=phase_currents_a)
+
+    def evaluate_forecast_daylight(
+        self,
+        actual_kw: list[float],
+        predicted_kw: list[float],
+    ) -> Any:
+        """Solar Battery Dispatch: Daylight-only error metrics (MAE/RMSE/nRMSE)."""
+        from avishkar_ems.integrations.dispatch_validator import DispatchValidator
+        val = DispatchValidator()
+        return val.evaluate_forecast(actual_kw=actual_kw, predicted_kw=predicted_kw)
+
+    def step_microgrid_fallback(
+        self,
+        step_idx: int,
+        pv_kw: float,
+        load_kw: float,
+        tariff_per_kwh: float,
+    ) -> Any:
+        """Microgrid Autopilot: Heuristic fallback rule execution with carbon tracking."""
+        from avishkar_ems.integrations.microgrid_mpc import MicrogridMpcController
+        controller = MicrogridMpcController()
+        return controller.dispatch_fallback_step(
+            step_idx=step_idx,
+            pv_kw=pv_kw,
+            load_kw=load_kw,
+            tariff_per_kwh=tariff_per_kwh,
+        )
+
+    def compute_solectrus_balance(
+        self,
+        solar_generation: float,
+        home_consumption: float,
+        battery_charge: float,
+        battery_discharge: float,
+        grid_import: float,
+        grid_export: float,
+    ) -> Any:
+        """Solectrus: Flow balance ledger, self-consumption ratio & autarky degree."""
+        from avishkar_ems.integrations.solectrus_metrics import SolectrusMetrics
+        return SolectrusMetrics.calculate_flow_balance(
+            solar_generation=solar_generation,
+            home_consumption=home_consumption,
+            battery_charge=battery_charge,
+            battery_discharge=battery_discharge,
+            grid_import=grid_import,
+            grid_export=grid_export,
+        )
+
+    def allocate_community_sharing_vnm(
+        self,
+        members: list[Any],
+    ) -> Any:
+        """Flexcomm: Community virtual net metering & distribution line loss modeling."""
+        from avishkar_ems.integrations.flexcomm_sharing import CommunityEnergySharing
+        sharing = CommunityEnergySharing()
+        return sharing.allocate_community_sharing(members=members)
+
