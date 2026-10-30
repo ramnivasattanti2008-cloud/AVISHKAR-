@@ -3634,3 +3634,76 @@ reading them. Four things were found that every previous entry had reported as w
 - Identify the chart behind issue 27.
 - A test that merely imports `app.dashboard` would have caught all three of this entry's dashboard defects in
   one line; `tests/avishkar_ems/test_dashboard.py` skips itself without a warm cache, so nothing did.
+
+## Entry 66 — 2026-10-30 — The deployment path, run for the first time, and two defects only a built image could show
+
+Entry 65 recorded that the Docker images had never been built and that deployment was the one wholly unverified
+path. That was because `CLAUDE.md` says the Docker engine does not start on the owner's machine. It does start
+here, so the images were built and the whole stack was brought up.
+
+### What was run
+
+- All three images build (`docker/engine.Dockerfile`, `api.Dockerfile`, `web.Dockerfile`).
+- `docker compose up -d`: **db, engine, api and web all reach `healthy`.** The API's healthcheck passing means it
+  reached the containerised PostGIS and the containerised engine on the private network.
+- The documented sequence from `docker-compose.yml`'s own header: `db:migrate` (all applied), `db:seed`.
+- Against the running containers: `pnpm -C platform/web journey` **41/41**, `pnpm browser` **21/21**,
+  `pnpm smoke` **12/12**.
+- The engine image on its own: serves `/health` with scipy 1.18.1 and HiGHS 1.15.1, and enforces its key (401
+  without one, 401 with a wrong one, past auth with the right one).
+
+### The two defects
+
+1. **`db:seed` could not reach the tariff and policy files.** The seeder resolves `data/` relative to its own
+   compiled location, which is `/data` inside the image; those files live at the repository root, outside the
+   build context, so they are not in the image. The documented `docker compose run --rm api pnpm db:seed` failed
+   with ENOENT — meaning a deployed instance would have had **no tariff plans and no policy rules at all**, so no
+   eligibility figures and no tariff comparison. Fixed: the api service mounts the repository's `data/` read-only
+   and sets `SEED_DATA_DIR`, the override the seeder already had. Mounted rather than copied in, because those
+   files are the single source for both the Python EMS and the platform.
+2. **The map was blank in every container.** `basemaps.ts` chose its tile URL with `??`, which falls through only
+   on null and undefined — and `docker-compose.yml` passes `NEXT_PUBLIC_OSM_TILE_URL: ${NEXT_PUBLIC_OSM_TILE_URL:-}`,
+   an empty string, whenever the operator has not chosen a tile service. `basemaps.ts` is evaluated server-side
+   during rendering as well as in the browser, so the empty string became the tile template: the map asked its own
+   origin for `/{z}/{x}/{y}.png`, got Next's 404 page, and failed to decode it as an image about twenty times
+   over. Measured on the running container: **0 tile requests, 22 decode errors, a 12 KB canvas** before;
+   **41 requests, 0 errors, a 569 KB canvas** after. It is the same mistake as the API's blank-variable handling
+   from entry 65, in a different file. 10 new tests, four of which fail if the `??` is restored.
+
+### A fix attempted and reverted, which is the other point of this entry
+
+`pnpm -C platform/api test:live` was also run for the first time: **6 of 7** real public providers answer. The
+failure is the building footprint, because no planet-wide Overpass instance is reachable from here. A mirror that
+*did* answer in about a second, `overpass.osm.ch`, was added to the chain — and reverted, because it is a
+**Switzerland-only extract**: three buildings around Zurich, none around London or Bengaluru. It would have
+turned an honest outage into "there is no building at this address" for every property in India. `config.ts` and
+`.env.example` now say every mirror must be planet-wide and that a candidate should be checked against two
+distant cities first.
+
+A conclusion drawn while that mirror was in the chain was also wrong and is corrected in `platform/STATUS.md`:
+the provider's "no building within 40 m" for the live test's Bengaluru point looked like evidence that the test
+asserts a building where OSM has none. It is evidence of nothing — a Swiss extract answers empty for every point
+in India whatever is mapped there.
+
+Two more speculative explanations written during this session were tested and disproved: the hidden-container
+theory for issue 27 (a Plotly chart in a collapsed expander and in an inactive tab produce no error at all), and
+a measurement of map blankness by `gl.readPixels`, which reads one colour for a working map too, because WebGL
+clears its drawing buffer after compositing. Both corrections are in the documents that carried them.
+
+### Also run for the first time
+
+`pnpm -C platform/api bench` — **every performance target the specification sets is met**: cached property
+queries at 10 ms median against 500 ms, a 24-hour plan through the optimiser at 174 ms against 3 s, a one-year
+what-if over 24 typical days at 841 ms against 5 s.
+
+### Evidence
+
+612 EMS tests, 448 engine, 994 API, 399 web; ruff, typecheck, lint and both production builds clean; journey
+41/41, browser 21/21 and smoke 12/12 against the **containers**.
+
+### What is NOT done
+
+- A **deployment**, as opposed to the images: not run on a real host, behind TLS, with a domain and a tile
+  service of the operator's own. The session cookie is `Secure` in production, so TLS there is not optional.
+- Issue 27 is still open, with four hypotheses now tested and none holding.
+- Still no hardware of any kind, so every device path remains simulated and labelled.

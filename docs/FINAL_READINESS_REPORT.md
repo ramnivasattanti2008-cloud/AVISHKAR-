@@ -78,10 +78,10 @@ any external project:
 
 | Suite / check | Result |
 |---|---|
-| `pytest tests/avishkar_ems` | **589 passed, 1 skipped** (554 at session start) |
+| `pytest tests/avishkar_ems` | **612 passed, 1 skipped** (554 at session start) |
 | `platform/engine` pytest | **448 passed** in 41.5 s |
 | `pnpm -C platform/api test` (real PostGIS) | **994 passed**, 69 files |
-| `pnpm -C platform/web test` | **387 passed**, 45 files (366 at start) |
+| `pnpm -C platform/web test` | **399 passed**, 46 files (366 at start) |
 | ruff on the EMS, the app and the engine | clean |
 | API typecheck / lint / build | clean |
 | Web typecheck / lint / production build | clean |

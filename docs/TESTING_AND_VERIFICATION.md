@@ -11,10 +11,10 @@ hardware testing and independent certification are seven different things. Only 
 
 | Suite | Command | Result |
 |---|---|---|
-| Python EMS | `.venv/bin/python -m pytest tests/avishkar_ems -q` | **589 passed, 1 skipped** (was 554 at session start) |
+| Python EMS | `.venv/bin/python -m pytest tests/avishkar_ems -q` | **612 passed, 1 skipped** (was 554 at session start) |
 | Platform engine (FastAPI + scipy/HiGHS) | `python -m pytest tests -q` in `platform/engine` | **448 passed** in 41.5 s |
 | Platform API (real PostGIS) | `pnpm -C platform/api test` | **994 passed**, 69 files, 346 s |
-| Platform web (vitest + jsdom + axe) | `pnpm -C platform/web test` | **387 passed**, 45 files (was 366) |
+| Platform web (vitest + jsdom + axe) | `pnpm -C platform/web test` | **399 passed**, 46 files (was 366) |
 
 The one skip is `tests/avishkar_ems/test_dashboard.py`, which skips itself unless the disk cache is fresh. That
 skip is why a dashboard that could not start at all passed 554 tests; `tests/avishkar_ems/test_app_imports.py` was
