@@ -2736,6 +2736,73 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 ### What is next
 - Ready for deployment and synchronization to GitHub remote repository.
 
+## Entry 53 — 2026-10-30 — End-to-End Solar Lifecycle Architecture: Physical Connection to Daily Usage & Economics
+
+### What was done
+- **Restructured Primary Application Dashboard (`app/dashboard.py`) into Ordered 12-Stage Solar Lifecycle**:
+  - Re-ordered and unified the application to follow the logical, physical, and operational journey of solar energy systems:
+    1. **⚡ 1. Solar Connection & Smart Meter (Feasibility, Wiring & Sizing)**:
+       - Designed and embedded an interactive vector Single Line Diagram (SLD) electrical circuit topology: Rooftop PV array (Voc 48V, Strings 600V DC) $\rightarrow$ DC Combiner Box (1000V Isolator, Class II 40kA SPD, 15A Fuses) $\rightarrow$ Hybrid Inverter (Dual MPPT, pure sine wave DC-AC) $\leftrightarrow$ 51.2V LiFePO4 Battery (BESS with BMS) $\rightarrow$ ACDB (AC MCB 32A/63A, Type 2 SPD, 30mA RCD ELCB) $\rightarrow$ Critical Loads Sub-panel (EPS blackout backup) $\rightarrow$ Bi-directional 4-Quadrant DLMS/COSEM Net Meter $\rightarrow$ Lockable Gang-Operated Air-Break Isolator Switch $\rightarrow$ 11kV/415V Utility Grid Feeder.
+       - Embedded CEA technical standards for connectivity (earthing pits, earth resistance $<5\,\Omega$ for LA, $<2\,\Omega$ for neutral, $\le 2.0$s anti-islanding trip).
+       - Statutory PM Surya Ghar Muft Bijli Yojana Central Financial Assistance (CFA) subsidy schedule (1 kW = ₹30k, 2 kW = ₹60k, 3 kW+ = ₹78k ceiling) and 5-stage DISCOM onboarding roadmap.
+       - Smart meter CSV parser (supporting custom utility CSV uploads or 35k reading commercial dataset) with 24-hr demand profiling and rooftop sizing calculator.
+    2. **🛰️ 2. Satellite Radar & Generation (ISRO / NavIC Live Space-to-Ground Telemetry)**:
+       - Real-time geostationary observations from INSAT-3D/3DR and NavIC positioning.
+       - Direct Normal Solar (DNI W/m²), Satellite Cloud Cover Opacity (%), Surface Temp, Nowcasting Clearness index ($k_t$), and 3D WebGL / Plotly microgrid map.
+    3. **🔋 3. Battery Storage & Advisor (Outage Protection & Cell Physics)**:
+       - Usable stored energy (kWh), critical load survival time calculator (LEDs, fans, router, fridge, water pump).
+       - Dynamic Outage Reserve floor with conformal safety.
+       - Battery sizing advisor ("How big should my battery be?") with backup duration slider.
+       - Physical LFP battery physics: non-linear Arrhenius thermal degradation ($E_a=31.5\text{ kJ/mol}$), Wöhler cycle DoD stress, dynamic Sandia inverter efficiency, calendar vs cycle lifespan projection.
+    4. **📊 4. Plan for the Day (Conformal Forecast Bands & 15-Min LP Dispatch)**:
+       - Master 15-minute optimization schedule: P10/P50/P90 generation and load forecast bands, planned vs actual battery SoC, and plain-language explanation of dispatch reasons.
+    5. **🚦 5. Smart Appliances & Citizen Guide (Action Guide & Alerts)**:
+       - Today's bill savings (Bijli Bachat) vs buying from grid.
+       - Traffic-light appliance action guide: 🟢 Peak sun hours (10:00 - 15:00) vs 🔴 Evening peak (18:00 - 22:00 @ ₹10/unit).
+       - Appliance start-time scheduler (`best_start`) optimizing operating windows for Geyser, Washing Machine, Pump, EV charger.
+       - 1-Click WhatsApp / SMS Alert Generator for household and commercial staff.
+    6. **🚗 6. EV V2H & Feeder Guard (Vehicle-to-Home & Transformer Shield)**:
+       - Bidirectional EV V2H dispatch (Tata Nexon EV, Ather 450X, Ola S1 Pro) for evening peak tariff arbitrage while preserving morning commute range.
+       - Distribution Transformer (DT) Feeder Thermal Guard protecting 11kV/415V neighborhood transformers from overheating and reverse power backfeed.
+    7. **🔌 7. Hardware Inverter Gateway (SunSpec Modbus & CEA Security)**:
+       - Multi-vendor inverter protocol profiles (Sungrow, Growatt, GoodWe, Solis, Victron).
+       - SunSpec Model 124 active power limit setpoint latching with CRC-16 checksums.
+       - CEA Regulations 2026 Statutory Cybersecurity compliance audit.
+       - IEEE 1547 / CEA 2.0-second Anti-Islanding Watchdog with ROCOF sensor and mechanical contactor tripping.
+    8. **🤝 8. Offers & Beckn DEG (P2P Surplus Clean Energy Market)**:
+       - Beckn DEG v2.0 (India Energy Stack) decentralized clean energy protocol.
+       - Microgrid continuous double-sided auction order book with merit-order supply and demand equilibrium.
+    9. **⚖️ 9. Wheeling & UPI Settlement (State Regulations & Instant Payments)**:
+       - State regulatory wheeling framework (UPERC / MERC / RERC) with technical line loss and wire charges.
+       - Instant NPCI UPI payment QR code generation and intent URIs.
+    10. **🌐 10. Fleet Pooling (Multi-Site Surplus Aggregation)**:
+        - Multi-site surplus offer pooling with pro-rata revenue settlement.
+    11. **🔍 11. Fault Monitoring & Flex (String Diagnostics & Shiftable Loads)**:
+        - Real-time PV output deviation detection against clear-sky baseline.
+        - Synthetic string fault injection simulation and shiftable burst load analysis.
+    12. **💰 12. Lifetime Payback, PM Surya Ghar & Carbon Credits**:
+        - Financial analysis: baseline vs idle battery vs fixed rules vs AVISHKAR LP optimizer.
+        - Payback years with and without PM Surya Ghar subsidy.
+        - BEE Carbon Credit Trading Scheme (CCTS): avoided CO2 (CEA 0.716 kg/kWh baseline), coal displaced, trees equivalent, and carbon credit rupee value.
+        - Held-out year forecast calibration metrics.
+- **Verification & Testing**:
+  - `tests/avishkar_ems/test_dashboard.py` passed across all demo sites (`home-mathura`, `clinic-jaipur`, `shop-pune`) in 13.66s.
+  - Validated all 12 tab labels against required keywords.
+  - Full codebase lint check: `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix` passed with 0 errors.
+  - Verified `python scripts/update_readme.py --check`: README results block up to date.
+
+### Evidence
+- `pytest tests/avishkar_ems/test_dashboard.py -v`: Exit code 0 (**1 passed in 13.66s**).
+- `ruff check src/avishkar_ems app scripts examples tests/avishkar_ems --no-fix`: Exit code 0 (All checks passed).
+- `python scripts/update_readme.py --check`: Exit code 0 (`README.md results block is up to date`).
+
+### What was NOT done
+- Did not modify vendored `src/emhass/` upstream code.
+- Did not actuate physical high-voltage grid switchgear (runs in hardware gateway emulation / advisory mode).
+
+### What is next
+- Commit changes and synchronize with GitHub remote repository across all active tracking branches.
+
 
 
 
