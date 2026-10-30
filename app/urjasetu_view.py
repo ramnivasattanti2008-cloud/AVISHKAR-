@@ -123,14 +123,64 @@ def render_urjasetu_dashboard() -> None:
     # ARKA PERSONAL AI SOLAR COMPANION FOR MACRO EXPLORER
     # --------------------------------------------------------------------------
     with st.expander("💬 ☀️ **Ask ARKA (अर्क) — Your Personal Solar & Energy AI Assistant**", expanded=False):
-        st.caption("Ask ARKA any question regarding PM Surya Ghar subsidies, state net-metering, battery storage, or tariffs:")
-        q_arka_macro = st.text_input("Ask ARKA:", placeholder="e.g. How much subsidy do I get under PM Surya Ghar?", key="arka_macro_query")
-        if q_arka_macro:
-            resp_arka = ArkaPersonalAssistant().answer_query(q_arka_macro)
-            st.markdown(f"**{resp_arka.headline}**")
-            st.write(resp_arka.answer_text)
+        st.caption("Ask ARKA any question regarding national PM Surya Ghar subsidies, state net-metering SLAs, battery storage, or tariffs:")
+
+        mq_c1, mq_c2, mq_c3, mq_c4 = st.columns(4)
+        m_preset = None
+        if mq_c1.button("🏛️ PM Surya Ghar Subsidy", key="m_btn_sub", use_container_width=True):
+            m_preset = "How much subsidy do I get under PM Surya Ghar and what size do I need?"
+        if mq_c2.button("🏢 Virtual Net Metering", key="m_btn_vnm", use_container_width=True):
+            m_preset = "Can tenants and apartment societies install solar under virtual net metering?"
+        if mq_c3.button("⏱️ DISCOM Net Metering SLA", key="m_btn_sla", use_container_width=True):
+            m_preset = "Why is my DISCOM delaying my net meter installation and what is the SLA?"
+        if mq_c4.button("🌱 BEE Carbon Offsets", key="m_btn_carb", use_container_width=True):
+            m_preset = "How many carbon credits and trees has my home solar saved?"
+
+        if "arka_macro_query_input" not in st.session_state:
+            st.session_state.arka_macro_query_input = ""
+
+        if m_preset:
+            st.session_state.arka_macro_query_input = m_preset
+
+        with st.form("arka_macro_form", clear_on_submit=False):
+            form_c1, form_c2 = st.columns([5, 1])
+            with form_c1:
+                q_typed = st.text_input(
+                    "Ask ARKA:",
+                    value=st.session_state.arka_macro_query_input,
+                    placeholder="e.g. How much subsidy do I get under PM Surya Ghar? Or what is the net-metering SLA?",
+                    label_visibility="collapsed",
+                )
+            with form_c2:
+                btn_ask_macro = st.form_submit_button("⚡ Ask ARKA", use_container_width=True)
+
+        active_query = q_typed if (btn_ask_macro and q_typed.strip()) else (m_preset if m_preset else None)
+
+        if active_query:
+            resp_arka = ArkaPersonalAssistant().answer_query(active_query)
+            clean_html = resp_arka.answer_text.replace("\n", "<br/>")
+            st.markdown(
+                f"""
+                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #38bdf8; border-radius: 12px; padding: 16px 20px; margin-top: 10px; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-weight: 700; color: #38bdf8; font-size: 15px;">
+                            {resp_arka.headline}
+                        </span>
+                        <span style="background: #0284c7; color: #f0f9ff; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                            ARKA AI • {resp_arka.intent} • {resp_arka.timestamp}
+                        </span>
+                    </div>
+                    <div style="color: #f1f5f9; font-size: 14px; margin-top: 12px; line-height: 1.6;">
+                        {clean_html}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
             if resp_arka.action_recommendation:
-                st.info(f"💡 {resp_arka.action_recommendation}")
+                st.info(f"💡 **Recommended Action:** {resp_arka.action_recommendation}")
+            if resp_arka.statutory_grounding:
+                st.caption(f"📜 **Grounded Reference:** {resp_arka.statutory_grounding}")
 
     st.markdown(
         """

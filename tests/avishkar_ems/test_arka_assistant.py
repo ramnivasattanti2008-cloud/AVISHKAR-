@@ -166,3 +166,45 @@ def test_arka_sbi_solar_loan_scenario(arka: ArkaPersonalAssistant, sample_contex
     assert resp.key_metrics["monthly_emi_inr"] > 0
 
 
+def test_arka_monsoon_and_clouds_scenario(arka: ArkaPersonalAssistant, sample_context: dict):
+    resp = arka.answer_query("Will my solar panels work during rainy season and monsoon clouds?", sample_context)
+    assert resp.intent == "MONSOON_RAIN_CLOUDS"
+    assert "20–30%" in resp.headline or "20-30%" in resp.headline or "20% to 30%" in resp.answer_text
+    assert "Reserve" in resp.headline or "रिजर्व" in resp.headline
+    assert resp.key_metrics["monsoon_reserve_floor_pct"] == 70
+
+
+def test_arka_lightning_and_earthing_scenario(arka: ArkaPersonalAssistant, sample_context: dict):
+    resp = arka.answer_query("Do I need earthing pits and a lightning arrester for my rooftop solar?", sample_context)
+    assert resp.intent == "LIGHTNING_EARTHING_SAFETY"
+    assert "Earthing" in resp.headline or "अर्थिंग" in resp.headline
+    assert "< 5 Ω" in resp.headline or "< 5.0 Ω" in resp.answer_text or "< 5" in resp.answer_text
+    assert resp.key_metrics["chemical_pits_count"] == 3
+
+
+def test_arka_net_metering_discom_sla_scenario(arka: ArkaPersonalAssistant, sample_context: dict):
+    resp = arka.answer_query("Why is my DISCOM delaying my net meter installation and what is the SLA?", sample_context)
+    assert resp.intent == "NET_METERING_DISCOM"
+    assert "15-Day" in resp.headline or "15 दिन" in resp.headline
+    assert "₹500" in resp.answer_text
+    assert resp.key_metrics["statutory_delay_penalty_per_day"] == 500.0
+
+
+def test_arka_warranties_and_insurance_scenario(arka: ArkaPersonalAssistant, sample_context: dict):
+    resp = arka.answer_query("What warranties and insurance protect my solar panels and inverter?", sample_context)
+    assert resp.intent == "WARRANTIES_INSURANCE"
+    assert "25-Year" in resp.headline or "25 साल" in resp.headline
+    assert "84.8" in resp.answer_text
+    assert resp.key_metrics["panel_warranty_years"] == 25
+    assert resp.key_metrics["yr25_guaranteed_output_pct"] == 84.8
+
+
+def test_arka_virtual_net_metering_apartments_scenario(arka: ArkaPersonalAssistant, sample_context: dict):
+    resp = arka.answer_query("Can tenants and apartment societies install solar under virtual net metering?", sample_context)
+    assert resp.intent == "TENANTS_APARTMENTS"
+    assert "Virtual Net Metering" in resp.headline or "VNM" in resp.headline or "वर्चुअल" in resp.headline
+    assert "₹18,000" in resp.answer_text
+    assert resp.key_metrics["rwa_subsidy_per_kwp_inr"] == 18000.0
+
+
+

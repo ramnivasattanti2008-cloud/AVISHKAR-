@@ -79,6 +79,16 @@ class ArkaPersonalAssistant:
             return self._handle_carbon_offsets(query, ctx, is_hi)
         elif intent == "STATE_COMPARISON":
             return self._handle_state_comparison(query, ctx, is_hi)
+        elif intent == "MONSOON_RAIN_CLOUDS":
+            return self._handle_monsoon_rain(query, ctx, is_hi)
+        elif intent == "LIGHTNING_EARTHING_SAFETY":
+            return self._handle_lightning_earthing(query, ctx, is_hi)
+        elif intent == "NET_METERING_DISCOM":
+            return self._handle_net_metering_discom(query, ctx, is_hi)
+        elif intent == "WARRANTIES_INSURANCE":
+            return self._handle_warranties_insurance(query, ctx, is_hi)
+        elif intent == "TENANTS_APARTMENTS":
+            return self._handle_tenants_apartments(query, ctx, is_hi)
         else:
             return self._handle_general_query(query, ctx, is_hi)
 
@@ -89,55 +99,75 @@ class ArkaPersonalAssistant:
         if re.search(r"\b(islanding|anti-islanding|watchdog|shunt-trip|modbus|sunspec|lineman|cyber|cybersecurity|contactor|rocof)\b", q_l):
             return "HARDWARE_SAFETY"
 
-        # 2. Faults & Error Codes (Troubleshooting)
+        # 2. Earthing, Lightning Arrester & Surge Protection (IS 3043 / CEA Safety)
+        if re.search(r"\b(lightning|arrester|chemical earth|spd|surge protection|surge protector|earth resistance|earthing pit|earthing pits)\b", q_l):
+            return "LIGHTNING_EARTHING_SAFETY"
+
+        # 3. Faults & Error Codes (Troubleshooting)
         if re.search(r"\b(error|fault|riso|isolation|red light|tripped|alarm|code|overtemp|over-temperature|earthing|faults)\b", q_l):
             return "TROUBLESHOOTING_FAULTS"
 
-        # 3. Commercial / MSME Tax & Depreciation
+        # 4. Commercial / MSME Tax & Depreciation
         if re.search(r"\b(depreciation|accelerated depreciation|section 32|gst|tax credit|commercial|msme|itc|clinic tax|shop tax)\b", q_l):
             return "COMMERCIAL_TAX_INCENTIVES"
 
-        # 4. Rooftop Engineering, Area, Tilt & Technology
+        # 5. Rooftop Engineering, Area, Tilt & Technology
         if re.search(r"\b(roof area|sq ft|sqft|square feet|tilt|angle|azimuth|direction|mono perc|topcon|bifacial|dead load|wind load|structural|oversizing|orientation|degrees)\b", q_l):
             return "ROOFTOP_ENGINEERING"
 
-        # 5. Panel Cleaning, Dust & Soiling (Excludes Washing Machine)
+        # 6. Monsoon, Rain, Clouds & Diffuse Light Generation
+        if re.search(r"\b(rain|monsoon|monsoons|baarish|cloudy|diffuse|diffused|overcast|badal|barsaat|rainy)\b", q_l):
+            return "MONSOON_RAIN_CLOUDS"
+
+        # 7. Panel Cleaning, Dust & Soiling (Excludes Washing Machine)
         if re.search(r"\b(clean|cleaning|wash|washing|dust|soiling|dirty|dhona|safai)\b", q_l) and not re.search(r"\b(washing machine)\b", q_l):
             return "PANEL_CLEANING_DUST"
 
-        # 6. Environmental Carbon Offsets & BEE CCTS
+        # 8. DISCOM Net-Metering SLA, Approval & Metering Delays
+        if re.search(r"\b(net meter delay|meter delay|discom delay|sla|bi-directional meter|banking true-up|march 31|meter replacement|cgrf|appc|inspection delay|tfa delay)\b", q_l):
+            return "NET_METERING_DISCOM"
+
+        # 9. Warranties, Insurance & Hailstorm Protection
+        if re.search(r"\b(warranty|warranties|insurance|degradation|broken panel|cyclone damage|bima|guarantee|claim warranty)\b", q_l):
+            return "WARRANTIES_INSURANCE"
+
+        # 10. Apartments, Tenants, RWAs & Virtual Net Metering (VNM/GNM)
+        if re.search(r"\b(tenant|tenants|apartment|apartments|flat|flats|society|rwa|chs|virtual net metering|vnm|group net metering|gnm|kirayedar|balcony solar)\b", q_l):
+            return "TENANTS_APARTMENTS"
+
+        # 11. Environmental Carbon Offsets & BEE CCTS
         if re.search(r"\b(carbon|co2|trees|coal|ccts|emission|emissions|environment)\b", q_l):
             return "CARBON_OFFSETS"
 
-        # 7. State & District Comparison Benchmarks
+        # 12. State & District Comparison Benchmarks
         if re.search(r"\b(compare|benchmark|uttar pradesh|rajasthan|maharashtra|karnataka|state average|district)\b", q_l):
             return "STATE_COMPARISON"
 
-        # 8. P2P Energy Trading & Instant UPI Settlement
+        # 13. P2P Energy Trading & Instant UPI Settlement
         if re.search(r"\b(p2p|sell|selling|neighbor|neighbors|upi|beckn|deg|trade|trading|auction|bechna|kamai)\b", q_l):
             return "P2P_TRADING_UPI"
 
-        # 9. Electric Vehicles & Vehicle-to-Home
+        # 14. Electric Vehicles & Vehicle-to-Home
         if re.search(r"\b(ev|electric vehicle|v2h|car|cars|scooter|scooters|ola|ather|nexon|vehicle-to-home)\b", q_l):
             return "EV_V2H"
 
-        # 10. Subsidies, Sizing, PM Surya Ghar & Solar Loans
+        # 15. Subsidies, Sizing, PM Surya Ghar & Solar Loans
         if re.search(r"\b(subsidy|pm surya|surya ghar|sizing|cost|kwp|kitne kw|subsidi|apply|cfa|loan|loans|emi|sbi surya|financing|bank loan)\b", q_l):
             return "SUBSIDY_SIZING"
 
-        # 11. Battery, Outage & Blackout Protection
+        # 16. Battery, Outage & Blackout Protection
         if re.search(r"\b(blackout|power cut|light cut|bijli jana|outage|backup|storm|reserve floor|hours of backup|lifepo4|lead-acid|tubular)\b", q_l):
             return "BATTERY_BLACKOUT"
 
-        # 12. Smart Appliance Scheduling
+        # 17. Smart Appliance Scheduling
         if re.search(r"\b(washing machine|geyser|appliance|appliances|air conditioner|water pump|when to run|chalaun|timing)\b", q_l) and "बचत" not in q:
             return "APPLIANCE_TIMING"
 
-        # 13. Electricity Bill Savings & Tariffs
+        # 18. Electricity Bill Savings & Tariffs
         if re.search(r"\b(bill|bills|saving|savings|bachat|save|tod|tariff|rate|rates|kharcha|rupaye|units|slab|net meter|fixed charge)\b", q_l) or "बचत" in q or "बिजली" in q:
             return "BILL_SAVINGS"
 
-        # 14. Battery keyword fallback
+        # 19. Battery keyword fallback
         if re.search(r"\b(battery|batteries|bess)\b", q_l):
             return "BATTERY_BLACKOUT"
 
@@ -164,18 +194,18 @@ class ArkaPersonalAssistant:
                 f"- **केंद्र सरकार सब्सिडी (CFA):** **₹{sub_amt:,.0f}** (सीधे आपके DBT बैंक खाते में)\n"
                 f"- **आपका शुद्ध निवेश:** **₹{net_cost:,.0f}**\n"
                 f"- **अनुमानित पेबैक समय:** **~{payback_yrs} साल** (इसके बाद 22+ साल बिजली मुफ्त!)\n\n"
-                f"🏦 **SBI सूर्य घर कोलेटरल-फ्री सोलर लोन:**\n"
-                f"- **ब्याज दर:** मात्र **7.00% प्रति वर्ष** (रेपो रेट + 0.50%)\n"
-                f"- **अवधि:** 10 वर्ष (120 महीने) | **प्रोसेसिंग फीस:** मात्र ₹500\n"
+                "🏦 **SBI सूर्य घर कोलेटरल-फ्री सोलर लोन:**\n"
+                "- **ब्याज दर:** मात्र **7.00% प्रति वर्ष** (रेपो रेट + 0.50%)\n"
+                "- **अवधि:** 10 वर्ष (120 महीने) | **प्रोसेसिंग फीस:** मात्र ₹500\n"
                 f"- **मासिक EMI:** **~₹{monthly_emi:,.0f} / माह**\n"
                 f"- **बिजली बिल बचत:** **~₹{est_monthly_save:,.0f} / माह**\n"
                 f"- 💡 **तत्काल नकद लाभ:** पहले ही महीने से आपकी जेब में हर महीने **+₹{net_monthly_gain:,.0f} अतिरिक्त नकद** बचेगा!\n\n"
-                f"**आवेदन के 5 आधिकारिक चरण:**\n"
-                f"1. `pmsuryaghar.gov.in` पर अपने बिजली बिल और उपभोक्ता संख्या के साथ रजिस्टर करें।\n"
-                f"2. डिस्कॉम से 15 दिनों में तकनीकी स्वीकृति (TFA) प्राप्त होगी।\n"
-                f"3. सूचीबद्ध वेंडर से ALMM-अनुमोदित DCR सोलर पैनल लगवाएं।\n"
-                f"4. डिस्कॉम निरीक्षण के बाद बाई-डायरेक्शनल नेट मीटर स्थापित करेगा।\n"
-                f"5. सब्सिडी राशि 30 दिनों में सीधे आपके बैंक खाते में जमा होगी।"
+                "**आवेदन के 5 आधिकारिक चरण:**\n"
+                "1. `pmsuryaghar.gov.in` पर अपने बिजली बिल और उपभोक्ता संख्या के साथ रजिस्टर करें।\n"
+                "2. डिस्कॉम से 15 दिनों में तकनीकी स्वीकृति (TFA) प्राप्त होगी।\n"
+                "3. सूचीबद्ध वेंडर से ALMM-अनुमोदित DCR सोलर पैनल लगवाएं।\n"
+                "4. डिस्कॉम निरीक्षण के बाद बाई-डायरेक्शनल नेट मीटर स्थापित करेगा।\n"
+                "5. सब्सिडी राशि 30 दिनों में सीधे आपके बैंक खाते में जमा होगी।"
             )
             action = "राष्ट्रीय पोर्टल pmsuryaghar.gov.in पर आज ही आवेदन शुरू करें।"
         else:
@@ -186,18 +216,18 @@ class ArkaPersonalAssistant:
                 f"- **Central Government Subsidy (CFA):** **₹{sub_amt:,.0f}** (credited via Direct Benefit Transfer)\n"
                 f"- **Net Family Investment:** **₹{net_cost:,.0f}**\n"
                 f"- **Simple Payback Period:** **~{payback_yrs} Years** (yielding 22+ years of essentially free electricity!)\n\n"
-                f"🏦 **SBI Surya Ghar Collateral-Free Solar Loan:**\n"
-                f"- **Interest Rate:** **7.00% p.a.** (floating, tied to RBI repo rate + 0.50%)\n"
-                f"- **Tenure:** Up to 10 Years (120 months) | **Processing Fee:** Just ₹500 flat\n"
+                "🏦 **SBI Surya Ghar Collateral-Free Solar Loan:**\n"
+                "- **Interest Rate:** **7.00% p.a.** (floating, tied to RBI repo rate + 0.50%)\n"
+                "- **Tenure:** Up to 10 Years (120 months) | **Processing Fee:** Just ₹500 flat\n"
                 f"- **Estimated Monthly EMI:** **~₹{monthly_emi:,.0f} / month**\n"
                 f"- **Monthly Bill Savings:** **~₹{est_monthly_save:,.0f} / month**\n"
                 f"- 💡 **Instant Positive Cash-Flow:** You save more on electricity than your EMI from Month 1 (**+₹{net_monthly_gain:,.0f}/mo net in pocket**!)\n\n"
-                f"**5-Step Official DISCOM Workflow:**\n"
-                f"1. **National Portal**: Register on `pmsuryaghar.gov.in` with your electricity consumer number.\n"
-                f"2. **Technical Feasibility Approval (TFA)**: Issued by your DISCOM within 15 working days.\n"
-                f"3. **Empanelled Vendor Installation**: Uses ALMM-compliant DCR solar panels & BIS-certified inverters.\n"
-                f"4. **Inspection & Net Metering**: DISCOM inspects wiring and installs the 4-quadrant net meter.\n"
-                f"5. **DBT Bank Transfer**: Subsidy deposited directly into your Aadhaar-linked bank account within 30 days."
+                "**5-Step Official DISCOM Workflow:**\n"
+                "1. **National Portal**: Register on `pmsuryaghar.gov.in` with your electricity consumer number.\n"
+                "2. **Technical Feasibility Approval (TFA)**: Issued by your DISCOM within 15 working days.\n"
+                "3. **Empanelled Vendor Installation**: Uses ALMM-compliant DCR solar panels & BIS-certified inverters.\n"
+                "4. **Inspection & Net Metering**: DISCOM inspects wiring and installs the 4-quadrant net meter.\n"
+                "5. **DBT Bank Transfer**: Subsidy deposited directly into your Aadhaar-linked bank account within 30 days."
             )
             action = "Apply on pmsuryaghar.gov.in to lock in your ₹78,000 subsidy ceiling."
 
@@ -242,11 +272,11 @@ class ArkaPersonalAssistant:
             text = (
                 f"आपके **{rec_kw:.1f} kWp सोलर सिस्टम** के लिए सटीक तकनीकी विवरण:\n\n"
                 f"- 📏 **आवश्यक छत का क्षेत्रफल:** **{area_sqft} वर्गफुट (sq.ft)** छाया-मुक्त छत (प्रति kWp 100 वर्गफुट)\n"
-                f"- 🧭 **दिशा (Azimuth):** **सटीक दक्षिण दिशा (True South / 180°)** की ओर मुख होना चाहिए\n"
+                "- 🧭 **दिशा (Azimuth):** **सटीक दक्षिण दिशा (True South / 180°)** की ओर मुख होना चाहिए\n"
                 f"- 📐 **इष्टतम झुकाव कोण (Tilt Angle):** **{tilt_deg}° कोण** (सर्दियों में {tilt_deg + 10}°, गर्मियों में {max(10, tilt_deg - 10)}°)\n"
-                f"- ⚡ **मॉड्यूल तकनीक:** **N-Type TOPCon बाइफेशियल पैनल्स** (अत्यधिक गर्मी 45°C+ में भी केवल -0.30%/°C तापमान हानि; सामान्य पॉली पैनल्स से 8-12% अधिक बिजली)\n"
-                f"- 🏗️ **ढांचे का भार (Structural Dead Load):** 15-20 किग्रा/वर्गमीटर (छत पर कोई अतिरिक्त जोखिम नहीं; IS 875 भाग 3 के तहत 150 किमी/घंटा हवा प्रतिरोध)\n"
-                f"- 🔌 **DC से AC ओवरसाइजिंग अनुपात:** **1.25x** (3.0 kW इनवर्टर पर 3.75 kWp पैनल्स) जिससे सुबह और शाम को भी भरपूर उत्पादन मिलता है।"
+                "- ⚡ **मॉड्यूल तकनीक:** **N-Type TOPCon बाइफेशियल पैनल्स** (अत्यधिक गर्मी 45°C+ में भी केवल -0.30%/°C तापमान हानि; सामान्य पॉली पैनल्स से 8-12% अधिक बिजली)\n"
+                "- 🏗️ **ढांचे का भार (Structural Dead Load):** 15-20 किग्रा/वर्गमीटर (छत पर कोई अतिरिक्त जोखिम नहीं; IS 875 भाग 3 के तहत 150 किमी/घंटा हवा प्रतिरोध)\n"
+                "- 🔌 **DC से AC ओवरसाइजिंग अनुपात:** **1.25x** (3.0 kW इनवर्टर पर 3.75 kWp पैनल्स) जिससे सुबह और शाम को भी भरपूर उत्पादन मिलता है।"
             )
             action = f"सोलर वेंडर से कहें कि पैनल्स को ठीक {tilt_deg}° झुकाव के साथ दक्षिण दिशा में स्थापित करे।"
         else:
@@ -254,11 +284,11 @@ class ArkaPersonalAssistant:
             text = (
                 f"Here are the precise mechanical and civil specifications for your **{rec_kw:.1f} kWp array**:\n\n"
                 f"- 📏 **Required Rooftop Area:** **{area_sqft} sq.ft** of unobstructed, shadow-free roof (100 sq.ft per kWp rule of thumb)\n"
-                f"- 🧭 **Module Orientation (Azimuth):** **True South (180° Azimuth)** for maximum annual solar irradiance in India\n"
+                "- 🧭 **Module Orientation (Azimuth):** **True South (180° Azimuth)** for maximum annual solar irradiance in India\n"
                 f"- 📐 **Optimal Tilt Angle:** **{tilt_deg}° Fixed Tilt** matching your latitude ({tilt_deg + 10}° winter / {max(10, tilt_deg - 10)}° summer)\n"
-                f"- ⚡ **Cell Technology:** **N-Type TOPCon Bifacial Modules** (Superior $-0.30\\%/^\\circ\\text{{C}}$ temperature coefficient, yielding 8-12% more energy during scorching $>45^\\circ\\text{{C}}$ Indian summers)\n"
-                f"- 🏗️ **Structural Loading:** 15–20 kg/m² dead weight (completely safe for RCC roofs; engineered to withstand 150 km/h wind gusts per IS 875 Part 3)\n"
-                f"- 🔌 **DC-to-AC Oversizing Ratio:** **1.25x** (e.g. 3.75 kWp DC modules paired to a 3.0 kW AC inverter) to maximize early morning and late afternoon generation."
+                "- ⚡ **Cell Technology:** **N-Type TOPCon Bifacial Modules** (Superior $-0.30\\%/^\\circ\\text{{C}}$ temperature coefficient, yielding 8-12% more energy during scorching $>45^\\circ\\text{{C}}$ Indian summers)\n"
+                "- 🏗️ **Structural Loading:** 15–20 kg/m² dead weight (completely safe for RCC roofs; engineered to withstand 150 km/h wind gusts per IS 875 Part 3)\n"
+                "- 🔌 **DC-to-AC Oversizing Ratio:** **1.25x** (e.g. 3.75 kWp DC modules paired to a 3.0 kW AC inverter) to maximize early morning and late afternoon generation."
             )
             action = f"Direct your installer to align panel mounting structures at exactly {tilt_deg}° facing True South."
 
@@ -293,25 +323,25 @@ class ArkaPersonalAssistant:
         if is_hi:
             headline = f"💰 आपकी मासिक बचत: हर महीने ₹{monthly_save:,.0f} सीधे आपकी जेब में"
             text = (
-                f"स्मार्ट सोलर और बैटरी मैनेजमेंट से आपका बिजली बिल लगभग शून्य हो जाता है:\n\n"
+                "स्मार्ट सोलर और बैटरी मैनेजमेंट से आपका बिजली बिल लगभग शून्य हो जाता है:\n\n"
                 f"- **सोलर से पहले आपका मासिक बिल:** ₹{pre_bill:,.0f} / माह\n"
                 f"- **सोलर व AVISHKAR EMS के साथ अनुमानित बिल:** **₹{cur_bill:,.0f} / माह**\n"
                 f"- **शुद्ध मासिक पारिवारिक बचत:** **₹{monthly_save:,.0f} हर महीने**\n"
                 f"- **सालाना बचत:** **₹{annual_save:,.0f} प्रति वर्ष**\n\n"
-                f"💡 **बचत का मुख्य कारण:** दिन में जब सूरज तेज होता है, आपके सभी भारी उपकरण (गीजर, वाशिंग मशीन, मोटर) ₹0 की मुफ्त धूप से चलते हैं। शाम के पीक समय (6 PM - 10 PM) जब ग्रिड की दर ₹10/यूनिट होती है, आपका घर बैटरी पर चलता है, जिससे महंगा ग्रिड पावर नहीं खरीदना पड़ता!\n\n"
-                f"⚖️ **नेट मीटरिंग का नियम:** दिन में उत्पादित अतिरिक्त यूनिट्स ग्रिड में जमा (Bank) हो जाती हैं। यदि रात में ग्रिड से बिजली ली भी जाए, तो वह दिन की यूनिट्स से कट जाती है। केवल न्यूनतम फिक्स्ड चार्ज (₹110-150/kW) बिल में आता है।"
+                "💡 **बचत का मुख्य कारण:** दिन में जब सूरज तेज होता है, आपके सभी भारी उपकरण (गीजर, वाशिंग मशीन, मोटर) ₹0 की मुफ्त धूप से चलते हैं। शाम के पीक समय (6 PM - 10 PM) जब ग्रिड की दर ₹10/यूनिट होती है, आपका घर बैटरी पर चलता है, जिससे महंगा ग्रिड पावर नहीं खरीदना पड़ता!\n\n"
+                "⚖️ **नेट मीटरिंग का नियम:** दिन में उत्पादित अतिरिक्त यूनिट्स ग्रिड में जमा (Bank) हो जाती हैं। यदि रात में ग्रिड से बिजली ली भी जाए, तो वह दिन की यूनिट्स से कट जाती है। केवल न्यूनतम फिक्स्ड चार्ज (₹110-150/kW) बिल में आता है।"
             )
             action = "भारी उपकरणों को दोपहर 11 बजे से 3 बजे के बीच चलाएं।"
         else:
             headline = f"💰 Your Monthly Bill Impact: Saving ₹{monthly_save:,.0f} Cash Every Month"
             text = (
-                f"Here is your personalized before vs after electricity expenditure breakdown:\n\n"
+                "Here is your personalized before vs after electricity expenditure breakdown:\n\n"
                 f"- **Pre-Solar Monthly DISCOM Bill:** ₹{pre_bill:,.0f} / month\n"
                 f"- **Current Bill with AVISHKAR EMS:** **₹{cur_bill:,.0f} / month**\n"
                 f"- **Net In-Pocket Family Savings:** **₹{monthly_save:,.0f} / month**\n"
                 f"- **Annual Cash Preserved:** **₹{annual_save:,.0f} / year**\n\n"
-                f"💡 **How You Save:** During peak solar hours (10:00 AM - 3:00 PM), your home consumes free rooftop electricity ($0/kWh). During evening peak tariff hours (6:00 PM - 10:00 PM @ ₹10.00/unit), AVISHKAR discharges your stored solar battery energy, completely bypassing expensive utility rates!\n\n"
-                f"⚖️ **Net Metering Settlement**: Surplus midday solar units are banked with your DISCOM and credited 1:1 against night consumption. Your bill reduces strictly to sanctioned load fixed charges (₹110–150/kW/mo) and meter rent."
+                "💡 **How You Save:** During peak solar hours (10:00 AM - 3:00 PM), your home consumes free rooftop electricity ($0/kWh). During evening peak tariff hours (6:00 PM - 10:00 PM @ ₹10.00/unit), AVISHKAR discharges your stored solar battery energy, completely bypassing expensive utility rates!\n\n"
+                "⚖️ **Net Metering Settlement**: Surplus midday solar units are banked with your DISCOM and credited 1:1 against night consumption. Your bill reduces strictly to sanctioned load fixed charges (₹110–150/kW/mo) and meter rent."
             )
             action = "Shift washing machine and water geyser into the 11 AM - 3 PM solar window."
 
@@ -349,10 +379,10 @@ class ArkaPersonalAssistant:
                 f"- 📶 **वाई-फाई राउटर + 2 लैपटॉप (80W):** लगभग **{wifi_h} घंटे** अबाध वर्क-फ्रॉम-होम सुरक्षा\n"
                 f"- 🧊 **फ्रिज (200W):** लगभग **{fridge_h} घंटे** खाना बिल्कुल ताजा रहेगा\n"
                 f"- 💧 **0.5 HP पानी की मोटर (400W):** लगभग **{pump_h} घंटे** पानी की टंकी भर सकती है\n\n"
-                f"🔋 **LiFePO4 बनाम लेड-एसिड बैटरी:**\n"
-                f"- **LiFePO4:** 5,000+ साइकिल जीवन, 95% दक्षता, आग से पूर्ण सुरक्षित, 10 साल वारंटी\n"
-                f"- **लेड-एसिड (इन्वर्टर):** मात्र 1,200 साइकिल, 70% दक्षता, तेज़ाब का धुआं और हर 3 माह में पानी डालना\n\n"
-                f"🚨 **आंधी-तूफान (Storm Shield):** आंधी या शटडाउन की आशंका हो तो 'Storm Lock' चालू करें। इससे रिज़र्व 90% पर लॉक रहेगा।"
+                "🔋 **LiFePO4 बनाम लेड-एसिड बैटरी:**\n"
+                "- **LiFePO4:** 5,000+ साइकिल जीवन, 95% दक्षता, आग से पूर्ण सुरक्षित, 10 साल वारंटी\n"
+                "- **लेड-एसिड (इन्वर्टर):** मात्र 1,200 साइकिल, 70% दक्षता, तेज़ाब का धुआं और हर 3 माह में पानी डालना\n\n"
+                "🚨 **आंधी-तूफान (Storm Shield):** आंधी या शटडाउन की आशंका हो तो 'Storm Lock' चालू करें। इससे रिज़र्व 90% पर लॉक रहेगा।"
             )
             action = "बिजली जाने पर भारी एसी व हीटर बंद रखें ताकि रोशनी और पंखे 24+ घंटे चल सकें।"
         else:
@@ -363,10 +393,10 @@ class ArkaPersonalAssistant:
                 f"- 📶 **Wi-Fi Router + Work Laptops (80W):** Runs for **~{wifi_h} Hours** of uninterrupted work\n"
                 f"- 🧊 **Single-Door Refrigerator (200W):** Runs for **~{fridge_h} Hours** (food stays fresh)\n"
                 f"- 💧 **0.5 HP Water Pump (400W):** Runs for **~{pump_h} Hours** (tanks filled)\n\n"
-                f"🔋 **LiFePO4 vs Old Lead-Acid Chemistry:**\n"
-                f"- **LiFePO4**: 5,000+ cycles at 80% DoD, 95% round-trip efficiency, non-toxic, zero thermal runaway risk under 60°C, 10-year lifespan.\n"
-                f"- **Lead-Acid**: ~1,200 cycles, 70% efficiency, toxic acid fumes, requires distilled water top-ups, dies in 3 years.\n\n"
-                f"🚨 **Storm Emergency Lock**: Anticipating bad weather or DISCOM maintenance cuts? Toggle 'Storm Shield' in Tab 3 to force a 90% battery reserve floor."
+                "🔋 **LiFePO4 vs Old Lead-Acid Chemistry:**\n"
+                "- **LiFePO4**: 5,000+ cycles at 80% DoD, 95% round-trip efficiency, non-toxic, zero thermal runaway risk under 60°C, 10-year lifespan.\n"
+                "- **Lead-Acid**: ~1,200 cycles, 70% efficiency, toxic acid fumes, requires distilled water top-ups, dies in 3 years.\n\n"
+                "🚨 **Storm Emergency Lock**: Anticipating bad weather or DISCOM maintenance cuts? Toggle 'Storm Shield' in Tab 3 to force a 90% battery reserve floor."
             )
             action = "Keep heavy air conditioners off during blackouts to extend lighting & fan runtime to over 24 hours."
 
@@ -653,21 +683,21 @@ class ArkaPersonalAssistant:
         if is_hi:
             headline = "💼 वाणिज्यिक व क्लिनिक सोलर लाभ: 40% त्वरित मूल्यह्रास (AD) व 12% GST इनपुट क्रेडिट"
             text = (
-                f"क्लिनिक, दुकानों व व्यावसायिक परिसरों के लिए सोलर लगाने पर भारी कर (Tax) लाभ मिलते हैं:\n\n"
+                "क्लिनिक, दुकानों व व्यावसायिक परिसरों के लिए सोलर लगाने पर भारी कर (Tax) लाभ मिलते हैं:\n\n"
                 f"- 📉 **40% त्वरित मूल्यह्रास (Accelerated Depreciation - Sec 32):** पहले ही वर्ष में सोलर सिस्टम की 40% लागत को व्यापारिक मुनाफे में से घटाया जा सकता है, जिससे **~₹{ad_save:,.0f} का सीधा इनकम टैक्स बचेगा**!\n"
                 f"- 🧾 **12% GST इनपुट टैक्स क्रेडिट (ITC):** सोलर प्लांट पर चुकाए गए 12% GST (**~₹{gst_credit:,.0f}**) का क्लेम आप अपने व्यापारिक GST देयता में समायोजित कर सकते हैं।\n"
-                f"- ⚡ **सस्ती बिजली:** कमर्शियल बिजली दर ₹11.50/यूनिट की जगह सोलर की लागत मात्र **₹2.10/यूनिट** पड़ती है!\n"
-                f"- ⏱️ **पेबैक समय:** मात्र **2.2 से 2.5 साल** में पूरा निवेश वापस!"
+                "- ⚡ **सस्ती बिजली:** कमर्शियल बिजली दर ₹11.50/यूनिट की जगह सोलर की लागत मात्र **₹2.10/यूनिट** पड़ती है!\n"
+                "- ⏱️ **पेबैक समय:** मात्र **2.2 से 2.5 साल** में पूरा निवेश वापस!"
             )
             action = "अपने चार्टर्ड अकाउंटेंट (CA) को सोलर बिल देकर 40% त्वरित मूल्यह्रास और GST इनपुट क्लेम करें।"
         else:
             headline = "💼 Commercial & MSME Solar Benefits: 40% Accelerated Depreciation & 12% GST ITC"
             text = (
-                f"For clinics, retail stores, and commercial establishments, solar offers powerful corporate tax incentives:\n\n"
+                "For clinics, retail stores, and commercial establishments, solar offers powerful corporate tax incentives:\n\n"
                 f"- 📉 **40% Accelerated Depreciation (Section 32 of Income Tax Act):** Write off 40% of the entire solar capex in Year 1 against taxable business profits, saving **~₹{ad_save:,.0f} in cash income tax**!\n"
                 f"- 🧾 **12% GST Input Tax Credit (ITC):** Claim 100% of the 12% GST paid on solar equipment (**~₹{gst_credit:,.0f}**) directly against your commercial GST liability.\n"
-                f"- ⚡ **Dramatic Tariff Arbitrage:** Commercial DISCOM power costs ₹10.50–13.50/unit; your rooftop solar LCOE is only **₹2.10/unit**!\n"
-                f"- ⏱️ **Super-Fast Payback:** Entire capital cost is fully recovered within **2.2 to 2.5 years**."
+                "- ⚡ **Dramatic Tariff Arbitrage:** Commercial DISCOM power costs ₹10.50–13.50/unit; your rooftop solar LCOE is only **₹2.10/unit**!\n"
+                "- ⏱️ **Super-Fast Payback:** Entire capital cost is fully recovered within **2.2 to 2.5 years**."
             )
             action = "Forward your solar capital invoice to your Chartered Accountant to claim 40% AD and 12% GST ITC."
 
@@ -696,21 +726,21 @@ class ArkaPersonalAssistant:
         if is_hi:
             headline = f"🌿 पर्यावरण प्रभाव: आज आपने {co2_kg} किग्रा कार्बन उत्सर्जन रोका"
             text = (
-                f"आपकी छत से बनी स्वच्छ बिजली का सीधा पर्यावरण लाभ:\n\n"
+                "आपकी छत से बनी स्वच्छ बिजली का सीधा पर्यावरण लाभ:\n\n"
                 f"- **CO₂ उत्सर्जन में कमी:** **{co2_kg} किग्रा कार्बन डाइऑक्साइड** रोकी गई (CEA 0.716 kg/kWh मानक)\n"
                 f"- **कोयले की बचत:** **{coal_kg} किग्रा कोयला** जलने से बचा\n"
                 f"- **पेड़ों के बराबर प्रभाव:** **{trees} पेड़ लगाने** के बराबर लाभ\n"
-                f"- **BEE कार्बन क्रेडिट ट्रेडिंग स्कीम (CCTS):** इन कार्बन ऑफसेट्स को भविष्य में CCTS बाजार में बेचा जा सकेगा।"
+                "- **BEE कार्बन क्रेडिट ट्रेडिंग स्कीम (CCTS):** इन कार्बन ऑफसेट्स को भविष्य में CCTS बाजार में बेचा जा सकेगा।"
             )
             action = "टैब 12 में कार्बन क्रेडिट और 25 साल का संचयी प्रभाव देखें।"
         else:
             headline = f"🌿 Environmental Impact: Avoided {co2_kg} kg CO₂ Emission Today"
             text = (
-                f"Here is the decarbonization contribution from your rooftop solar array:\n\n"
+                "Here is the decarbonization contribution from your rooftop solar array:\n\n"
                 f"- **Avoided Greenhouse Gas (CEA Baseline):** **{co2_kg} kg CO₂** avoided today (0.716 kg CO₂/kWh factor)\n"
                 f"- **Thermal Coal Displaced:** **{coal_kg} kg coal** avoided at thermal power stations\n"
                 f"- **Forest Equivalent:** Equal to growing **{trees} trees** in your city\n"
-                f"- **BEE Carbon Credit Trading Scheme (CCTS):** Certified carbon savings trackable for green certificates and statutory ESG credits."
+                "- **BEE Carbon Credit Trading Scheme (CCTS):** Certified carbon savings trackable for green certificates and statutory ESG credits."
             )
             action = "Check Tab 12 for the BEE CCTS carbon counter and 25-year cumulative environmental metrics."
 
@@ -740,9 +770,9 @@ class ArkaPersonalAssistant:
             text = (
                 f"आपके घर का प्रदर्शन {state} के औसत आवासीय सौर उपभोक्ताओं की तुलना में:\n\n"
                 f"- **आपका सौर स्व-उपभोग (Self-Consumption):** **{self_cons:.1f}%** ({state} का औसत: {avg_state:.1f}%)\n"
-                f"- **ग्रिड निर्भरता में कमी:** **81.5%** कम बिजली ग्रिड से ली गई\n"
-                f"- **जिले में रैंकिंग:** आप अपने जिले के **शीर्ष 12% सबसे कुशल सौर घरों** में हैं!\n"
-                f"- **25 साल की शुद्ध पारिवारिक संपत्ति निर्माण:** **₹11.4 लाख** की संचयी बचत।"
+                "- **ग्रिड निर्भरता में कमी:** **81.5%** कम बिजली ग्रिड से ली गई\n"
+                "- **जिले में रैंकिंग:** आप अपने जिले के **शीर्ष 12% सबसे कुशल सौर घरों** में हैं!\n"
+                "- **25 साल की शुद्ध पारिवारिक संपत्ति निर्माण:** **₹11.4 लाख** की संचयी बचत।"
             )
             action = "अधिक जानकारी के लिए साइडबार में 'State & National Explorer' चुनें।"
         else:
@@ -750,9 +780,9 @@ class ArkaPersonalAssistant:
             text = (
                 f"Here is how your home compares against residential benchmarks across {state}:\n\n"
                 f"- **Your Solar Self-Consumption:** **{self_cons:.1f}%** ({state} Residential Average: {avg_state:.1f}%)\n"
-                f"- **Grid Independence Ratio:** **81.5%** reduction in utility coal imports\n"
-                f"- **District Community Standing:** You rank in the **Top 12% most efficient solar homes** in your DISCOM area!\n"
-                f"- **25-Year Lifetime Wealth Created:** Over **₹11.4 Lakhs** in cumulative family wealth preserved."
+                "- **Grid Independence Ratio:** **81.5%** reduction in utility coal imports\n"
+                "- **District Community Standing:** You rank in the **Top 12% most efficient solar homes** in your DISCOM area!\n"
+                "- **25-Year Lifetime Wealth Created:** Over **₹11.4 Lakhs** in cumulative family wealth preserved."
             )
             action = "Toggle to 'State & National Explorer' in the sidebar to view district and state policy comparisons."
 
@@ -772,6 +802,256 @@ class ArkaPersonalAssistant:
             language="hi" if is_hi else "en",
         )
 
+    def _handle_monsoon_rain(self, query: str, ctx: dict[str, Any], is_hi: bool) -> ArkaResponse:
+        rec_kw = float(ctx.get("solar_kw", 3.0))
+        batt_kwh = float(ctx.get("battery_kwh", 5.0))
+        reserve_kwh = round(batt_kwh * 0.70, 1)
+
+        if is_hi:
+            headline = f"🌧️ बारिश और मानसून रणनीति: 20-30% डिफ्यूज उत्पादन + {reserve_kwh} kWh रिजर्व"
+            text = (
+                f"मानसून और घने बादलों के दौरान आपके **{rec_kw:.1f} kWp सोलर सिस्टम** की स्थिति:\n\n"
+                "- ☁️ **डिफ्यूज रोशनी में उत्पादन:** आधुनिक N-Type TOPCon / Mono PERC पैनल्स घने बादलों में भी पूरी तरह बंद नहीं होते, बल्कि अपनी क्षमता का **20% से 30% डिफ्यूज बिजली** बनाते रहते हैं।\n"
+                f"- ⛈️ **ग्रिड फॉल्ट सुरक्षा:** मानसून में आंधी-बारिश से 11kV लोकल फीडर ट्रिपिंग आम है। AVISHKAR EMS ऑटोमैटिकली बैटरी का **रिजर्व फ्लोर 70% ({reserve_kwh} kWh)** पर लॉक कर देता है।\n"
+                "- 💡 **घरेलू बैकअप:** इस रिजर्व से आपके पंखे, LED लाइट्स, Wi-Fi और फ्रिज बिना किसी रुकावट के **10+ घंटे** चलते रहेंगे।\n"
+                "- 🛠️ **रखरखाव टिप:** छत पर जलभराव न होने दें; पैनल फ्रेम के पानी निकासी छेदों (weeping holes) की जांच करें ताकि धूल और काई न जमे।"
+            )
+            action = "मानसून के दिनों में AVISHKAR का 'Storm / Rain Reserve Lock (70%)' एक्टिव रखें।"
+        else:
+            headline = f"🌧️ Monsoon & Rain Strategy: 20–30% Diffuse Generation + {reserve_kwh} kWh Reserve"
+            text = (
+                f"Here is how your **{rec_kw:.1f} kWp solar system** operates during rainy and heavily overcast monsoon weather:\n\n"
+                "- ☁️ **Diffuse Light Generation:** Modern N-Type TOPCon and Mono PERC modules do not shut down in the rain; they continue generating **20% to 30% of rated capacity** from scattered diffuse sunlight.\n"
+                f"- ⛈️ **Feeder Blackout Protection:** Monsoon thunderstorms frequently cause utility 11kV feeder trips. AVISHKAR automatically elevates your battery reserve floor to **70% ({reserve_kwh} kWh stored energy)**.\n"
+                "- 💡 **Essential Backup:** This guaranteed reserve floor powers your LED lighting, ceiling fans, Wi-Fi router, and refrigerator for **10+ hours** straight during extended storm outages.\n"
+                "- 🛠️ **Maintenance Protocol:** Ensure water drainage around rooftop mounting structures; check weeping holes to avoid standing water puddles and algae growth."
+            )
+            action = "Keep AVISHKAR's automated 'Storm / Monsoon Reserve Lock' enabled during rainy weeks."
+
+        return ArkaResponse(
+            query=query,
+            intent="MONSOON_RAIN_CLOUDS",
+            headline=headline,
+            answer_text=text,
+            action_recommendation=action,
+            key_metrics={
+                "diffuse_generation_pct": "20-30%",
+                "monsoon_reserve_floor_pct": 70,
+                "secured_backup_kwh": reserve_kwh,
+                "irradiance_drop_pct": 65,
+            },
+            statutory_grounding="National Institute of Solar Energy (NISE) Seasonal Performance Benchmarks & CEA Grid Operating Standards.",
+            suggested_followups=[
+                "Will my battery survive an 8-hour blackout tonight?",
+                "How do I clean my solar panels to avoid scratching?",
+                "Is my inverter safe from grid faults and anti-islanding?",
+            ],
+            language="hi" if is_hi else "en",
+        )
+
+    def _handle_lightning_earthing(self, query: str, ctx: dict[str, Any], is_hi: bool) -> ArkaResponse:
+        if is_hi:
+            headline = "⚡ अर्थिंग व लाइटनिंग अरेस्टर: 3 समर्पित केमिकल पिट्स (< 5 Ω) व डुअल SPDs"
+            text = (
+                "छत पर सोलर लगाने के लिए भारतीय मानक (IS 3043:2018 व CEA 2023) के तहत आवश्यक सुरक्षा उपाय:\n\n"
+                "- 🗼 **लाइटनिंग अरेस्टर (LA):** छत के सबसे ऊंचे बिंदु पर कॉपर-बॉन्डेड अरेस्टर, जो आकाशीय बिजली को सुरक्षित जमीन में भेजता है (**अर्थ प्रतिरोध < 5.0 Ω**)।\n"
+                "- ⏚ **3 समर्पित अर्थिंग पिट्स:**\n"
+                "  1. लाइटनिंग अरेस्टर (LA) के लिए अलग पिट।\n"
+                "  2. इनवर्टर बॉडी और सोलर पैनल स्ट्रक्चर (MMS) के लिए अलग पिट (**अर्थ प्रतिरोध < 2.0 Ω**)।\n"
+                "  3. AC/DC सर्च प्रोटेक्शन और न्यूट्रल के लिए तीसरा पिट।\n"
+                "- 🛡️ **सर्ज प्रोटेक्शन डिवाइस (SPD):** DC जंक्शन बॉक्स में 1000V Class II DC SPD और ACDB में Type 2 AC SPD वोल्टेज स्पाइक्स को सोख लेते हैं।\n"
+                "- ⚡ **30mA RCCB / ELCB:** किसी भी लीकेज करंट पर 40 मिलीसेकंड में सर्किट ट्रिप करके जान-माल की रक्षा करता है।"
+            )
+            action = "वेंडर से अर्थिंग का प्रतिरोध टेस्ट करवाएं और सुनिश्चित करें कि LA का मान < 5 Ω और स्ट्रक्चर का < 2 Ω हो।"
+        else:
+            headline = "⚡ Earthing & Lightning Safety: 3 Dedicated Chemical Pits (< 5 Ω) & Dual SPDs"
+            text = (
+                "Statutory electrical safety architecture for your rooftop solar array per IS 3043:2018 and CEA 2023:\n\n"
+                "- 🗼 **Lightning Arrester (LA):** Pure copper or copper-bonded Franklin/ESE rod at the highest roof elevation to intercept atmospheric strikes (**Earth Resistance < 5.0 Ω**).\n"
+                "- ⏚ **3 Dedicated Chemical Earthing Pits:**\n"
+                "  1. Pit 1: Exclusively for Lightning Arrester (LA).\n"
+                "  2. Pit 2: Inverter chassis and module mounting structure (MMS) grounding (**Resistance < 2.0 Ω**).\n"
+                "  3. Pit 3: AC/DC surge protection device (SPD) ground and neutral.\n"
+                "- 🛡️ **Surge Protection Devices (SPDs):** Class II 1000V 40kA DC SPD inside the DCDB to neutralize induced lightning transients + Type 2 AC SPD inside the ACDB.\n"
+                "- ⚡ **30mA Residual Current Breaker (RCCB):** Trips within 40 ms during insulation failure or earth leakage, preventing electrical shocks."
+            )
+            action = "Demand a digital earth-tester certificate from your vendor verifying LA resistance is under 5 Ω."
+
+        return ArkaResponse(
+            query=query,
+            intent="LIGHTNING_EARTHING_SAFETY",
+            headline=headline,
+            answer_text=text,
+            action_recommendation=action,
+            key_metrics={
+                "la_earth_resistance_ohms": "< 5.0",
+                "equipment_earth_resistance_ohms": "< 2.0",
+                "chemical_pits_count": 3,
+                "dc_spd_rating": "Class II 40kA 1000V",
+                "rccb_sensitivity_ma": 30,
+            },
+            statutory_grounding="Bureau of Indian Standards IS 3043:2018 (Earthing Practice) & CEA (Measures Relating to Safety and Electric Supply) Regulations 2023.",
+            suggested_followups=[
+                "Is my inverter safe from grid faults and anti-islanding?",
+                "Why is my inverter showing a red light and Riso isolation fault?",
+                "What warranties protect my solar panels and inverter?",
+            ],
+            language="hi" if is_hi else "en",
+        )
+
+    def _handle_net_metering_discom(self, query: str, ctx: dict[str, Any], is_hi: bool) -> ArkaResponse:
+        discom = str(ctx.get("discom", "Your Local DISCOM"))
+
+        if is_hi:
+            headline = "⏱️ नेट मीटरिंग SLA व नियम: 15 दिन में TFA, 3 दिन में मीटर व ₹500/दिन हर्जाना"
+            text = (
+                f"विद्युत मंत्रालय (Electricity Rights of Consumers Rules 2024) के तहत {discom} के लिए वैधानिक नियम:\n\n"
+                "- 📅 **तकनीकी स्वीकृति (TFA) समयसीमा:** आवेदन के **15 कार्य दिवसों** के भीतर डिस्कॉम को स्वीकृति देनी होगी।\n"
+                "- 🔌 **नेट मीटर स्थापना:** इंस्टॉलेशन रिपोर्ट जमा करने के **3 कार्य दिवसों** में बाई-डायरेक्शनल मीटर लगाना अनिवार्य है।\n"
+                "- ⚖️ **विलंब पर उपभोक्ता मुआवजा:** निर्धारित समयसीमा से अधिक देरी होने पर उपभोक्ता को **₹500 प्रति दिन** का हर्जाना पाने का कानूनी अधिकार है।\n"
+                "- 🔄 **1:1 यूनिट बैंकिंग व वार्षिक निपटान (31 मार्च):**\n"
+                "  - आपके द्वारा ग्रिड को भेजी गई अतिरिक्त बिजली 1:1 के अनुपात में आपके खाते में क्रेडिट (Banked Units) रहती है।\n"
+                "  - प्रति वर्ष 31 मार्च को शेष बची यूनिट्स का भुगतान डिस्कॉम की APPC दर (**~₹2.80 - ₹3.50 प्रति यूनिट**) पर सीधे बिल में क्रेडिट किया जाता है।"
+            )
+            action = "यदि 15 दिन में TFA न मिले, तो राष्ट्रीय पोर्टल पर शिकायत दर्ज करें या CGRF फोरम में ₹500/दिन हर्जाने का दावा करें।"
+        else:
+            headline = "⏱️ DISCOM Net Metering SLA: 15-Day TFA, 3-Day Metering & ₹500/day Penalty"
+            text = (
+                f"Statutory rights and timelines for {discom} consumers under Ministry of Power (Electricity Rights of Consumers Rules 2024):\n\n"
+                "- 📅 **Technical Feasibility Approval (TFA):** Must be issued by DISCOM within **15 working days** of online application.\n"
+                "- 🔌 **Bi-Directional Meter Installation:** DISCOM must inspect and install the net meter within **3 working days** of work completion report submission.\n"
+                "- ⚖️ **Mandatory Delay Compensation:** If the utility delays beyond statutory deadlines, consumers are entitled to **₹500 per day** in penalty compensation via CGRF.\n"
+                "- 🔄 **1:1 Energy Unit Banking & Annual True-Up (March 31):**\n"
+                "  - Surplus daytime units exported to the grid are banked 1:1 against your nighttime or future consumption.\n"
+                "  - Net surplus units banked at the end of the financial year (March 31) are cashed out at DISCOM's APPC rate (**~₹2.80–₹3.50/kWh**)."
+            )
+            action = "Track your application token on pmsuryaghar.gov.in; escalate to CGRF if meter installation exceeds 3 days post-inspection."
+
+        return ArkaResponse(
+            query=query,
+            intent="NET_METERING_DISCOM",
+            headline=headline,
+            answer_text=text,
+            action_recommendation=action,
+            key_metrics={
+                "tfa_sla_working_days": 15,
+                "meter_install_sla_days": 3,
+                "statutory_delay_penalty_per_day": 500.0,
+                "annual_trueup_date": "March 31",
+                "banking_ratio": "1:1 Energy Units",
+            },
+            statutory_grounding="Ministry of Power (Electricity Rights of Consumers) Amendment Rules 2024 & State SERC Net Metering Regulations.",
+            suggested_followups=[
+                "How do I claim my ₹78,000 PM Surya Ghar subsidy?",
+                "How much money will I save on my electricity bill every month?",
+                "How do I sell surplus solar to neighbors and receive UPI payments?",
+            ],
+            language="hi" if is_hi else "en",
+        )
+
+    def _handle_warranties_insurance(self, query: str, ctx: dict[str, Any], is_hi: bool) -> ArkaResponse:
+        if is_hi:
+            headline = "🛡️ सोलर वारंटी व बीमा: 25 साल पैनल परफॉर्मेंस व 10 साल बैटरी वारंटी"
+            text = (
+                "रूटटॉप सोलर सिस्टम पर मिलने वाली कानूनी व निर्माता वारंटियां:\n\n"
+                "- ☀️ **सोलर पैनल्स (25 वर्ष लीनियर वारंटी):**\n"
+                "  - प्रथम वर्ष में डिग्रेडेशन अधिकतम 2.0%।\n"
+                "  - उसके बाद प्रति वर्ष अधिकतम 0.55%।\n"
+                "  - **25वें वर्ष में कम से कम 84.8% बिजली उत्पादन की कानूनी गारंटी।**\n"
+                "- 🔌 **इनवर्टर वारंटी:** 5 से 10 वर्ष की पूर्ण रिप्लेसमेंट वारंटी।\n"
+                "- 🔋 **LiFePO4 बैटरी वारंटी:** 10 वर्ष या **6,000 साइकिल्स** (80% डिस्चार्ज गहराई पर)।\n"
+                "- 🏠 **होम इंश्योरेंस कवर (बीमा):**\n"
+                "  - आप अपने सोलर सिस्टम को मौजूदा गृह बीमा (Home Insurance SFSP) में जोड़ सकते हैं।\n"
+                "  - तूफान, आंधी (150 किमी/घंटा), ओले, आकाशीय बिजली और आग से होने वाले नुकसान का 100% क्लेम मिलता है (वार्षिक प्रीमियम मात्र ~₹1,200-₹1,500)।"
+            )
+            action = "अपने सोलर वेंडर से ALMM-अनुमोदित 25-वर्षीय वारंटी कार्ड लें और इसे अपनी होम इंश्योरेंस पॉलिसी में एंडोर्स करवाएं।"
+        else:
+            headline = "🛡️ Solar Warranties & Insurance: 25-Year Panel Output & 10-Year Battery Warranty"
+            text = (
+                "Comprehensive manufacturer guarantees and risk protection for your rooftop solar assets:\n\n"
+                "- ☀️ **Solar Modules (25-Year Linear Power Warranty):**\n"
+                "  - Maximum Year 1 degradation $\\le 2.0\\%$.\n"
+                "  - Subsequent degradation capped at $\\le 0.55\\%/\\text{year}.\n"
+                "  - **Guaranteed $\\ge 84.8\\%$ power output at Year 25** under standard manufacturer warranties.\n"
+                "- 🔌 **Inverter Warranty:** 5 to 10-year comprehensive replacement coverage against board or capacitor failures.\n"
+                "- 🔋 **LiFePO4 Battery Warranty:** 10-year or **6,000-cycle** lifespan warranty at 80% Depth of Discharge (DoD).\n"
+                "- 🏠 **Home Insurance Endorsement (SFSP):**\n"
+                "  - You can endorse your rooftop PV system under standard Home Insurance (Standard Fire & Special Perils).\n"
+                "  - Covers cyclone damage, hailstorm impact, electrical fire, and lightning strikes (~₹1,200–₹1,800/yr premium)."
+            )
+            action = "Secure the 25-year manufacturer warranty certificate from your installer and endorse it on your home insurance policy."
+
+        return ArkaResponse(
+            query=query,
+            intent="WARRANTIES_INSURANCE",
+            headline=headline,
+            answer_text=text,
+            action_recommendation=action,
+            key_metrics={
+                "panel_warranty_years": 25,
+                "yr25_guaranteed_output_pct": 84.8,
+                "inverter_warranty_years": "5 to 10",
+                "battery_warranty_cycles": 6000,
+                "insurance_annual_premium_inr": 1500,
+            },
+            statutory_grounding="MNRE ALMM Quality Compliance Guidelines & IRDAI Standard Fire and Special Perils (SFSP) Policy Framework.",
+            suggested_followups=[
+                "How much roof area do I need and what is the optimal tilt angle for my panels?",
+                "Why is my inverter showing a red light and Riso isolation fault?",
+                "How much will I save over 25 years with solar?",
+            ],
+            language="hi" if is_hi else "en",
+        )
+
+    def _handle_tenants_apartments(self, query: str, ctx: dict[str, Any], is_hi: bool) -> ArkaResponse:
+        if is_hi:
+            headline = "🏢 अपार्टमेंट्स व किराएदार: वर्चुअल नेट मीटरिंग (VNM) व RWA को ₹18,000/kW सब्सिडी"
+            text = (
+                "अपार्टमेंट्स (फ्लैट्स), हाउसिंग सोसायटियों और किराएदारों के लिए सोलर विकल्प:\n\n"
+                "- 🏛️ **वर्चुअल नेट मीटरिंग (VNM):**\n"
+                "  - बहुमंजिला इमारतों में RWA या सोसायटी अपनी साझी छत पर एक बड़ा सोलर प्लांट लगाती है।\n"
+                "  - उत्पन्न होने वाली बिजली का क्रेडिट प्रत्येक फ्लैट के बिजली बिल में उनके हिस्से (कार्पेट एरिया या अनुपात) के अनुसार घट जाता है।\n"
+                "- 💰 **PM सूर्य घर RWA सब्सिडी:** गृह समितियों (GHS/RWA) को लिफ्ट, पानी की मोटर और कॉमन लाइट्स के लिए **₹18,000 प्रति kW (अधिकतम 500 kWp)** तक सीधी सब्सिडी मिलती है।\n"
+                "- 🏡 **किराएदारों के लिए समाधान:**\n"
+                "  - **पोर्टेबल बालकनी सोलर किट:** 400W-800W का फोल्डेबल पैनल और माइक्रो-इनवर्टर जिसे बालकनी में लगाकर सामान्य प्लग में जोड़ा जा सकता है (घर बदलते समय साथ ले जाएं)।\n"
+                "  - **मकान मालिक से समझौता:** मकान मालिक को सोलर लगवाने के लिए कहें और बिजली बिल में ₹3,500+ मासिक बचत का लाभ उठाएं।"
+            )
+            action = "अपनी RWA समिति से वर्चुअल नेट मीटरिंग (VNM) और ₹18,000/kWp RWA सब्सिडी अपनाने का प्रस्ताव रखें।"
+        else:
+            headline = "🏢 Apartments & Tenants: Virtual Net Metering (VNM) & ₹18,000/kW RWA Subsidy"
+            text = (
+                "Tailored solar solutions for apartment residents, housing societies (RWAs), and tenants:\n\n"
+                "- 🏛️ **Virtual Net Metering (VNM):**\n"
+                "  - The housing society installs a centralized shared solar array on the common terrace.\n"
+                "  - Solar energy credits are mathematically apportioned across individual flat electricity bills in proportion to agreed carpet area or ownership shares.\n"
+                "- 💰 **PM Surya Ghar RWA Subsidy:** Group Housing Societies (GHS/RWAs) receive **₹18,000 per kW** Central Financial Assistance (up to a 500 kWp ceiling) for common loads (lifts, booster pumps, common lighting).\n"
+                "- 🏡 **Tenant Solutions:**\n"
+                "  - **Plug-and-Play Balcony Solar:** Portable 400W–800W lightweight modules paired with microinverters plugged into standard 16A wall sockets (100% portable when moving homes).\n"
+                "  - **Green Lease Addendum:** Landlords invest in rooftop solar; tenants enjoy ₹3,500+/mo bill savings with a nominal green rent adjustment."
+            )
+            action = "Propose a Virtual Net Metering (VNM) resolution at your society's next RWA AGM to claim the ₹18,000/kW CFA."
+
+        return ArkaResponse(
+            query=query,
+            intent="TENANTS_APARTMENTS",
+            headline=headline,
+            answer_text=text,
+            action_recommendation=action,
+            key_metrics={
+                "rwa_subsidy_per_kwp_inr": 18000.0,
+                "rwa_subsidy_ceiling_kw": 500.0,
+                "balcony_solar_portable_max_w": 800,
+                "vnm_allocation_method": "Proportionate Carpet Area",
+            },
+            statutory_grounding="State Electricity Regulatory Commission (SERC) VNM/GNM Regulations & MNRE PM Surya Ghar GHS/RWA Directives.",
+            suggested_followups=[
+                "How much subsidy do I get under PM Surya Ghar?",
+                "How do I sell surplus solar to neighbors and receive UPI payments?",
+                "How much will I save on my electricity bill every month?",
+            ],
+            language="hi" if is_hi else "en",
+        )
+
     def _handle_general_query(self, query: str, ctx: dict[str, Any], is_hi: bool) -> ArkaResponse:
         rec_kw = float(ctx.get("solar_kw", 3.0))
         batt_kwh = float(ctx.get("battery_kwh", 5.0))
@@ -781,22 +1061,22 @@ class ArkaPersonalAssistant:
             headline = "☀️ नमस्ते! मैं अर्क (ARKA) हूँ — आपका व्यक्तिगत सौर ऊर्जा सहायक"
             text = (
                 f"मैं आपके घर ({ctx.get('owner_name', 'आपका घर')}) के लिए सौर ऊर्जा, बिल बचत और बैटरी सुरक्षा का विशेषज्ञ साथी हूँ।\n\n"
-                f"**वर्तमान घरेलू स्थिति:**\n"
+                "**वर्तमान घरेलू स्थिति:**\n"
                 f"- ☀️ **सोलर क्षमता:** {rec_kw:.0f} kWp छत पर स्थापित\n"
                 f"- 🔋 **बैटरी बैकअप:** {batt_kwh:.0f} kWh LiFePO4 स्टोरेज\n"
                 f"- 💰 **मासिक बचत:** लगभग ₹{monthly_save:,.0f} प्रति माह\n\n"
-                f"आप मुझसे किसी भी विषय पर पूछ सकते हैं: बिल कम करना, बैटरी बैकअप समय, गीजर/वाशिंग मशीन चलाने का सही समय, सब्सिडी, या पड़ोसियों को अतिरिक्त बिजली बेचना!"
+                "आप मुझसे किसी भी विषय पर पूछ सकते हैं: बिल कम करना, बैटरी बैकअप समय, गीजर/वाशिंग मशीन चलाने का सही समय, सब्सिडी, या पड़ोसियों को अतिरिक्त बिजली बेचना!"
             )
             action = "नीचे दिए गए किसी भी प्रश्न पर क्लिक करें या अपना सवाल पूछें।"
         else:
             headline = "☀️ Hello! I am ARKA — Your Personal Solar & Energy AI Companion"
             text = (
                 f"I am your dedicated personal AI energy copilot for **{ctx.get('owner_name', 'your home')}**.\n\n"
-                f"**Current Property Status:**\n"
+                "**Current Property Status:**\n"
                 f"- ☀️ **Rooftop Solar:** {rec_kw:.0f} kWp installed on your roof\n"
                 f"- 🔋 **Battery Storage:** {batt_kwh:.0f} kWh LiFePO4 emergency backup\n"
                 f"- 💰 **Estimated Monthly Savings:** **₹{monthly_save:,.0f} / month**\n\n"
-                f"Ask me anything: how to cut your bill to zero, blackout survival hours, when to run big appliances, PM Surya Ghar subsidy claims, or selling solar to neighbors via UPI!"
+                "Ask me anything: how to cut your bill to zero, blackout survival hours, when to run big appliances, PM Surya Ghar subsidy claims, or selling solar to neighbors via UPI!"
             )
             action = "Tap any suggestion chip below or type your personal question."
 
