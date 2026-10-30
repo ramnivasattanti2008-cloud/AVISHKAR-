@@ -12,8 +12,8 @@ specification) is tracked separately in [../platform/STATUS.md](../platform/STAT
 | 2 | Silent failure handling hid solver and data problems | 3 | 3 | 1 | 30 | **Fixed** |
 | 3 | A self-written protocol check was shown as "Beckn validation" | 3 | 4 | 2 | 28 | **Fixed** (wording); official check still opt-in |
 | 4 | No CI; ruff config rewrote files; ruff absent from the venv | 3 | 3 | 2 | 24 | **Fixed** (CI green on GitHub, run 37612815661) |
-| 5 | Packaging and deploy leftovers from upstream | 2 | 3 | 2 | 20 | Partly fixed |
-| 6 | Payback is a simple, extrapolated figure | 3 | 3 | 3 | 18 | Mitigated; headline stays simple |
+| 5 | Packaging and deploy leftovers from upstream | 2 | 3 | 2 | 26 | Partly fixed |
+| 6 | Payback is a simple, extrapolated figure | 3 | 3 | 3 | 24 | Mitigated; headline stays simple |
 | 7 | Test coverage stopped at the library | 3 | 3 | 3 | 18 | **Fixed** (34 to 68 project tests) |
 | 8 | Upload tab promised more than it did | 3 | 2 | 3 | 15 | **Fixed** |
 | 9 | Dependency pins conflicted | 2 | 3 | 3 | 15 | Resolved except upstream pins |
@@ -25,6 +25,12 @@ specification) is tracked separately in [../platform/STATUS.md](../platform/STAT
 | 15 | Windows-only launcher | 1 | 1 | 1 | 10 | **Fixed** |
 | 16 | Many inputs are assumptions, not data | 5 | 4 | 5 | 9 | Open (needs real data); now visible and configurable |
 | 17 | The optimiser's edge over a simple rule is small | 4 | 3 | 5 | 7 | Open (a finding, stated in the README) |
+| 24 | Streamlit dashboard crashed on import: it could not start at all | 5 | 5 | 1 | 50 | **Fixed** (2026-10-30) |
+| 25 | HTML blocks were printed as literal text by Markdown's code-block rule | 4 | 3 | 1 | 35 | **Fixed** (2026-10-30) |
+| 26 | Both map builders invented P2P trades, prices and equipment sizes | 4 | 5 | 1 | 45 | **Fixed** (2026-10-30) |
+| 27 | Plotly puts a text label at -Infinity on one chart (console warning only) | 1 | 1 | 4 | 4 | Open (2026-10-30) |
+| 28 | The documented EMS test runtime assumes a warm cache | 1 | 2 | 1 | 15 | Documented (2026-10-30) |
+| 29 | A fresh install resolves pandas 3, not the environment `results/` came from | 2 | 3 | 2 | 20 | Documented (2026-10-30) |
 
 ## Details
 
@@ -155,3 +161,57 @@ and `platform/api/src/routes/account.ts` include up to 1,000 meter readings per 
 `meterReadings.rows` array, in addition to the counts that were already there.  The export is
 authorised by the signed-in user only and never contains another person's data, passwords or
 tokens.  Test: `platform/api/test/account-deletion.test.ts` checks the row count and shape.
+
+
+## Found on 2026-10-30, by running the applications rather than reading them
+
+**24. The dashboard could not start.**  `app/dashboard.py` crashed on import.  `app/home_setup_view.py`
+imported `route_community_exchange` from `avishkar_ems.home_balance`, where no such name existed; the engine
+has a *method* of that name with a different signature, and the tests call the method, so the whole suite
+passed while `run-dashboard.sh` showed nothing but an ImportError.  Two further mismatches sat behind it:
+the view passed `measurement_mode` to `IntervalTelemetry`, which had no such field, and read
+`profile.battery.chemistry`, which did not exist.  Fixed: the module-level function the view was written
+against is implemented (I^2R feeder loss from the current the transfer draws, caps named, opt-in on both
+sides required, nothing counted twice, caller's prices only), `IntervalTelemetry` carries an optional
+per-reading `measurement_mode` that the engine prefers over the home's, and `BatteryConfig.chemistry`
+defaults to `NOT_STATED` with nothing inferred from it.  Tests:
+`tests/avishkar_ems/test_community_exchange.py` (28 tests, passing).
+**Why no test caught it:** `tests/avishkar_ems/test_dashboard.py` skips itself unless the disk cache is
+fresh, and nothing else imports `app.dashboard`.  A test that merely imports the dashboard modules would
+have caught all three in one line.
+
+**25. HTML was printed as text on the page.**  `st.markdown(..., unsafe_allow_html=True)` still runs the
+string through Markdown first, and Markdown treats a blank line followed by a line indented four spaces or
+more as a *code block*.  The HTML in these views is written indented with blank lines between sections, so
+everything after the first such blank line was shown as text: readers saw `<!-- Active Animated Flow Lines
+-->` and raw `<path d="...">` where the power-flow map should have been, on the front page.  36 blocks
+across the four view files were affected.  Fixed: `app/ui_html.py` strips the indentation at the render
+boundary (42 call sites), which cannot form a code block and leaves any Markdown in the same string working;
+it refuses a block containing `<pre>` or `<textarea>`, where that whitespace would matter.
+
+**26. The maps invented trades and equipment.**  `build_microgrid_plotly_map` and
+`build_microgrid_map_deck` in `src/avishkar_ems/satellite.py` each hardcoded three peer-to-peer trades with
+made-up energies and prices (6.8 kWh at INR 7.25, and so on) and drew them between real Indian cities, while
+the `trades` parameter both accept was ignored.  The EMS publishes *offers* -- a seller, an hour, an amount
+and a price -- and never matches them to a buyer, so an arrow between two cities asserted a market that does
+not exist.  They also fell back to invented sizes (`15.0 if "shop" in k else 3.0 if "home" in k`) for any
+node with no configured site.  Fixed: both draw only the trades they are given, skip a trade naming a node
+they do not know, and report equipment as "not configured in AVISHKAR" rather than guessing a size.
+Test: `tests/avishkar_ems/test_satellite.py::test_build_microgrid_plotly_map`.
+
+**27. One chart asks Plotly to place a label at -Infinity.**  Opening the dashboard in Chromium leaves two
+console errors, `<text> attribute y: Expected length, "-Infinity"`, raised inside Plotly's own bundle.  The
+page renders, no Streamlit exception is raised, and no figure on it is wrong.  The chart was not identified:
+the offending `<text>` elements are gone by the time the page settles, and the two plots without axis types
+are map traces whose tile host is reachable from here, so it is not a tile failure.  Open, and cosmetic.
+
+**28. The documented test runtime assumes a warm cache.**  `CLAUDE.md` gives the EMS suite as about 100 s.
+With an empty `data/cache/` it took **41 minutes 27 seconds** here (554 passed, 1 skipped), because every
+test needing `prepared_<site>` trains the quantile models from scratch; the same suite then ran in 91 s once
+the cache existed.  Run `python scripts/precompute_cache.py` first, or expect the long run.
+
+**29. A fresh install is not the environment the results came from.**  `pip install -e ".[app,test]"`
+resolves `pandas>=2.2.0` to pandas 3.0.5, which emits `Pandas4Warning` deprecations from `bands.py` and
+pvlib (101 warnings, all harmless here).  `requirements-lock.txt` is the environment `results/*.csv` and the
+README's numbers came from, and reproducing them to the stated 1e-11 INR needs that file, not the pyproject
+ranges.  Install with `pip install -r requirements-lock.txt` when reproducing results.

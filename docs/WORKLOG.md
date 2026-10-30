@@ -3539,3 +3539,98 @@ Phase 20 implementation of UrjaSetu EMS: Building a functional, evidence-backed 
 
 ### What is next
 - Ready for live walkthrough of the residential home energy management interface and Phase 7 benchmark.
+
+## Entry 65 — 2026-10-30 — Running the two applications: a dead dashboard, a dead web app, and the community allocation that was missing
+
+This entry is the result of starting both applications and opening them in a real browser, rather than
+reading them. Four things were found that every previous entry had reported as working.
+
+### The headline findings
+
+1. **The Streamlit dashboard could not start.** `app/dashboard.py` raised `ImportError` on import:
+   `app/home_setup_view.py` imported `route_community_exchange` from `avishkar_ems.home_balance`, which has
+   no such name (the engine has a *method* of that name, a different thing, and the tests call the method).
+   Two further mismatches sat behind it. Entry 64 cites `curl -I http://127.0.0.1:8501` returning 200 as
+   evidence the dashboard worked: that 200 is the Streamlit shell, which is served whether or not the app
+   script runs. The app itself showed an error page.
+2. **The production web app was not interactive on any page.** Its own Content-Security-Policy allowed
+   scripts from `'self'` plus one SHA-256 hash, that of the theme script. Next's App Router writes the data a
+   page hydrates from into two further inline scripts whose contents differ per page and per build, so no
+   fixed hash list can admit them. The browser blocked them, React failed with error #412, and every page
+   was dead while answering HTTP 200: no map, no theme switch, no form, no chart. `pnpm smoke` cannot see
+   this (it checks only that a policy was sent); `pnpm browser` reported 20 failures.
+3. **Both map builders invented peer-to-peer trades.** Three trades with made-up energies and prices were
+   hardcoded and drawn between real Indian cities, while the `trades` parameter both functions accept was
+   ignored. The EMS publishes offers and never matches them to a buyer, so those arrows asserted a market
+   that does not exist. Node equipment also fell back to invented sizes.
+4. **The community feature could not allocate.** It computed `min(surplus, deficit)` per hour over pooled
+   totals, so it could not say who received what, respect a transfer limit, account for a loss, or explain a
+   decision — which is most of what the owner's brief asks of it.
+
+### What was done
+
+- **New: `platform/api/src/community/allocate.ts`**, a per-interval allocation engine, pure arithmetic with
+  no database, provider or clock. Own generation, then own battery, then the shared node, then the grid, in
+  a stated order presented as a convention and not as something an optimiser discovered. It applies per-member
+  export and import limits and a shared feeder limit; line losses per member and one network loss on the pool,
+  each charged exactly once; battery reserve floors, power limits and round-trip efficiency on the charge leg.
+  Four allocation rules (proportional, equal share, critical first, nearest first) and two battery policies.
+  Each member reports which cap bound it and a plain-language account. Unserved demand and curtailed
+  generation are reported as failures, not smoothed away. Every result carries an energy-balance check.
+- **New: `POST /api/community/allocate`** and `platform/api/src/community/service.ts`, which builds members
+  either from figures in the request or from the owner's own properties — generation from their entered
+  systems modelled by pvlib at their own place, demand from the pattern derived from their imported meter
+  readings, export limit from the entered inverter. Where no real figure exists (the schema holds no
+  sanctioned load) the response says so in its `basis` rather than applying a default as if it were the
+  property's own.
+- **New: the allocation workbench** on the web community page: three starting scenarios, every input
+  editable, recalculation through the same engine, nothing computed in the browser and no outcome hardcoded.
+- **Fixed: the CSP** — scripts now run by a per-request nonce via `platform/web/src/proxy.ts`, which is what
+  Next documents. No inline script runs without the nonce in either mode, so the policy is stricter than the
+  hash one it replaces, and unlike that one it works. `THEME_SCRIPT_HASH` deleted rather than left to rot.
+- **Fixed: the dashboard** — `route_community_exchange` implemented as the module-level function the view was
+  written against (I²R feeder loss from the current the transfer draws, so doubling the power quadruples the
+  loss; caps named; both sides must have opted in; nothing counted twice; caller's prices only).
+  `IntervalTelemetry` gained an optional per-reading `measurement_mode` the engine prefers over the home's,
+  and `BatteryConfig.chemistry` defaults to `NOT_STATED`.
+- **Fixed: HTML printed as text.** `st.markdown(..., unsafe_allow_html=True)` still runs Markdown first, and
+  Markdown reads a blank line followed by an indented line as a code block. 36 blocks across the four views
+  were being printed as source. `app/ui_html.py` strips the indentation at the render boundary (42 call sites).
+- **Fixed: the invented trades and equipment sizes** in both map builders.
+- **Fixed: the API would not start from its own documented command.** `src/server.ts` never read
+  `platform/api/.env`, and `loadConfig` refused to start over a variable that was present but blank — so
+  copying `.env.example`, which leaves optional keys blank on purpose, failed on an empty `ANTHROPIC_API_KEY`.
+- **New: `start-platform.sh`.** The repository had Windows launchers only; there was no documented way to
+  start the three services on Linux or macOS.
+
+### Evidence (all run here, in this container)
+
+- `platform/api`: **994 tests passed** against a real PostgreSQL 16 + PostGIS 3.4, typecheck, lint and build clean.
+- `platform/web`: **387 tests passed** (was 366), typecheck, lint and production build clean.
+- `platform/engine`: **448 tests passed in 42.5 s** (scipy 1.18.1, HiGHS 1.15.1).
+- `tests/avishkar_ems`: **582 passed, 1 skipped** (was 554), ruff clean.
+- `pnpm -C platform/web smoke`: **12/12**. `pnpm -C platform/web journey`: **41/41** over HTTP through the
+  running stack, against the real public providers and the real optimiser.
+- `pnpm -C platform/web browser`: **21/21 in Chromium (was 1/21)**, including the workbench allocating the
+  owner's three-building scenario, recalculating after an edit, and naming the feeder as the binding constraint.
+- The Streamlit dashboard opens in Chromium with **no Streamlit exception and no raw markup** in the rendered text.
+
+### What was NOT done
+
+- The `-Infinity` text-label warning Plotly raises on one unidentified dashboard chart is **not fixed**; it is
+  recorded as issue 27. The page renders and no figure on it is wrong.
+- No attempt was made to run the upstream EMHASS test suite (`tests/test_*.py`), which needs a separate venv.
+- `results/*.csv` and the README numbers were **not** regenerated: this container resolves pandas 3.0.5 rather
+  than the locked environment those numbers came from (issue 29). Nothing under the fingerprint was changed in
+  a way that invalidates them — the engine, tariffs and data are untouched — but reproducing them needs
+  `requirements-lock.txt`.
+- Nothing about hardware was verified: no inverter, no meter, no Modbus device was present. Every such path
+  remains simulated and labelled.
+- No claim is made that peer-to-peer transfer between properties is permitted or possible. The allocation
+  engine models energy; it states in every response that AVISHKAR moves no electricity.
+
+### What is next
+
+- Identify the chart behind issue 27.
+- A test that merely imports `app.dashboard` would have caught all three of this entry's dashboard defects in
+  one line; `tests/avishkar_ems/test_dashboard.py` skips itself without a warm cache, so nothing did.
