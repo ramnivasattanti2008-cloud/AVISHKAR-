@@ -131,16 +131,20 @@ def get_cached_flex(site_key: str):
 st.title("⚡ UrjaSetu (ऊर्जा सेतु): Predictive Energy Management & P2P Dispatch")
 st.markdown("##### *India-Ready Rooftop Solar Intelligence, Dynamic Outage Reserve & P2P Trading (India Energy Stack)*")
 
-# Shareable Demo Link Banner for Teammates
+# Shareable Demo Link Banner
 st.markdown(
     """
     <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #4338ca; border-radius: 14px; padding: 14px 20px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <div>
-                <span style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #818cf8;">🔗 Live Public Demo Link • Share with Teammates & Jury</span><br/>
+                <span style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #818cf8;">⚡ Localhost Active Session • UrjaSetu EMS</span><br/>
                 <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 15px; font-weight: 700; color: #38bdf8;">
-                    https://trek-produces-meyer-academy.trycloudflare.com
+                    http://localhost:8501
                 </span>
+                <span style="margin: 0 10px; color: #64748b;">|</span>
+                <a href="http://localhost:3000" target="_blank" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; font-weight: 700; color: #fbbf24; text-decoration: none; background: rgba(245, 158, 11, 0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.4);">
+                    ✨ Open 21st.dev Next-Gen Frontend (Port 3000) ↗
+                </a>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
                 <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; padding: 4px 12px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(16, 185, 129, 0.4);">
@@ -362,7 +366,7 @@ with tab_sat:
             "Map Visualization Engine:",
             ["🌐 3D PyDeck Mesh (WebGL)", "🗺️ High-Definition Plotly Radar"],
             horizontal=True,
-            index=0,
+            index=1,
         )
 
     active_sites_map = {k: v[0] for k, v in demo_sites().items()}

@@ -55,3 +55,8 @@ platform/api/src/generated/
 Thumbs.db
 *.swp
 *.swo
+
+
+# Firebase hosting internal cache and local backups
+.firebase/
+frontend_backup/
