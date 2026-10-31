@@ -1,14 +1,36 @@
-"""Intelligent Surplus Energy Allocation Engine for UrjaSetu / AVISHKAR EMS.
+"""Surplus energy allocation engine for UrjaSetu / AVISHKAR EMS.
 
-Synthesizes best practices from verified open-source energy management architectures:
-1. 7-Tier Configurable Priority Hierarchy (traktore-org/sem-community, thomasgodon/homeassistant-ems).
-2. Anti-Hunting Hysteresis Controller with contactor protection (evcc-io/evcc).
-3. Industry-Standard EV Charging Modes: STOP, FAST, MIN_PLUS_PV, PV_ONLY (evcc-io/evcc).
-4. Battery State-of-Charge Hard Protective Bounds (davidusb-geek/emhass, lbsanto/SolarFlow).
-5. Multi-Building Virtual Net Metering with Technical Line Loss (Enpower-project/Flexcomm).
-6. CEA Statutory Cybersecurity Nonce Authentication (CEA 2026 Regulations).
-7. Fail-Closed Watchdog & Hardware Command Timeout Guard (IEEE 1547 / SunSpec Modbus).
-8. Data Honesty & Telemetry Quality Tagging (AVISHKAR Principles D6/D7).
+**This module is AVISHKAR's own code.** An earlier version of this docstring said it "synthesizes best
+practices from verified open-source energy management architectures" and named eight projects, which
+reads as source reuse and was not: nothing here was copied from any of them. The ideas below are
+widely-held ones in this field and were implemented from scratch. Where a project's code is genuinely
+reused it lives under `avishkar_ems/vendor/` with its upstream commit, its licence and its own tests --
+see `docs/OPEN_SOURCE_INTEGRATION_MAP.md`.
+
+What this module does, and where each part really comes from:
+
+1. A seven-tier configurable priority hierarchy. AVISHKAR's own; the shape of it (priority cascade,
+   minimum power per device, LIFO shedding) is the common pattern in this kind of controller.
+2. An anti-hunting hysteresis controller with minimum run time, cooldown and an enable delay, so a
+   relay or compressor is not cycled. AVISHKAR's own.
+3. EV charging modes STOP / FAST / MIN_PLUS_PV / PV_ONLY. The names and the behaviour follow the
+   convention evcc established and documents publicly; the implementation is AVISHKAR's own, and evcc
+   is Go, so none of its code could be used here (`docs/OPEN_SOURCE_REUSE_AUDIT.md`).
+4. Hard state-of-charge bounds for the battery. AVISHKAR's own.
+5. Multi-building virtual net metering with a technical line loss. AVISHKAR's own; the platform's
+   `api/src/community/allocate.ts` is the fuller treatment.
+6. A nonce-authenticated command path. AVISHKAR's own. It is a software control and no hardware has
+   ever been attached to it; nothing here is a claim of CEA compliance.
+7. A fail-closed watchdog and a command timeout. AVISHKAR's own, and likewise never exercised against
+   a real device.
+8. Telemetry quality tagging, per this project's own data-honesty rules.
+
+**The surplus figure itself is the one part that is vendored.** `home_balance.py` computes the
+allocatable surplus from a live grid meter with SEM's `solar_bounded_surplus`
+(`avishkar_ems/vendor/sem_surplus.py`), because that function encodes physical invariants learned from
+field failures -- chiefly that surplus must be clamped to what the sun is producing, or a load running
+off the battery at night reads as surplus. This module's own `calculate_surplus_and_deficit` is the
+simulation path, used when there is no meter.
 """
 
 from __future__ import annotations

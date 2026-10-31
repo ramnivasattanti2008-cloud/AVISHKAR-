@@ -13,6 +13,7 @@ from avishkar_ems.home_profile import (
     MeasurementMode,
     OptimizationGoal,
 )
+from avishkar_ems.vendor import sem_reclaim, sem_surplus
 
 
 @dataclass
@@ -29,6 +30,36 @@ class IntervalTelemetry:
     #: meter may still be asked a "what if" question with made-up figures, and the answer must not be labelled
     #: HARDWARE_MEASURED because the home usually is. Left None, the home's own mode applies.
     measurement_mode: MeasurementMode | None = None
+
+    # ---- Live grid-meter readings. All optional: a simulated interval has none of them. ----
+    # With these, the surplus is computed by SEM's `solar_bounded_surplus` (vendored, see below in
+    # `evaluate_interval`), which is feedback-free and bounded by the sun. Without them it is
+    # `generation - demand`, which is right for a what-if and wrong for a metered home.
+    #: What the meter is exporting, kW. Clamped half of a signed grid reading: `max(0, grid)`.
+    grid_export_kw: float | None = None
+    #: What the meter is importing, kW. `None` means no live reading, which takes nothing off the pool.
+    grid_import_kw: float | None = None
+    #: What the battery is discharging, kW. Power the sun did not make, so it comes off the pool the
+    #: same way an import does.
+    battery_discharge_kw: float | None = None
+    #: What this EMS's own controllable loads are drawing, kW. Added back, because a controller that
+    #: reads only the export chases its own tail as its loads switch on.
+    controllable_draw_kw: float = 0.0
+    #: What the vehicle charger is drawing, kW. A charger is decided before the household loads and its
+    #: own grid draw must not be charged against their pool.
+    ev_draw_kw: float = 0.0
+    #: What the home battery is currently charging at, kW. Above the reserve floor, power going into the
+    #: pack is power a higher-priority flexible load may take instead -- but only the share the sun is
+    #: funding, which is what `sem_reclaim.reclaimable_battery_w` works out.
+    battery_charge_kw: float | None = None
+    #: True when the battery is under an explicit or scheduled command (a force charge, an arbitrage
+    #: window). Upstream honours such a command and reclaims nothing from it.
+    battery_commanded: bool = False
+
+    @property
+    def has_grid_meter(self) -> bool:
+        """True when there is enough of a live grid reading to compute surplus from the meter."""
+        return self.grid_export_kw is not None
 
 
 @dataclass
@@ -58,6 +89,17 @@ class DispatchStepResult:
     net_cost_inr: float
     is_balanced: bool
     energy_balance_error_kw: float
+
+    #: How much surplus the EMS was willing to switch loads onto, as distinct from `gross_surplus_kw`,
+    #: which is the accounting figure the books balance on. With a live grid meter this is SEM's
+    #: `solar_bounded_surplus` (vendored); without one the two are equal. The difference, if any, leaves
+    #: as export or curtailment rather than being switched onto a load the meter cannot justify.
+    allocatable_surplus_kw: float = 0.0
+
+    #: Generation the interval could not use, store or export, so the inverter throttles it back. A
+    #: zero-export home with a full battery curtails; before this existed the energy simply vanished
+    #: from the balance and `is_balanced` went False with nothing to point at.
+    curtailed_solar_kw: float = 0.0
 
     # Energy Interval Accounting (kWh)
     interval_energy_kwh: dict[str, float] = field(default_factory=dict)
@@ -141,7 +183,76 @@ class HomeEnergyBalanceEngine:
 
         # 3. Direct Solar Consumption
         pv_direct = min(pv_kw, load_kw)
+
+        # Surplus, which is two different quantities and must not be conflated.
+        #
+        # `gross_surplus` is an ACCOUNTING figure: the generation this interval did not spend on the
+        # home's own load. Everything downstream has to add up against it (`pv = pv_direct +
+        # gross_surplus`), so it is always `generation - demand` and nothing else. The energy-balance
+        # check at the end of this method is what holds that.
+        #
+        # `allocatable_surplus` is a CONTROL signal: how much power the EMS may actually switch extra
+        # loads onto. With a live grid meter that is SEM's `solar_bounded_surplus` (vendored verbatim,
+        # `avishkar_ems/vendor/sem_surplus.py`): the export plus this EMS's own loads' draw, less the
+        # part of the import and the battery's discharge the sun did not fund, clamped to what the sun
+        # is producing. It is deliberately NOT a conservation quantity -- subtracting an import from it
+        # is the whole point -- which is why it is kept apart from the figure the books balance on.
+        #
+        # The clamp is the one that matters: without it a load running off the battery at night reads
+        # as surplus and the controller keeps it running on the pack (upstream's #620).
+        #
+        # Whatever the control signal withholds is not lost: it stays in `gross_surplus` and leaves
+        # through export or curtailment below, so the books still close.
+        reclaim_note = ""
         gross_surplus = max(0.0, pv_kw - load_kw)
+        if telemetry.has_grid_meter:
+            allocatable_surplus = sem_surplus.solar_bounded_surplus(
+                grid_export_w=float(telemetry.grid_export_kw or 0.0) * 1000.0,
+                active_draw_w=float(telemetry.controllable_draw_kw or 0.0) * 1000.0,
+                solar_w=pv_kw * 1000.0,
+                grid_import_w=None if telemetry.grid_import_kw is None else float(telemetry.grid_import_kw) * 1000.0,
+                ev_draw_w=float(telemetry.ev_draw_kw or 0.0) * 1000.0,
+                battery_discharge_w=None if telemetry.battery_discharge_kw is None else float(telemetry.battery_discharge_kw) * 1000.0,
+            ) / 1000.0
+            # Upstream allocates from `surplus + reclaim`: above the reserve floor, the power going into
+            # the pack is power a higher-priority load may take instead. Only the sun-funded share counts
+            # (an inverter filling its pack from the grid on its own time-of-use window shows the same
+            # positive charge power with nothing behind it but the meter), and the whole pool is then
+            # bounded by the sun again -- the bound has to sit on the pool, not on one addend, or a night
+            # grid-charge funds a "solar only" load. Both steps are SEM's, vendored.
+            reclaim_kw = 0.0
+            if telemetry.battery_charge_kw is not None:
+                raw_reclaim_w = sem_reclaim.reclaimable_battery_w(
+                    battery_charge_power=float(telemetry.battery_charge_kw) * 1000.0,
+                    soc=curr_soc,
+                    priority_soc=batt.preferred_backup_reserve_pct,
+                    battery_commanded=telemetry.battery_commanded,
+                    grid_import_w=None if telemetry.grid_import_kw is None else float(telemetry.grid_import_kw) * 1000.0,
+                )
+                reclaim_kw = sem_surplus.solar_bounded_reclaim(
+                    raw_reclaim_w,
+                    surplus_w=allocatable_surplus * 1000.0,
+                    solar_w=pv_kw * 1000.0,
+                ) / 1000.0
+                if reclaim_kw > 1e-9:
+                    reclaim_note = (
+                        f"BATTERY_RECLAIM: {reclaim_kw:.2f} kW that would have charged the battery is offered to "
+                        "higher-priority loads first, because the state of charge is above the backup reserve."
+                    )
+            allocatable_surplus = min(allocatable_surplus + reclaim_kw, gross_surplus)
+            surplus_basis = (
+                f"Allocatable surplus {allocatable_surplus:.3f} kW read from the grid meter by SEM's "
+                f"solar_bounded_surplus (vendored): export {telemetry.grid_export_kw or 0.0:.3f} kW plus this "
+                f"EMS's own load draw {telemetry.controllable_draw_kw or 0.0:.3f} kW, less the import and battery "
+                f"discharge the sun did not fund, clamped to the solar generation. The accounting surplus stays "
+                f"{gross_surplus:.3f} kW (generation less demand); the difference leaves as export or curtailment."
+            )
+        else:
+            allocatable_surplus = gross_surplus
+            surplus_basis = (
+                "Allocatable surplus is generation minus demand: there is no live grid reading in this interval, "
+                "so this is a what-if over the figures supplied, not a measurement of a meter."
+            )
         gross_deficit = max(0.0, load_kw - pv_kw)
 
         # 4. Multi-Objective Dispatch Formulation
@@ -151,10 +262,15 @@ class HomeEnergyBalanceEngine:
         ev_allocated_kw = 0.0
         grid_import_kw = 0.0
         grid_export_kw = 0.0
+        curtailed_solar_kw = 0.0
+        withheld_surplus = 0.0
         constraints: list[str] = []
+        if reclaim_note:
+            constraints.append(reclaim_note)
         assumptions: list[str] = [
             f"Optimization Goal: {goal.value}",
             f"Inverter Sandia efficiency: {inv.efficiency_fraction * 100.0:.1f}%" if enable_losses else "Lossless calculation mode",
+            surplus_basis,
         ]
 
         # Calculate battery room (kWh and kW)
@@ -172,7 +288,10 @@ class HomeEnergyBalanceEngine:
 
         # CASE A: Solar Surplus Available (PV > Load)
         if gross_surplus > 0.0:
-            rem_surplus = gross_surplus
+            # The tiers may only switch on what the control signal permits. `withheld` is the rest of
+            # the accounting surplus, added back below so export and curtailment still account for it.
+            withheld_surplus = max(0.0, gross_surplus - allocatable_surplus)
+            rem_surplus = allocatable_surplus
 
             # Tier 1 of surplus: Battery Charging
             # In MINIMIZE_BILLS or MAXIMIZE_SELF_CONSUMPTION, surplus goes to battery first
@@ -198,12 +317,27 @@ class HomeEnergyBalanceEngine:
                 ev_allocated_kw = min(rem_surplus, max_ev_kw)
                 rem_surplus -= ev_allocated_kw
 
-            # Tier 4 of surplus: Grid Export vs Zero-Export Limit
+            # Tier 4 of surplus: Grid Export vs Zero-Export Limit.
+            # `withheld_surplus` rejoins here: the control signal stopped the tiers switching it on, but
+            # the generation exists and has to go somewhere, so it leaves as export (or is curtailed by
+            # the zero-export rule below, which the energy-balance check then accounts for).
+            leaving_kw = rem_surplus + withheld_surplus
+            if withheld_surplus > 1e-9:
+                constraints.append(
+                    f"METER_BOUNDED_SURPLUS: {withheld_surplus:.2f} kW of generation was not switched onto loads "
+                    "because the grid meter does not show it as free solar; it leaves as export or curtailment."
+                )
             if inv.is_zero_export_enforced:
                 grid_export_kw = 0.0
+                curtailed_solar_kw = leaving_kw
                 constraints.append("ZERO_EXPORT: Reverse power export suppressed to 0.0 kW")
+                if curtailed_solar_kw > 1e-9:
+                    constraints.append(
+                        f"CURTAILED: {curtailed_solar_kw:.2f} kW of generation had nowhere to go (no export "
+                        "permitted, nothing left to charge or shift) and is throttled back at the inverter."
+                    )
             else:
-                grid_export_kw = rem_surplus
+                grid_export_kw = leaving_kw
 
         # CASE B: Solar Deficit (Load > PV)
         else:
@@ -252,9 +386,14 @@ class HomeEnergyBalanceEngine:
 
         # 7. First Law of Thermodynamics Energy Balance Verification
         # Total Sources = PV + Grid Import + Battery Discharge
-        # Total Sinks = Home Load + Flex Load + EV Load + Battery Charge + Grid Export
+        # Total Sinks = Home Load + Flex Load + EV Load + Battery Charge + Grid Export + Curtailment
+        # Curtailment belongs here: generation an inverter throttles back is a real sink. Without it a
+        # zero-export home with a full battery broke this check by the whole unusable surplus, and the
+        # result said BALANCE_MISMATCH with nothing to point at.
         tot_sources = pv_kw + grid_import_kw + batt_discharge_kw
-        tot_sinks = load_kw + flex_allocated_kw + ev_allocated_kw + batt_charge_kw + grid_export_kw
+        tot_sinks = (
+            load_kw + flex_allocated_kw + ev_allocated_kw + batt_charge_kw + grid_export_kw + curtailed_solar_kw
+        )
         balance_error = abs(tot_sources - tot_sinks)
         is_balanced = balance_error < 1e-3
 
@@ -289,6 +428,8 @@ class HomeEnergyBalanceEngine:
             home_consumption_kw=round(load_kw, 3),
             solar_direct_used_kw=round(pv_direct, 3),
             gross_surplus_kw=round(gross_surplus, 3),
+            allocatable_surplus_kw=round(allocatable_surplus, 3),
+            curtailed_solar_kw=round(curtailed_solar_kw, 3),
             gross_deficit_kw=round(gross_deficit, 3),
             battery_charge_kw=round(batt_charge_kw, 3),
             battery_discharge_kw=round(batt_discharge_kw, 3),
