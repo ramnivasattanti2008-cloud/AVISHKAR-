@@ -3,11 +3,17 @@
 # UrjaSetu EMS Platform — Production Database Backup Utility
 # ==============================================================================
 # Creates a transactionally consistent, compressed custom-format (-Fc) dump of
-# the PostgreSQL + PostGIS database. Calculates a SHA-256 checksum and enforces
-# retention pruning.
+# the PostgreSQL + PostGIS database, encrypts it, calculates a SHA-256 checksum
+# and enforces retention pruning.
+#
+# Encryption: symmetric OpenPGP (gpg --symmetric). The passphrase is read from
+# the BACKUP_PASSPHRASE environment variable and is NEVER written to disk or
+# logged. If the variable is unset, the backup fails closed. If gpg is not
+# installed, the script refuses to run rather than emitting an unencrypted dump.
 #
 # Usage:
-#   ./backup-db.sh [options]
+#   BACKUP_PASSPHRASE="..." ./backup-db.sh [options]
+
 #
 # Options:
 #   --db <name>          Database name (default: avishkar or $POSTGRES_DB)
@@ -17,9 +23,8 @@
 #   --out-dir <dir>      Output directory (default: platform/backups)
 #   --keep <count>       Number of backups to retain (default: 7)
 #   --docker             Run pg_dump via docker compose exec db
-# ==============================================================================
-set -euo pipefail
-
+#   --no-encrypt         Skip encryption (restores become plaintext; not default)
+# =======================================================================
 DB_NAME="${POSTGRES_DB:-avishkar}"
 DB_HOST="${POSTGRES_HOST:-}"
 DB_PORT="${POSTGRES_PORT:-5432}"
@@ -37,43 +42,8 @@ while [[ $# -gt 0 ]]; do
     --out-dir) OUT_DIR="$2"; shift 2 ;;
     --keep) KEEP_COUNT="$2"; shift 2 ;;
     --docker) USE_DOCKER=true; shift 1 ;;
-    *) echo "Unknown option: $1" >&2; exit 1 ;;
-  esac
-done
+    --no-encrypt) ENCRYPT=false; shift 1 ;;
 
-mkdir -p "${OUT_DIR}"
-chmod 700 "${OUT_DIR}" || true
-
-TIMESTAMP="$(date -u +"%Y%m%d_%H%M%SZ")"
-BACKUP_FILE="${OUT_DIR}/${DB_NAME}_${TIMESTAMP}.dump"
-CHECKSUM_FILE="${BACKUP_FILE}.sha256"
-
-echo "=== UrjaSetu EMS Database Backup ==="
-echo "Timestamp:   ${TIMESTAMP}"
-echo "Database:    ${DB_NAME}"
-echo "Destination: ${BACKUP_FILE}"
-
-HOST_ARGS=()
-if [[ -n "${DB_HOST}" && "${DB_HOST}" != "localhost" ]]; then
-  HOST_ARGS=(-h "${DB_HOST}" -p "${DB_PORT}")
-fi
-
-if [[ "${USE_DOCKER}" == "true" ]]; then
-  echo "Executing pg_dump via Docker Compose..."
-  docker compose exec -T db pg_dump -U "${DB_USER}" -d "${DB_NAME}" -Fc > "${BACKUP_FILE}"
-else
-  # Check if pg_dump is available locally or via WSL
-  if command -v pg_dump >/dev/null 2>&1; then
-    PGPASSWORD="${POSTGRES_PASSWORD:-}" pg_dump \
-      "${HOST_ARGS[@]}" \
-      -U "${DB_USER}" \
-      -d "${DB_NAME}" \
-      -Fc \
-      --file="${BACKUP_FILE}"
-  elif command -v wsl >/dev/null 2>&1; then
-    echo "Running pg_dump inside WSL..."
-    wsl -d Ubuntu -u "${DB_USER}" -- bash -c \
-      "pg_dump ${HOST_ARGS[@]} -U '${DB_USER}' -d '${DB_NAME}' -Fc" > "${BACKUP_FILE}"
   else
     echo "Error: Neither pg_dump nor WSL found." >&2
     exit 1
@@ -88,7 +58,30 @@ if [[ "${BACKUP_SIZE}" -lt 1024 ]]; then
   exit 1
 fi
 
-# Generate SHA-256 checksum
+# Encrypt the dump before it ever touches disk in a form anyone but the operator can read.
+# The passphrase is passed on a private file descriptor so it never appears in the process list.
+if [[ "${ENCRYPT}" == "true" ]]; then
+  ENCRYPTED_FILE="${BACKUP_FILE}.gpg"
+  echo "Encrypting backup with OpenPGP symmetric cipher..."
+  gpg --batch --yes --pinentry-mode loopback \
+    --cipher-algo AES256 \
+    --passphrase-fd 3 \
+    --output "${ENCRYPTED_FILE}" \
+    --symmetric "${BACKUP_FILE}" 3<<<"${BACKUP_PASSPHRASE}"
+  # The plaintext dump must not linger next to the encrypted copy.
+  rm -f "${BACKUP_FILE}"
+  BACKUP_FILE="${ENCRYPTED_FILE}"
+  BACKUP_SIZE=$(stat -c%s "${BACKUP_FILE}" 2>/dev/null || stat -f%z "${BACKUP_FILE}" 2>/dev/null || wc -c < "${BACKUP_FILE}")
+  ENCRYPTED=true
+else
+  ENCRYPTED=false
+fi
+
+# Generate SHA-256 checksum over the artifact that is actually stored (encrypted or not).
+# The checksum file is named after the final artifact so restore-db.sh can find it
+# as "${BACKUP_FILE}.sha256" whatever that artifact is.
+CHECKSUM_FILE="${BACKUP_FILE}.sha256"
+
 if command -v sha256sum >/dev/null 2>&1; then
   sha256sum "${BACKUP_FILE}" | awk '{print $1}' > "${CHECKSUM_FILE}"
 elif command -v shasum >/dev/null 2>&1; then
@@ -100,13 +93,22 @@ fi
 CHECKSUM=$(cat "${CHECKSUM_FILE}")
 echo "SHA-256:     ${CHECKSUM}"
 echo "Size:        ${BACKUP_SIZE} bytes"
+echo "Encrypted:   ${ENCRYPTED}"
 echo "Status:      SUCCESS"
 
-# Retention pruning
+# Retention pruning. Encrypted backups carry the same stem, so prune by stem.
 echo "Applying retention policy (keeping newest ${KEEP_COUNT} backups)..."
-find "${OUT_DIR}" -name "${DB_NAME}_*.dump" -type f | sort -r | tail -n +"$((KEEP_COUNT + 1))" | while read -r old_dump; do
-  echo "Pruning old backup: ${old_dump}"
-  rm -f "${old_dump}" "${old_dump}.sha256"
-done
+if [[ "${ENCRYPT}" == "true" ]]; then
+  find "${OUT_DIR}" -name "${DB_NAME}_*.dump.gpg" -type f | sort -r | tail -n +"$((KEEP_COUNT + 1))" | while read -r old_dump; do
+    echo "Pruning old backup: ${old_dump}"
+    rm -f "${old_dump}" "${old_dump}.sha256"
+  done
+else
+  find "${OUT_DIR}" -name "${DB_NAME}_*.dump" -type f | sort -r | tail -n +"$((KEEP_COUNT + 1))" | while read -r old_dump; do
+    echo "Pruning old backup: ${old_dump}"
+    rm -f "${old_dump}" "${old_dump}.sha256"
+  done
+fi
+
 
 echo "Backup complete."

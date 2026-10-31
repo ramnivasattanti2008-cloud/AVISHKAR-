@@ -28,6 +28,8 @@ export interface OptimiseRequest {
     wearInrPerKwh?: number;
     /** The horizon starts and ends at the same charge, which the planner chooses (a typical day that repeats). */
     cyclic?: boolean;
+    /** Most full cycles a day the battery may do: the energy drawn out of it over the horizon is capped at this many capacities a day. */
+    maxCyclesPerDay?: number | null;
   } | null;
   grid?: { importLimitKw?: number | null; exportLimitKw?: number | null; outages?: { startStep: number; endStep: number }[] };
   criticalKw?: number;
@@ -36,8 +38,18 @@ export interface OptimiseRequest {
   appliances?: { id: string; name: string; powerKw: number; durationSteps: number; earliestStartStep: number; latestFinishStep: number; interruptible: boolean }[];
   mode?: Mode;
   carbonKgPerKwh?: number[] | null;
+  /** Plan once for several possible days (expected cost blended with CVaR); the schedule returned is the central forecast's. */
+  risk?: { scenarios: { label: string; loadKw: number[]; pvKw: number[]; weight: number }[]; centralWeight: number; alpha: number; aversion: number } | null;
   timeLimitS?: number;
 }
+
+export const RiskOut = z.object({
+  alpha: z.number(),
+  aversion: z.number(),
+  scenarios: z.array(z.object({ label: z.string(), weight: z.number(), netCostInr: z.number(), importKwh: z.number(), exportKwh: z.number(), unservedKwh: z.number() })),
+  expectedNetCostInr: z.number(),
+  cvarNetCostInr: z.number(),
+});
 
 const nums = z.array(z.number());
 
@@ -95,6 +107,7 @@ export const OptimiseResponse = z.object({
   ),
   validation: z.object({ valid: z.boolean(), maxBalanceErrorKw: z.number(), problems: z.array(z.string()) }),
   notes: z.array(z.string()),
+  risk: RiskOut.nullish(),
 });
 export type OptimiseResponse = z.infer<typeof OptimiseResponse>;
 
@@ -231,3 +244,31 @@ export const TypicalDaysResponse = z.object({
   notes: z.array(z.string()),
 });
 export type TypicalDaysResponse = z.infer<typeof TypicalDaysResponse>;
+
+export interface DegradationRequest {
+  socKwh: number[];
+  capacityKwh: number;
+  nominalCycleLife?: number;
+  replacementCostInr?: number;
+  cellTemperatureCelsius?: number | null;
+  maxChargeKw?: number;
+  maxDischargeKw?: number;
+  operationalDays?: number;
+}
+
+export const DegradationResponse = z.object({
+  equivalentFullCycles: z.number(),
+  rainflowCycleCount: z.number(),
+  dodDistribution: z.record(z.string(), z.number()),
+  cycleCapacityLossPercent: z.number(),
+  calendarCapacityLossPercent: z.number(),
+  totalCapacityLossPercent: z.number(),
+  stateOfHealthPercent: z.number(),
+  wearCostInr: z.number(),
+  estimatedRemainingCycles: z.number(),
+  thermalDerateFactor: z.number(),
+  deratedMaxChargeKw: z.number(),
+  deratedMaxDischargeKw: z.number(),
+  summaryVerdict: z.string(),
+});
+export type DegradationResponse = z.infer<typeof DegradationResponse>;

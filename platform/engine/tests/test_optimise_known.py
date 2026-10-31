@@ -368,3 +368,19 @@ def test_the_solver_is_deterministic():
     assert a.schedule.model_dump() == b.schedule.model_dump()
     assert a.totals.net_cost_inr == b.totals.net_cost_inr
     assert list(itertools.chain.from_iterable([a.schedule.grid_import_kw])) == b.schedule.grid_import_kw
+
+
+def test_optimise_batch_parallel_solves_multiple_scenarios():
+    from avishkar_engine.optimise import optimise_batch_parallel
+    from avishkar_engine.schemas import OptimiseRequest
+
+    req1 = OptimiseRequest.model_validate(request(4, loadKw=[0, 0, 2, 2], importPrice=[1, 1, 10, 10], battery=battery(capacityKwh=4, maxSocKwh=4)))
+    req2 = OptimiseRequest.model_validate(request(4, loadKw=[1, 1, 1, 1], importPrice=[3, 3, 3, 3]))
+
+    results = optimise_batch_parallel([req1, req2], max_workers=2)
+    assert len(results) == 2
+    assert results[0].solver.status == "optimal" and results[0].validation.valid
+    assert results[1].solver.status == "optimal" and results[1].validation.valid
+    assert results[0].totals.net_cost_inr == approx(4.0)
+    assert results[1].totals.net_cost_inr == approx(12.0)
+

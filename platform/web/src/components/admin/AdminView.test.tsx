@@ -15,6 +15,7 @@ function world(extra: [string, string, (a: { url: URL; body: unknown }) => Respo
     ["GET", "/api/admin/overview", () => json(adminOverview())],
     ["GET", "/api/admin/jobs", () => json(adminJobs())],
     ["GET", "/api/admin/audit", () => json(adminAudit())],
+    ["GET", "/api/admin/users", () => json({ users: [{ id: "u1", email: "user@example.com", role: "USER", displayName: "Test User", createdAt: "2026-10-01T00:00:00Z", propertiesCount: 2 }] })],
   ]);
   vi.stubGlobal("fetch", api.fetch);
   return api;
@@ -157,4 +158,18 @@ describe("AdminView", () => {
     render(<AdminView />);
     expect(await screen.findByRole("alert")).toHaveTextContent("Administrator access required.");
   });
+
+  it("shows user accounts and allows promoting a user to administrator", async () => {
+    const api = world([
+      ["PATCH", "/api/admin/users/u1/role", () => json({ id: "u1", email: "user@example.com", role: "ADMIN", displayName: "Test User", createdAt: "2026-10-01T00:00:00Z" })],
+    ]);
+    render(<AdminView />);
+    expect(await screen.findByRole("region", { name: "User Accounts & Roles" })).toBeInTheDocument();
+    expect(screen.getByText("user@example.com")).toBeInTheDocument();
+    const btn = screen.getByRole("button", { name: "Promote to ADMIN" });
+    await userEvent.click(btn);
+    expect(await screen.findByText("Updated user role to ADMIN.")).toBeInTheDocument();
+    expect(api.called("PATCH", "/api/admin/users/u1/role")).toHaveLength(1);
+  });
 });
+

@@ -10,8 +10,9 @@ import { type ForecastDeps, loadForecast, solarForecast } from "../forecast/serv
 import { simulated } from "../provenance/index.js";
 import { getProperty } from "../properties/service.js";
 import { getTariff, type TariffPlanDto } from "../tariff/service.js";
-import { HOUR_MS, departureStep, istIso, local, planStart, resample, windowInHorizon } from "./horizon.js";
+import { HOUR_MS, arrivalStep, departureStep, istIso, local, planStart, resample, windowInHorizon } from "./horizon.js";
 import { type ScenarioResult, batteryMoves, confidence, headline, scenarioSpecs, windowKwh } from "./explain.js";
+import { CENTRAL_WEIGHT, riskDays, riskRequest, riskSummary } from "./risk.js";
 import type { PlanDto, PlanRequest } from "./schemas.js";
 
 interface Ctx {
@@ -86,6 +87,13 @@ export function aggregateBatteries(rows: Battery[], now: Date, startSocPercent: 
     notes.push("Battery efficiency, usable range and wear cost use the documented defaults where you did not enter them.");
   }
 
+  // The store is one battery to the optimiser, so its allowance is the batteries' allowances added up (capacity times cycles a day):
+  // the capacity-weighted average limit. It applies only when every installed battery has one.
+  const cycleLimited = installed.every((b) => b.maxCyclesPerDay !== null);
+  const maxCyclesPerDay = cycleLimited ? round(installed.reduce((a, b) => a + b.maxCyclesPerDay! * b.capacityKwh, 0) / cap, 6) : null;
+  if (cycleLimited) notes.push(`The plan keeps the store within the cycle limit you entered: ${round(maxCyclesPerDay!, 2)} full cycles a day on average.`);
+  else if (installed.some((b) => b.maxCyclesPerDay !== null)) notes.push("Only some batteries have a cycle limit, so the plan applies none to the store.");
+
   let initial: number;
   let basis: BatteryPlan["startBasis"];
   const fresh = installed.every((b) => b.currentSoc !== null && b.currentSocAt !== null && now.getTime() - b.currentSocAt.getTime() <= 24 * HOUR_MS);
@@ -116,6 +124,7 @@ export function aggregateBatteries(rows: Battery[], now: Date, startSocPercent: 
       initialSocKwh: round(clamped, 6),
       terminalSocKwh: round(clamped, 6),
       wearInrPerKwh: round(wavg((i) => dtos[i]!.effective.wearInrPerKwh.value ?? DEFAULTS.battery.wearInrPerKwh.value), 4),
+      maxCyclesPerDay,
     },
     usableKwh: round(maxKwh - minKwh, 3),
     capacityKwh: cap,
@@ -136,10 +145,17 @@ export function evPlan(rows: Ev[], startMs: number, steps: number): { input: Non
   const dep = departureStep(ev.departureTime, ev.departureDays, startMs, steps);
   if (!dep || dep.step < 1) return { input: null, notes: [...notes, `${ev.name} is not scheduled: it departs within the first hour or on no day within the next week.`] };
   if (dep.beyondHorizon) notes.push(`${ev.name} departs after this plan ends, so its charge is completed within the plan's hours.`);
-  notes.push(`${ev.name} is assumed to be plugged in from the start of the plan.`);
+  // the last arrival before it leaves; when it leaves after the plan ends, the last arrival before the plan ends
+  const from = ev.arrivalTime ? arrivalStep(ev.arrivalTime, dep.beyondHorizon ? startMs + steps * HOUR_MS : dep.atMs, startMs) : 0;
+  if (from >= dep.step) {
+    return { input: null, notes: [...notes, `${ev.name} is not scheduled: it comes home at ${ev.arrivalTime} and leaves at ${ev.departureTime}, which leaves no whole hour to charge inside the plan.`] };
+  }
+  if (!ev.arrivalTime) notes.push(`${ev.name} is assumed to be plugged in from the start of the plan (no arrival time is entered).`);
+  else if (from === 0) notes.push(`${ev.name} is home (from ${ev.arrivalTime}) when the plan starts.`);
+  else notes.push(`${ev.name} comes home at ${ev.arrivalTime}, so it charges from the next whole hour on.`);
   const dto = toEvDto(ev);
   return {
-    input: { energyNeededKwh: round(need, 3), chargerKw: ev.chargerKw, chargerEfficiency: dto.effective.chargerEfficiency.value as number, availableFromStep: 0, departureStep: dep.step },
+    input: { energyNeededKwh: round(need, 3), chargerKw: ev.chargerKw, chargerEfficiency: dto.effective.chargerEfficiency.value as number, availableFromStep: from, departureStep: dep.step },
     energyNeededKwh: round(need, 3),
     departure: startMs + dep.step * HOUR_MS,
     notes,
@@ -319,13 +335,24 @@ export async function buildPlanInputs(deps: ForecastDeps, userId: string, proper
     mode: req.mode,
   };
 
-  return { at, property, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, bands: { pvLow, pvHigh, loadLow: load.lowKw, loadHigh: load.highKw }, battery, ev, apps, assumptions, request };
+  const days = riskDays({ pvLow, pvHigh, loadLow: load.lowKw, loadHigh: load.highKw }, pv, load.kw);
+  if (req.riskAversion && req.riskAversion > 0) {
+    const risk = battery ? riskRequest(days, req.riskAversion) : null;
+    if (risk) {
+      request.risk = risk;
+      assumptions.push(`Risk-aware: the battery is planned for the central forecast and ${days.length} bad end(s) of the forecasts' own bands at once (central weight ${CENTRAL_WEIGHT}, the rest shared equally: preferences, not probabilities).`);
+    } else {
+      assumptions.push(battery ? "Risk-aware planning was asked for, but no forecast has a band for these hours, so the plan is for the central forecast only." : "Risk-aware planning was asked for, but with no battery there is no decision to make ahead for other days, so it was not applied.");
+    }
+  }
+
+  return { at, property, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, bands: { pvLow, pvHigh, loadLow: load.lowKw, loadHigh: load.highKw }, riskDays: days, battery, ev, apps, assumptions, request };
 }
 
 export async function createPlan(deps: ForecastDeps, userId: string, propertyId: string, req: PlanRequest, ctx: Ctx = {}): Promise<PlanDto> {
   const { db } = deps;
   const engine = requireEngine(deps.engine);
-  const { at, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, bands, battery, ev, apps, assumptions, request } = await buildPlanInputs(deps, userId, propertyId, req, ctx);
+  const { at, startMs, steps, where, tariff, load, prices, solar, solarNote, pv, bands, riskDays: days, battery, ev, apps, assumptions, request } = await buildPlanInputs(deps, userId, propertyId, req, ctx);
 
   const out: OptimiseResponse = await engine.optimise(request, { requestId: ctx.requestId });
 
@@ -401,6 +428,7 @@ export async function createPlan(deps: ForecastDeps, userId: string, propertyId:
     validation: out.validation,
     notes: out.notes,
   };
+  if (out.risk) dto.risk = riskSummary(out.risk, days);
 
   dto.recommendation = await recommend(engine, { request, pv, load, bands, battery, tariff, solarNote, startMs, steps, sch, dto, savings }, ctx);
 
@@ -493,7 +521,7 @@ export async function getPlan(db: Db, userId: string, propertyId: string, id?: s
   return { ...(r.plan as unknown as PlanDto), id: r.id };
 }
 
-async function requireOwner(db: Db, userId: string, propertyId: string): Promise<void> {
+export async function requireOwner(db: Db, userId: string, propertyId: string): Promise<void> {
   const p = await db.property.findFirst({ where: { id: propertyId, ownerId: userId, deletedAt: null }, select: { id: true } });
   if (!p) throw new AppError("NOT_FOUND", "No such property.");
 }

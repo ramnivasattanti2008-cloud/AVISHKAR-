@@ -175,6 +175,20 @@ describeBoth("what-if scenarios, through the API and the real engine", () => {
     expect(list.map((x: { id: string }) => x.id)).toEqual([b.id, a.id]);
     expect(list[1]).toMatchObject({ name: "Three kWp", addSolarKwp: 3, addBatteryKwh: null, tariffChanged: false });
     expect((await call("GET", `/api/properties/${pid}/scenarios/${a.id}`)).json()).toEqual(a);
+
+    // the same what-if as CSV: a row per month and the year, the year's figures as shown
+    const csv = await call("GET", `/api/properties/${pid}/scenarios/${a.id}/export.csv`);
+    expect(csv.statusCode).toBe(200);
+    expect(csv.headers["content-type"]).toMatch(/^text\/csv/);
+    expect(csv.body).toContain("# ESTIMATED");
+    const data = csv.body.trimEnd().split("\r\n").filter((l) => !l.startsWith("#"));
+    expect(data[0]!.startsWith("month,days,today_net_cost_inr,changed_net_cost_inr,saving_inr")).toBe(true);
+    expect(data).toHaveLength(1 + a.base.months.length + 1);
+    const year = data.at(-1)!.split(",");
+    expect(year[0]).toBe("Year");
+    expect(Number(year[2])).toBeCloseTo(a.base.netCostInr, 4);
+    expect(Number(year[3])).toBeCloseTo(a.scenario.netCostInr, 4);
+
     expect((await call("DELETE", `/api/properties/${pid}/scenarios/${a.id}`)).statusCode).toBe(204);
     expect((await call("GET", `/api/properties/${pid}/scenarios/${a.id}`)).statusCode).toBe(404);
     expect(await db().scenario.count({ where: { propertyId: pid } })).toBe(1);
@@ -209,6 +223,7 @@ describeBoth("what-if scenarios, through the API and the real engine", () => {
     expect((await run({ tariffPlanId: theirs.id })).statusCode).toBe(404);
     expect((await call("GET", `/api/properties/${pid}/scenarios`, undefined, other)).statusCode).toBe(404);
     expect((await call("GET", `/api/properties/${pid}/scenarios/${mine.id}`, undefined, other)).statusCode).toBe(404);
+    expect((await call("GET", `/api/properties/${pid}/scenarios/${mine.id}/export.csv`, undefined, other)).statusCode).toBe(404);
     expect((await call("DELETE", `/api/properties/${pid}/scenarios/${mine.id}`, undefined, other)).statusCode).toBe(404);
     expect((await t.app.inject({ method: "GET", url: `/api/properties/${pid}/scenarios` })).statusCode).toBe(401);
     expect((await t.app.inject({ method: "POST", url: `/api/properties/${pid}/scenarios`, cookies: s.cookies, payload: { addSolarKwp: 3 } })).statusCode).toBe(403);

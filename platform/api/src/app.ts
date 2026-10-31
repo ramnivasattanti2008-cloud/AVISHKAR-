@@ -89,7 +89,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       const h = req.headers["x-request-id"];
       return typeof h === "string" && REQUEST_ID.test(h) ? h : randomUUID();
     },
-    trustProxy: config.TRUST_PROXY,
+    trustProxy:
+      typeof config.TRUST_PROXY === "number"
+        ? (_addr: string, hop: number) => hop <= (config.TRUST_PROXY as number)
+        : config.TRUST_PROXY,
     bodyLimit: 1_000_000,
   });
 

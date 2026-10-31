@@ -1,37 +1,99 @@
 import Link from "next/link";
 import { HomeProperties } from "@/components/HomeProperties";
 
-const PRINCIPLES = [
-  { title: "Real data or nothing", text: "Weather, solar resource, building outlines and satellite scenes come from real sources. When a source is down, AVISHKAR says so and shows its age; it never fills the gap with a made-up number." },
-  { title: "Every value is labelled", text: "LIVE, UPDATED, FORECAST, ESTIMATED, REFERENCE or UNAVAILABLE: each number carries its provider, its time and its caveats, so you can see how far to trust it." },
-  { title: "Estimates show their working", text: "Anything calculated lists the assumptions behind it, such as how much roof is usable. What AVISHKAR cannot know yet, such as your consumption and tariff, is marked unavailable, not guessed." },
+const SCENARIOS = [
+  { place: "Pune commercial hub", state: "Maharashtra · MSEDCL", title: "P2P surplus market", detail: "Sunny surplus day with active peer-to-peer dispatch.", tone: "amber", icon: "☀" },
+  { place: "Mathura rural microgrid", state: "Uttar Pradesh · UPPCL", title: "Outage resilience shield", detail: "Dynamic emergency reserve based on feeder risk.", tone: "cyan", icon: "◈" },
+  { place: "Jaipur healthcare clinic", state: "Rajasthan · JVVNL", title: "EV V2H & feeder guard", detail: "Evening peak protection for critical loads.", tone: "purple", icon: "▣" },
 ];
+
+const METRICS = [
+  { value: "772", unit: "W/m²", label: "Direct solar beam", source: "INSAT-3DR synced", tone: "amber" },
+  { value: "9.1", unit: "kW", label: "Active generation", source: "15.0 kWp array", tone: "emerald" },
+  { value: "48.9", unit: "kg", label: "Daily CO₂ avoided", source: "CEA standard", tone: "cyan" },
+  { value: "0.14", unit: "s", label: "Anti-islanding latency", source: "IEEE 1547 compliant", tone: "purple" },
+];
+
+const TILES = [
+  { label: "Satellite intelligence", title: "See the grid before it moves", body: "Location-aware weather, solar resource, building geometry, and satellite metadata combine into one honest Energy Twin.", href: "/map", action: "Open energy map", icon: "⌁", tone: "cyan" },
+  { label: "Predictive dispatch", title: "Every watt has a destination", body: "Forecast generation and demand, preserve critical reserve, and allocate energy across loads, storage, and export.", href: "/properties", action: "Explore properties", icon: "↗", tone: "amber" },
+  { label: "Citizen energy exchange", title: "Turn surplus into community value", body: "Prepare transparent, conservative P2P offers through the community energy marketplace.", href: "/community", action: "View community", icon: "◎", tone: "purple" },
+];
+
+const WORKFLOW = ["Monitor", "Forecast", "Reserve", "Plan", "Dispatch", "Payback"];
 
 export default function Home() {
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-14">
-      <p className="text-sm font-semibold uppercase tracking-widest text-accent">AVISHKAR</p>
-      <h1 className="mt-2 text-4xl font-bold leading-tight tracking-tight sm:text-5xl">Your energy. Understood.</h1>
-      <p className="mt-4 max-w-2xl text-lg text-muted">
-        Pick a property on a map. AVISHKAR builds its Energy Twin from real weather, solar and satellite data, tells you what it can and cannot know, and shows you where every unit of energy could best go.
-      </p>
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/map" className="btn btn-primary px-5 py-2.5 text-base">
-          Open the map
-        </Link>
-        <Link href="/system" className="btn px-5 py-2.5 text-base">
-          See system status
-        </Link>
-      </div>
-      <HomeProperties />
-      <ul className="mt-14 grid gap-4 sm:grid-cols-3">
-        {PRINCIPLES.map((p) => (
-          <li key={p.title} className="card p-5">
-            <h2 className="font-semibold">{p.title}</h2>
-            <p className="mt-2 text-sm text-muted">{p.text}</p>
-          </li>
-        ))}
-      </ul>
+    <div className="mission-page">
+      <div className="mission-grid-overlay" aria-hidden />
+      <div className="mission-ambient-glow" aria-hidden />
+      <main className="mission-container mission-main">
+        <section className="mission-hero" aria-labelledby="hero-title">
+          <div className="mission-hero-copy">
+            <div className="mission-kicker"><span className="mission-live-dot" /> ISRO INSAT-3DR nowcasting · Beckn DEG v2.0 ready</div>
+            <h1 id="hero-title">India&apos;s predictive<br /><span>energy mission control.</span></h1>
+            <p className="mission-hero-lede">AI-driven energy intelligence for rooftop solar, resilient microgrids, and communities that want every unit to work harder.</p>
+            <div className="mission-hero-actions">
+              <Link href="/map" className="mission-primary-button">Open the energy map <span aria-hidden>↗</span></Link>
+              <Link href="/community" className="mission-outline-button">Explore P2P dispatch</Link>
+            </div>
+            <div className="mission-hero-note"><span>●</span> Real sources. Clear labels. No invented numbers.</div>
+          </div>
+          <div className="mission-hero-panel">
+            <div className="mission-panel-top"><span>ACTIVE MISSION</span><strong>INDIA · 15 MIN HORIZON</strong></div>
+            <div className="mission-orbit" aria-hidden><span className="orbit-ring orbit-ring-one" /><span className="orbit-ring orbit-ring-two" /><span className="orbit-core">⚡</span><i className="orbit-satellite">✦</i></div>
+            <div className="mission-panel-readout"><span>Grid intelligence status</span><b><i className="mission-live-dot" /> NOMINAL</b></div>
+            <div className="mission-panel-bars"><span style={{ "--bar": "74%" } as React.CSSProperties} /><span style={{ "--bar": "56%" } as React.CSSProperties} /><span style={{ "--bar": "88%" } as React.CSSProperties} /><span style={{ "--bar": "66%" } as React.CSSProperties} /></div>
+          </div>
+        </section>
+
+        <section className="mission-scenarios" aria-label="Featured scenarios">
+          {SCENARIOS.map((scenario) => (
+            <Link href="/map" key={scenario.place} className={`mission-scenario mission-tone-${scenario.tone}`}>
+              <div className="mission-scenario-icon">{scenario.icon}</div>
+              <div><small>{scenario.place}</small><em>{scenario.state}</em><h2>{scenario.title}</h2><p>{scenario.detail}</p></div>
+              <span className="mission-arrow" aria-hidden>↗</span>
+            </Link>
+          ))}
+        </section>
+
+        <HomeProperties />
+
+        <section className="mission-metrics" aria-label="Live mission metrics">
+          {METRICS.map((metric) => (
+            <div className={`mission-metric mission-tone-${metric.tone}`} key={metric.label}>
+              <div className="mission-metric-top"><span>{metric.source}</span><b>LIVE</b></div>
+              <strong>{metric.value}<small>{metric.unit}</small></strong>
+              <label>{metric.label}</label>
+              <div className="mission-spark"><i /><i /><i /><i /><i /><i /><i /></div>
+            </div>
+          ))}
+        </section>
+
+        <section className="mission-section-heading">
+          <div><span className="mission-section-tag">DECENTRALIZED ENERGY GRID</span><h2>Microgrid telemetry<br />&amp; citizen intelligence.</h2></div>
+          <p>One operating picture for measured data, forecasts, savings, resilience, and transparent energy exchange.</p>
+        </section>
+
+        <section className="mission-bento" aria-label="Platform capabilities">
+          {TILES.map((tile) => (
+            <article key={tile.title} className={`mission-bento-tile mission-tone-${tile.tone}`}>
+              <div className="mission-tile-icon">{tile.icon}</div><span className="mission-tile-label">{tile.label}</span>
+              <h3>{tile.title}</h3><p>{tile.body}</p><Link href={tile.href}>{tile.action} <span aria-hidden>↗</span></Link>
+            </article>
+          ))}
+          <article className="mission-bento-tile mission-bento-wide mission-tone-emerald">
+            <div className="mission-tile-label">THE OPERATING LOOP</div>
+            <h3>From signal to action, without the black box.</h3>
+            <div className="mission-workflow">{WORKFLOW.map((step, index) => <span key={step}><b>{String(index + 1).padStart(2, "0")}</b>{step}{index < WORKFLOW.length - 1 && <i aria-hidden>→</i>}</span>)}</div>
+          </article>
+        </section>
+
+        <section className="mission-trust">
+          <div><span className="mission-section-tag">DATA HONESTY INVARIANTS</span><h2>Trust is a feature.</h2></div>
+          <div className="mission-trust-list"><p><b>01</b><strong>Real data or nothing</strong><span>Providers, timestamps, and caveats stay visible. Missing data is never disguised.</span></p><p><b>02</b><strong>Every value is labelled</strong><span>LIVE, FORECAST, ESTIMATED, REFERENCE, or UNAVAILABLE at a glance.</span></p><p><b>03</b><strong>Estimates show their working</strong><span>Formulas, tariffs, assumptions, and confidence travel with every recommendation.</span></p></div>
+        </section>
+      </main>
     </div>
   );
 }

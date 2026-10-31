@@ -92,3 +92,31 @@ export const AuditSchema = z
     next: z.string().nullable().describe("Pass as `before` to read the next, older page."),
   })
   .meta({ id: "AdminAudit" });
+
+export const AdminUserSchema = z.object({
+  id: z.uuid(),
+  email: z.string(),
+  role: z.enum(["USER", "ADMIN"]),
+  displayName: z.string().nullable(),
+  createdAt: z.string(),
+  propertiesCount: z.number(),
+});
+
+export const AdminUsersListSchema = z
+  .object({
+    users: z.array(AdminUserSchema),
+  })
+  .meta({ id: "AdminUsersList" });
+
+export const UpdateRoleRequestSchema = z
+  .object({
+    role: z.enum(["USER", "ADMIN"]),
+  })
+  .meta({ id: "UpdateRoleRequest" });
+
+export const UpdateTariffRequestSchema = z
+  .object({
+    effectiveTo: z.string().nullable().optional(),
+    verifiedAt: z.string().nullable().optional(),
+  })
+  .meta({ id: "UpdateTariffRequest" });

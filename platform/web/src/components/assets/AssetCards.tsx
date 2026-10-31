@@ -102,6 +102,8 @@ export function EvCard({ e, actions }: { e: Ev; actions: ReactNode }) {
       <dd className="num">
         {pct(e.targetSoc)} by {e.departureTime} on {e.departureDays.map((d) => DAY_NAMES[d]).join(", ")}
       </dd>
+      <dt className="text-muted">Plugged in from</dt>
+      <dd className="num">{e.arrivalTime ?? "not entered (plans assume all the time)"}</dd>
       <ParamRow label="Charger efficiency" p={e.effective.chargerEfficiency} fmt={pct} />
       {e.currentSoc !== null && (
         <>

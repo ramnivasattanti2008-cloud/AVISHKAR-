@@ -1183,6 +1183,110 @@
         ],
         "type": "object"
       },
+      "AdminUsersList": {
+        "additionalProperties": false,
+        "properties": {
+          "users": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "createdAt": {
+                  "type": "string"
+                },
+                "displayName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "email": {
+                  "type": "string"
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "propertiesCount": {
+                  "type": "number"
+                },
+                "role": {
+                  "enum": [
+                    "USER",
+                    "ADMIN"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "email",
+                "role",
+                "displayName",
+                "createdAt",
+                "propertiesCount"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "users"
+        ],
+        "type": "object"
+      },
+      "AdminUsersListInput": {
+        "properties": {
+          "users": {
+            "items": {
+              "properties": {
+                "createdAt": {
+                  "type": "string"
+                },
+                "displayName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "email": {
+                  "type": "string"
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "propertiesCount": {
+                  "type": "number"
+                },
+                "role": {
+                  "enum": [
+                    "USER",
+                    "ADMIN"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "email",
+                "role",
+                "displayName",
+                "createdAt",
+                "propertiesCount"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "users"
+        ],
+        "type": "object"
+      },
       "Appliance": {
         "additionalProperties": false,
         "properties": {
@@ -4337,6 +4441,1431 @@
           "result",
           "assumptions",
           "notes"
+        ],
+        "type": "object"
+      },
+      "CommunityAllocateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "dayType": {
+            "enum": [
+              "weekday",
+              "weekend"
+            ],
+            "type": "string"
+          },
+          "hour": {
+            "description": "Hour of the typical day (IST) to take generation and demand from, when using propertyIds. Default: the current hour.",
+            "maximum": 23,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/CommunityLimitsInput"
+          },
+          "members": {
+            "description": "The properties to allocate between, described in full.",
+            "items": {
+              "$ref": "#/components/schemas/CommunityMemberInput"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "month": {
+            "description": "Month of that typical day. Default: this month.",
+            "maximum": 12,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "overrides": {
+            "additionalProperties": {
+              "additionalProperties": false,
+              "properties": {
+                "battery": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CommunityBatteryInput"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "criticalKw": {
+                  "default": 0,
+                  "description": "The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "demandKw": {
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "exportLimitKw": {
+                  "default": 100000,
+                  "description": "Most this property may push past its meter: the smaller of its inverter and what its connection permits.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "generationKw": {
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "importLimitKw": {
+                  "default": 100000,
+                  "description": "Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "lineLossFraction": {
+                  "default": 0,
+                  "description": "Fraction lost on this property's own leg to the shared node.",
+                  "maximum": 0.5,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "name": {
+                  "maxLength": 120,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "description": "Changes to apply to the figures built from your properties, keyed by property id: what you want to ask 'what if' about.",
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "propertyIds": {
+            "description": "Your own properties to allocate between instead, at the hour given by `hour`.",
+            "items": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "required": [
+          "limits"
+        ],
+        "type": "object"
+      },
+      "CommunityAllocateRequestInput": {
+        "properties": {
+          "dayType": {
+            "enum": [
+              "weekday",
+              "weekend"
+            ],
+            "type": "string"
+          },
+          "hour": {
+            "description": "Hour of the typical day (IST) to take generation and demand from, when using propertyIds. Default: the current hour.",
+            "maximum": 23,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/CommunityLimitsInputInput",
+            "default": {}
+          },
+          "members": {
+            "description": "The properties to allocate between, described in full.",
+            "items": {
+              "$ref": "#/components/schemas/CommunityMemberInputInput"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "month": {
+            "description": "Month of that typical day. Default: this month.",
+            "maximum": 12,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "overrides": {
+            "additionalProperties": {
+              "properties": {
+                "battery": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CommunityBatteryInputInput"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "criticalKw": {
+                  "default": 0,
+                  "description": "The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "demandKw": {
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "exportLimitKw": {
+                  "default": 100000,
+                  "description": "Most this property may push past its meter: the smaller of its inverter and what its connection permits.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "generationKw": {
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "importLimitKw": {
+                  "default": 100000,
+                  "description": "Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.",
+                  "maximum": 100000,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "lineLossFraction": {
+                  "default": 0,
+                  "description": "Fraction lost on this property's own leg to the shared node.",
+                  "maximum": 0.5,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                "name": {
+                  "maxLength": 120,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "description": "Changes to apply to the figures built from your properties, keyed by property id: what you want to ask 'what if' about.",
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "propertyIds": {
+            "description": "Your own properties to allocate between instead, at the hour given by `hour`.",
+            "items": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CommunityAllocateResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "inputs": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "basis": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "basis"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "label": {
+            "const": "COMMUNITY ALLOCATION SIMULATION",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "result": {
+            "additionalProperties": false,
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "check": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "balanced": {
+                            "type": "boolean"
+                          },
+                          "communityErrorKw": {
+                            "type": "number"
+                          },
+                          "maxMemberErrorKw": {
+                            "type": "number"
+                          },
+                          "note": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "balanced",
+                          "maxMemberErrorKw",
+                          "communityErrorKw",
+                          "note"
+                        ],
+                        "type": "object"
+                      },
+                      "comparison": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "basis": {
+                                "type": "string"
+                              },
+                              "savingInr": {
+                                "type": "number"
+                              },
+                              "withSharingInr": {
+                                "type": "number"
+                              },
+                              "withoutSharingInr": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "withoutSharingInr",
+                              "withSharingInr",
+                              "savingInr",
+                              "basis"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "decisions": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "feederBinding": {
+                        "type": "boolean"
+                      },
+                      "feederFlowKw": {
+                        "type": "number"
+                      },
+                      "limits": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "batteryPolicy": {
+                            "enum": [
+                              "SHARE_FIRST",
+                              "BATTERY_FIRST"
+                            ],
+                            "type": "string"
+                          },
+                          "feederLimitKw": {
+                            "type": "number"
+                          },
+                          "networkLossFraction": {
+                            "type": "number"
+                          },
+                          "rule": {
+                            "enum": [
+                              "PROPORTIONAL",
+                              "EQUAL_SHARE",
+                              "CRITICAL_FIRST",
+                              "NEAREST_FIRST"
+                            ],
+                            "type": "string"
+                          },
+                          "stepHours": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "feederLimitKw",
+                          "networkLossFraction",
+                          "rule",
+                          "batteryPolicy",
+                          "stepHours"
+                        ],
+                        "type": "object"
+                      },
+                      "members": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "allocatedKw": {
+                              "type": "number"
+                            },
+                            "batteryChargeKw": {
+                              "type": "number"
+                            },
+                            "batteryDischargeKw": {
+                              "type": "number"
+                            },
+                            "batterySocKwh": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "binding": {
+                              "enum": [
+                                "NONE",
+                                "EXPORT_LIMIT",
+                                "IMPORT_LIMIT",
+                                "FEEDER_LIMIT",
+                                "NO_TAKER",
+                                "NO_SUPPLY",
+                                "BATTERY_FULL",
+                                "BATTERY_EMPTY"
+                              ],
+                              "type": "string"
+                            },
+                            "curtailedKw": {
+                              "type": "number"
+                            },
+                            "demandKw": {
+                              "type": "number"
+                            },
+                            "explanation": {
+                              "type": "string"
+                            },
+                            "generationKw": {
+                              "type": "number"
+                            },
+                            "gridExportKw": {
+                              "type": "number"
+                            },
+                            "gridImportKw": {
+                              "type": "number"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "offeredKw": {
+                              "type": "number"
+                            },
+                            "receivedKw": {
+                              "type": "number"
+                            },
+                            "requestedKw": {
+                              "type": "number"
+                            },
+                            "selfUseKw": {
+                              "type": "number"
+                            },
+                            "sentKw": {
+                              "type": "number"
+                            },
+                            "status": {
+                              "enum": [
+                                "SURPLUS",
+                                "DEFICIT",
+                                "BALANCED"
+                              ],
+                              "type": "string"
+                            },
+                            "unservedKw": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "generationKw",
+                            "demandKw",
+                            "selfUseKw",
+                            "batteryDischargeKw",
+                            "batteryChargeKw",
+                            "batterySocKwh",
+                            "offeredKw",
+                            "sentKw",
+                            "requestedKw",
+                            "allocatedKw",
+                            "receivedKw",
+                            "gridImportKw",
+                            "gridExportKw",
+                            "curtailedKw",
+                            "unservedKw",
+                            "status",
+                            "binding",
+                            "explanation"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "totals": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "batteryChargeKw": {
+                            "type": "number"
+                          },
+                          "batteryDischargeKw": {
+                            "type": "number"
+                          },
+                          "curtailedKw": {
+                            "type": "number"
+                          },
+                          "demandKw": {
+                            "type": "number"
+                          },
+                          "generationKw": {
+                            "type": "number"
+                          },
+                          "gridExportKw": {
+                            "type": "number"
+                          },
+                          "gridImportKw": {
+                            "type": "number"
+                          },
+                          "members": {
+                            "type": "number"
+                          },
+                          "offeredKw": {
+                            "type": "number"
+                          },
+                          "requestedKw": {
+                            "type": "number"
+                          },
+                          "selfConsumption": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "selfSufficiency": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "selfUseKw": {
+                            "type": "number"
+                          },
+                          "sharedDeliveredKw": {
+                            "type": "number"
+                          },
+                          "sharedSentKw": {
+                            "type": "number"
+                          },
+                          "transferLossKw": {
+                            "type": "number"
+                          },
+                          "unservedKw": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "members",
+                          "generationKw",
+                          "demandKw",
+                          "selfUseKw",
+                          "offeredKw",
+                          "requestedKw",
+                          "sharedSentKw",
+                          "sharedDeliveredKw",
+                          "transferLossKw",
+                          "batteryChargeKw",
+                          "batteryDischargeKw",
+                          "gridImportKw",
+                          "gridExportKw",
+                          "curtailedKw",
+                          "unservedKw",
+                          "selfSufficiency",
+                          "selfConsumption"
+                        ],
+                        "type": "object"
+                      },
+                      "transfers": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "deliveredKw": {
+                              "type": "number"
+                            },
+                            "fromId": {
+                              "type": "string"
+                            },
+                            "fromName": {
+                              "type": "string"
+                            },
+                            "lossKw": {
+                              "type": "number"
+                            },
+                            "sentKw": {
+                              "type": "number"
+                            },
+                            "toId": {
+                              "type": "string"
+                            },
+                            "toName": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "fromId",
+                            "fromName",
+                            "toId",
+                            "toName",
+                            "sentKw",
+                            "deliveredKw",
+                            "lossKw"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "members",
+                      "transfers",
+                      "totals",
+                      "limits",
+                      "feederBinding",
+                      "feederFlowKw",
+                      "check",
+                      "decisions",
+                      "comparison"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "source": {
+            "description": "Whether the figures were supplied in the request or built from your own properties.",
+            "enum": [
+              "MEMBERS_GIVEN",
+              "YOUR_PROPERTIES"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "source",
+          "result",
+          "inputs",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "CommunityAllocateResponseInput": {
+        "properties": {
+          "inputs": {
+            "items": {
+              "properties": {
+                "basis": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "basis"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "label": {
+            "const": "COMMUNITY ALLOCATION SIMULATION",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "result": {
+            "properties": {
+              "provenance": {
+                "$ref": "#/components/schemas/ProvenanceInput"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "check": {
+                        "properties": {
+                          "balanced": {
+                            "type": "boolean"
+                          },
+                          "communityErrorKw": {
+                            "type": "number"
+                          },
+                          "maxMemberErrorKw": {
+                            "type": "number"
+                          },
+                          "note": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "balanced",
+                          "maxMemberErrorKw",
+                          "communityErrorKw",
+                          "note"
+                        ],
+                        "type": "object"
+                      },
+                      "comparison": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "basis": {
+                                "type": "string"
+                              },
+                              "savingInr": {
+                                "type": "number"
+                              },
+                              "withSharingInr": {
+                                "type": "number"
+                              },
+                              "withoutSharingInr": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "withoutSharingInr",
+                              "withSharingInr",
+                              "savingInr",
+                              "basis"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "decisions": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "feederBinding": {
+                        "type": "boolean"
+                      },
+                      "feederFlowKw": {
+                        "type": "number"
+                      },
+                      "limits": {
+                        "properties": {
+                          "batteryPolicy": {
+                            "enum": [
+                              "SHARE_FIRST",
+                              "BATTERY_FIRST"
+                            ],
+                            "type": "string"
+                          },
+                          "feederLimitKw": {
+                            "type": "number"
+                          },
+                          "networkLossFraction": {
+                            "type": "number"
+                          },
+                          "rule": {
+                            "enum": [
+                              "PROPORTIONAL",
+                              "EQUAL_SHARE",
+                              "CRITICAL_FIRST",
+                              "NEAREST_FIRST"
+                            ],
+                            "type": "string"
+                          },
+                          "stepHours": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "feederLimitKw",
+                          "networkLossFraction",
+                          "rule",
+                          "batteryPolicy",
+                          "stepHours"
+                        ],
+                        "type": "object"
+                      },
+                      "members": {
+                        "items": {
+                          "properties": {
+                            "allocatedKw": {
+                              "type": "number"
+                            },
+                            "batteryChargeKw": {
+                              "type": "number"
+                            },
+                            "batteryDischargeKw": {
+                              "type": "number"
+                            },
+                            "batterySocKwh": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "binding": {
+                              "enum": [
+                                "NONE",
+                                "EXPORT_LIMIT",
+                                "IMPORT_LIMIT",
+                                "FEEDER_LIMIT",
+                                "NO_TAKER",
+                                "NO_SUPPLY",
+                                "BATTERY_FULL",
+                                "BATTERY_EMPTY"
+                              ],
+                              "type": "string"
+                            },
+                            "curtailedKw": {
+                              "type": "number"
+                            },
+                            "demandKw": {
+                              "type": "number"
+                            },
+                            "explanation": {
+                              "type": "string"
+                            },
+                            "generationKw": {
+                              "type": "number"
+                            },
+                            "gridExportKw": {
+                              "type": "number"
+                            },
+                            "gridImportKw": {
+                              "type": "number"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "offeredKw": {
+                              "type": "number"
+                            },
+                            "receivedKw": {
+                              "type": "number"
+                            },
+                            "requestedKw": {
+                              "type": "number"
+                            },
+                            "selfUseKw": {
+                              "type": "number"
+                            },
+                            "sentKw": {
+                              "type": "number"
+                            },
+                            "status": {
+                              "enum": [
+                                "SURPLUS",
+                                "DEFICIT",
+                                "BALANCED"
+                              ],
+                              "type": "string"
+                            },
+                            "unservedKw": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "generationKw",
+                            "demandKw",
+                            "selfUseKw",
+                            "batteryDischargeKw",
+                            "batteryChargeKw",
+                            "batterySocKwh",
+                            "offeredKw",
+                            "sentKw",
+                            "requestedKw",
+                            "allocatedKw",
+                            "receivedKw",
+                            "gridImportKw",
+                            "gridExportKw",
+                            "curtailedKw",
+                            "unservedKw",
+                            "status",
+                            "binding",
+                            "explanation"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "totals": {
+                        "properties": {
+                          "batteryChargeKw": {
+                            "type": "number"
+                          },
+                          "batteryDischargeKw": {
+                            "type": "number"
+                          },
+                          "curtailedKw": {
+                            "type": "number"
+                          },
+                          "demandKw": {
+                            "type": "number"
+                          },
+                          "generationKw": {
+                            "type": "number"
+                          },
+                          "gridExportKw": {
+                            "type": "number"
+                          },
+                          "gridImportKw": {
+                            "type": "number"
+                          },
+                          "members": {
+                            "type": "number"
+                          },
+                          "offeredKw": {
+                            "type": "number"
+                          },
+                          "requestedKw": {
+                            "type": "number"
+                          },
+                          "selfConsumption": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "selfSufficiency": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "selfUseKw": {
+                            "type": "number"
+                          },
+                          "sharedDeliveredKw": {
+                            "type": "number"
+                          },
+                          "sharedSentKw": {
+                            "type": "number"
+                          },
+                          "transferLossKw": {
+                            "type": "number"
+                          },
+                          "unservedKw": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "members",
+                          "generationKw",
+                          "demandKw",
+                          "selfUseKw",
+                          "offeredKw",
+                          "requestedKw",
+                          "sharedSentKw",
+                          "sharedDeliveredKw",
+                          "transferLossKw",
+                          "batteryChargeKw",
+                          "batteryDischargeKw",
+                          "gridImportKw",
+                          "gridExportKw",
+                          "curtailedKw",
+                          "unservedKw",
+                          "selfSufficiency",
+                          "selfConsumption"
+                        ],
+                        "type": "object"
+                      },
+                      "transfers": {
+                        "items": {
+                          "properties": {
+                            "deliveredKw": {
+                              "type": "number"
+                            },
+                            "fromId": {
+                              "type": "string"
+                            },
+                            "fromName": {
+                              "type": "string"
+                            },
+                            "lossKw": {
+                              "type": "number"
+                            },
+                            "sentKw": {
+                              "type": "number"
+                            },
+                            "toId": {
+                              "type": "string"
+                            },
+                            "toName": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "fromId",
+                            "fromName",
+                            "toId",
+                            "toName",
+                            "sentKw",
+                            "deliveredKw",
+                            "lossKw"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "members",
+                      "transfers",
+                      "totals",
+                      "limits",
+                      "feederBinding",
+                      "feederFlowKw",
+                      "check",
+                      "decisions",
+                      "comparison"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "provenance"
+            ],
+            "type": "object"
+          },
+          "source": {
+            "description": "Whether the figures were supplied in the request or built from your own properties.",
+            "enum": [
+              "MEMBERS_GIVEN",
+              "YOUR_PROPERTIES"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "source",
+          "result",
+          "inputs",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "CommunityBatteryInput": {
+        "additionalProperties": false,
+        "properties": {
+          "maxChargeKw": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "maxDischargeKw": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "reserveKwh": {
+            "default": 0,
+            "description": "The part kept back for backup. Discharging stops here.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "roundTripEfficiency": {
+            "default": 0.9,
+            "description": "Charged on the way in: putting x kWh in stores x times this.",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "socKwh": {
+            "description": "Energy stored now, counted within that usable band.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "usableKwh": {
+            "description": "Capacity that may be cycled: the usable band above the depth-of-discharge floor.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "usableKwh",
+          "socKwh",
+          "reserveKwh",
+          "maxChargeKw",
+          "maxDischargeKw",
+          "roundTripEfficiency"
+        ],
+        "type": "object"
+      },
+      "CommunityBatteryInputInput": {
+        "properties": {
+          "maxChargeKw": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "maxDischargeKw": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "reserveKwh": {
+            "default": 0,
+            "description": "The part kept back for backup. Discharging stops here.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "roundTripEfficiency": {
+            "default": 0.9,
+            "description": "Charged on the way in: putting x kWh in stores x times this.",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "socKwh": {
+            "description": "Energy stored now, counted within that usable band.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "usableKwh": {
+            "description": "Capacity that may be cycled: the usable band above the depth-of-discharge floor.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "usableKwh",
+          "socKwh",
+          "maxChargeKw",
+          "maxDischargeKw"
+        ],
+        "type": "object"
+      },
+      "CommunityLimitsInput": {
+        "additionalProperties": false,
+        "properties": {
+          "batteryPolicy": {
+            "default": "SHARE_FIRST",
+            "description": "Whether a property in surplus fills its own battery before offering anything.",
+            "enum": [
+              "SHARE_FIRST",
+              "BATTERY_FIRST"
+            ],
+            "type": "string"
+          },
+          "feederLimitKw": {
+            "default": 1000000,
+            "description": "Most that may pass through the shared node at once: the feeder or the transformer, whichever is smaller.",
+            "maximum": 1000000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "networkLossFraction": {
+            "default": 0,
+            "description": "Fraction lost in the shared network itself. Charged once, on the pool.",
+            "maximum": 0.5,
+            "minimum": 0,
+            "type": "number"
+          },
+          "rule": {
+            "default": "PROPORTIONAL",
+            "description": "How the pool is divided when the askers want more than it holds.",
+            "enum": [
+              "PROPORTIONAL",
+              "EQUAL_SHARE",
+              "CRITICAL_FIRST",
+              "NEAREST_FIRST"
+            ],
+            "type": "string"
+          },
+          "stepHours": {
+            "default": 1,
+            "description": "Length of the interval, hours. Converts kW to the kWh a charge level moves by.",
+            "exclusiveMinimum": 0,
+            "maximum": 24,
+            "type": "number"
+          }
+        },
+        "required": [
+          "feederLimitKw",
+          "networkLossFraction",
+          "rule",
+          "batteryPolicy",
+          "stepHours"
+        ],
+        "type": "object"
+      },
+      "CommunityLimitsInputInput": {
+        "properties": {
+          "batteryPolicy": {
+            "default": "SHARE_FIRST",
+            "description": "Whether a property in surplus fills its own battery before offering anything.",
+            "enum": [
+              "SHARE_FIRST",
+              "BATTERY_FIRST"
+            ],
+            "type": "string"
+          },
+          "feederLimitKw": {
+            "default": 1000000,
+            "description": "Most that may pass through the shared node at once: the feeder or the transformer, whichever is smaller.",
+            "maximum": 1000000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "networkLossFraction": {
+            "default": 0,
+            "description": "Fraction lost in the shared network itself. Charged once, on the pool.",
+            "maximum": 0.5,
+            "minimum": 0,
+            "type": "number"
+          },
+          "rule": {
+            "default": "PROPORTIONAL",
+            "description": "How the pool is divided when the askers want more than it holds.",
+            "enum": [
+              "PROPORTIONAL",
+              "EQUAL_SHARE",
+              "CRITICAL_FIRST",
+              "NEAREST_FIRST"
+            ],
+            "type": "string"
+          },
+          "stepHours": {
+            "default": 1,
+            "description": "Length of the interval, hours. Converts kW to the kWh a charge level moves by.",
+            "exclusiveMinimum": 0,
+            "maximum": 24,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "CommunityMemberInput": {
+        "additionalProperties": false,
+        "properties": {
+          "battery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommunityBatteryInput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "criticalKw": {
+            "default": 0,
+            "description": "The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "demandKw": {
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "exportLimitKw": {
+            "default": 100000,
+            "description": "Most this property may push past its meter: the smaller of its inverter and what its connection permits.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "generationKw": {
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "importLimitKw": {
+            "default": 100000,
+            "description": "Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "lineLossFraction": {
+            "default": 0,
+            "description": "Fraction lost on this property's own leg to the shared node.",
+            "maximum": 0.5,
+            "minimum": 0,
+            "type": "number"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "generationKw",
+          "demandKw",
+          "criticalKw",
+          "battery",
+          "exportLimitKw",
+          "importLimitKw",
+          "lineLossFraction"
+        ],
+        "type": "object"
+      },
+      "CommunityMemberInputInput": {
+        "properties": {
+          "battery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommunityBatteryInputInput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "criticalKw": {
+            "default": 0,
+            "description": "The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "demandKw": {
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "exportLimitKw": {
+            "default": 100000,
+            "description": "Most this property may push past its meter: the smaller of its inverter and what its connection permits.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "generationKw": {
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "importLimitKw": {
+            "default": 100000,
+            "description": "Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.",
+            "maximum": 100000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "lineLossFraction": {
+            "default": 0,
+            "description": "Fraction lost on this property's own leg to the shared node.",
+            "maximum": 0.5,
+            "minimum": 0,
+            "type": "number"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "generationKw",
+          "demandKw"
         ],
         "type": "object"
       },
@@ -10964,6 +12493,12 @@
       "Ev": {
         "additionalProperties": false,
         "properties": {
+          "arrivalTime": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "batteryKwh": {
             "type": "number"
           },
@@ -11090,6 +12625,7 @@
           "currentSocAt",
           "departureTime",
           "departureDays",
+          "arrivalTime",
           "entered",
           "effective",
           "notes"
@@ -11098,6 +12634,12 @@
       },
       "EvInput": {
         "properties": {
+          "arrivalTime": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "batteryKwh": {
             "type": "number"
           },
@@ -11221,6 +12763,7 @@
           "currentSocAt",
           "departureTime",
           "departureDays",
+          "arrivalTime",
           "entered",
           "effective",
           "notes"
@@ -13083,6 +14626,72 @@
             ],
             "type": "object"
           },
+          "risk": {
+            "additionalProperties": false,
+            "description": "Present when the plan was made risk-aware: what each day planned for would cost with the one battery schedule. Weights are preferences, not probabilities.",
+            "properties": {
+              "alpha": {
+                "type": "number"
+              },
+              "aversion": {
+                "type": "number"
+              },
+              "cvarNetCostInr": {
+                "description": "Average net cost over the worst (1 - alpha) of weight among the days planned for.",
+                "type": "number"
+              },
+              "expectedNetCostInr": {
+                "type": "number"
+              },
+              "scenarios": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "built": {
+                      "type": "string"
+                    },
+                    "importKwh": {
+                      "type": "number"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "netCostInr": {
+                      "type": "number"
+                    },
+                    "unservedKwh": {
+                      "type": "number"
+                    },
+                    "weight": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "built",
+                    "weight",
+                    "netCostInr",
+                    "importKwh",
+                    "unservedKwh"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "statement": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "aversion",
+              "alpha",
+              "scenarios",
+              "expectedNetCostInr",
+              "cvarNetCostInr",
+              "statement"
+            ],
+            "type": "object"
+          },
           "schedule": {
             "additionalProperties": false,
             "properties": {
@@ -13256,6 +14865,159 @@
           "solver",
           "validation",
           "notes"
+        ],
+        "type": "object"
+      },
+      "PlanDrift": {
+        "additionalProperties": false,
+        "properties": {
+          "driftPercent": {
+            "description": "Signed: positive when the meter read more than the plan expected.",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "evaluatedAt": {
+            "type": "string"
+          },
+          "hoursCompared": {
+            "description": "Plan hours that have ended and whose meter readings cover them completely.",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "observedKwh": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "planId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "plannedKwh": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "replanRecommended": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ON_TRACK",
+              "DRIFT_DETECTED",
+              "NO_PLAN",
+              "INSUFFICIENT_OBSERVATIONS"
+            ],
+            "type": "string"
+          },
+          "thresholdPercent": {
+            "description": "The tolerance used: a setting, not a property of the home.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "status",
+          "planId",
+          "driftPercent",
+          "replanRecommended",
+          "reason",
+          "hoursCompared",
+          "plannedKwh",
+          "observedKwh",
+          "thresholdPercent",
+          "evaluatedAt"
+        ],
+        "type": "object"
+      },
+      "PlanDriftInput": {
+        "properties": {
+          "driftPercent": {
+            "description": "Signed: positive when the meter read more than the plan expected.",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "evaluatedAt": {
+            "type": "string"
+          },
+          "hoursCompared": {
+            "description": "Plan hours that have ended and whose meter readings cover them completely.",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "observedKwh": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "planId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "plannedKwh": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "replanRecommended": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ON_TRACK",
+              "DRIFT_DETECTED",
+              "NO_PLAN",
+              "INSUFFICIENT_OBSERVATIONS"
+            ],
+            "type": "string"
+          },
+          "thresholdPercent": {
+            "description": "The tolerance used: a setting, not a property of the home.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "status",
+          "planId",
+          "driftPercent",
+          "replanRecommended",
+          "reason",
+          "hoursCompared",
+          "plannedKwh",
+          "observedKwh",
+          "thresholdPercent",
+          "evaluatedAt"
         ],
         "type": "object"
       },
@@ -13634,6 +15396,70 @@
             ],
             "type": "object"
           },
+          "risk": {
+            "description": "Present when the plan was made risk-aware: what each day planned for would cost with the one battery schedule. Weights are preferences, not probabilities.",
+            "properties": {
+              "alpha": {
+                "type": "number"
+              },
+              "aversion": {
+                "type": "number"
+              },
+              "cvarNetCostInr": {
+                "description": "Average net cost over the worst (1 - alpha) of weight among the days planned for.",
+                "type": "number"
+              },
+              "expectedNetCostInr": {
+                "type": "number"
+              },
+              "scenarios": {
+                "items": {
+                  "properties": {
+                    "built": {
+                      "type": "string"
+                    },
+                    "importKwh": {
+                      "type": "number"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "netCostInr": {
+                      "type": "number"
+                    },
+                    "unservedKwh": {
+                      "type": "number"
+                    },
+                    "weight": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "built",
+                    "weight",
+                    "netCostInr",
+                    "importKwh",
+                    "unservedKwh"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "statement": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "aversion",
+              "alpha",
+              "scenarios",
+              "expectedNetCostInr",
+              "cvarNetCostInr",
+              "statement"
+            ],
+            "type": "object"
+          },
           "schedule": {
             "properties": {
               "applianceKw": {
@@ -13837,6 +15663,19 @@
             ],
             "type": "string"
           },
+          "riskAversion": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Plan the battery for the ends of the forecasts' own bands as well as the central forecast: 0 or absent plans for the central forecast only, 1 for the worst of those days only. Needs a forecast band; without one the plan says it was not applied."
+          },
           "startSocPercent": {
             "anyOf": [
               {
@@ -13885,6 +15724,19 @@
               "BALANCED"
             ],
             "type": "string"
+          },
+          "riskAversion": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Plan the battery for the ends of the forecasts' own bands as well as the central forecast: 0 or absent plans for the central forecast only, 1 for the worst of those days only. Needs a forecast band; without one the plan says it was not applied."
           },
           "startSocPercent": {
             "anyOf": [
@@ -20932,6 +22784,72 @@
         ],
         "type": "object"
       },
+      "UpdateRoleRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "type": "object"
+      },
+      "UpdateRoleRequestInput": {
+        "properties": {
+          "role": {
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "type": "object"
+      },
+      "UpdateTariffRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "effectiveTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "UpdateTariffRequestInput": {
+        "properties": {
+          "effectiveTo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "User": {
         "additionalProperties": false,
         "properties": {
@@ -22095,12 +24013,37 @@
                                       "string",
                                       "null"
                                     ]
+                                  },
+                                  "rows": {
+                                    "default": [],
+                                    "items": {
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "importKwh": {
+                                          "type": "number"
+                                        },
+                                        "intervalMinutes": {
+                                          "type": "number"
+                                        },
+                                        "ts": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "ts",
+                                        "importKwh",
+                                        "intervalMinutes"
+                                      ],
+                                      "type": "object"
+                                    },
+                                    "type": "array"
                                   }
                                 },
                                 "required": [
                                   "count",
                                   "first",
-                                  "last"
+                                  "last",
+                                  "rows"
                                 ],
                                 "type": "object"
                               },
@@ -22613,6 +24556,291 @@
         ]
       }
     },
+    "/api/admin/tariffs/{id}": {
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTariffRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "effectiveTo": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "verifiedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "verifiedAt",
+                    "effectiveTo"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Update tariff verification timestamp or expiration date",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUsersList"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "List all user accounts with roles and property counts",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/users/{id}/role": {
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoleRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "displayName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "role": {
+                      "enum": [
+                        "USER",
+                        "ADMIN"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "email",
+                    "role",
+                    "displayName",
+                    "createdAt"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Update a user's role (promote or demote)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/auth/login": {
       "post": {
         "requestBody": {
@@ -23107,6 +25335,107 @@
           }
         },
         "summary": "Your properties together: surplus, deficit, storage and shiftable load on a typical day",
+        "tags": [
+          "community"
+        ]
+      }
+    },
+    "/api/community/allocate": {
+      "post": {
+        "description": "Works out, for a single interval, which property's surplus can meet which other's deficit: own generation first, then own battery, then the shared node divided by the rule you choose, then the grid. Transfer limits, the feeder limit and line and network losses are all applied and reported, and each property says which cap bound it and why. Supply `members` to allocate between figures you give (pure arithmetic, nothing measured), or `propertyIds` to allocate between your own properties at one hour of a typical day, built from their entered systems and imported readings, with `overrides` for asking what if. Energy is conserved and the response carries the check that proves it. AVISHKAR does not move electricity and makes no claim that sharing between these properties is permitted.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommunityAllocateRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunityAllocateResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Allocate one interval's surplus between properties, and say what stopped it",
         "tags": [
           "community"
         ]
@@ -26899,6 +29228,185 @@
         ]
       }
     },
+    "/api/properties/{id}/batteries/{assetId}/degradation": {
+      "get": {
+        "description": "Counts the cycles of the battery's planned use in the latest plan (a simulated day, not a measured one), against the rated cycle life you entered and at your wear cost per kWh. 503 DATA_UNAVAILABLE when there is no plan with a battery or no rated cycle life: nothing is assumed in their place.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cellTemperatureCelsius",
+            "required": false,
+            "schema": {
+              "maximum": 70,
+              "minimum": -20,
+              "type": "number"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "assumptions": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "calendarCapacityLossPercent": {
+                      "type": "number"
+                    },
+                    "cycleCapacityLossPercent": {
+                      "type": "number"
+                    },
+                    "deratedMaxChargeKw": {
+                      "type": "number"
+                    },
+                    "deratedMaxDischargeKw": {
+                      "type": "number"
+                    },
+                    "dodDistribution": {
+                      "additionalProperties": {
+                        "type": "number"
+                      },
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    "equivalentFullCycles": {
+                      "type": "number"
+                    },
+                    "estimatedRemainingCycles": {
+                      "type": "number"
+                    },
+                    "planId": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "rainflowCycleCount": {
+                      "type": "number"
+                    },
+                    "stateOfHealthPercent": {
+                      "type": "number"
+                    },
+                    "summaryVerdict": {
+                      "type": "string"
+                    },
+                    "thermalDerateFactor": {
+                      "type": "number"
+                    },
+                    "totalCapacityLossPercent": {
+                      "type": "number"
+                    },
+                    "wearCostInr": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "equivalentFullCycles",
+                    "rainflowCycleCount",
+                    "dodDistribution",
+                    "cycleCapacityLossPercent",
+                    "calendarCapacityLossPercent",
+                    "totalCapacityLossPercent",
+                    "stateOfHealthPercent",
+                    "wearCostInr",
+                    "estimatedRemainingCycles",
+                    "thermalDerateFactor",
+                    "deratedMaxChargeKw",
+                    "deratedMaxDischargeKw",
+                    "summaryVerdict",
+                    "planId",
+                    "assumptions"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Battery degradation analysis (ASTM E1049 Rainflow cycle counting, DoD wear, thermal derating)",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
     "/api/properties/{id}/cloud-front": {
       "post": {
         "description": "CLOUD FRONT SCENARIO. The front is one you set (when it arrives, how much sun it takes, how long it lasts): AVISHKAR has no cloud-nowcast source, so a front is never observed. The same day is planned twice by the planner, on the forecast sky and on the sky with the front. The answer says what the plan does differently, and the grid energy and cost with and without AVISHKAR. Nothing is stored.",
@@ -28549,6 +31057,18 @@
             "application/json": {
               "schema": {
                 "properties": {
+                  "arrivalTime": {
+                    "anyOf": [
+                      {
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "When the car is usually plugged in at home, local 24-hour time. Blank: a plan assumes it is plugged in throughout."
+                  },
                   "batteryKwh": {
                     "exclusiveMinimum": 0,
                     "maximum": 500,
@@ -28796,6 +31316,18 @@
             "application/json": {
               "schema": {
                 "properties": {
+                  "arrivalTime": {
+                    "anyOf": [
+                      {
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "When the car is usually plugged in at home, local 24-hour time. Blank: a plan assumes it is plugged in throughout."
+                  },
                   "batteryKwh": {
                     "exclusiveMinimum": 0,
                     "maximum": 500,
@@ -29799,6 +32331,69 @@
         ]
       }
     },
+    "/api/properties/{id}/plan/drift": {
+      "get": {
+        "description": "Only plan hours that have ended and are fully covered by imported readings are compared; a partly read hour is left out. A drift beyond the tolerance suggests making a new plan; nothing is re-planned automatically.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDrift"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Compare the latest plan's expected demand with the meter readings for the hours that have passed",
+        "tags": [
+          "plan"
+        ]
+      }
+    },
     "/api/properties/{id}/plans": {
       "get": {
         "parameters": [
@@ -29940,6 +32535,79 @@
           }
         },
         "summary": "One plan as it was shown",
+        "tags": [
+          "plan"
+        ]
+      }
+    },
+    "/api/properties/{id}/plans/{planId}/export.csv": {
+      "get": {
+        "description": "One row per step with the numbers exactly as they were shown. The first lines (starting with #) say what the file is: a SIMULATED outcome of forecast inputs, not a measurement. Nothing is recomputed.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Download one stored plan as CSV",
         "tags": [
           "plan"
         ]
@@ -30512,6 +33180,79 @@
           }
         },
         "summary": "One scenario as it was shown",
+        "tags": [
+          "scenarios"
+        ]
+      }
+    },
+    "/api/properties/{id}/scenarios/{scenarioId}/export.csv": {
+      "get": {
+        "description": "One row per month, today's setup beside the changed one, then the year. The first lines (starting with #) say it is an ESTIMATE from typical days and give the economics with their assumptions. Nothing is recomputed.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "scenarioId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "summary": "Download one stored what-if as CSV",
         "tags": [
           "scenarios"
         ]

@@ -60,7 +60,21 @@ graph TD
    python -m uvicorn avishkar_engine.app:create_app --factory --host 0.0.0.0 --port 8090
    ```
 
-### Step 3: API Service Startup
+### Step 3: Engine Service Startup
+1. Ensure Python 3.12 environment has dependencies installed:
+   ```bash
+   pip install -r platform/engine/requirements-runtime.txt
+   ```
+2. Generate and export a shared secret key (minimum 16 characters):
+   ```bash
+   export ENGINE_API_KEY="generate-at-least-16-characters-secret"
+   ```
+3. Start the engine service:
+   ```bash
+   python -m uvicorn avishkar_engine.app:create_app --factory --host 0.0.0.0 --port 8090
+   ```
+
+### Step 4: API Service Startup
 1. Set the required production environment variables (see Section 4).
 2. Build TypeScript artifacts:
    ```bash
@@ -71,7 +85,7 @@ graph TD
    node platform/api/dist/server.js
    ```
 
-### Step 4: Web Application Startup
+### Step 5: Web Application Startup
 1. Configure `API_URL` and `NEXT_PUBLIC_MAP_TILE_URL` (or `NEXT_PUBLIC_OSM_TILE_URL`) **before building** (Next.js statically bakes proxy rewrites at build time):
    ```bash
    export API_URL="http://127.0.0.1:8080"
@@ -98,6 +112,35 @@ Verify the API health endpoint:
 ```bash
 curl -sf http://127.0.0.1:8080/api/health
 ```
+
+### Step 7: Database Backup and Restore Drill
+1. Encrypt a backup of the production database:
+   ```bash
+   BACKUP_PASSPHRASE="<your-encryption-key>" ./platform/scripts/backup-db.sh --out-dir ./platform/backups --keep 5
+   ```
+2. Restore the backup into an isolated test database:
+   ```bash
+   BACKUP_PASSPHRASE="<your-encryption-key>" ./platform/scripts/restore-db.sh --file ./platform/backups/<latest-dump>.dump.gpg --db avishkar_restore_test
+   ```
+3. Verify the restored database:
+   ```bash
+   wsl -d Ubuntu -e bash -c "PGPASSWORD='avishkar' psql -h 127.0.0.1 -U avishkar -d avishkar_restore_test -c 'SELECT count(*) FROM information_schema.tables WHERE table_schema=\"public\";'"
+   ```
+
+### Step 7: Database Backup and Restore Drill
+1. Encrypt a backup of the production database:
+   ```bash
+   BACKUP_PASSPHRASE="<your-encryption-key>" ./platform/scripts/backup-db.sh --out-dir ./platform/backups --keep 5
+   ```
+2. Restore the backup into an isolated test database:
+   ```bash
+   BACKUP_PASSPHRASE="<your-encryption-key>" ./platform/scripts/restore-db.sh --file ./platform/backups/<latest-dump>.dump.gpg --db avishkar_restore_test
+   ```
+3. Verify the restored database:
+   ```bash
+   wsl -d Ubuntu -e bash -c "PGPASSWORD='avishkar' psql -h 127.0.0.1 -U avishkar -d avishkar_restore_test -c 'SELECT count(*) FROM information_schema.tables WHERE table_schema=\"public\";'"
+
+   ```
 
 ---
 
@@ -155,6 +198,37 @@ platform/
 
 All environment variables must be populated from secure environment injection (e.g. AWS Secrets Manager, Vault, or protected `.env` files). Real secrets MUST NEVER be committed to Git.
 
+### 4.1 Security Requirements
+
+| Variable | Minimum length | Description |
+|---|---|---|
+| `POSTGRES_PASSWORD` | 12 chars | Database administrator password (PostgreSQL). |
+| `SESSION_SECRET` | 32 chars | HMAC signing key for session cookie and CSRF tokens. |
+| `ENGINE_API_KEY` | 16 chars | Shared authentication key between API and Python engine. |
+| `BACKUP_PASSPHRASE` | 16 chars | Symmetric encryption passphrase for PostgreSQL dumps (GPG). |
+| `PROVIDER_USER_AGENT` | 1 line | Identifies your instance to upstream providers (required by OSM, weather, etc.). |
+
+### 4.2 Example Production Set
+
+```bash
+export POSTGRES_PASSWORD="<your-unique-random-password>"
+export ENGINE_API_KEY="<at-least-16-chars-engine-key>"
+export SESSION_SECRET="<at-least-32-chars-session-hmac-secret>"
+export BACKUP_PASSPHRASE="<strong-encryption-passphrase>"
+export PROVIDER_USER_AGENT="UrjaSetu EMS/1.0 (+https://github.com/ramnivasattanti2008-cloud/AVISHKAR-)"
+export TRUST_PROXY="false"  # only set true behind a fully trusted reverse proxy
+```
+
+### 4.3 Git-Safe Template
+
+`platform/api/.env.example` and the root `.env.example` contain **only placeholders**, not real values. The `BACKUP_PASSPHRASE` placeholder is present in `.env.example` to remind operators to set it at runtime (never in `.env`).
+
+### 4.4 File Permissions
+
+Backup scripts require the `BACKUP_PASSPHRASE` environment variable and write to `platform/backups`. The backup directory is set to `700` (owner-only). The `secrets_emhass(example).yaml` template is protected by `.gitignore` and is only overridden by explicit exclusion.
+
+---
+
 | Variable Name | Required | Default / Safe Placeholder | Purpose & Security Constraint |
 |---|---|---|---|
 | `NODE_ENV` | Yes | `production` | Enables Secure cookie flags and disables development debug endpoints. |
@@ -165,7 +239,7 @@ All environment variables must be populated from secure environment injection (e
 | `ENGINE_URL` | Yes | `http://engine:8090` | Network address of the Python optimization engine. |
 | `ENGINE_API_KEY` | Yes | (16+ chars random) | Shared bearer token protecting the engine from unauthorized calls. |
 | `PROVIDER_USER_AGENT` | Yes | `UrjaSetuEMS/1.0 (...)` | Contact email/URL identifying the instance to OpenStreetMap and Nominatim. |
-| `TRUST_PROXY` | Yes | `true` (behind proxy) | Enables Fastify to read `X-Forwarded-For` for accurate per-IP rate limiting. |
+| `TRUST_PROXY` | Yes | `1` (behind proxy) | Fastify reads `X-Forwarded-For` only for the number of hops you trust. `1` is correct here: the web app is the only externally-exposed service and is exactly one hop from the API. `true` trusts every hop and is only safe for a fully controlled proxy; `false` (the default) never trusts forwarded headers. |
 | `JOBS_ENABLED` | Yes | `true` (single worker) | Runs background forecast scoring and satellite refresh. Exactly one process. |
 | `NEXT_PUBLIC_MAP_TILE_URL` | Optional | OpenStreetMap default | Custom/commercial map tile endpoint (MapTiler, Stadia, CARTO). |
 | `ANTHROPIC_API_KEY` | Optional | Empty | Enables AI Copilot conversational explanations. Falls back to templates if absent. |
@@ -200,7 +274,40 @@ The application enforces strict Content Security Policy headers in `platform/web
 
 ---
 
-## 6. Database Backups, Recovery & Restore Drill
+## 6. TLS, HSTS and the edge proxy
+
+**Where TLS terminates: at the edge, in front of the web app.** The application itself does not terminate TLS and does not set
+`Strict-Transport-Security`. The web app's `next.config.ts` sets no TLS, and the Compose file publishes only port 3000, so the
+certificate, the HTTP-to-HTTPS redirect and the HSTS header are the edge proxy's or the hosting provider's responsibility. This section
+describes what that edge must do; it is a deployment task, not a code change, and no production TLS is deployed merely by this document.
+
+1. **Terminate HTTPS at the edge.** Obtain a valid certificate for the public domain from your CA (Let's Encrypt with automatic
+   renewal is the common choice) and terminate TLS there. The web app then receives plain HTTP on its published port and the API,
+   engine and database stay on the private network as described in section 1.
+2. **Redirect HTTP to HTTPS at the edge, not in the app.** A 301 from `http://` to `https://` for the same host, before any application
+   logic. Do not redirect inside Next.js: it cannot see the scheme the browser used and would loop or redirect to the wrong port.
+3. **Set HSTS only after HTTPS has been verified working.** Once the edge serves HTTPS correctly for a while, add:
+   ```
+   Strict-Transport-Security: max-age=31536000; includeSubDomains
+   ```
+   - `max-age=31536000` (one year) is the usual starting value; increase to a longer preload value only when you are sure.
+   - `includeSubDomains` applies the policy to every subdomain of the public host. **Only set it if every subdomain is served over
+     HTTPS.** The API, engine and database are not published, so there are no public subdomains to worry about, but any future
+     published service must also be HTTPS-only.
+   - `preload` is a one-way commitment to the HSTS preload list and is decided by the owner, not by this document. Do not add it
+     before the domain is stable and every subdomain is HTTPS-only.
+4. **Secure cookies.** In production the session and CSRF cookies are already `Secure` (see `api/src/config.ts`: `COOKIE_SECURE` defaults
+   to `NODE_ENV === "production"`). That is correct only when the edge terminates HTTPS, which is why TLS is step 1.
+5. **Proxy headers.** The edge must forward `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host` to the web app, and the web
+   app must forward them to the API on `/api/*`. `TRUST_PROXY` on the API is set to `1` in Compose (section 4), so the API trusts exactly
+   one hop: the web app. Any other client's forged `X-Forwarded-For` has no effect unless it arrives on that trusted hop.
+6. **Avoid redirect loops.** Do not redirect `http://` to `https://` inside the application, and do not redirect `https://` back to
+   `http://`. The edge handles both directions; the app only sees plain HTTP.
+7. **Local development stays usable.** `next dev` and the Compose stack run on plain HTTP on localhost. `Strict-Transport-Security`
+   is not sent, and the `Secure` cookie flag is off unless `NODE_ENV=production` is set, so the app works without a certificate while
+   developing. Nothing here requires a certificate to run locally.
+
+## 7. Database Backups, Recovery & Restore Drill
 
 ### Backup Strategy
 
@@ -315,6 +422,7 @@ To ensure absolute transparency and prevent misleading claims, all platform capa
 | **3. Tested with Real External Service** | Live external HTTP calls verified against real APIs outside test mocks. | • Open-Meteo Weather (forecast & archive APIs)<br/>• NASA POWER Solar Resource API<br/>• OpenStreetMap Overpass (building footprints)<br/>• Earth Search STAC (Sentinel-2 satellite metadata)<br/>• Nominatim Geocoding API |
 | **4. Blocked by Missing Credentials** | Code implemented with deterministic fallback; requires owner commercial keys. | • Commercial Map Tile Provider key (MapTiler/Stadia)<br/>• Anthropic API Key (AI Copilot conversational mode)<br/>• Production TLS certificate & custom domain |
 | **5. Requiring Physical Hardware / Real Data** | Simulated in software; requires real-world physical devices to claim live operation. | • Hardware Inverter & Battery Control (Simulated records only; no hardware inverter actuated)<br/>• Smart Meter AMR telemetry (CSV upload only; no live DLMS/COSEM meter push)<br/>• Grid Outage telemetry (Modelled assumptions; no DISCOM outage API feed)<br/>• UPI Payment Settlement (Simulated Beckn protocol; no live banking gateway integration) |
+
 
 > [!CAUTION]
 > UrjaSetu EMS currently records control proposals and approvals in an append-only database audit log. **No physical inverter or battery hardware is actuated.** Never represent software optimization models or simulated Beckn offer messages as physical electrical device actuation.

@@ -129,6 +129,12 @@ export interface paths {
                                         count: number;
                                         first: string | null;
                                         last: string | null;
+                                        /** @default [] */
+                                        rows: {
+                                            importKwh: number;
+                                            intervalMinutes: number;
+                                            ts: string;
+                                        }[];
                                     };
                                     name: string;
                                     /** Format: uuid */
@@ -488,6 +494,247 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/admin/tariffs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update tariff verification timestamp or expiration date */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateTariffRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            effectiveTo: string | null;
+                            id: string;
+                            name: string;
+                            verifiedAt: string | null;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all user accounts with roles and property counts */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminUsersList"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{id}/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a user's role (promote or demote) */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateRoleRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            createdAt: string;
+                            displayName: string | null;
+                            email: string;
+                            /** Format: uuid */
+                            id: string;
+                            /** @enum {string} */
+                            role: "USER" | "ADMIN";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/api/auth/login": {
@@ -975,6 +1222,112 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/community/allocate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Allocate one interval's surplus between properties, and say what stopped it
+         * @description Works out, for a single interval, which property's surplus can meet which other's deficit: own generation first, then own battery, then the shared node divided by the rule you choose, then the grid. Transfer limits, the feeder limit and line and network losses are all applied and reported, and each property says which cap bound it and why. Supply `members` to allocate between figures you give (pure arithmetic, nothing measured), or `propertyIds` to allocate between your own properties at one hour of a typical day, built from their entered systems and imported readings, with `overrides` for asking what if. Energy is conserved and the response carries the check that proves it. AVISHKAR does not move electricity and makes no claim that sharing between these properties is permitted.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CommunityAllocateRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CommunityAllocateResponse"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -3299,6 +3652,114 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/properties/{id}/batteries/{assetId}/degradation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Battery degradation analysis (ASTM E1049 Rainflow cycle counting, DoD wear, thermal derating)
+         * @description Counts the cycles of the battery's planned use in the latest plan (a simulated day, not a measured one), against the rated cycle life you entered and at your wear cost per kWh. 503 DATA_UNAVAILABLE when there is no plan with a battery or no rated cycle life: nothing is assumed in their place.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    cellTemperatureCelsius?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                    assetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            assumptions: string[];
+                            calendarCapacityLossPercent: number;
+                            cycleCapacityLossPercent: number;
+                            deratedMaxChargeKw: number;
+                            deratedMaxDischargeKw: number;
+                            dodDistribution: {
+                                [key: string]: number;
+                            };
+                            equivalentFullCycles: number;
+                            estimatedRemainingCycles: number;
+                            /** Format: uuid */
+                            planId: string;
+                            rainflowCycleCount: number;
+                            stateOfHealthPercent: number;
+                            summaryVerdict: string;
+                            thermalDerateFactor: number;
+                            totalCapacityLossPercent: number;
+                            wearCostInr: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/cloud-front": {
         parameters: {
             query?: never;
@@ -4608,6 +5069,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        /** @description When the car is usually plugged in at home, local 24-hour time. Blank: a plan assumes it is plugged in throughout. */
+                        arrivalTime?: string | null;
                         batteryKwh: number;
                         chargerEfficiency?: number | null;
                         chargerKw: number;
@@ -4761,6 +5224,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        /** @description When the car is usually plugged in at home, local 24-hour time. Blank: a plan assumes it is plugged in throughout. */
+                        arrivalTime?: string | null;
                         batteryKwh?: number;
                         chargerEfficiency?: number | null;
                         chargerKw?: number;
@@ -5638,6 +6103,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/properties/{id}/plan/drift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compare the latest plan's expected demand with the meter readings for the hours that have passed
+         * @description Only plan hours that have ended and are fully covered by imported readings are compared; a partly read hour is left out. A drift beyond the tolerance suggests making a new plan; nothing is re-planned automatically.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanDrift"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/properties/{id}/plans": {
         parameters: {
             query?: never;
@@ -5732,6 +6265,75 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["Plan"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/plans/{planId}/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download one stored plan as CSV
+         * @description One row per step with the numbers exactly as they were shown. The first lines (starting with #) say what the file is: a SIMULATED outcome of forecast inputs, not a measurement. Nothing is recomputed.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    planId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
                     };
                 };
                 /** @description Default Response */
@@ -6284,6 +6886,75 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/properties/{id}/scenarios/{scenarioId}/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download one stored what-if as CSV
+         * @description One row per month, today's setup beside the changed one, then the year. The first lines (starting with #) say it is an ESTIMATE from typical days and give the economics with their assumptions. Nothing is recomputed.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    scenarioId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -8241,6 +8912,30 @@ export interface components {
                 total: number;
             };
         };
+        AdminUsersList: {
+            users: {
+                createdAt: string;
+                displayName: string | null;
+                email: string;
+                /** Format: uuid */
+                id: string;
+                propertiesCount: number;
+                /** @enum {string} */
+                role: "USER" | "ADMIN";
+            }[];
+        };
+        AdminUsersListInput: {
+            users: {
+                createdAt: string;
+                displayName: string | null;
+                email: string;
+                /** Format: uuid */
+                id: string;
+                propertiesCount: number;
+                /** @enum {string} */
+                role: "USER" | "ADMIN";
+            }[];
+        };
         Appliance: {
             comfortNote: string | null;
             createdAt: string;
@@ -8988,6 +9683,437 @@ export interface components {
                     };
                 } | null;
             };
+        };
+        CommunityAllocateRequest: {
+            /** @enum {string} */
+            dayType?: "weekday" | "weekend";
+            /** @description Hour of the typical day (IST) to take generation and demand from, when using propertyIds. Default: the current hour. */
+            hour?: number;
+            limits: components["schemas"]["CommunityLimitsInput"];
+            /** @description The properties to allocate between, described in full. */
+            members?: components["schemas"]["CommunityMemberInput"][];
+            /** @description Month of that typical day. Default: this month. */
+            month?: number;
+            /** @description Changes to apply to the figures built from your properties, keyed by property id: what you want to ask 'what if' about. */
+            overrides?: {
+                [key: string]: {
+                    /** @default null */
+                    battery: components["schemas"]["CommunityBatteryInput"] | null;
+                    /**
+                     * @description The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.
+                     * @default 0
+                     */
+                    criticalKw: number;
+                    demandKw?: number;
+                    /**
+                     * @description Most this property may push past its meter: the smaller of its inverter and what its connection permits.
+                     * @default 100000
+                     */
+                    exportLimitKw: number;
+                    generationKw?: number;
+                    /**
+                     * @description Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.
+                     * @default 100000
+                     */
+                    importLimitKw: number;
+                    /**
+                     * @description Fraction lost on this property's own leg to the shared node.
+                     * @default 0
+                     */
+                    lineLossFraction: number;
+                    name?: string;
+                };
+            };
+            /** @description Your own properties to allocate between instead, at the hour given by `hour`. */
+            propertyIds?: string[];
+        };
+        CommunityAllocateRequestInput: {
+            /** @enum {string} */
+            dayType?: "weekday" | "weekend";
+            /** @description Hour of the typical day (IST) to take generation and demand from, when using propertyIds. Default: the current hour. */
+            hour?: number;
+            /** @default {} */
+            limits: components["schemas"]["CommunityLimitsInputInput"];
+            /** @description The properties to allocate between, described in full. */
+            members?: components["schemas"]["CommunityMemberInputInput"][];
+            /** @description Month of that typical day. Default: this month. */
+            month?: number;
+            /** @description Changes to apply to the figures built from your properties, keyed by property id: what you want to ask 'what if' about. */
+            overrides?: {
+                [key: string]: {
+                    /** @default null */
+                    battery: components["schemas"]["CommunityBatteryInputInput"] | null;
+                    /**
+                     * @description The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.
+                     * @default 0
+                     */
+                    criticalKw: number;
+                    demandKw?: number;
+                    /**
+                     * @description Most this property may push past its meter: the smaller of its inverter and what its connection permits.
+                     * @default 100000
+                     */
+                    exportLimitKw: number;
+                    generationKw?: number;
+                    /**
+                     * @description Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.
+                     * @default 100000
+                     */
+                    importLimitKw: number;
+                    /**
+                     * @description Fraction lost on this property's own leg to the shared node.
+                     * @default 0
+                     */
+                    lineLossFraction: number;
+                    name?: string;
+                };
+            };
+            /** @description Your own properties to allocate between instead, at the hour given by `hour`. */
+            propertyIds?: string[];
+        };
+        CommunityAllocateResponse: {
+            inputs: {
+                basis: string[];
+                id: string;
+                name: string;
+            }[];
+            /** @constant */
+            label: "COMMUNITY ALLOCATION SIMULATION";
+            notes: string[];
+            result: {
+                provenance: components["schemas"]["Provenance"];
+                unit?: string;
+                value: {
+                    check: {
+                        balanced: boolean;
+                        communityErrorKw: number;
+                        maxMemberErrorKw: number;
+                        note: string;
+                    };
+                    comparison: {
+                        basis: string;
+                        savingInr: number;
+                        withSharingInr: number;
+                        withoutSharingInr: number;
+                    } | null;
+                    decisions: string[];
+                    feederBinding: boolean;
+                    feederFlowKw: number;
+                    limits: {
+                        /** @enum {string} */
+                        batteryPolicy: "SHARE_FIRST" | "BATTERY_FIRST";
+                        feederLimitKw: number;
+                        networkLossFraction: number;
+                        /** @enum {string} */
+                        rule: "PROPORTIONAL" | "EQUAL_SHARE" | "CRITICAL_FIRST" | "NEAREST_FIRST";
+                        stepHours: number;
+                    };
+                    members: {
+                        allocatedKw: number;
+                        batteryChargeKw: number;
+                        batteryDischargeKw: number;
+                        batterySocKwh: number | null;
+                        /** @enum {string} */
+                        binding: "NONE" | "EXPORT_LIMIT" | "IMPORT_LIMIT" | "FEEDER_LIMIT" | "NO_TAKER" | "NO_SUPPLY" | "BATTERY_FULL" | "BATTERY_EMPTY";
+                        curtailedKw: number;
+                        demandKw: number;
+                        explanation: string;
+                        generationKw: number;
+                        gridExportKw: number;
+                        gridImportKw: number;
+                        id: string;
+                        name: string;
+                        offeredKw: number;
+                        receivedKw: number;
+                        requestedKw: number;
+                        selfUseKw: number;
+                        sentKw: number;
+                        /** @enum {string} */
+                        status: "SURPLUS" | "DEFICIT" | "BALANCED";
+                        unservedKw: number;
+                    }[];
+                    totals: {
+                        batteryChargeKw: number;
+                        batteryDischargeKw: number;
+                        curtailedKw: number;
+                        demandKw: number;
+                        generationKw: number;
+                        gridExportKw: number;
+                        gridImportKw: number;
+                        members: number;
+                        offeredKw: number;
+                        requestedKw: number;
+                        selfConsumption: number | null;
+                        selfSufficiency: number | null;
+                        selfUseKw: number;
+                        sharedDeliveredKw: number;
+                        sharedSentKw: number;
+                        transferLossKw: number;
+                        unservedKw: number;
+                    };
+                    transfers: {
+                        deliveredKw: number;
+                        fromId: string;
+                        fromName: string;
+                        lossKw: number;
+                        sentKw: number;
+                        toId: string;
+                        toName: string;
+                    }[];
+                } | null;
+            };
+            /**
+             * @description Whether the figures were supplied in the request or built from your own properties.
+             * @enum {string}
+             */
+            source: "MEMBERS_GIVEN" | "YOUR_PROPERTIES";
+        };
+        CommunityAllocateResponseInput: {
+            inputs: {
+                basis: string[];
+                id: string;
+                name: string;
+            }[];
+            /** @constant */
+            label: "COMMUNITY ALLOCATION SIMULATION";
+            notes: string[];
+            result: {
+                provenance: components["schemas"]["ProvenanceInput"];
+                unit?: string;
+                value: {
+                    check: {
+                        balanced: boolean;
+                        communityErrorKw: number;
+                        maxMemberErrorKw: number;
+                        note: string;
+                    };
+                    comparison: {
+                        basis: string;
+                        savingInr: number;
+                        withSharingInr: number;
+                        withoutSharingInr: number;
+                    } | null;
+                    decisions: string[];
+                    feederBinding: boolean;
+                    feederFlowKw: number;
+                    limits: {
+                        /** @enum {string} */
+                        batteryPolicy: "SHARE_FIRST" | "BATTERY_FIRST";
+                        feederLimitKw: number;
+                        networkLossFraction: number;
+                        /** @enum {string} */
+                        rule: "PROPORTIONAL" | "EQUAL_SHARE" | "CRITICAL_FIRST" | "NEAREST_FIRST";
+                        stepHours: number;
+                    };
+                    members: {
+                        allocatedKw: number;
+                        batteryChargeKw: number;
+                        batteryDischargeKw: number;
+                        batterySocKwh: number | null;
+                        /** @enum {string} */
+                        binding: "NONE" | "EXPORT_LIMIT" | "IMPORT_LIMIT" | "FEEDER_LIMIT" | "NO_TAKER" | "NO_SUPPLY" | "BATTERY_FULL" | "BATTERY_EMPTY";
+                        curtailedKw: number;
+                        demandKw: number;
+                        explanation: string;
+                        generationKw: number;
+                        gridExportKw: number;
+                        gridImportKw: number;
+                        id: string;
+                        name: string;
+                        offeredKw: number;
+                        receivedKw: number;
+                        requestedKw: number;
+                        selfUseKw: number;
+                        sentKw: number;
+                        /** @enum {string} */
+                        status: "SURPLUS" | "DEFICIT" | "BALANCED";
+                        unservedKw: number;
+                    }[];
+                    totals: {
+                        batteryChargeKw: number;
+                        batteryDischargeKw: number;
+                        curtailedKw: number;
+                        demandKw: number;
+                        generationKw: number;
+                        gridExportKw: number;
+                        gridImportKw: number;
+                        members: number;
+                        offeredKw: number;
+                        requestedKw: number;
+                        selfConsumption: number | null;
+                        selfSufficiency: number | null;
+                        selfUseKw: number;
+                        sharedDeliveredKw: number;
+                        sharedSentKw: number;
+                        transferLossKw: number;
+                        unservedKw: number;
+                    };
+                    transfers: {
+                        deliveredKw: number;
+                        fromId: string;
+                        fromName: string;
+                        lossKw: number;
+                        sentKw: number;
+                        toId: string;
+                        toName: string;
+                    }[];
+                } | null;
+            };
+            /**
+             * @description Whether the figures were supplied in the request or built from your own properties.
+             * @enum {string}
+             */
+            source: "MEMBERS_GIVEN" | "YOUR_PROPERTIES";
+        };
+        CommunityBatteryInput: {
+            maxChargeKw: number;
+            maxDischargeKw: number;
+            /**
+             * @description The part kept back for backup. Discharging stops here.
+             * @default 0
+             */
+            reserveKwh: number;
+            /**
+             * @description Charged on the way in: putting x kWh in stores x times this.
+             * @default 0.9
+             */
+            roundTripEfficiency: number;
+            /** @description Energy stored now, counted within that usable band. */
+            socKwh: number;
+            /** @description Capacity that may be cycled: the usable band above the depth-of-discharge floor. */
+            usableKwh: number;
+        };
+        CommunityBatteryInputInput: {
+            maxChargeKw: number;
+            maxDischargeKw: number;
+            /**
+             * @description The part kept back for backup. Discharging stops here.
+             * @default 0
+             */
+            reserveKwh: number;
+            /**
+             * @description Charged on the way in: putting x kWh in stores x times this.
+             * @default 0.9
+             */
+            roundTripEfficiency: number;
+            /** @description Energy stored now, counted within that usable band. */
+            socKwh: number;
+            /** @description Capacity that may be cycled: the usable band above the depth-of-discharge floor. */
+            usableKwh: number;
+        };
+        CommunityLimitsInput: {
+            /**
+             * @description Whether a property in surplus fills its own battery before offering anything.
+             * @default SHARE_FIRST
+             * @enum {string}
+             */
+            batteryPolicy: "SHARE_FIRST" | "BATTERY_FIRST";
+            /**
+             * @description Most that may pass through the shared node at once: the feeder or the transformer, whichever is smaller.
+             * @default 1000000
+             */
+            feederLimitKw: number;
+            /**
+             * @description Fraction lost in the shared network itself. Charged once, on the pool.
+             * @default 0
+             */
+            networkLossFraction: number;
+            /**
+             * @description How the pool is divided when the askers want more than it holds.
+             * @default PROPORTIONAL
+             * @enum {string}
+             */
+            rule: "PROPORTIONAL" | "EQUAL_SHARE" | "CRITICAL_FIRST" | "NEAREST_FIRST";
+            /**
+             * @description Length of the interval, hours. Converts kW to the kWh a charge level moves by.
+             * @default 1
+             */
+            stepHours: number;
+        };
+        CommunityLimitsInputInput: {
+            /**
+             * @description Whether a property in surplus fills its own battery before offering anything.
+             * @default SHARE_FIRST
+             * @enum {string}
+             */
+            batteryPolicy: "SHARE_FIRST" | "BATTERY_FIRST";
+            /**
+             * @description Most that may pass through the shared node at once: the feeder or the transformer, whichever is smaller.
+             * @default 1000000
+             */
+            feederLimitKw: number;
+            /**
+             * @description Fraction lost in the shared network itself. Charged once, on the pool.
+             * @default 0
+             */
+            networkLossFraction: number;
+            /**
+             * @description How the pool is divided when the askers want more than it holds.
+             * @default PROPORTIONAL
+             * @enum {string}
+             */
+            rule: "PROPORTIONAL" | "EQUAL_SHARE" | "CRITICAL_FIRST" | "NEAREST_FIRST";
+            /**
+             * @description Length of the interval, hours. Converts kW to the kWh a charge level moves by.
+             * @default 1
+             */
+            stepHours: number;
+        };
+        CommunityMemberInput: {
+            /** @default null */
+            battery: components["schemas"]["CommunityBatteryInput"] | null;
+            /**
+             * @description The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.
+             * @default 0
+             */
+            criticalKw: number;
+            demandKw: number;
+            /**
+             * @description Most this property may push past its meter: the smaller of its inverter and what its connection permits.
+             * @default 100000
+             */
+            exportLimitKw: number;
+            generationKw: number;
+            id: string;
+            /**
+             * @description Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.
+             * @default 100000
+             */
+            importLimitKw: number;
+            /**
+             * @description Fraction lost on this property's own leg to the shared node.
+             * @default 0
+             */
+            lineLossFraction: number;
+            name: string;
+        };
+        CommunityMemberInputInput: {
+            /** @default null */
+            battery: components["schemas"]["CommunityBatteryInputInput"] | null;
+            /**
+             * @description The part of the demand that must not be dropped. Used by the CRITICAL_FIRST rule; clamped to the demand.
+             * @default 0
+             */
+            criticalKw: number;
+            demandKw: number;
+            /**
+             * @description Most this property may push past its meter: the smaller of its inverter and what its connection permits.
+             * @default 100000
+             */
+            exportLimitKw: number;
+            generationKw: number;
+            id: string;
+            /**
+             * @description Most it may draw past its meter: its sanctioned load. Shared and bought energy both pass it.
+             * @default 100000
+             */
+            importLimitKw: number;
+            /**
+             * @description Fraction lost on this property's own leg to the shared node.
+             * @default 0
+             */
+            lineLossFraction: number;
+            name: string;
         };
         CommunitySimulation: {
             /** @enum {string} */
@@ -10472,6 +11598,7 @@ export interface components {
             };
         };
         Ev: {
+            arrivalTime: string | null;
             batteryKwh: number;
             chargerKw: number;
             createdAt: string;
@@ -10502,6 +11629,7 @@ export interface components {
             updatedAt: string;
         };
         EvInput: {
+            arrivalTime: string | null;
             batteryKwh: number;
             chargerKw: number;
             createdAt: string;
@@ -10984,6 +12112,23 @@ export interface components {
                     unservedKwh: number;
                 } | null;
             };
+            /** @description Present when the plan was made risk-aware: what each day planned for would cost with the one battery schedule. Weights are preferences, not probabilities. */
+            risk?: {
+                alpha: number;
+                aversion: number;
+                /** @description Average net cost over the worst (1 - alpha) of weight among the days planned for. */
+                cvarNetCostInr: number;
+                expectedNetCostInr: number;
+                scenarios: {
+                    built: string;
+                    importKwh: number;
+                    label: string;
+                    netCostInr: number;
+                    unservedKwh: number;
+                    weight: number;
+                }[];
+                statement: string;
+            };
             schedule: {
                 applianceKw: {
                     [key: string]: number[];
@@ -11013,6 +12158,38 @@ export interface components {
                 problems: string[];
                 valid: boolean;
             };
+        };
+        PlanDrift: {
+            /** @description Signed: positive when the meter read more than the plan expected. */
+            driftPercent: number | null;
+            evaluatedAt: string;
+            /** @description Plan hours that have ended and whose meter readings cover them completely. */
+            hoursCompared: number;
+            observedKwh: number | null;
+            planId: string | null;
+            plannedKwh: number | null;
+            reason: string;
+            replanRecommended: boolean;
+            /** @enum {string} */
+            status: "ON_TRACK" | "DRIFT_DETECTED" | "NO_PLAN" | "INSUFFICIENT_OBSERVATIONS";
+            /** @description The tolerance used: a setting, not a property of the home. */
+            thresholdPercent: number;
+        };
+        PlanDriftInput: {
+            /** @description Signed: positive when the meter read more than the plan expected. */
+            driftPercent: number | null;
+            evaluatedAt: string;
+            /** @description Plan hours that have ended and whose meter readings cover them completely. */
+            hoursCompared: number;
+            observedKwh: number | null;
+            planId: string | null;
+            plannedKwh: number | null;
+            reason: string;
+            replanRecommended: boolean;
+            /** @enum {string} */
+            status: "ON_TRACK" | "DRIFT_DETECTED" | "NO_PLAN" | "INSUFFICIENT_OBSERVATIONS";
+            /** @description The tolerance used: a setting, not a property of the home. */
+            thresholdPercent: number;
         };
         PlanInput: {
             appliances: {
@@ -11103,6 +12280,23 @@ export interface components {
                     unservedKwh: number;
                 } | null;
             };
+            /** @description Present when the plan was made risk-aware: what each day planned for would cost with the one battery schedule. Weights are preferences, not probabilities. */
+            risk?: {
+                alpha: number;
+                aversion: number;
+                /** @description Average net cost over the worst (1 - alpha) of weight among the days planned for. */
+                cvarNetCostInr: number;
+                expectedNetCostInr: number;
+                scenarios: {
+                    built: string;
+                    importKwh: number;
+                    label: string;
+                    netCostInr: number;
+                    unservedKwh: number;
+                    weight: number;
+                }[];
+                statement: string;
+            };
             schedule: {
                 applianceKw: {
                     [key: string]: number[];
@@ -11145,6 +12339,8 @@ export interface components {
              * @enum {string}
              */
             mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            /** @description Plan the battery for the ends of the forecasts' own bands as well as the central forecast: 0 or absent plans for the central forecast only, 1 for the worst of those days only. Needs a forecast band; without one the plan says it was not applied. */
+            riskAversion?: number | null;
             /** @description The battery's charge now, if you know it. Otherwise the plan assumes it starts at its reserve (or minimum) level and says so. */
             startSocPercent?: number | null;
         };
@@ -11160,6 +12356,8 @@ export interface components {
              * @enum {string}
              */
             mode: "SAVE_MONEY" | "INDEPENDENCE" | "RESILIENCE" | "GREEN" | "REVENUE" | "BALANCED";
+            /** @description Plan the battery for the ends of the forecasts' own bands as well as the central forecast: 0 or absent plans for the central forecast only, 1 for the worst of those days only. Needs a forecast band; without one the plan says it was not applied. */
+            riskAversion?: number | null;
             /** @description The battery's charge now, if you know it. Otherwise the plan assumes it starts at its reserve (or minimum) level and says so. */
             startSocPercent?: number | null;
         };
@@ -12786,6 +13984,22 @@ export interface components {
                     rule: string;
                 } | null;
             };
+        };
+        UpdateRoleRequest: {
+            /** @enum {string} */
+            role: "USER" | "ADMIN";
+        };
+        UpdateRoleRequestInput: {
+            /** @enum {string} */
+            role: "USER" | "ADMIN";
+        };
+        UpdateTariffRequest: {
+            effectiveTo?: string | null;
+            verifiedAt?: string | null;
+        };
+        UpdateTariffRequestInput: {
+            effectiveTo?: string | null;
+            verifiedAt?: string | null;
         };
         User: {
             displayName: string | null;

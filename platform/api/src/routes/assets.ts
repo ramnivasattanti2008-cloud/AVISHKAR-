@@ -29,6 +29,7 @@ import {
   deleteBattery,
   deleteEv,
   deleteSolarSystem,
+  getBattery,
   listApplianceEvents,
   listAppliances,
   listBatteries,
@@ -45,6 +46,8 @@ import {
 } from "../assets/service.js";
 import { audit } from "../audit.js";
 import { requireUser } from "../auth/hooks.js";
+import { DegradationResponse } from "../engine/schemas.js";
+import { AppError } from "../errors.js";
 import { ErrorResponse, measured } from "../schemas.js";
 
 const P = z.object({ id: z.uuid() });
@@ -89,6 +92,66 @@ export const assetRoutes: FastifyPluginAsyncZod<{ deps: AppDeps; nilm?: NilmEngi
     reply.code(204);
     return null;
   });
+
+  app.get(
+    "/api/properties/:id/batteries/:assetId/degradation",
+    {
+      ...auth,
+      schema: {
+        tags: ["assets"],
+        summary: "Battery degradation analysis (ASTM E1049 Rainflow cycle counting, DoD wear, thermal derating)",
+        description:
+          "Counts the cycles of the battery's planned use in the latest plan (a simulated day, not a measured one), against the rated cycle life you entered and at your wear cost per kWh. 503 DATA_UNAVAILABLE when there is no plan with a battery or no rated cycle life: nothing is assumed in their place.",
+        params: PA,
+        querystring: z.object({
+          cellTemperatureCelsius: z.coerce.number().min(-20).max(70).optional(),
+        }),
+        response: { 200: DegradationResponse.extend({ planId: z.uuid(), assumptions: z.array(z.string()) }), 503: ErrorResponse, ...errs },
+      },
+    },
+    async (req) => {
+      if (!deps.engine) throw new AppError("ENGINE_UNAVAILABLE", "The planning engine is not available.");
+      const b = await getBattery(db, req.user!.id, req.params.id, req.params.assetId);
+      // nothing here is invented: the cycles are the latest plan's, the cycle life is the datasheet's, the cost is the owner's wear cost
+      if (b.entered.ratedCycles == null) throw new AppError("DATA_UNAVAILABLE", "Enter the battery's rated cycle life (from its datasheet) first: the wear estimate depends on it entirely.");
+      const latestPlan = await db.optimizationRun.findFirst({ where: { propertyId: req.params.id }, orderBy: { createdAt: "desc" } });
+      const plan = latestPlan?.plan as { schedule?: { batterySocKwh?: number[] }; inputs?: { battery?: { capacityKwh?: number } | null } } | null;
+      const planSoc = plan?.schedule?.batterySocKwh;
+      const storeKwh = plan?.inputs?.battery?.capacityKwh;
+      if (!latestPlan || !planSoc || planSoc.length < 3 || !storeKwh) {
+        throw new AppError("DATA_UNAVAILABLE", "No plan with a battery has been made yet. The wear estimate counts the cycles of the battery's planned use, so make a plan first.");
+      }
+      // a plan schedules the whole store; this battery's share of it is in proportion to its capacity
+      const share = Math.min(1, b.capacityKwh / storeKwh);
+      const wear = b.effective.wearInrPerKwh;
+      const temperature = req.query.cellTemperatureCelsius ?? 25;
+
+      const deg = await deps.engine.batteryDegradation(
+        {
+          socKwh: planSoc.map((v) => v * share),
+          capacityKwh: b.capacityKwh,
+          nominalCycleLife: b.entered.ratedCycles,
+          // the cost of one full cycle at the owner's wear cost, spread over the rated life, is what the planner charges too
+          replacementCostInr: (wear.value ?? 0) * b.capacityKwh * b.entered.ratedCycles,
+          cellTemperatureCelsius: temperature,
+          maxChargeKw: b.maxChargeKw,
+          maxDischargeKw: b.maxDischargeKw,
+        },
+        { requestId: req.id },
+      );
+
+      return {
+        ...deg,
+        planId: latestPlan.id,
+        assumptions: [
+          `Cycles counted from the state of charge of the latest plan (${latestPlan.createdAt.toISOString()}), a simulated day of use, not a measured one${share < 1 ? `, scaled to this battery's ${Math.round(share * 100)}% share of the store` : ""}.`,
+          `Rated cycle life ${b.entered.ratedCycles}, as you entered it.`,
+          `Wear cost ${wear.value ?? 0} INR per kWh: ${wear.basis === "USER_ENTERED" ? "your figure" : wear.note}`,
+          req.query.cellTemperatureCelsius === undefined ? "Cell temperature 25 °C (the reference temperature): no temperature was given." : `Cell temperature ${temperature} °C, as asked.`,
+        ],
+      };
+    },
+  );
 
   app.get("/api/properties/:id/solar-systems", { ...auth, schema: { tags: ["assets"], summary: "Solar systems of a property", params: P, response: { 200: z.object({ solarSystems: z.array(SolarSystemSchema) }), ...errs } } }, async (req) => ({
     solarSystems: await listSolarSystems(db, req.user!.id, req.params.id),

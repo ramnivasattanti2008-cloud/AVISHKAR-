@@ -181,9 +181,11 @@ The plan: when to charge, discharge, import, export and run flexible loads, chec
 | Method | Path | What it does |
 |---|---|---|
 | GET | `/api/properties/{id}/plan` | The latest plan |
+| GET | `/api/properties/{id}/plan/drift` | Compare the latest plan's expected demand with the meter readings for the hours that have passed |
 | POST | `/api/properties/{id}/plan` | Plan the next day or two |
 | GET | `/api/properties/{id}/plans` | Plans made for a property, newest first |
 | GET | `/api/properties/{id}/plans/{planId}` | One plan as it was shown |
+| GET | `/api/properties/{id}/plans/{planId}/export.csv` | Download one stored plan as CSV |
 | GET | `/api/properties/{id}/resilience` | How long the critical load would last if the grid failed, and how autonomous the plan is |
 | GET | `/api/properties/{id}/today` | Today: generation, use, surplus, weather risk, backup, autonomy, expected value, and what to do next |
 | GET | `/api/properties/{id}/health` | Energy health: efficiency, solar utilisation, peak management, storage utilisation, resilience, grid dependence and flexibility |
@@ -204,6 +206,7 @@ What-if: today's setup against added solar, a battery or another tariff over a t
 | POST | `/api/properties/{id}/scenarios` | What would adding solar, a battery or a different tariff do over a year |
 | DELETE | `/api/properties/{id}/scenarios/{scenarioId}` | Delete a scenario |
 | GET | `/api/properties/{id}/scenarios/{scenarioId}` | One scenario as it was shown |
+| GET | `/api/properties/{id}/scenarios/{scenarioId}/export.csv` | Download one stored what-if as CSV |
 
 ### copilot
 
@@ -225,6 +228,9 @@ For administrators: the health of data, catalogue, models and providers, the bac
 | GET | `/api/admin/jobs` | The background jobs, when each is next due and what it did lately |
 | POST | `/api/admin/jobs/{name}/run` | Run one background job now |
 | GET | `/api/admin/overview` | Health of the data, the catalogue, the models and the providers: counts, and no one's readings |
+| PATCH | `/api/admin/tariffs/{id}` | Update tariff verification timestamp or expiration date |
+| GET | `/api/admin/users` | List all user accounts with roles and property counts |
+| PATCH | `/api/admin/users/{id}/role` | Update a user's role (promote or demote) |
 
 ### control
 
@@ -254,6 +260,7 @@ Your properties together, and a simulated virtual power plant of synthetic homes
 | Method | Path | What it does |
 |---|---|---|
 | GET | `/api/community` | Your properties together: surplus, deficit, storage and shiftable load on a typical day |
+| POST | `/api/community/allocate` | Allocate one interval's surplus between properties, and say what stopped it |
 | POST | `/api/vpp/simulate` | Simulate a virtual power plant of 10, 100, 1,000 or 10,000 homes |
 
 ### assets
@@ -275,6 +282,7 @@ What a property has: batteries, solar systems, electric vehicles, appliances and
 | POST | `/api/properties/{id}/batteries` | Add a battery |
 | DELETE | `/api/properties/{id}/batteries/{assetId}` | Delete a battery |
 | PATCH | `/api/properties/{id}/batteries/{assetId}` | Change a battery |
+| GET | `/api/properties/{id}/batteries/{assetId}/degradation` | Analyze battery degradation using ASTM E1049 Rainflow cycle counting, DoD power-law, and Arrhenius thermal aging |
 | GET | `/api/properties/{id}/evs` | Electric vehicles of a property |
 | POST | `/api/properties/{id}/evs` | Add an electric vehicle |
 | DELETE | `/api/properties/{id}/evs/{assetId}` | Delete an electric vehicle |

@@ -3,6 +3,8 @@ import type { AppDeps } from "../app.js";
 import { audit } from "../audit.js";
 import { requireUser } from "../auth/hooks.js";
 import { ErrorResponse } from "../schemas.js";
+import { AllocateRequest, AllocateSchema } from "../community/schemas.js";
+import { allocateCommunity } from "../community/service.js";
 import { communityView } from "../vpp/community.js";
 import { CommunitySchema, VppSchema } from "../vpp/schemas.js";
 import { VppRequest, simulateVpp } from "../vpp/service.js";
@@ -27,6 +29,23 @@ export const communityRoutes: FastifyPluginAsyncZod<{ deps: AppDeps }> = async (
       },
     },
     async (req) => communityView(fdeps, req.user!.id, { requestId: req.id }),
+  );
+
+  app.post(
+    "/api/community/allocate",
+    {
+      ...auth,
+      config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+      schema: {
+        tags: ["community"],
+        summary: "Allocate one interval's surplus between properties, and say what stopped it",
+        description:
+          "Works out, for a single interval, which property's surplus can meet which other's deficit: own generation first, then own battery, then the shared node divided by the rule you choose, then the grid. Transfer limits, the feeder limit and line and network losses are all applied and reported, and each property says which cap bound it and why. Supply `members` to allocate between figures you give (pure arithmetic, nothing measured), or `propertyIds` to allocate between your own properties at one hour of a typical day, built from their entered systems and imported readings, with `overrides` for asking what if. Energy is conserved and the response carries the check that proves it. AVISHKAR does not move electricity and makes no claim that sharing between these properties is permitted.",
+        body: AllocateRequest,
+        response: { 200: AllocateSchema, ...errs },
+      },
+    },
+    async (req) => allocateCommunity(fdeps, req.user!.id, req.body, { requestId: req.id }),
   );
 
   app.post(

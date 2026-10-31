@@ -67,9 +67,9 @@ export async function makeApp(over: Record<string, string> = {}, extra: { engine
   return { app, deps, fetched, setFetch: (h) => void (handler = h), clock };
 }
 
-/** The repository's data/ folder: the sourced tariff orders and policy files the seeder loads. */
+/** The isolated test fixture data folder: the curated tariff orders and policy files. */
 export function defaultTestDataDir(): string {
-  return fileURLToPath(new URL("../../../data", import.meta.url));
+  return fileURLToPath(new URL("./fixtures/seed_data", import.meta.url));
 }
 
 export const PASSWORD = "correct-horse-battery";

@@ -21,11 +21,21 @@ const Env = z.object({
     .optional()
     .transform((v) => (v === undefined ? undefined : v === "true")),
   CORS_ORIGIN: z.string().optional(),
-  /** True only behind a reverse proxy you control, so req.ip (rate limiting, audit log) is the real client address. */
+  /**
+   * Trust the hop(s) between this service and a reverse proxy you control, so req.ip (rate limiting, audit log) is the real
+   * client address. Accepts a hop count (e.g. "1") or "true" (trust every hop — only safe for a single, fully-controlled
+   * proxy). Defaults to 0 hops, i.e. never trust forwarded headers: the connection's peer address is used directly.
+   *
+   * The web app is the only externally-exposed service; the API sits behind it on the private bridge network, so production
+   * should trust exactly one hop. A forged X-Forwarded-For from any other client has no effect unless it arrives on a
+   * trusted hop.
+   */
   TRUST_PROXY: z
-    .enum(["true", "false"])
-    .default("false")
-    .transform((v) => v === "true"),
+    .preprocess(
+      (v) => (typeof v === "string" ? v.trim() : v),
+      z.union([z.enum(["true", "false"]), z.coerce.number().int().nonnegative()]).default("false"),
+    )
+    .transform((v) => (v === "true" ? true : v === "false" ? false : Number(v))),
 
   /** Identifies this application to public providers (Nominatim and Overpass require it). Include a contact. */
   PROVIDER_USER_AGENT: z
@@ -49,7 +59,18 @@ const Env = z.object({
 
   BUILDING_FOOTPRINT_PROVIDER: z.enum(["overpass"]).default("overpass"),
   BUILDING_FOOTPRINT_BASE_URL: z.url().default("https://overpass-api.de"),
-  /** Comma-separated Overpass mirrors tried in order when the primary fails (it does, about one request in three at times). */
+  /**
+   * Comma-separated Overpass mirrors tried in order when the primary fails (it does, about one request in three
+   * at times).
+   *
+   * **Every entry must be a planet-wide instance.** A regional extract answers 200 with an empty result for
+   * anywhere outside its region, which this provider can only read as "there is no building here" -- a confident
+   * wrong answer, and worse than the connection error it would have replaced. `overpass.osm.ch` was added here on
+   * 2026-10-30 and reverted for exactly that reason: it returns buildings in Zurich and none in London or
+   * Bengaluru. Check any candidate against two distant cities before adding it.
+   *
+   * The chain's worst case is the sum of the per-request timeouts, so keep the list short.
+   */
   BUILDING_FOOTPRINT_FALLBACK_URLS: z
     .string()
     .default("https://overpass.kumi.systems,https://overpass.private.coffee")
@@ -106,8 +127,20 @@ export class ConfigError extends Error {
   }
 }
 
+/**
+ * A variable that is present but blank means "not set". `.env.example` leaves every optional key blank on purpose, so
+ * copying it must not make the service refuse to start over an empty API key it never needed; and a container that
+ * passes an unset variable through as "" must behave like one that omits it. Required keys still fail: dropping a blank
+ * `SESSION_SECRET` leaves it missing, which is exactly what it is.
+ */
+function withoutBlanks(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const out: NodeJS.ProcessEnv = {};
+  for (const [k, v] of Object.entries(env)) if (!(typeof v === "string" && v.trim() === "")) out[k] = v;
+  return out;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const parsed = Env.safeParse(env);
+  const parsed = Env.safeParse(withoutBlanks(env));
   if (!parsed.success) {
     throw new ConfigError(parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`));
   }

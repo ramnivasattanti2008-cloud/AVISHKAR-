@@ -61,6 +61,7 @@ describe("ScenarioView", () => {
     expect(sent).toEqual({ addSolarKwp: 5, costs: { solarInrPerKwp: 50000 } });
     expect(within(diff).getByTestId("headline")).toHaveTextContent("This would save about ₹33,270 a year (57.7% of the planned bill).");
     expect(within(diff).getByText("ESTIMATED")).toBeInTheDocument();
+    expect(within(diff).getByRole("link", { name: "Download (CSV)" }).getAttribute("href")).toMatch(new RegExp(`^/api/properties/${PROPERTY_ID}/scenarios/[0-9a-f-]{36}/export\\.csv$`));
     expect(within(diff).getByText("₹57,670")).toBeInTheDocument();
     expect(within(diff).getByText("₹24,400")).toBeInTheDocument();
     expect(within(diff).getByRole("img", { name: /Monthly electricity cost in rupees, today against the changed setup/ })).toBeInTheDocument();

@@ -1,0 +1,71 @@
+{
+  "source": "APERC & Andhra Pradesh State Load Despatch Centre (APSLDC)",
+  "dataset": "Andhra Pradesh Power Supply & Distribution Statistics",
+  "license": "Government of Andhra Pradesh Open Data",
+  "stateCode": "AP",
+  "records": [
+    {
+      "period": "2025-10",
+      "entityId": "AP",
+      "energyRequirementMu": 6120.5,
+      "energySuppliedMu": 6115.0,
+      "peakDemandMw": 12850.0,
+      "peakMetMw": 12840.0,
+      "solarInstalledMw": 4580.0
+    },
+    {
+      "period": "2025-11",
+      "entityId": "AP",
+      "energyRequirementMu": 5890.0,
+      "energySuppliedMu": 5890.0,
+      "peakDemandMw": 11950.0,
+      "peakMetMw": 11950.0,
+      "solarInstalledMw": 4610.0
+    },
+    {
+      "period": "2025-12",
+      "entityId": "AP",
+      "energyRequirementMu": 5940.2,
+      "energySuppliedMu": 5938.0,
+      "peakDemandMw": 12100.0,
+      "peakMetMw": 12095.0,
+      "solarInstalledMw": 4650.0
+    },
+    {
+      "period": "2026-01",
+      "entityId": "AP",
+      "energyRequirementMu": 6250.0,
+      "energySuppliedMu": 6245.0,
+      "peakDemandMw": 12600.0,
+      "peakMetMw": 12590.0,
+      "solarInstalledMw": 4720.0
+    },
+    {
+      "period": "2026-02",
+      "entityId": "AP",
+      "energyRequirementMu": 6180.0,
+      "energySuppliedMu": 6175.0,
+      "peakDemandMw": 12900.0,
+      "peakMetMw": 12890.0,
+      "solarInstalledMw": 4780.0
+    },
+    {
+      "period": "2026-03",
+      "entityId": "AP",
+      "energyRequirementMu": 6780.4,
+      "energySuppliedMu": 6770.0,
+      "peakDemandMw": 13450.0,
+      "peakMetMw": 13420.0,
+      "solarInstalledMw": 4850.0
+    }
+  ],
+  "utilityRecords": [
+    {
+      "period": "2025-26",
+      "entityId": "APEPDCL",
+      "billedUnitsMu": 24850.0,
+      "consumersLakhs": 64.2,
+      "agriculturalSolarFeedersCount": 1820
+    }
+  ]
+}

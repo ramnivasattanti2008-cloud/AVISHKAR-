@@ -1,4 +1,4 @@
-import type { AdminAudit, AdminJobs, AdminOverview, Appliance, Today, Battery, Bill, CloudFront, Community, Control, ControlProposal, DemoWorld, ResilienceReport, EnergyDna, EnergyImport, CopilotAnswer, CopilotTools, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan, VppSimulation } from "@/lib/types";
+import type { AdminAudit, AdminJobs, AdminOverview, Appliance, Today, Battery, Bill, CloudFront, Community, CommunityAllocation, Control, ControlProposal, DemoWorld, ResilienceReport, EnergyDna, EnergyImport, CopilotAnswer, CopilotTools, EnergySummary, Ev, ForecastAccuracy, LoadForecast, Opportunities, Plan, PlanSummary, Property, Provenance, Scenario, ScenarioSummary, SolarForecast, SolarPerformance, SolarSystem, TariffPlan, VppSimulation } from "@/lib/types";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   status: "REFERENCE",
@@ -159,6 +159,7 @@ export function ev(over: Partial<Ev> = {}): Ev {
     currentSocAt: null,
     departureTime: "07:30",
     departureDays: [0, 1, 2, 3, 4],
+    arrivalTime: null,
     entered: { chargerEfficiency: null },
     effective: { chargerEfficiency: param(0.9, "ASSUMPTION", "A typical figure; no source recorded.") },
     notes: null,
@@ -421,6 +422,92 @@ export function community(over: Partial<Community> = {}): Community {
     notes: ["This is a simulation over properties you own. AVISHKAR does not move electricity between properties and says nothing about whether that is allowed.", "Only properties your account owns appear here. Nothing about anyone else's is shown."],
     ...over,
   };
+}
+
+/**
+ * The allocation of the specified three-building scenario, as POST /api/community/allocate answers it. The figures are the
+ * real engine's for those inputs (A 8/3, B 2/4, C 0/3, lossless): A sends 5 kW, B receives 2 and C receives 3.
+ */
+export function communityAllocation(over: Partial<CommunityAllocation> = {}): CommunityAllocation {
+  const member = (id: string, name: string, generationKw: number, demandKw: number, extra: Record<string, unknown> = {}) => ({
+    id,
+    name,
+    generationKw,
+    demandKw,
+    selfUseKw: Math.min(generationKw, demandKw),
+    batteryDischargeKw: 0,
+    batteryChargeKw: 0,
+    batterySocKwh: null,
+    offeredKw: Math.max(0, generationKw - demandKw),
+    sentKw: 0,
+    requestedKw: Math.max(0, demandKw - generationKw),
+    allocatedKw: 0,
+    receivedKw: 0,
+    gridImportKw: 0,
+    gridExportKw: 0,
+    curtailedKw: 0,
+    unservedKw: 0,
+    status: generationKw > demandKw ? "SURPLUS" : generationKw < demandKw ? "DEFICIT" : "BALANCED",
+    binding: "NONE",
+    explanation: `${name} did its part.`,
+    ...extra,
+  });
+  return {
+    label: "COMMUNITY ALLOCATION SIMULATION",
+    source: "MEMBERS_GIVEN",
+    result: {
+      value: {
+        members: [
+          member("a", "Building A", 8, 3, { sentKw: 5, explanation: "Generated 8.00 kW and used 3.00 kW of it on site. Sent 5.00 kW to the shared node, of which 5.00 kW reached it." }),
+          member("b", "Building B", 2, 4, { allocatedKw: 2, receivedKw: 2, explanation: "Generated 2.00 kW and used 2.00 kW of it on site. Received 2.00 kW from the community." }),
+          member("c", "Building C", 0, 3, { allocatedKw: 3, receivedKw: 3, explanation: "Generated nothing, and needed 3.00 kW. Received 3.00 kW from the community." }),
+        ],
+        transfers: [
+          { fromId: "a", fromName: "Building A", toId: "b", toName: "Building B", sentKw: 2, deliveredKw: 2, lossKw: 0 },
+          { fromId: "a", fromName: "Building A", toId: "c", toName: "Building C", sentKw: 3, deliveredKw: 3, lossKw: 0 },
+        ],
+        totals: {
+          members: 3,
+          generationKw: 10,
+          demandKw: 10,
+          selfUseKw: 5,
+          offeredKw: 5,
+          requestedKw: 5,
+          sharedSentKw: 5,
+          sharedDeliveredKw: 5,
+          transferLossKw: 0,
+          batteryChargeKw: 0,
+          batteryDischargeKw: 0,
+          gridImportKw: 0,
+          gridExportKw: 0,
+          curtailedKw: 0,
+          unservedKw: 0,
+          selfSufficiency: 1,
+          selfConsumption: 1,
+        },
+        limits: { feederLimitKw: 1000, networkLossFraction: 0, rule: "PROPORTIONAL", batteryPolicy: "SHARE_FIRST", stepHours: 1 },
+        feederBinding: false,
+        feederFlowKw: 5,
+        check: { balanced: true, maxMemberErrorKw: 0, communityErrorKw: 0, note: "Every property's generation, battery, shared energy and grid energy add up to its demand, and the community's sent and delivered energy differ by exactly the losses reported." },
+        decisions: [
+          "Step 1 — each property's own generation met its own demand first: 5.00 kW of the 10.00 kW generated. The same kW is never allocated twice.",
+          "Step 5 — rule PROPORTIONAL: 5.00 kW was divided in proportion to what each property asked for, and no one was given more than it asked.",
+        ],
+        comparison: null,
+      },
+      provenance: provenance({ status: "SIMULATED", provider: "avishkar-community-allocation", dataType: "community_allocation", notes: ["A calculation over one interval, not a measurement."] }),
+    },
+    inputs: [
+      { id: "a", name: "Building A", basis: ["Every figure for Building A was supplied in the request."] },
+      { id: "b", name: "Building B", basis: ["Every figure for Building B was supplied in the request."] },
+      { id: "c", name: "Building C", basis: ["Every figure for Building C was supplied in the request."] },
+    ],
+    notes: [
+      "AVISHKAR does not move electricity between properties. Whether a surplus may be sent to a neighbour depends on the law, the distribution licensee's rules, the metering arrangement and the wiring where those properties are.",
+      "The order of steps is a stated convention: own generation, then own battery, then the shared node, then the grid.",
+    ],
+    ...over,
+  } as CommunityAllocation;
 }
 
 export function vppSimulation(over: Partial<VppSimulation> = {}): VppSimulation {

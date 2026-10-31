@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 import numpy as np
 import pandas as pd
 
 
-class DEVIATION_MODES(Enum):
+class DEVIATION_MODES(StrEnum):
     UNDERPERFORMANCE = "underperformance"
     SENSOR_STUCK = "sensor_stuck"
     INVERTER_OFF = "inverter_off"
@@ -58,8 +58,41 @@ def detect_inverter_off(df: pd.DataFrame, min_poa: float = 200.0, min_steps: int
     return flag.groupby(run_id).transform("any") & off
 
 
+def validate_readings(df: pd.DataFrame) -> None:
+    """Validate dataframe columns before monitoring.
+
+    * Raises ``ValueError`` if required columns are missing.
+    * Raises ``ValueError`` if any value in ``pv_kw``, ``expected_kw`` or ``poa_wm2`` is negative.
+    * Raises ``ValueError`` if a NaN value is present in those columns.
+    * Detects timestamp gaps where the delta between consecutive indices exceeds 90 minutes.
+    """
+    required = {"pv_kw", "expected_kw", "poa_wm2"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns for monitoring: {sorted(missing)}")
+
+    for col in required:
+        if df[col].isna().any():
+            raise ValueError(f"Missing values detected in column {col} during monitoring")
+        if (df[col] < 0).any():
+            raise ValueError(f"Negative values detected in column {col} during monitoring")
+
+    ts = df.index
+    if ts.tzinfo is not None:
+        ts = ts.tz_convert(None)
+    delta = ts.to_series().diff().dropna()
+    if (delta > pd.Timedelta("90min")).any():
+        raise ValueError("Timestamp gap larger than 90 minutes detected; data may be stale.")
+
+
 def enhanced_monitor(df: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate all deviation flags into a diagnostic DataFrame."""
+    """Aggregate all deviation flags into a diagnostic DataFrame.
+
+    Validates the input, then runs the underlying flaggers. This function performs
+    static data-quality checks first so that downstream logic never operates on
+    malformed telemetry.
+    """
+    validate_readings(df)
     base = deviation_flags(df)
     stuck = detect_sensor_stuck(df)
     off = detect_inverter_off(df)

@@ -10,6 +10,10 @@ discharge, EV charging and when each flexible appliance runs, so as to minimise 
   EV               the energy needed is delivered between arrival and departure (or the shortfall is reported)
   appliances       each runs for its duration inside its window (non-interruptible ones are binary start choices)
 
+With `risk`, the battery, EV and appliance decisions are shared by the central forecast and up to eight other possible days, each
+with its own grid, solar-use and unserved variables and its own energy balance, and the objective is (1 - aversion) x the weighted
+average cost + aversion x CVaR at `alpha` (Rockafellar-Uryasev, still linear). The schedule returned is the central day's.
+
 The plan is never trusted on its own account: `validate` recomputes every balance from the returned schedule, and a plan that
 fails is returned flagged SIMULATION INVALID (spec sections 64 and 67). Costs are always reported at the true prices, whatever
 the mode weights were. Nothing here reads a database or the network.
@@ -31,6 +35,9 @@ from avishkar_engine.schemas import (
     Decision,
     OptimiseRequest,
     OptimiseResponse,
+    RiskIn,
+    RiskOut,
+    RiskScenarioOut,
     Schedule,
     SolverInfo,
     Totals,
@@ -183,10 +190,23 @@ def optimise(req: OptimiseRequest) -> OptimiseResponse:
     b = req.battery
     notes: list[str] = []
 
+    # The days planned for: the central forecast, then any risk scenarios. Battery, EV and appliance decisions are shared by all of
+    # them (they are committed ahead); grid use, solar use and unserved load adapt to each day.
+    risk = req.risk
+    days: list[tuple[str, np.ndarray, np.ndarray, float]] = [("central forecast", eff_load, pv, risk.central_weight if risk else 1.0)]
+    if risk:
+        for s in risk.scenarios:
+            sl = np.array(s.load_kw, dtype=float)
+            days.append((s.label, np.where(outage, np.minimum(sl, req.critical_kw), sl), np.array(s.pv_kw, dtype=float), s.weight))
+    total_w = sum(d[3] for d in days)
+    day_w = [d[3] / total_w for d in days]
+    aversion = risk.aversion if risk else 0.0
+    day_costs: list[list[tuple[int, float]]] = [[] for _ in days]  # each day's cost as (variable, INR per unit), for the CVaR rows
+
     # finite bounds keep the programme bounded whatever the prices
     app_total = sum(a.power_kw for a in req.appliances)
-    big_imp = float(np.max(eff_load) + (b.max_charge_kw if b else 0) + (req.ev.charger_kw if req.ev else 0) + app_total + 1.0)
-    big_exp = float(np.max(pv) + (b.max_discharge_kw if b else 0) + 1.0)
+    big_imp = float(max(np.max(d[1]) for d in days) + (b.max_charge_kw if b else 0) + (req.ev.charger_kw if req.ev else 0) + app_total + 1.0)
+    big_exp = float(max(np.max(d[2]) for d in days) + (b.max_discharge_kw if b else 0) + 1.0)
     imp_ub = req.grid.import_limit_kw if req.grid.import_limit_kw is not None else big_imp
     exp_ub = req.grid.export_limit_kw if req.grid.export_limit_kw is not None else big_exp
 
@@ -197,24 +217,35 @@ def optimise(req: OptimiseRequest) -> OptimiseResponse:
 
     m = _Model()
     L = _Layout()
+    R = [L, *[_Layout() for _ in days[1:]]]  # per day: imp, exp, pvu, ush; the central day's are in L
     imp_cost = weights.import_cost * pi * dt + weights.import_energy_penalty * dt
     if carbon is not None and req.mode == "GREEN":
         imp_cost = imp_cost + 5.0 * carbon * dt  # an INR 5 per kg shadow price: a preference, stated in the mode weights notes
         notes.append("GREEN mode weighted import by the carbon intensity you supplied at INR 5 per kg CO2, a preference and not a market price.")
 
+    def day_var(k: int, lb: float, ub: float, cost: float, integer: bool = False) -> int:
+        """A variable of day k: its cost counts in the weighted average, and in that day's cost for the tail."""
+        if not risk:
+            return m.var(lb, ub, cost, integer)
+        v = m.var(lb, ub, (1.0 - aversion) * day_w[k] * cost, integer)
+        if cost:
+            day_costs[k].append((v, cost))
+        return v
+
     for t in range(n):
         out = bool(outage[t])
-        z = m.var(0, 1, 0.0, integer=True) if exclusive else None
-        i = m.var(0, 0.0 if out else imp_ub, float(imp_cost[t]))
-        e = m.var(0, 0.0 if out else exp_ub, float(-weights.export_revenue * pe[t] * dt))
-        L.imp.append(i)
-        L.exp.append(e)
-        if z is not None:
-            m.row([(i, 1.0), (z, -imp_ub if np.isfinite(imp_ub) else -big_imp)], -np.inf, 0.0)
-            m.row([(e, 1.0), (z, exp_ub if np.isfinite(exp_ub) else big_exp)], -np.inf, exp_ub if np.isfinite(exp_ub) else big_exp)
-        L.pvu.append(m.var(0, float(pv[t]), -TIE_BREAK * dt))
-        # load that cannot be supplied is allowed, at a prohibitive price, so there is always a plan to report on
-        L.ush.append(m.var(0, float(eff_load[t]), UNSERVED_INR_PER_KWH * dt))
+        for k, (_, d_load, d_pv, _) in enumerate(days):
+            z = m.var(0, 1, 0.0, integer=True) if exclusive else None
+            i = day_var(k, 0, 0.0 if out else imp_ub, float(imp_cost[t]))
+            e = day_var(k, 0, 0.0 if out else exp_ub, float(-weights.export_revenue * pe[t] * dt))
+            R[k].imp.append(i)
+            R[k].exp.append(e)
+            if z is not None:
+                m.row([(i, 1.0), (z, -imp_ub if np.isfinite(imp_ub) else -big_imp)], -np.inf, 0.0)
+                m.row([(e, 1.0), (z, exp_ub if np.isfinite(exp_ub) else big_exp)], -np.inf, exp_ub if np.isfinite(exp_ub) else big_exp)
+            R[k].pvu.append(day_var(k, 0, float(d_pv[t]), -TIE_BREAK * dt))
+            # load that cannot be supplied is allowed, at a prohibitive price, so there is always a plan to report on
+            R[k].ush.append(day_var(k, 0, float(d_load[t]), UNSERVED_INR_PER_KWH * dt))
         if b:
             L.chg.append(m.var(0, b.max_charge_kw, TIE_BREAK * dt))
             L.dis.append(m.var(0, b.max_discharge_kw, (b.wear_inr_per_kwh / b.discharge_efficiency + TIE_BREAK) * dt))
@@ -235,6 +266,10 @@ def optimise(req: OptimiseRequest) -> OptimiseResponse:
         else:
             terminal = b.terminal_soc_kwh if b.terminal_soc_kwh is not None else b.initial_soc_kwh
             m.row([(L.soc[n - 1], 1.0), (L.terminal_short, 1.0)], float(terminal), np.inf)
+    if b and b.max_cycles_per_day is not None:
+        # the cycle count is the energy drawn out of the battery over the horizon in units of its capacity: cap it at the allowance
+        allowance = b.max_cycles_per_day * b.capacity_kwh * n * dt / 24.0
+        m.row([(d, dt / b.discharge_efficiency) for d in L.dis], -np.inf, allowance)
     if req.ev:
         ev = req.ev
         for t in range(n):
@@ -268,15 +303,27 @@ def optimise(req: OptimiseRequest) -> OptimiseResponse:
                     app_by_step[t].append((v, a.power_kw))
             L.app_vars[a.id] = sv
             L.app_skip[a.id] = skip
-    # energy balance per step
-    for t in range(n):
-        terms = [(L.pvu[t], 1.0), (L.imp[t], 1.0), (L.ush[t], 1.0), (L.exp[t], -1.0)]
-        if b:
-            terms += [(L.dis[t], 1.0), (L.chg[t], -1.0)]
-        if req.ev:
-            terms.append((L.evc[t], -1.0))
-        terms += [(v, -p) for v, p in app_by_step[t]]
-        m.eq(terms, float(eff_load[t]))
+    # energy balance per step, on every day planned for
+    for k, (_, d_load, _, _) in enumerate(days):
+        for t in range(n):
+            terms = [(R[k].pvu[t], 1.0), (R[k].imp[t], 1.0), (R[k].ush[t], 1.0), (R[k].exp[t], -1.0)]
+            if b:
+                terms += [(L.dis[t], 1.0), (L.chg[t], -1.0)]
+            if req.ev:
+                terms.append((L.evc[t], -1.0))
+            terms += [(v, -p) for v, p in app_by_step[t]]
+            m.eq(terms, float(d_load[t]))
+    if risk:
+        # CVaR in its linear form: eta + sum_k w_k u_k / (1 - alpha), with u_k >= cost_k - eta and u_k >= 0
+        eta = m.var(-np.inf, np.inf, aversion)
+        for k, terms in enumerate(day_costs):
+            u = m.var(0, np.inf, aversion * day_w[k] / (1.0 - risk.alpha))
+            m.row([(u, 1.0), (eta, 1.0), *[(v, -c) for v, c in terms]], 0.0, np.inf)
+        notes.append(
+            f"Risk-aware: the battery, vehicle and appliance schedule is chosen once to do well across {len(days)} possible days "
+            f"(weights are preferences, not measured probabilities); grid use adapts to each day. The schedule shown is the central forecast's. "
+            f"Aversion {aversion:g} (0 = average cost only, 1 = the worst {1 - risk.alpha:.0%} of weight only)."
+        )
 
     res = m.solve(req.time_limit_s)
     seconds = time.perf_counter() - started
@@ -326,6 +373,32 @@ def optimise(req: OptimiseRequest) -> OptimiseResponse:
         decisions=_decisions(req, sched, pi, pe, eff_load),
         validation=validation,
         notes=notes,
+        risk=_risk_report(risk, days, day_w, R, x, pi, pe, dt, totals.wear_cost_inr) if risk else None,
+    )
+
+
+def cvar(costs: list[float], weights: list[float], alpha: float) -> float:
+    """Weighted average of the worst (1 - alpha) of weight: min over eta of eta + sum w (c - eta)+ / (1 - alpha), reached at a cost."""
+    return min(eta + sum(w * max(c - eta, 0.0) for c, w in zip(costs, weights, strict=True)) / (1.0 - alpha) for eta in costs)
+
+
+def _risk_report(risk: RiskIn, days: list[tuple[str, np.ndarray, np.ndarray, float]], day_w: list[float], R: list[_Layout], x: np.ndarray, pi: np.ndarray, pe: np.ndarray, dt: float, wear: float) -> RiskOut:
+    """What each day would cost at the true prices with the shared schedule, and the average and tail of those costs. The battery's
+    wear is the same on every day (the discharge is shared), so the central day's cost equals the plan's net cost."""
+    rows = []
+    for (label, *_), w, lay in zip(days, day_w, R, strict=True):
+        imp, exp, ush = _arr(x, lay.imp), _arr(x, lay.exp), _arr(x, lay.ush)
+        rows.append(
+            RiskScenarioOut(
+                label=label, weight=round(w, 6), net_cost_inr=round(float(np.sum(pi * imp) - np.sum(pe * exp)) * dt + wear, 4),
+                import_kwh=round(float(imp.sum() * dt), 4), export_kwh=round(float(exp.sum() * dt), 4), unserved_kwh=round(float(ush.sum() * dt), 4),
+            )
+        )
+    costs = [r.net_cost_inr for r in rows]
+    return RiskOut(
+        alpha=risk.alpha, aversion=risk.aversion, scenarios=rows,
+        expected_net_cost_inr=round(sum(c * w for c, w in zip(costs, day_w, strict=True)), 4),
+        cvar_net_cost_inr=round(cvar(costs, day_w, risk.alpha), 4),
     )
 
 
@@ -506,6 +579,8 @@ def validate(req: OptimiseRequest, s: Schedule) -> Validation:
             problems.append("a battery power limit is exceeded")
         if np.any((chg > 1e-6) & (dis > 1e-6)):
             problems.append("the battery charges and discharges in the same step")
+        if b.max_cycles_per_day is not None and float(dis.sum()) * dt / b.discharge_efficiency > b.max_cycles_per_day * b.capacity_kwh * n * dt / 24.0 + 1e-5:
+            problems.append("the battery is cycled more than its maxCyclesPerDay allows over the horizon")
     elif np.any(chg > 1e-9) or np.any(dis > 1e-9):
         problems.append("a battery is used but none exists")
     if req.ev:
@@ -579,3 +654,20 @@ def _decisions(req: OptimiseRequest, s: Schedule, pi: np.ndarray, pe: np.ndarray
             out.append(Decision(step=first, kind="appliance", kwh=round(float(p.sum() * dt), 4), reason=f"{a.name} placed from {_label(req, first)} to {_label(req, last + 1)}, inside its window, where energy is cheapest given solar and tariff (cheapest import in its window is at {_label(req, cheapest)})"))
     out.sort(key=lambda d: (d.step, d.kind))
     return out[:limit]
+
+
+def optimise_batch_parallel(requests: list[OptimiseRequest], max_workers: int | None = None) -> list[OptimiseResponse]:
+    """Execute multiple optimisation requests in parallel across CPU cores.
+
+    HiGHS solver runs native compiled C++ routines which release Python's GIL.
+    """
+    if not requests:
+        return []
+    if len(requests) == 1:
+        return [optimise(requests[0])]
+    from concurrent.futures import ThreadPoolExecutor
+
+    workers = min(len(requests), max_workers or 4)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(optimise, requests))
+

@@ -1,0 +1,31 @@
+{
+  "program": "NATIONAL_ROOFTOP_NET_METERING",
+  "name": "Indian State Net-Metering and Net-Billing Regulatory Limits",
+  "region": "IN",
+  "source": "State Electricity Regulatory Commission (SERC) Solar Rooftop Regulations and Central Electricity Authority (CEA) Technical Standards as checked on 2026-10-23.",
+  "sourceUrl": "https://cea.nic.in",
+  "verifiedAt": "2026-10-23",
+  "effectiveFrom": "2024-01-01",
+  "effectiveTo": "2027-03-31",
+  "rules": [
+    {
+      "ruleKey": "state_net_metering_limits",
+      "appliesTo": "RESIDENTIAL",
+      "statedAs": "State-specific net-metering capacity limits as percentage of sanctioned connected load and distribution transformer ceiling.",
+      "states": {
+        "KA": { "maxLoadPct": 100, "maxDtPct": 30, "grossMeteringAboveKw": 10 },
+        "DL": { "maxLoadPct": 100, "maxDtPct": 50, "grossMeteringAboveKw": 500 },
+        "MH": { "maxLoadPct": 100, "maxDtPct": 40, "grossMeteringAboveKw": 10 },
+        "GJ": { "maxLoadPct": 100, "maxDtPct": 50, "grossMeteringAboveKw": 1000 },
+        "TN": { "maxLoadPct": 100, "maxDtPct": 30, "grossMeteringAboveKw": 10 },
+        "UP": { "maxLoadPct": 100, "maxDtPct": 25, "grossMeteringAboveKw": 10 },
+        "RJ": { "maxLoadPct": 100, "maxDtPct": 30, "grossMeteringAboveKw": 10 }
+      },
+      "notes": [
+        "In Karnataka, net-metering is restricted to 10 kW for domestic LT consumers; gross-metering applies above 10 kW.",
+        "In Delhi under Delhi Solar Policy 2024, net-metering is permitted up to 500 kW without capacity penalty.",
+        "In Gujarat, net-metering is supported with surplus energy credited at Rs. 2.25/kWh."
+      ]
+    }
+  ]
+}

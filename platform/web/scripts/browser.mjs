@@ -34,7 +34,14 @@ class CannotRunHere extends Error {}
 /** Noise a browser produces that says nothing about this app: a tile server refusing a request, an aborted fetch on navigation. */
 const IGNORE = [/favicon/i, /net::ERR_ABORTED/, /tile\.openstreetmap|server\.arcgisonline|opentopomap/i, /Failed to load resource: the server responded with a status of 4\d\d/i];
 
-const browser = await chromium.launch();
+/**
+ * Playwright normally downloads and finds its own Chromium. Where one is already installed — a CI image or a container that
+ * ships a browser but no download — PLAYWRIGHT_CHROMIUM_PATH points at that binary instead, so this check can run there
+ * without `playwright install` fetching a second copy that may not be permitted. --no-sandbox is needed to run as root,
+ * which is how containers usually run.
+ */
+const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
+const browser = await chromium.launch(chromiumPath ? { executablePath: chromiumPath, args: ["--no-sandbox"] } : {});
 const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 
 /** Open a page, collect everything it complains about, and run `check` on it. */
@@ -194,6 +201,67 @@ if (signedIn) {
     await page.getByRole("button", { name: "Run the futures" }).waitFor({ state: "visible", timeout: 15_000 });
     const text = await page.locator("main").innerText();
     if (!/not\s+predictions/i.test(text)) throw new Error("the page does not say the days are not predictions");
+  });
+
+  // The allocation workbench is the one page whose whole point is that editing an input changes the answer. HTTP can prove
+  // the route; only a browser can prove that the form drives it and that the figures on screen are the engine's.
+  await visit("/community", "signed in: the allocation workbench works the specified scenario out and shows who received what", async (page) => {
+    const table = page.getByRole("table", { name: /What each property generated/ });
+    await table.waitFor({ state: "visible", timeout: 25_000 });
+    await page.getByText("COMMUNITY ALLOCATION SIMULATION", { exact: false }).first().waitFor({ state: "visible", timeout: 10_000 });
+
+    // Building A generates 8 kW and uses 3; B generates 2 and uses 4; C generates nothing and uses 3. Lossless, so B must
+    // receive exactly 2 kW, C exactly 3, and the community must buy nothing.
+    const received = async (name) => {
+      const row = page.getByRole("row").filter({ has: page.getByRole("rowheader", { name, exact: true }) });
+      return (await row.getByRole("cell").nth(4).innerText()).trim();
+    };
+    if ((await received("Building B")) !== "2") throw new Error(`Building B received ${await received("Building B")} kW, not 2`);
+    if ((await received("Building C")) !== "3") throw new Error(`Building C received ${await received("Building C")} kW, not 3`);
+    const text = await page.locator("main").innerText();
+    if (!/the community covered itself/.test(text)) throw new Error("the page does not say the community bought nothing, so either the arithmetic or the wording is wrong");
+    if (!/does not move electricity between properties/.test(text)) throw new Error("the page does not say AVISHKAR moves no electricity");
+    if (!/never allocated twice/.test(text)) throw new Error("the page does not explain the steps it applied");
+  });
+
+  await visit("/community", "signed in: editing a figure and recalculating changes the answer", async (page) => {
+    const workbench = page.getByRole("region", { name: "Allocation workbench" });
+    await workbench.getByRole("table", { name: /What each property generated/ }).waitFor({ state: "visible", timeout: 25_000 });
+
+    // Take Building A's sun away: it can no longer cover its neighbours, so the community must start buying.
+    const a = workbench.getByRole("group", { name: "Building A" });
+    const gen = a.getByLabel(/Generating \(kW\)/);
+    await gen.fill("1");
+    await workbench.getByText(/Recalculate to bring them up to date/).waitFor({ state: "visible", timeout: 5000 });
+    await workbench.getByRole("button", { name: "Recalculate" }).click();
+    await workbench.getByText(/Recalculate to bring them up to date/).waitFor({ state: "detached", timeout: 25_000 });
+
+    const text = await workbench.innerText();
+    if (/the community covered itself/.test(text)) throw new Error("with the sun gone the community still claims it bought nothing");
+    const bought = /Bought from the grid\s*\n\s*([\d.,]+) kW/.exec(text);
+    if (!bought) throw new Error("the page no longer reports what was bought");
+    if (!(Number(bought[1].replace(/,/g, "")) > 0)) throw new Error(`with 1 kW of sun against 10 kW of demand the page reports buying ${bought[1]} kW`);
+  });
+
+  await visit("/community", "signed in: a feeder limit is applied and named as the binding constraint", async (page) => {
+    const workbench = page.getByRole("region", { name: "Allocation workbench" });
+    await workbench.getByRole("table", { name: /What each property generated/ }).waitFor({ state: "visible", timeout: 25_000 });
+    await workbench.getByRole("button", { name: /Sunny midday, but the feeder is small/ }).click();
+    await workbench.getByText(/shared feeder was the binding constraint/).waitFor({ state: "visible", timeout: 25_000 });
+
+    const text = await workbench.innerText();
+    // Surplus and demand both exist, but the wires cannot carry it: the community must buy, and the loss must be reported.
+    if (!/Lost \(kW\)|lost carrying it/.test(text)) throw new Error("the constrained scenario does not report the loss of carrying the energy");
+    if (!/The shared feeder/.test(text)) throw new Error("no property is shown as limited by the feeder");
+  });
+
+  await visit("/properties/compare", "signed in: the property comparison view renders the portfolio matrix", async (page) => {
+    await page.getByText(/Property Comparison Matrix/i).first().waitFor({ state: "visible", timeout: 15_000 });
+  });
+
+  await visit(`/property/${propertyId}/planner`, "signed in: the installation planner renders sizing and subsidy calculations", async (page) => {
+    await page.getByText(/Installation Sizing & Investment Planner/i).first().waitFor({ state: "visible", timeout: 15_000 });
+    await page.getByText(/MNRE Benchmark Model/i).first().waitFor({ state: "visible", timeout: 10_000 });
   });
 
   // Drawing a roof is the one thing in the product that can only be done with a mouse on a map, so it has never had a test.

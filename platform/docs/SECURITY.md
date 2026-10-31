@@ -24,27 +24,55 @@ had an independent security review or a penetration test; treat it as a descript
 | Secrets | `.env` files are git-ignored; `.env.example` holds placeholders only. The API refuses to start without a `SESSION_SECRET` of at least 32 characters (in every mode) and, in production with an engine URL, without an engine key | `api/src/config.ts` |
 | Honesty as a safety property | `LIVE` is derived from freshness and cannot be chosen; a provider failure becomes an error or a stale-marked value, never invented data; browser location is never labelled NavIC; the Copilot cannot state a number no backend tool returned (`api/src/copilot/guard.ts`) | see STATUS rows 0-4 and 90 |
 
+## Phase 1 hardening (2026-10-22)
+
+These four protections were added in the `fix/phase-1-security-hardening` branch. They are implemented in code and covered by tests;
+the remaining gaps below are unchanged.
+
+- **Engine authentication cannot be bypassed in production.** `ENGINE_INSECURE_DEV` is refused when `NODE_ENV=production` at app
+  build time, with a clear `EngineConfigError`. The engine still starts open in development (the documented local workflow) and still
+  requires a 16+ character `ENGINE_API_KEY` in every other mode. Five new tests cover production+bypass rejected, production+key
+  enforced, dev compatibility, and malformed/missing credentials.
+- **The web CSP no longer needs `'unsafe-inline'` for scripts.** The one inline script that existed (the theme picker, which only
+  touches our own `localStorage`) is now allowed by its SHA-256 hash instead. Production `script-src` is
+  `script-src 'self' 'sha256-CziUIgdwQiAXOHBEaXV2OraoUnQkXqcY/0vH3bIKftk='` (as in `web/src/lib/csp.ts`; this line was corrected on 2026-10-27, it had shown a hash that was never in the code); development keeps `'unsafe-inline' 'unsafe-eval'` for hot reload.
+  Next.js 16's own hydration scripts are still served, and they carry their own nonce. The hash is computed from the script the layout
+  actually renders, and a test pins the two together so a hand-edit cannot drift.
+- **Secrets template is safe and documented.** `secrets_emhass(example).yaml` is a template of placeholders only (every value is a
+  placeholder or a clearly fake token). `.gitignore` now refuses any `secrets_*.yaml` except this one documented template, and a test
+  confirms the template still parses as YAML with no real-looking values.
+- **Proxy trust is bounded.** `TRUST_PROXY` now accepts a hop count (`"1"`), `"true"` (trust every hop, only for a fully controlled
+  proxy) or `"false"`, and defaults to `false` (never trust forwarded headers). The Compose file sets `"1"` because the web app is the
+  only externally-exposed service and is exactly one hop from the API. A forged `X-Forwarded-For` from any other client now has no effect
+  unless it arrives on a trusted hop, and `req.ip` used by rate limiting and the audit log is the connection peer when nothing is trusted.
+
+## Fixed on 2026-10-27
+
+- **The plan drift check did not check ownership.** `GET /api/properties/:id/plan/drift` passed only the property id to its
+  service, so any signed-in user could read how another owner's meter readings compared with their latest plan. It now checks
+  `(id, userId)` like every other plan route and answers 404 otherwise (`api/test/plan.test.ts`, the ownership case).
+
 ## What is not done
 
 These are real gaps. None is hidden by the code; several are the owner's decision.
 
-- **The web app's Content-Security-Policy still allows inline scripts and styles.** Pages are served with a CSP (own origin only for
-  code and data, the three tile hosts and any provider set in `NEXT_PUBLIC_OSM_TILE_URL` for map tiles, no framing, no plugins,
-  `nosniff`, a restrictive referrer policy and a permissions policy that allows only the position sensor), but Next writes the data a
-  page hydrates from into inline scripts, so `'unsafe-inline'` is needed: the policy stops a script from a foreign host, not an injected
-  inline one. A nonce-based policy needs every page rendered per request. No `Strict-Transport-Security`: that belongs with the TLS
-  at the proxy.
+- **The web app's Content-Security-Policy still allows inline styles.** `style-src 'self' 'unsafe-inline'` remains because Next.js 16
+  injects per-page `<style>` elements for CSS that cannot be moved to a file without a larger change. A nonce-based policy needs every
+  page rendered per request, which is a larger change than this one. No `Strict-Transport-Security`: that belongs with the TLS at the
+  proxy.
 - **No email verification, password reset or two-factor sign-in.** Anyone can register any email address, and a forgotten
   password cannot be recovered. There is no mail provider configured.
 - **Registering an existing address says so** (`EMAIL_TAKEN`, 409), so anyone can test whether an address has an account. Login
   does not leak this (same message and same cost for an unknown email), but registration does.
 - **No account lockout.** Brute force is slowed only by the per-client rate limit (10 a minute on login) and argon2's cost.
   Behind a proxy, `TRUST_PROXY=true` must be set or every client shares one address.
-- **The administrator role is granted from the command line only** (`pnpm -C platform/api db:make-admin <email>`, audited as
-  `admin.grant`): no route can make an administrator, and a registration always makes an ordinary user (both tested). The
-  admin routes (`/api/admin/*`) answer 403 to anyone else. An administrator sees counts and aggregates, never another person's
-  readings, equipment or plans, but the audit log they can read does carry email addresses and IP addresses. There is one
-  administrator role with no finer permissions, no second-person approval for anything, and no two-factor sign-in for it.
+- **The initial administrator role is granted from the command line** (`pnpm -C platform/api db:make-admin <email>`, audited as
+  `admin.grant`). Once an administrator exists, user role promotion and demotion between USER and ADMIN can be managed
+  via `PATCH /api/admin/users/:id/role` (audited as `admin.user.role_change`), with server-side protection preventing self-demotion.
+  The admin routes (`/api/admin/*`) answer 403 to non-administrators. Administrators can list users (`GET /api/admin/users`) and
+  verify unverified tariff orders (`PATCH /api/admin/tariffs/:id`, audited as `admin.tariff.update`). An administrator sees
+  counts and aggregates, never another person's private readings, equipment or plans. The audit log they read records emails,
+  actions, and IP addresses.
 - **`/api/system/health` is public** and shows provider names, call counts, latencies and the last error text of each public
   provider. It contains no secrets, but it is information about the deployment; restrict it at the proxy if that matters.
 - **No dependency or container scanning in CI**, and no signed releases. Both audits were run by hand on 2026-10-09, and the

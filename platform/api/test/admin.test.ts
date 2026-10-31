@@ -10,7 +10,7 @@ describeDb("the admin API", () => {
   let t: TestApp;
   let admin: Session;
   let user: Session;
-  const call = (method: "GET" | "POST", url: string, session: Session | null = admin, payload?: unknown) =>
+  const call = (method: "GET" | "POST" | "PATCH", url: string, session: Session | null = admin, payload?: unknown) =>
     t.app.inject({ method, url, cookies: session?.cookies, headers: session?.headers, payload: payload as never });
 
   beforeEach(async () => {
@@ -130,6 +130,41 @@ describeDb("the admin API", () => {
     expect((await call("GET", "/api/admin/audit?limit=0")).statusCode).toBe(400);
     expect((await call("GET", "/api/admin/audit?limit=500")).statusCode).toBe(400);
     expect((await call("GET", "/api/admin/audit?before=abc")).statusCode).toBe(400);
+  });
+
+  it("lists all user accounts with roles and property counts", async () => {
+    const res = await call("GET", "/api/admin/users");
+    expect(res.statusCode).toBe(200);
+    const users = res.json().users;
+    expect(users.length).toBeGreaterThanOrEqual(2);
+    const adminUser = users.find((u: { email: string }) => u.email === "admin@example.com");
+    expect(adminUser).toMatchObject({ role: "ADMIN" });
+  });
+
+  it("allows an admin to promote or demote a user role", async () => {
+    const someone = await db().user.findUniqueOrThrow({ where: { email: "someone@example.com" } });
+    const promote = await call("PATCH", `/api/admin/users/${someone.id}/role`, admin, { role: "ADMIN" });
+    expect(promote.statusCode).toBe(200);
+    expect(promote.json().role).toBe("ADMIN");
+    expect((await db().user.findUniqueOrThrow({ where: { id: someone.id } })).role).toBe("ADMIN");
+
+    const demote = await call("PATCH", `/api/admin/users/${someone.id}/role`, admin, { role: "USER" });
+    expect(demote.statusCode).toBe(200);
+    expect(demote.json().role).toBe("USER");
+    expect((await db().user.findUniqueOrThrow({ where: { id: someone.id } })).role).toBe("USER");
+  });
+
+  it("allows an admin to update tariff verification status and expiry", async () => {
+    const mathura = await db().tariffPlan.findFirstOrThrow({ where: { seedKey: "curated:home-mathura" } });
+    const res = await call("PATCH", `/api/admin/tariffs/${mathura.id}`, admin, {
+      verifiedAt: "2026-10-26T12:00:00.000Z",
+      effectiveTo: "2027-03-31T00:00:00.000Z",
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      id: mathura.id,
+      verifiedAt: "2026-10-26T12:00:00.000Z",
+    });
   });
 });
 

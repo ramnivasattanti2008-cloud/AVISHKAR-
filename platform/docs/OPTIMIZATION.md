@@ -45,6 +45,21 @@ Six modes change only the weights, and the weights are returned with every plan 
 
 The weights are preferences, not prices: **the cost reported is always at the true prices**, whatever the mode weighted.
 
+## Allowing for a worse day (risk-aware)
+
+A plan asked with `riskAversion` above 0 is made for several possible days at once: the central forecast, and the bad ends of
+the forecasts' own bands that exist for those hours (less sun, more demand, and both together; more sun is no risk to the bill).
+The battery, vehicle and appliance schedule is decided once and shared by all of them, because it has to be decided ahead; grid
+use, solar use and unserved load are separate per day, each with its own energy balance. The objective is
+
+    (1 - aversion) x sum_k w_k cost_k  +  aversion x CVaR_alpha(cost)
+
+with CVaR in its linear form (eta + sum_k w_k u_k / (1 - alpha), u_k >= cost_k - eta, u_k >= 0), so the programme stays an LP
+(or MILP) for HiGHS. The central forecast has weight 0.5 and the band days share the other 0.5; alpha is 0.8. Both are settings,
+not probabilities, and each plan says so. The schedule shown is the central day's, so the validator and the baseline are
+unchanged; the plan also lists each day's cost at the true prices (battery wear included, the same on every day), their weighted
+average and the CVaR. Without a band, or without a battery (nothing is decided ahead), the plan says risk was not applied.
+
 ## Never trusted on its own account
 
 `validate` recomputes the physics from the returned schedule and nothing else: energy balance at every step, no negative flow,
@@ -79,10 +94,11 @@ climatology scaled to a clear-sky day. This ignores cloudy-day variability, whic
 
 ## Not done
 
-- No risk-aware objective: the plan uses the median forecast and does not hedge against the band.
+- Risk-aware plans use the ends of the marginal bands as whole days; there is no joint scenario sampling and no chance constraint.
 - No outage data, so `RESILIENCE` holds a reserve for the hours asked; it does not predict outages.
 - No carbon weighting from a sourced table (none exists in the platform); only an intensity the owner supplies is used.
 - One battery (several are summed), one vehicle, one run per appliance per plan.
-- Plans are not rolling: nothing re-plans when a forecast changes.
+- Plans are not rolling: nothing re-plans by itself. `GET /api/properties/:id/plan/drift` compares the latest plan's demand with
+  the meter readings for its hours that have passed and suggests a new plan beyond a 15% tolerance.
 - No net-metering settlement and no demand charge.
-- No battery degradation model beyond the owner's wear cost per kWh; no cycle limit.
+- No battery degradation model beyond the owner's wear cost per kWh. The owner's `maxCyclesPerDay`, when every installed battery has one, caps the energy drawn from the store over the horizon; the optimiser and the independent check both enforce it.

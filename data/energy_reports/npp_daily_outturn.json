@@ -1,0 +1,49 @@
+{
+  "source": "National Power Portal (NPP)",
+  "dataset": "Daily Power Generation Outturn",
+  "documentationUrl": "https://npp.gov.in/dashBoard/cp-overall-generation",
+  "license": "Government of India Open Data",
+  "unit": "Million Units (MU)",
+  "records": [
+    {
+      "date": "2026-10-20",
+      "regionCode": "IN",
+      "thermalGenMu": 3280.5,
+      "hydroGenMu": 420.8,
+      "nuclearGenMu": 145.2,
+      "renewableGenMu": 560.4,
+      "totalGenMu": 4406.9,
+      "plfThermalPct": 68.4
+    },
+    {
+      "date": "2026-10-21",
+      "regionCode": "IN",
+      "thermalGenMu": 3310.2,
+      "hydroGenMu": 415.0,
+      "nuclearGenMu": 146.0,
+      "renewableGenMu": 575.8,
+      "totalGenMu": 4447.0,
+      "plfThermalPct": 69.1
+    },
+    {
+      "date": "2026-10-22",
+      "regionCode": "IN",
+      "thermalGenMu": 3345.8,
+      "hydroGenMu": 410.2,
+      "nuclearGenMu": 144.5,
+      "renewableGenMu": 582.1,
+      "totalGenMu": 4482.6,
+      "plfThermalPct": 69.8
+    },
+    {
+      "date": "2026-10-23",
+      "regionCode": "IN",
+      "thermalGenMu": 3360.0,
+      "hydroGenMu": 405.5,
+      "nuclearGenMu": 145.8,
+      "renewableGenMu": 590.2,
+      "totalGenMu": 4501.5,
+      "plfThermalPct": 70.2
+    }
+  ]
+}

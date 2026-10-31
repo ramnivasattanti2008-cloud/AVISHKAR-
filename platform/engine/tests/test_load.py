@@ -131,6 +131,18 @@ class TestForecast:
         h = history(days=60, seed=6)
         assert run(h).model_dump() == run(h).model_dump()
 
+    def test_forecast_cache_hits_and_clears(self):
+        load.clear_cache()
+        h = history(days=60, seed=9)
+        r1 = run(h)
+        # Calling run(h) immediately returns the exact cached object
+        r2 = run(h)
+        assert r1 is r2
+        load.clear_cache()
+        r3 = run(h)
+        assert r3 is not r1
+        assert r3.model_dump() == r1.model_dump()
+
     def test_seasonality_is_only_claimed_when_there_is_a_year_to_learn_it_from(self):
         short = run(history(days=70))
         long = run(history(days=330, noise=0.1, seed=7))

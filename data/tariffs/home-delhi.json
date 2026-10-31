@@ -1,0 +1,33 @@
+{
+  "name": "BSES Rajdhani Domestic FY2025-26",
+  "source": "DERC Domestic Tariff Schedule FY2025-26: Telescopic slabs 0-200 kWh @ 3.00, 201-400 @ 4.50, 401-800 @ 6.50, 801-1200 @ 7.00, >1200 @ 8.00 Rs/kWh. Modelled at typical slab 6.50 Rs/kWh; fixed charge Rs 70/kW/month; net-metering settlement at DERC average power purchase cost.",
+  "tou_blocks": [
+    [
+      0,
+      24,
+      6.5
+    ]
+  ],
+  "export_rate": 3.8,
+  "p2p_charges": 0.5,
+  "shortfall_penalty": 5.0,
+  "meta": {
+    "state": "DL",
+    "discom": "BRPL",
+    "category": "Domestic",
+    "consumerType": "RESIDENTIAL",
+    "tariffYear": "FY2025-26",
+    "effectiveFrom": "2025-04-01",
+    "effectiveTo": "2026-03-31",
+    "fixedCharge": {
+      "amountInr": 70,
+      "basis": "PER_KW_MONTH"
+    },
+    "exportRateBasis": "REGULATOR_ORDER",
+    "meteringMode": "NET_METERING",
+    "notes": [
+      "DERC FY2025-26 residential schedule. Modelled at representative domestic slab 6.50 INR/kWh (excluding Delhi government subsidy).",
+      "Solar generation export settled under DERC Net Metering Regulations at APPC."
+    ]
+  }
+}

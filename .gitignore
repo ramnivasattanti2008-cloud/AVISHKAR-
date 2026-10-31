@@ -15,6 +15,8 @@ data/adjust_pv_regressor.pkl
 data/debug-*.csv
 # Scratch copy of a meter file uploaded in the dashboard:
 data/real/uploaded_*.csv
+# Temporary external clone repositories:
+tmp_repos/
 # examples/analyze_my_site.py output:
 my_site_report.md
 .streamlit/credentials.toml
@@ -40,15 +42,42 @@ platform/**/.env.local
 !.env.example
 !**/.env.example
 
+# Real secret files (any name starting with secrets_) are never committed. The one exception is the
+# documented template, which carries only placeholders and is tracked so the names exist.
+secrets_*.yaml
+secrets_*.yml
+!secrets_emhass(example).yaml
+
+# Database backups and recovery dumps
+*.dump
+*.dump.*
+*.dump.sha256
+*.dump.gpg
+*.dump.gpg.sha256
+*.dump.enc
+*.dump.enc.sha256
 # Database backups and recovery dumps
 *.dump
 *.dump.sha256
 *.sql.gz
 platform/backups/
+# Runtime logs from start-platform.sh. They are local and contain nothing but this machine's own request lines,
+# but they are output, not source. Three of them were committed by accident on 2026-10-30 and untracked again.
+platform/.logs/
 backups/
 
 # Prisma client is generated (pnpm db:generate), never committed
 platform/api/src/generated/
+
+# SQLite databases
+*.db
+*.db-journal
+*.sqlite
+
+# Local binaries and tunnel tools (downloaded at runtime)
+tools/
+*.exe
+
 
 # OS and editor files
 .DS_Store
@@ -56,7 +85,7 @@ Thumbs.db
 *.swp
 *.swo
 
-
-# Firebase hosting internal cache and local backups
+# Firebase runtime caches and debug logs
 .firebase/
-frontend_backup/
+firebase-debug.log
+firebase-debug.*.log

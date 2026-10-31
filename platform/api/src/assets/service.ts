@@ -150,6 +150,13 @@ export async function updateBattery(db: Db, userId: string, propertyId: string, 
   return toBatteryDto(await db.battery.update({ where: { id }, data }));
 }
 
+export async function getBattery(db: Db, userId: string, propertyId: string, id: string) {
+  await ownProperty(db, userId, propertyId);
+  const row = await db.battery.findFirst({ where: { id, propertyId } });
+  if (!row) throw new AppError("NOT_FOUND", "No such battery.");
+  return toBatteryDto(row);
+}
+
 export async function deleteBattery(db: Db, userId: string, propertyId: string, id: string): Promise<void> {
   await ownProperty(db, userId, propertyId);
   const { count } = await db.battery.deleteMany({ where: { id, propertyId } });
@@ -237,6 +244,7 @@ export function toEvDto(e: Ev) {
     currentSocAt: iso(e.currentSocAt),
     departureTime: e.departureTime,
     departureDays: e.departureDays,
+    arrivalTime: e.arrivalTime,
     entered: { chargerEfficiency: e.chargerEfficiency },
     effective: { chargerEfficiency: param(e.chargerEfficiency, DEFAULTS.ev.chargerEfficiency) },
     notes: e.notes,
@@ -253,6 +261,7 @@ const evData = (v: z.output<typeof EvInput>, now: Date): Prisma.EvUncheckedUpdat
   currentSocAt: v.currentSoc == null ? null : now,
   departureTime: v.departureTime,
   departureDays: [...v.departureDays].sort((a, b) => a - b),
+  arrivalTime: v.arrivalTime ?? null,
   notes: v.notes ?? null,
 });
 
@@ -265,6 +274,7 @@ const evAsInput = (e: Ev): Record<string, unknown> => ({
   currentSoc: e.currentSoc,
   departureTime: e.departureTime,
   departureDays: e.departureDays,
+  arrivalTime: e.arrivalTime,
   notes: e.notes,
 });
 

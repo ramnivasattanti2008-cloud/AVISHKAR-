@@ -7,6 +7,10 @@ export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   // The time zone is pinned so date formatting and day boundaries are the same on every machine and in CI.
   test: {
+    pool: "forks",
+    // Each file gets its own module registry. With `isolate: false` the files that share a worker share their `vi.mock`s and
+    // module state, so results depended on how files were spread over workers (64 failures on one worker, 12 on two).
+    isolate: true,
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],

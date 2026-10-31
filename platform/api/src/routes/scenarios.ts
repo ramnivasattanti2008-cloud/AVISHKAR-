@@ -4,6 +4,7 @@ import type { AppDeps } from "../app.js";
 import { audit } from "../audit.js";
 import { requireUser } from "../auth/hooks.js";
 import { ScenarioRequest, ScenarioSchema, ScenarioSummarySchema } from "../scenarios/schemas.js";
+import { scenarioCsv } from "../scenarios/export.js";
 import { deleteScenario, getScenario, listScenarios, runScenario } from "../scenarios/service.js";
 import { ErrorResponse } from "../schemas.js";
 
@@ -44,6 +45,27 @@ export const scenarioRoutes: FastifyPluginAsyncZod<{ deps: AppDeps }> = async (a
 
   app.get("/api/properties/:id/scenarios/:scenarioId", { ...auth, schema: { tags: ["scenarios"], summary: "One scenario as it was shown", params: PS, response: { 200: ScenarioSchema, ...errs } } }, async (req) =>
     getScenario(deps.db, req.user!.id, req.params.id, req.params.scenarioId),
+  );
+
+  app.get(
+    "/api/properties/:id/scenarios/:scenarioId/export.csv",
+    {
+      ...auth,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      schema: {
+        tags: ["scenarios"],
+        summary: "Download one stored what-if as CSV",
+        description: "One row per month, today's setup beside the changed one, then the year. The first lines (starting with #) say it is an ESTIMATE from typical days and give the economics with their assumptions. Nothing is recomputed.",
+        params: PS,
+        response: { 200: z.string(), ...errs },
+      },
+    },
+    async (req, reply) => {
+      const s = await getScenario(deps.db, req.user!.id, req.params.id, req.params.scenarioId);
+      await audit(deps.db, { userId: req.user!.id, action: "scenario.export", entityType: "property", entityId: req.params.id, requestId: req.id, ip: req.ip, detail: { scenarioId: s.id } });
+      reply.header("content-type", "text/csv; charset=utf-8").header("content-disposition", `attachment; filename="avishkar-what-if-${s.id}.csv"`);
+      return scenarioCsv(s);
+    },
   );
 
   app.delete("/api/properties/:id/scenarios/:scenarioId", { ...auth, schema: { tags: ["scenarios"], summary: "Delete a scenario", params: PS, response: { 204: z.null(), ...errs } } }, async (req, reply) => {

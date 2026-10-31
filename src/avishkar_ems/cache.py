@@ -38,7 +38,7 @@ FAULT_FACTOR = 0.6  # the dashboard's "inject a string fault" switch scales that
 _LIBS = ("numpy", "pandas", "scikit-learn", "pvlib", "highspy", "cvxpy", "skforecast")
 # Modules that turn results into text or extra views and never feed numbers back into a cached or published result.
 # Anything not listed here is assumed to compute results, so editing it marks the cache and results/ stale.
-_PRESENTATION_ONLY = frozenset({"report.py", "mysite.py", "lifetime.py", "explain.py", "summary.py"})
+_PRESENTATION_ONLY = frozenset({"report.py", "mysite.py", "lifetime.py", "explain.py", "summary.py", "arka_assistant.py"})
 # Keys of a policy rule that describe it to a reader without being a number the EMS uses (see `_as_the_ems_reads_it`).
 _POLICY_WORDING = frozenset({"description", "statedAs", "conditions", "notes"})
 
