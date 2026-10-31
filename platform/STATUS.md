@@ -219,3 +219,15 @@ target (under 3 s) is a browser measurement the bench does not make. Full table 
 | The containerised stack end to end | **DONE** | `journey` 41/41, `browser` 21/21, `smoke` 12/12 against the containers. |
 | The map in a containerised deployment | **DONE**, after a fix | It was **blank in every container**. `basemaps.ts` chose its tile URL with `??`, and this compose file passes `NEXT_PUBLIC_OSM_TILE_URL` as an empty string when no tile service is chosen; `??` falls through only on null and undefined, so the empty string became the tile template and the map asked its own origin for `/{z}/{x}/{y}.png`. Measured on the running container: 0 tile requests, 22 decode errors, a 12 KB canvas; after the fix 41 requests, 0 errors, a 569 KB canvas. 10 new tests in `web/src/lib/basemaps.test.ts`. |
 | On a real host, behind TLS, with a tile provider | **NOT VERIFIED** | Built and run in this container only. TLS termination, a domain, and a tile service with a usage policy are still the operator's to supply. |
+
+### Reference UI & Multi-Platform Web Synchronization, 2026-10-31
+
+| Item | Status | Evidence |
+|---|---|---|
+| Reference Hero Card & Personal Places Sync | **DONE** | Ported the exact Reference UI (Sharma Niwas residence hero card, active session banner, personal places switcher, animated SVG power flow, Arka AI Copilot, 15-tab lifecycle suite) to Next.js `platform/web/src/app/page.tsx` and `frontend/index.html`. |
+| Platform Web Tests | **DONE** | `pnpm -C platform/web test`: **399 passed across 46 test files** in 195.37s. |
+| Platform Web Typecheck | **DONE** | `pnpm -C platform/web typecheck` (`tsc --noEmit`): **0 errors**. |
+| Platform Web Lint | **DONE** | `pnpm -C platform/web lint` (`eslint src`): **0 errors, 0 warnings**. |
+| Platform Web Production Build | **DONE** | `pnpm -C platform/web build`: Next.js 16.3.8 optimized production build generated 26 routes cleanly. |
+| Firebase Hosting Deploy | **DONE** | `firebase deploy --only hosting --project studio-4547798402-ec0aa`: deployed live to `https://studio-4547798402-ec0aa.web.app` (verified `HTTP/1.1 200 OK`). |
+| Streamlit App & Multi-Tab Stability | **DONE** | All 15 tabs tested via `AppTest` with **0 exceptions**; site switching verified with **0 exceptions**; live daemon `http://127.0.0.1:8501` returning `HTTP/1.1 200 OK`. |

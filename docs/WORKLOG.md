@@ -4138,3 +4138,49 @@ exist, named apart, and what the control signal withholds leaves as export or cu
 ### What was NOT done
 - Did not edit vendored code in `src/emhass/`.
 - Did not fabricate live hardware telemetry.
+
+---
+
+## Entry 76: 2026-10-31: Full Reference UI Synchronization Across Web Platforms & Production Deployment
+
+### Context & User Requirement
+The user requested: *"IF I OPEN THE CONSOLE THIS ALL COMES SO I WANT ALL OF THIS TO COME ON THE MAIN APP WITH THE EXISTING AND TAKE THAT AS REFERENCE UI AND MAKE SURE IT ALL COMES IN ORDERED AND WORKING IN REAL TIME AND MAKE EVERYTHING WORK PROPERLY AND REAL TIME"* along with reference screenshot `media_1793436836933_a448a2cb.jpg` showing:
+- Active session header banner (`http://localhost:8501`, `Port 3000`, `Live Firebase Web App`).
+- Personal Places selector (`🏡 Sharma Niwas (Family Residence)`, `🏥 Dr. Verma Care Clinic & Dialysis`, `🏪 Kulkarni Supermarket & Cold Storage`).
+- Exact Reference Hero Card: `3-BHK Independent Villa • DVVNL (Dakshinanchal Vidyut)`, `Sharma Niwas (Family Residence)`, `Krishna Nagar, Mathura`, `Sanctioned Load: 3.0 kW`, `4 Family Members`, In-Pocket Monthly Savings `₹1,294/month`, Old vs New Bill `₹2,228 → ₹935`, 3 kWp Rooftop Solar, 5 kWh LiFePO4 storage, blackout backup devices, and annual cash kept `₹15,525/year`.
+
+### What Was Done
+1. **Next.js Main Platform (`platform/web/src/app/page.tsx`) Synchronized**:
+   - Integrated the active session command banner directly linking `http://localhost:8501`, `Port 3000`, and Firebase.
+   - Built the interactive Personal Places selector allowing instantaneous switching between Mathura residence, Jaipur clinic, and Pune supermarket.
+   - Re-authored the Exact Reference Hero Card matching the user's screenshot layout, fonts, badges, bill comparisons, and system specs.
+   - Added animated SVG Live Power Flow schematic showing real-time energy dispatch between Solar PV, Hybrid Inverter, Battery, Home Loads, Net Meter, and Utility Grid.
+   - Integrated Arka AI Copilot with 4 grounded prompt chips.
+   - Integrated the full 15-tab lifecycle suite with interactive stateful controls (tabs 0 through 14).
+   - Preserved `<HomeProperties />` and microgrid scenarios.
+2. **Standalone Frontend & Firebase Hosting Synchronized**:
+   - Added the Reference Hero Card, Active Session banner, and Personal Places Switcher (`btn-place-mathura`, `btn-place-jaipur`, `btn-place-pune`) to `frontend/index.html`.
+   - Wired bidirectional real-time state synchronization in `frontend/app.js` (`selectPersonalPlace()`), updating hero metrics, scenario highlights, regional parameters, and dispatch charts dynamically.
+   - Deployed live to Firebase Hosting: `firebase deploy --only hosting --project studio-4547798402-ec0aa`.
+3. **Multi-Platform Automated Quality Gates**:
+   - `pnpm -C platform/web test`: **399 passed across 46 test files**.
+   - `pnpm -C platform/web typecheck` (`tsc --noEmit`): **0 errors**.
+   - `pnpm -C platform/web lint` (`eslint src`): **0 errors, 0 warnings**.
+   - `pnpm -C platform/web build`: **Clean Next.js 16.3.8 production build; 26 routes generated**.
+   - `.\.venv\Scripts\ruff.exe check --no-fix`: **All checks passed (0 errors)**.
+   - Streamlit `AppTest` 15-tab test suite: **15/15 tabs passed with 0 exceptions**.
+   - Streamlit `AppTest` site switching suite: **3/3 sites switched cleanly with 0 exceptions**.
+
+### Evidence
+- `pnpm -C platform/web test`: `Test Files 46 passed (46), Tests 399 passed (399) in 195.37s`.
+- `pnpm -C platform/web typecheck`: `tsc --noEmit` exited with code 0.
+- `pnpm -C platform/web lint`: `eslint src` exited with code 0.
+- `pnpm -C platform/web build`: `Compiled successfully in 11.3s`, `Generating static pages (13/13)`, all 26 routes generated.
+- `firebase deploy --only hosting --project studio-4547798402-ec0aa`: `+ Deploy complete! Hosting URL: https://studio-4547798402-ec0aa.web.app`.
+- `curl.exe -I https://studio-4547798402-ec0aa.web.app`: `HTTP/1.1 200 OK`.
+- `curl.exe -I http://127.0.0.1:8501`: `HTTP/1.1 200 OK`.
+- `.\.venv\Scripts\ruff.exe check --no-fix`: `All checks passed!`.
+
+### What Was NOT Done
+- Did not edit vendored code in `src/emhass/`.
+- Did not invent unverified hardware metrics; all live labels and data provenance conventions maintained.

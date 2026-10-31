@@ -441,6 +441,7 @@ function initScenarioCards() {
       document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
       card.classList.add('active');
       activeHub = card.dataset.scenario;
+      selectPersonalPlace(activeHub);
       const dropdown = document.getElementById('hub-selector-dropdown');
       if (dropdown) dropdown.value = activeHub;
       updateHubData();
@@ -978,7 +979,125 @@ function initArkaAiCopilot() {
   });
 }
 
+
+// ============================================================================
+// PERSONAL PLACES & REFERENCE HERO CARD SYNCHRONIZATION
+// ============================================================================
+const PERSONAL_PLACES_DATA = {
+  mathura: {
+    title: "Sharma Niwas (Family Residence)",
+    subtitle: "Personal Home Energy Intelligence • Krishna Nagar, Mathura, Uttar Pradesh (DVVNL (Dakshinanchal Vidyut))",
+    pill: "3-BHK Independent Villa • DVVNL (Dakshinanchal Vidyut)",
+    name: "Sharma Niwas (Family Residence)",
+    meta: "📍 Krishna Nagar, Mathura, Uttar Pradesh • ⚡ Sanctioned Load: 3.0 kW • 👨‍👩‍👧‍👦 4 Family Members (Parents + 2 Kids)",
+    savings: "₹1,294",
+    savingsSub: "/ month",
+    oldBill: "₹2,228",
+    newBill: "₹935",
+    array: "🌞 <b>My Rooftop Array:</b> 3 kWp Rooftop Solar (6 Mono PERC Panels)",
+    battery: "🔋 <b>Inverter & Storage:</b> 5 kWh LiFePO4 Inverter Storage (51.2V 100Ah)",
+    backup: "🛡️ <b>Blackout Backup Devices:</b> LED Lights, Fans, Refrigerator, Wi-Fi, Laptops",
+    cash: "💰 <b>Annual Cash Kept:</b> <span style=\"color: #34d399; font-weight: 700;\">₹15,525/year</span>"
+  },
+  jaipur: {
+    title: "Dr. Verma Care Clinic & Dialysis",
+    subtitle: "Healthcare Clinic Energy Intelligence • Malviya Nagar, Jaipur, Rajasthan (JVVNL (Jaipur Vidyut))",
+    pill: "Healthcare Clinic & Dialysis • JVVNL (Jaipur Vidyut)",
+    name: "Dr. Verma Care Clinic & Dialysis",
+    meta: "📍 Malviya Nagar, Jaipur, Rajasthan • ⚡ Sanctioned Load: 25.0 kW • 🏥 Critical Care Beds & Cold Storage",
+    savings: "₹14,850",
+    savingsSub: "/ month",
+    oldBill: "₹28,400",
+    newBill: "₹13,550",
+    array: "🌞 <b>My Rooftop Array:</b> 30 kWp Rooftop Solar (54 Bifacial Panels)",
+    battery: "🔋 <b>Inverter & Storage:</b> 40 kWh High-C LiFePO4 Hospital Storage",
+    backup: "🛡️ <b>Blackout Backup Devices:</b> Dialysis units, ICU monitors, vaccine fridge, OT lights",
+    cash: "💰 <b>Annual Cash Kept:</b> <span style=\"color: #34d399; font-weight: 700;\">₹1,78,200/year</span>"
+  },
+  pune: {
+    title: "Kulkarni Supermarket & Cold Storage",
+    subtitle: "Commercial Enterprise Energy Intelligence • Kothrud, Pune, Maharashtra (MSEDCL)",
+    pill: "Commercial Supermarket • MSEDCL",
+    name: "Kulkarni Supermarket & Cold Storage",
+    meta: "📍 Kothrud, Pune, Maharashtra • ⚡ Sanctioned Load: 15.0 kW • 🏪 Retail Floor & Deep Chillers",
+    savings: "₹8,420",
+    savingsSub: "/ month",
+    oldBill: "₹18,250",
+    newBill: "₹9,830",
+    array: "🌞 <b>My Rooftop Array:</b> 15 kWp Rooftop Solar (28 High-Yield Panels)",
+    battery: "🔋 <b>Inverter & Storage:</b> 20 kWh Commercial LiFePO4 Bank",
+    backup: "🛡️ <b>Blackout Backup Devices:</b> Deep freezers, POS checkout terminals, security cameras",
+    cash: "💰 <b>Annual Cash Kept:</b> <span style=\"color: #34d399; font-weight: 700;\">₹1,01,040/year</span>"
+  }
+};
+
+function selectPersonalPlace(placeKey) {
+  const p = PERSONAL_PLACES_DATA[placeKey];
+  if (!p) return;
+
+  document.querySelectorAll('.btn-ref-place').forEach(btn => {
+    const isAct = btn.dataset.place === placeKey;
+    btn.classList.toggle('active', isAct);
+    btn.style.border = isAct ? '1px solid #3b82f6' : '1px solid rgba(255, 255, 255, 0.08)';
+    btn.style.background = isAct ? 'rgba(30, 41, 59, 0.8)' : 'rgba(30, 41, 59, 0.4)';
+  });
+
+  const titleEl = document.getElementById('ref-hero-title');
+  if (titleEl) titleEl.textContent = p.title;
+
+  const subEl = document.getElementById('ref-hero-subtitle');
+  if (subEl) subEl.textContent = p.subtitle;
+
+  const pillEl = document.getElementById('ref-card-pill');
+  if (pillEl) pillEl.textContent = p.pill;
+
+  const nameEl = document.getElementById('ref-card-name');
+  if (nameEl) nameEl.textContent = p.name;
+
+  const metaEl = document.getElementById('ref-card-meta');
+  if (metaEl) metaEl.textContent = p.meta;
+
+  const savEl = document.getElementById('ref-card-savings');
+  if (savEl) savEl.innerHTML = `${p.savings} <span style="font-size: 13px; font-weight: 500; color: #a7f3d0;">${p.savingsSub}</span>`;
+
+  const billEl = document.getElementById('ref-card-bill');
+  if (billEl) billEl.innerHTML = `<span style="text-decoration: line-through; color: #94a3b8; font-size: 14px; margin-right: 6px;">${p.oldBill}</span> <span style="color: #38bdf8; font-size: 22px; font-weight: 900;">${p.newBill}</span>`;
+
+  const arrEl = document.getElementById('ref-spec-array');
+  if (arrEl) arrEl.innerHTML = p.array;
+
+  const batEl = document.getElementById('ref-spec-battery');
+  if (batEl) batEl.innerHTML = p.battery;
+
+  const backEl = document.getElementById('ref-spec-backup');
+  if (backEl) backEl.innerHTML = p.backup;
+
+  const cashEl = document.getElementById('ref-spec-cash');
+  if (cashEl) cashEl.innerHTML = p.cash;
+
+  // Also sync scenario cards and activeHub if matching
+  if (REGIONAL_HUBS[placeKey]) {
+    activeHub = placeKey;
+    document.querySelectorAll('.scenario-card').forEach(c => {
+      c.classList.toggle('active', c.dataset.scenario === placeKey);
+    });
+    const dropdown = document.getElementById('hub-selector-dropdown');
+    if (dropdown) dropdown.value = placeKey;
+    updateHubData();
+    drawDispatchChart();
+  }
+}
+
+function initPersonalPlaces() {
+  document.querySelectorAll('.btn-ref-place').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectPersonalPlace(btn.dataset.place);
+    });
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initPersonalPlaces();
   initArkaAiCopilot();
   initCelestialTheme();
   initSpotlightCards();
