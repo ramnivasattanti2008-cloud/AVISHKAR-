@@ -43,7 +43,7 @@ and the row names it.
 | **Improves** | Surplus is now feedback-free (the EMS's own load draw is added back, so the controller does not chase its own tail), clamped to the generation (so a load running off the battery at night is not read as surplus), and aware of an import the sun did not fund, of a zero-export inverter's deliberate 100 W import, and of a charger's own grid draw |
 | **Tests** | **49 of upstream's own tests, verbatim**, run against this copy: `tests/avishkar_ems/test_vendored_sem_surplus.py`. Plus 26 of AVISHKAR's own for the wiring: `tests/avishkar_ems/test_surplus_vendor_wiring.py` |
 | **Status** | `VERIFIED` |
-| **Limitations** | Only the pure arithmetic is here. SEM's device walk (`SurplusController`, `compute_load_intent`, `tier1_battery_reserved_w`, `surplus_reserved_w`) needs its `ControllableDevice` and Home Assistant lifecycle and is not vendored, so AVISHKAR's own priority cascade still does the allocating |
+| **Limitations** | Only the pure arithmetic is here. SEM's device walk (`SurplusController`, `compute_load_intent`, `tier1_battery_reserved_w`, `surplus_reserved_w`) needs its `ControllableDevice` and Home Assistant lifecycle and is not vendored, so AVISHKAR's own priority cascade still does the allocating. **Four of its eight public functions have no caller anywhere** (see the table below) |
 
 ## 3. SEM — battery-charge reclaim
 
@@ -59,7 +59,7 @@ and the row names it.
 | **Improves** | "Loads charge before the battery": above the backup reserve, power going into the pack is offered to higher-priority loads first, and only the share the sun is funding — an inverter filling its pack from the grid on its own time-of-use window shows the same positive charge power with nothing behind it but the meter. Also brings the sustained-reading helpers, which require a meter or charger reading to *last* before it is acted on |
 | **Tests** | Included in the 49 upstream tests above (`TestThePoolKeepsTheImport`, `TestOnlyAnImportThatLastedCounts`, `TestWhatOpensTheWindow` exercise this file). AVISHKAR's wiring tests: `TestTheBatteryReclaimIsWiredIn`, 7 tests |
 | **Status** | `VERIFIED` |
-| **Limitations** | `held_grid_import`, `ev_reclaims_battery_charge` and `redirect_strikes` are vendored but not yet called by AVISHKAR — they belong to SEM's charger arbitration, which AVISHKAR has no equivalent of. They are tested by upstream's suite and are there because the file was taken whole rather than cherry-picked |
+| **Limitations** | **Six of its seven public functions have no caller anywhere** (see the table below). They are there because the file was taken whole rather than cherry-picked, which is what keeps it byte-identical and keeps upstream's tests applicable to it |
 
 ## 4. evcc — not imported
 
@@ -91,6 +91,42 @@ and the row names it.
 | **`forecast_corrector.py` (84 lines)** | A sliding-window multiplicative bias correction on a day's solar forecast total. Declined because it is the wrong shape for where AVISHKAR would use it: `platform/engine/avishkar_engine/solar.py` already learns from the place's own past day-ahead errors, binned by sky condition, and already reports the bias it measures (`bias_kw`, `median_residual_kt`). A second correction on a daily total would double-count against that calibration, and the natural correction in that model is in clearness space, which it already computes. The Python EMS fits its own gradient-boosted model to the site, so it is unbiased on its training distribution by construction |
 | **`price_analyzer.py` (232 lines)** | Cheapest contiguous window selection. Declined because AVISHKAR's `src/avishkar_ems/loads.py::best_start` is better for the job: it works at the pipeline's 15-minute resolution rather than hourly, and it prices the opportunity cost of using spare solar (energy the sun covers costs the export income it displaces) rather than looking at price alone. Importing it would have been a regression |
 | **Status** | `NOT_IMPLEMENTED`, deliberately |
+
+---
+
+## Which vendored functions AVISHKAR actually calls
+
+Being exact about this matters: a vendored function with no caller is dead weight, and saying so is the
+difference between an integration and a dump. Counted by resolving call edges with `ast` across
+`src/avishkar_ems`, `app/` and the vendored modules themselves — not by grepping, which counts
+docstring mentions.
+
+**15 public functions vendored. 3 are called by AVISHKAR, 2 only by other vendored code, and 10 have no
+caller anywhere.**
+
+| Function | Module | Caller | Note |
+|---|---|---|---|
+| `solar_bounded_surplus` | `sem_surplus` | **AVISHKAR** | `home_balance.py`, the allocatable surplus for a metered interval |
+| `solar_bounded_reclaim` | `sem_surplus` | **AVISHKAR** | `home_balance.py`, bounding the battery-charge reclaim by the sun |
+| `reclaimable_battery_w` | `sem_reclaim` | **AVISHKAR** | `home_balance.py`, producing that reclaim |
+| `loads_import_deficit_w` | `sem_surplus` | vendored code only | called by `solar_bounded_surplus` and `import_absorbed_by_loads_w` |
+| `is_expensive_name` | `sem_surplus` | vendored code only | called by `price_damped_pool` |
+| `import_absorbed_by_loads_w` | `sem_surplus` | **none** | SEM's two-stage pool-then-reclaim debit; AVISHKAR does not split the debit that way |
+| `reclaim_handed_back` | `sem_surplus` | **none** | SEM's priority walk crossing the battery's slot; AVISHKAR's cascade has no such slot |
+| `sun_can_still_finish` | `sem_surplus` | **none** | needs a daylight-remaining figure the single-interval engine does not have. Upstream's own caller, `grid_top_up_defers_to_sun`, is device-coupled and was not vendored |
+| `price_damped_pool` | `sem_surplus` | **none** | needs a categorical price level ("cheap"/"expensive"); AVISHKAR's home profile carries numeric tariffs, and the damping semantics belong to SEM's walk |
+| `sustained_import`, `sustained_car_draw` | `sem_reclaim` | **none** | need a rolling two-minute reading history; AVISHKAR evaluates one interval at a time and keeps no buffer |
+| `car_may_be_charging`, `held_grid_import`, `ev_reclaims_battery_charge`, `redirect_strikes` | `sem_reclaim` | **none** | SEM's charger arbitration, which AVISHKAR has no equivalent of |
+
+All 15 are covered by the 49 upstream tests, so none is untested — but **ten are unused, and that is a
+cost of this approach, not a benefit.** It is the price of taking `energy_reclaim.py` whole: a
+cherry-picked copy would have had less dead weight but would no longer be byte-identical, and then
+upstream's tests would not apply to it, which was the whole point. The three that are called are the
+ones the integration was for.
+
+If a rolling telemetry buffer or a categorical price level is ever added, `sustained_import` and
+`price_damped_pool` are the two with an obvious home. The charger-arbitration four would only make
+sense alongside a real charger integration, which is the same place evcc belongs.
 
 ---
 

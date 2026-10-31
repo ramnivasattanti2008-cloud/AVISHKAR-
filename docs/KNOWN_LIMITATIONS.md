@@ -127,9 +127,15 @@ signed) are exactly where a first real deployment would find trouble.
 The vendored functions decide *how much* surplus there is. SEM's own device walk — which load gets it,
 in what order, with what hysteresis — needs its `ControllableDevice` and Home Assistant lifecycle and
 was not vendored. AVISHKAR's own priority cascade still does the allocating, and it is AVISHKAR's own
-code with AVISHKAR's own limitations. Three vendored functions (`held_grid_import`,
-`ev_reclaims_battery_charge`, `redirect_strikes`) have no caller here at all: they belong to SEM's
-charger arbitration and came along because the file was taken whole rather than cherry-picked.
+code with AVISHKAR's own limitations.
+
+**Ten of the fifteen vendored functions have no caller anywhere** (counted by resolving call edges with
+`ast`, not by grepping). Three are called by AVISHKAR and two only by other vendored code; the rest are
+SEM's charger arbitration, its two-stage debit, its daylight gate and its price damping, none of which
+AVISHKAR has an equivalent of. That is the price of taking `energy_reclaim.py` whole: a cherry-picked
+copy would carry less dead weight but would not be byte-identical, and then upstream's own tests would
+no longer apply to it, which was the reason for vendoring it that way. The full table is in
+[OPEN_SOURCE_INTEGRATION_MAP.md](OPEN_SOURCE_INTEGRATION_MAP.md).
 
 ### evcc is not integrated, and the charging modes are not evcc's code
 `surplus_engine.py`'s EV charging modes follow the convention evcc established and documents publicly.

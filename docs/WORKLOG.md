@@ -3806,7 +3806,11 @@ exist, named apart, and what the control signal withholds leaves as export or cu
 - **No hardware.** The live-meter path has only ever been given typed figures. A real inverter's sign
   conventions are where a first deployment would find trouble.
 - **SEM's device walk is not vendored**, only its arithmetic; AVISHKAR's own priority cascade still
-  allocates. Three vendored functions have no caller here and are documented as such.
+  allocates. **Ten of the fifteen vendored functions have no caller anywhere** — three are called by
+  AVISHKAR, two only by other vendored code. That is the cost of taking `energy_reclaim.py` whole
+  instead of cherry-picking: a cherry-picked copy would not be byte-identical and upstream's tests
+  would no longer apply to it. Counted with `ast`, tabulated in
+  `docs/OPEN_SOURCE_INTEGRATION_MAP.md`.
 - **EMHASS was not re-vendored** to upstream's current commit. It is deliberate work: the results, the
   README's numbers and the cache are fingerprinted against the vendored code and must be regenerated
   together, and a renamed configuration key surfaces as a `KeyError` from `planner._base_params`.
