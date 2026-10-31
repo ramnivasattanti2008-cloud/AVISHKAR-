@@ -3707,3 +3707,109 @@ what-if over 24 typical days at 841 ms against 5 s.
   service of the operator's own. The session cookie is `Secure` in production, so TLS there is not optional.
 - Issue 27 is still open, with four hypotheses now tested and none holding.
 - Still no hardware of any kind, so every device path remains simulated and labelled.
+
+## Entry 67 — 2026-10-31 — Open-source reuse: SEM's surplus arithmetic vendored, evcc and two others declined with reasons
+
+The brief was to stop describing other projects' work and start using it. `surplus_engine.py` opened by
+saying it "synthesizes best practices from" eight named projects — SEM and evcc among them — while
+`NOTICE.md` said no code had been copied from any of them. Both statements were true and together they
+describe an imitation wearing the originals' names. This entry replaces the claim with the thing, in one
+place, and says plainly why the other four candidates were not worth taking.
+
+### What was acquired, and under what licence
+
+Five repositories cloned into `/tmp/oss-research`, licences read at the commit cloned. GitHub's REST API
+answers 403 through this container's proxy, so `git clone` was used and each commit is recorded.
+
+| Repository | Commit | Licence | Language |
+|---|---|---|---|
+| `davidusb-geek/emhass` | `f1e99c5` | MIT | Python |
+| `traktore-org/sem-community` | `067c8615` | MIT | Python, 1,177 files |
+| `evcc-io/evcc` | `e2240501` | MIT | Go 1,373 + Vue 373 |
+| `lbsanto/SolarFlow` | `cde543e5` | Apache-2.0 | JS, 18 files |
+| `jirihelmich/smart-energy-manager` | `56ff9cea` | MIT | Python, 43 files |
+
+All five permissive, so licensing blocked nothing and the decisions came down to language, shape, and
+whether the code was actually better than what AVISHKAR had.
+
+### Vendored, verbatim
+
+**SEM**, into the new `src/avishkar_ems/vendor/`:
+
+- `sem_surplus.py` — seven pure functions from `coordinator/surplus_controller.py`, extracted with
+  `ast.get_source_segment` rather than retyped, with the exact upstream line ranges in the header.
+- `sem_reclaim.py` — the whole of `coordinator/energy_reclaim.py`, 299 lines byte for byte, with a
+  vendoring-time assertion that proved it.
+- `sensor_reader.py` — a stand-in holding the one constant `sem_reclaim` imports from a 6,988-line Home
+  Assistant module. Chosen over editing the import out, so the vendored file stays byte-identical and
+  upstream's tests still apply to it.
+
+Why these and not a rewrite: the docstrings name the field failures each rule exists for. A controller
+allocating from grid export alone chases its own tail, because its own loads suppress the signal it
+reads. Surplus must be clamped to the generation, or a load on the battery at night reads as surplus
+(`#620`). The clamp must bound the whole pool, not one addend, or a pack charging from the grid on the
+inverter's own time-of-use window funds a "solar only" load at 01:29 with the sun at 0 W (`#938`,
+reported with timestamps). A zero-export inverter holds a small import deliberately, so a naive "import
+means no surplus" rule stops every load. A charger's own grid draw must not be charged against the
+household loads' pool (`#1102`). A price signal may damp the pool but never inflate it (`#953`).
+Rewriting that means rediscovering six field failures.
+
+### Wired in, not left sitting there
+
+`home_balance.py` computes the **allocatable** surplus from a live grid meter with SEM's functions plus
+the battery-charge reclaim its other module produces; without a meter the old arithmetic stands and the
+result says which it used. The dashboard's "My Home EMS" tab grew a collapsed "I have a live grid meter"
+panel with the seven readings, and three metrics that show the outcome. A figure a person types there is
+`USER_ENTERED`, never `HARDWARE_MEASURED`.
+
+### Two defects, one pre-existing and one mine
+
+**Pre-existing:** `DispatchStepResult` had no curtailment term and the first-law check had none either,
+so a zero-export home with a full battery lost the unusable generation — 5 kW of sun, 2 kW of load,
+3 kW gone, `is_balanced` False with nothing to point at. Reproduced by stashing my changes first.
+`curtailed_solar_kw` now exists and is in the balance.
+
+**Mine:** I first replaced `gross_surplus_kw` with SEM's value. That breaks energy conservation —
+AVISHKAR's figure is an accounting quantity the books balance on, SEM's is a control signal that
+deliberately subtracts an import. My own first test caught it with a 3 kW imbalance. Both figures now
+exist, named apart, and what the control signal withholds leaves as export or curtailment.
+
+### Declined, with reasons
+
+- **evcc.** MIT, so copying was permitted; it is Go and AVISHKAR is Python and TypeScript, so there is
+  no in-process reuse. Running it as the service it wants to be is the right answer *with hardware*, and
+  there is none here: it would add a daemon that could only talk to simulated devices, implying an
+  integration nothing has tested. The honest outcome was to correct the docstring that claimed it.
+- **SolarFlow.** A Node-RED flow bundle for specific Zendure hardware. No library, no separable
+  algorithm. The old docstring cited it for "battery SoC hard bounds", which is four comparisons.
+- **smart-energy-manager's `forecast_corrector.py`.** Clean and pure, and declined: the platform engine
+  already learns its band from the place's own past day-ahead errors binned by sky condition and already
+  reports the bias it measures, so a daily-total multiplicative correction would double-count, and the
+  natural correction in that model is in clearness space.
+- **smart-energy-manager's `price_analyzer.py`.** Declined because AVISHKAR's `loads.py::best_start` is
+  better for the job: 15-minute resolution rather than hourly, and it prices the opportunity cost of
+  spare solar rather than looking at price alone. Importing it would have been a regression.
+
+### Evidence
+
+- **49 of upstream SEM's own tests, verbatim, pass against AVISHKAR's copies**
+  (`test_vendored_sem_surplus.py`). Shown to be meaningful: deleting the `min(surplus, solar_w)` clamp
+  makes upstream's own sweep test fail, and restoring it returns all 49.
+- 26 of AVISHKAR's own tests for the wiring (`test_surplus_vendor_wiring.py`).
+- 687 EMS tests, 1 skipped (655 before this entry); ruff clean.
+- Platform unaffected and re-verified: 994 API on a real PostGIS, 399 web, 448 engine.
+- The dashboard opened in Chromium: 0 Streamlit exceptions, all three new metrics and all seven meter
+  inputs present, and the page states whether the surplus came from the meter or the sliders.
+
+### What is NOT done
+
+- **No hardware.** The live-meter path has only ever been given typed figures. A real inverter's sign
+  conventions are where a first deployment would find trouble.
+- **SEM's device walk is not vendored**, only its arithmetic; AVISHKAR's own priority cascade still
+  allocates. Three vendored functions have no caller here and are documented as such.
+- **EMHASS was not re-vendored** to upstream's current commit. It is deliberate work: the results, the
+  README's numbers and the cache are fingerprinted against the vendored code and must be regenerated
+  together, and a renamed configuration key surfaces as a `KeyError` from `planner._base_params`.
+- **Upstream SEM's full suite was not run**: it needs `hass` and
+  `pytest-homeassistant-custom-component`. The 49 tests above are the subset that exercises the
+  vendored functions, which is the subset that says anything about the copy.
