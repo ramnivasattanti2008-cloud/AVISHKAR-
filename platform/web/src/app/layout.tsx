@@ -6,7 +6,6 @@ import { DegradedBanner } from "@/components/DegradedBanner";
 import { Nav } from "@/components/Nav";
 import { THEME_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
-import "./mission-control.css";
 
 export const metadata: Metadata = {
   title: { default: "AVISHKAR: your energy, understood", template: "%s | AVISHKAR" },

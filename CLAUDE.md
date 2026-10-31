@@ -82,33 +82,6 @@ payback and NPV with adjustable assumptions), `report` (renders the README resul
 Conventions: INR everywhere. In plans `batt_kw` is + discharge / - charge and `grid_kw` is + import / - export. The step
 constants `planner.STEP_H`, `execute.DT` and `sim.STEPS_PER_DAY` are separate copies of 0.25 h / 96.
 
-### Vendored third-party source
-
-Two places hold somebody else's code, and they are treated differently from everything else:
-
-- `src/emhass/` -- upstream EMHASS, unmodified (below).
-- `src/avishkar_ems/vendor/` -- **added 2026-10-31.** Pure functions vendored verbatim from SEM
-  (`traktore-org/sem-community`, MIT, commit `067c8615`): `sem_surplus.py` (seven functions of surplus
-  arithmetic) and `sem_reclaim.py` (the whole of upstream's `energy_reclaim.py`, byte for byte).
-  `sensor_reader.py` is a stand-in holding the single constant `sem_reclaim` imports from a 6,988-line
-  Home Assistant module AVISHKAR does not need. Licence text in `vendor/LICENSES/`.
-
-  **Do not edit the vendored bodies and do not reformat them.** 49 of upstream's own tests are run
-  against these copies by `tests/avishkar_ems/test_vendored_sem_surplus.py`, which is the only thing
-  that makes them a copy rather than a paraphrase; an edit silently invalidates it. The directory is
-  excluded from ruff in `pyproject.toml` for the same reason. To change behaviour, change the caller.
-
-  What they buy: `home_balance.py` computes the **allocatable** surplus from a live grid meter with
-  `solar_bounded_surplus` (feedback-free, clamped to the generation so a load on the battery at night
-  is not read as surplus, aware of an import the sun did not fund and of a zero-export inverter's
-  deliberate 100 W) plus the battery-charge reclaim. Two surplus figures now exist and must not be
-  conflated: `gross_surplus_kw` is the accounting value the first-law check balances on, and
-  `allocatable_surplus_kw` is the control signal, which deliberately subtracts an import. Conflating
-  them breaks energy conservation. Provenance and what was deliberately NOT reused (evcc: Go, and no
-  hardware; SolarFlow: a Node-RED bundle; smart-energy-manager: its two useful modules are the wrong
-  shape or worse than ours) are in `docs/OPEN_SOURCE_REUSE_AUDIT.md` and
-  `docs/OPEN_SOURCE_INTEGRATION_MAP.md`.
-
 ### Vendored EMHASS
 
 Do not edit `src/emhass/` or the upstream tests; the package keeps the name `emhass` because the vendored code reads its
@@ -271,15 +244,6 @@ ENGINE_API_KEY=<16+ chars> python -m uvicorn avishkar_engine.app:create_app --fa
   text). Write files with the Write/Edit tools; if a script is needed, write it to a file first, then run it.
 - Offer ids contain a random uuid, so offers are not byte-reproducible across runs.
 - Strings shown to users come in English/Hindi pairs (`explain.py`, `summary.py`, `advisor.py`); keep both when editing.
-- `IntervalTelemetry` (`home_balance.py`) takes optional live grid readings (`grid_export_kw`,
-  `grid_import_kw`, `battery_discharge_kw`, `battery_charge_kw`, `controllable_draw_kw`, `ev_draw_kw`,
-  `battery_commanded`). With them the surplus is read from the meter by the vendored SEM functions;
-  without them it is `generation - demand` and the result says so in its assumptions. The dashboard's
-  "My Home EMS" tab exposes them behind a collapsed "I have a live grid meter" panel, and a figure a
-  person types there is `USER_ENTERED`, never `HARDWARE_MEASURED`.
-- `DispatchStepResult.curtailed_solar_kw` is in the first-law check. Before 2026-10-31 there was no
-  curtailment term, so a zero-export home with a full battery lost the unusable generation and
-  `is_balanced` went False with nothing to point at.
 - Pass every block of HTML through `app/ui_html.py`'s `html_block()` before `st.markdown(..., unsafe_allow_html=True)`.
   Markdown still runs first and reads a blank line followed by an indented line as a *code block*, so indented markup is printed
   as text on the page; this stripped the indentation at 42 call sites after 36 blocks were found leaking raw `<path>` elements.

@@ -1,568 +1,303 @@
-"use client";
-
 import Link from "next/link";
-import React, { useState } from "react";
 import { HomeProperties } from "@/components/HomeProperties";
 
-interface RegionalMicrogrid {
-  state: string;
-  name: string;
-  discom: string;
-  solarCapacityMw: number;
-  activeGenerationKw: number;
-  directDniWm2: number;
-  p2pClearingRate: number;
-  discomRetailRate: number;
-  feederFrequencyHz: number;
-  solarPenetrationPct: number;
-}
-
-const REGIONAL_MICROGRIDS: Record<string, RegionalMicrogrid> = {
-  maharashtra: {
-    state: "Maharashtra",
-    name: "Pune Commercial Hub & Hinjewadi Microgrid",
-    discom: "MSEDCL",
-    solarCapacityMw: 420.5,
-    activeGenerationKw: 9.1,
-    directDniWm2: 772,
-    p2pClearingRate: 4.80,
-    discomRetailRate: 8.50,
-    feederFrequencyHz: 50.01,
-    solarPenetrationPct: 38.4,
+const QUESTIONS = [
+  {
+    num: "1",
+    question: "What energy system should I install?",
+    desc: "Analyze your property's exact geographic location, roof geometry, solar potential, weather history, and consumption patterns before investing a single rupee in hardware.",
   },
-  karnataka: {
-    state: "Karnataka",
-    name: "Bengaluru Whitefield Tech Microgrid",
-    discom: "BESCOM",
-    solarCapacityMw: 360.2,
-    activeGenerationKw: 8.4,
-    directDniWm2: 745,
-    p2pClearingRate: 4.50,
-    discomRetailRate: 7.90,
-    feederFrequencyHz: 50.02,
-    solarPenetrationPct: 41.2,
+  {
+    num: "2",
+    question: "What should I do with my energy now and in the coming days?",
+    desc: "Predict solar generation and electricity demand with uncertainty bands, then decide in advance how to consume, store, or distribute available energy.",
   },
-  gujarat: {
-    state: "Gujarat",
-    name: "Ahmedabad-Gandhinagar Solar Corridor",
-    discom: "UGVCL",
-    solarCapacityMw: 580.0,
-    activeGenerationKw: 9.8,
-    directDniWm2: 810,
-    p2pClearingRate: 3.90,
-    discomRetailRate: 6.80,
-    feederFrequencyHz: 50.00,
-    solarPenetrationPct: 49.6,
+  {
+    num: "3",
+    question: "How can I get maximum value from every unit of energy?",
+    desc: "Minimize electricity costs on Time-of-Day tariffs, safeguard essential loads during grid outages, eliminate waste, and monetize surplus energy via P2P dispatch.",
   },
-  tamilnadu: {
-    state: "Tamil Nadu",
-    name: "Coimbatore Industrial Rooftop Feeder",
-    discom: "TANGEDCO",
-    solarCapacityMw: 495.8,
-    activeGenerationKw: 8.9,
-    directDniWm2: 785,
-    p2pClearingRate: 4.60,
-    discomRetailRate: 8.10,
-    feederFrequencyHz: 49.99,
-    solarPenetrationPct: 44.1,
-  },
-  uttarpradesh: {
-    state: "Uttar Pradesh",
-    name: "Mathura Rural Resilient Feeder",
-    discom: "UPPCL",
-    solarCapacityMw: 210.4,
-    activeGenerationKw: 7.6,
-    directDniWm2: 720,
-    p2pClearingRate: 4.20,
-    discomRetailRate: 7.20,
-    feederFrequencyHz: 50.01,
-    solarPenetrationPct: 29.5,
-  },
-  rajasthan: {
-    state: "Rajasthan",
-    name: "Jaipur Solar City & Healthcare Zone",
-    discom: "JVVNL",
-    solarCapacityMw: 640.7,
-    activeGenerationKw: 10.4,
-    directDniWm2: 845,
-    p2pClearingRate: 3.75,
-    discomRetailRate: 7.40,
-    feederFrequencyHz: 50.03,
-    solarPenetrationPct: 53.8,
-  },
-};
-
-const SCENARIOS = [
-  { place: "Pune commercial hub", state: "Maharashtra · MSEDCL", title: "P2P surplus market", detail: "Sunny surplus day with active peer-to-peer dispatch.", tone: "amber", icon: "☀" },
-  { place: "Mathura rural microgrid", state: "Uttar Pradesh · UPPCL", title: "Outage resilience shield", detail: "Dynamic emergency reserve based on feeder risk.", tone: "cyan", icon: "◈" },
-  { place: "Jaipur healthcare clinic", state: "Rajasthan · JVVNL", title: "EV V2H & feeder guard", detail: "Evening peak protection for critical loads.", tone: "purple", icon: "▣" },
 ];
 
-const TILES = [
-  { label: "Satellite intelligence", title: "See the grid before it moves", body: "Location-aware weather, solar resource, building geometry, and satellite metadata combine into one honest Energy Twin.", href: "/map", action: "Open energy map", icon: "⌁", tone: "cyan" },
-  { label: "Predictive dispatch", title: "Every watt has a destination", body: "Forecast generation and demand, preserve critical reserve, and allocate energy across loads, storage, and export.", href: "/properties", action: "Explore properties", icon: "↗", tone: "amber" },
-  { label: "Citizen energy exchange", title: "Turn surplus into community value", body: "Prepare transparent, conservative P2P offers through the community energy marketplace.", href: "/community", action: "View community", icon: "◎", tone: "purple" },
+const PHILOSOPHY = [
+  {
+    step: "SEE",
+    title: "Understand the Site",
+    desc: "Build a digital Energy Twin using real weather, satellite metadata, building geometry, and consumption profiles.",
+  },
+  {
+    step: "PREDICT",
+    title: "Forecast with Uncertainty",
+    desc: "Compute probabilistic P10/P50/P90 solar and load forecast bands with conformal empirical calibration.",
+  },
+  {
+    step: "OPTIMIZE",
+    title: "Allocate Intelligently",
+    desc: "Solve a multi-objective LP/MILP over tariffs, battery wear, critical reserve floors, and shiftable loads.",
+  },
+  {
+    step: "ACT",
+    title: "Dispatch & Protect",
+    desc: "Execute guided battery dispatch, enforce emergency reserves, and formulate Beckn DEG v2.0 trade offers.",
+  },
 ];
 
-const WORKFLOW = ["Monitor", "Forecast", "Reserve", "Plan", "Dispatch", "Payback"];
+const WORKFLOW = [
+  { stage: "1", name: "MONITOR", detail: "Collect available property, generation, consumption, weather, and tariff information." },
+  { stage: "2", name: "FORECAST", detail: "Predict solar generation, electricity demand, and potential energy surpluses or deficits." },
+  { stage: "3", name: "RESERVE", detail: "Protect critical energy requirements and enforce battery and operational limits." },
+  { stage: "4", name: "PLAN", detail: "Optimize energy use, storage, flexible loads, and possible exports." },
+  { stage: "5", name: "DISPATCH", detail: "Present or execute permitted actions through supported integrations." },
+  { stage: "6", name: "PAYBACK", detail: "Measure outcomes and compare actual costs and performance against the baseline." },
+];
 
-const DEFAULT_GRID: RegionalMicrogrid = REGIONAL_MICROGRIDS.maharashtra!;
+const FEATURES = [
+  {
+    num: "01",
+    title: "AI-Powered Energy Twin",
+    desc: "Digital representation of property characteristics, solar potential, consumption DNA, battery capacity, and grid conditions.",
+    href: "/map",
+    linkText: "Explore on Map",
+  },
+  {
+    num: "02",
+    title: "Location-Aware Solar Intelligence",
+    desc: "Real building footprints (Overpass/OSM), NASA POWER irradiance, and PVGIS solar modeling for pre-install sizing.",
+    href: "/map",
+    linkText: "Analyze Solar",
+  },
+  {
+    num: "03",
+    title: "Predictive Energy Forecasting",
+    desc: "Hour-by-hour solar and load predictions with conformally calibrated P10/P50/P90 bands to manage uncertainty.",
+    href: "/properties",
+    linkText: "View Forecasts",
+  },
+  {
+    num: "04",
+    title: "Intelligent Energy Allocation Engine",
+    desc: "Accounting for every kWh across immediate consumption, battery storage, flexible loads, emergency reserve, and grid export.",
+    href: "/properties",
+    linkText: "See Energy Ledger",
+  },
+  {
+    num: "05",
+    title: "Smart Battery Optimization",
+    desc: "Non-linear DoD degradation modeling (ASTM E1049 Rainflow), Arrhenius temperature derating, and cycle life preservation.",
+    href: "/properties",
+    linkText: "Battery Health",
+  },
+  {
+    num: "06",
+    title: "Surplus Energy Dispatch",
+    desc: "India Energy Stack / Beckn DEG v2.0 catalog publishing, conservative offer sizing, and simulated settlement.",
+    href: "/community",
+    linkText: "Community & VPP",
+  },
+  {
+    num: "07",
+    title: "Electricity Cost Optimization",
+    desc: "Time-of-Day (ToD) tariff arbitrage, telescopic slab modeling, and transparent savings comparison against unmanaged baselines.",
+    href: "/properties",
+    linkText: "Tariff Analysis",
+  },
+  {
+    num: "08",
+    title: "Critical Energy Reserve",
+    desc: "Dynamic SOC floor calculated from critical kW, backup hours, and storm/outage risk to prevent cut blackouts.",
+    href: "/properties",
+    linkText: "Resilience Duration",
+  },
+  {
+    num: "09",
+    title: "What-If Simulation",
+    desc: "Simulate solar expansion, battery sizing, tariff hikes, cloudy days, and multi-hour outages before committing capital.",
+    href: "/properties",
+    linkText: "Run Scenarios",
+  },
+  {
+    num: "10",
+    title: "Explainable AI Recommendations",
+    desc: "Plain-language recommendations with measured confidence, underlying data sources, and strict grounded citations.",
+    href: "/properties",
+    linkText: "Ask Copilot",
+  },
+];
+
+const PRINCIPLES = [
+  {
+    title: "Real data or nothing",
+    text: "Weather, solar resource, building outlines, and satellite scenes come from real sources. When a source is down, AVISHKAR says so honestly; it never fills gaps with made-up numbers.",
+  },
+  {
+    title: "Every value is labelled",
+    text: "LIVE, UPDATED, FORECAST, ESTIMATED, REFERENCE, or UNAVAILABLE: each number carries its provider, its timestamp, and its caveats, so trust is never blind.",
+  },
+  {
+    title: "Estimates show their working",
+    text: "Anything calculated lists the underlying formulas, tariffs, and assumptions. Unknown data (such as unmetered circuits) is marked unavailable, not guessed.",
+  },
+];
 
 export default function Home() {
-  const [selectedStateKey, setSelectedStateKey] = useState<string>("maharashtra");
-  const [solarKw, setSolarKw] = useState<number>(3.0);
-  const [batterySoc, setBatterySoc] = useState<number>(65);
-  const [dispatchGoal, setDispatchGoal] = useState<"bill" | "self" | "backup">("bill");
-  const [p2pBooked, setP2pBooked] = useState<boolean>(false);
-
-  const currentGrid: RegionalMicrogrid = REGIONAL_MICROGRIDS[selectedStateKey] ?? DEFAULT_GRID;
-
-  // PM Surya Ghar Muft Bijli Yojana calculation rules (Official MNRE 2024 Schedule)
-  const calculateSubsidy = (kw: number): number => {
-    if (kw <= 1.0) return Math.min(kw * 30000, 30000);
-    if (kw <= 2.0) return 30000 + Math.min((kw - 1.0) * 30000, 30000);
-    return 78000; // Capped for 3 kWp and higher
-  };
-
-  const subsidyAmt = calculateSubsidy(solarKw);
-  const estimatedCost = solarKw * 55000;
-  const netConsumerCost = Math.max(0, estimatedCost - subsidyAmt);
-  const annualGenKwh = solarKw * 1450;
-  const annualBillSavings = annualGenKwh * currentGrid.discomRetailRate;
-  const monthlyLoanEmi = (netConsumerCost * 0.07) / 12 + netConsumerCost / 60; // 5-year SBI solar loan @ 7% p.a.
-
-  // Dynamic Energy Dispatch Balance (First Law Conservation)
-  const householdLoadKw = 4.2;
-  const generationKw = currentGrid.activeGenerationKw;
-  const rawSurplusKw = Math.max(0, generationKw - householdLoadKw);
-
-  let batteryChgKw = 0;
-  let gridExportKw = 0;
-  let gridImportKw = 0;
-
-  if (rawSurplusKw > 0) {
-    if (dispatchGoal === "backup") {
-      batteryChgKw = Math.min(3.5, rawSurplusKw);
-      gridExportKw = rawSurplusKw - batteryChgKw;
-    } else if (dispatchGoal === "bill") {
-      batteryChgKw = batterySoc < 90 ? Math.min(2.5, rawSurplusKw) : 0;
-      gridExportKw = rawSurplusKw - batteryChgKw;
-    } else {
-      batteryChgKw = Math.min(3.5, rawSurplusKw);
-      gridExportKw = rawSurplusKw - batteryChgKw;
-    }
-  } else {
-    const deficit = householdLoadKw - generationKw;
-    if (batterySoc > 25) {
-      gridImportKw = Math.max(0, deficit - 3.0);
-    } else {
-      gridImportKw = deficit;
-    }
-  }
-
-  const balanceVerification = (generationKw - householdLoadKw - batteryChgKw - gridExportKw + gridImportKw).toFixed(3);
-
   return (
-    <div className="mission-page">
-      <div className="mission-grid-overlay" aria-hidden />
-      <div className="mission-ambient-glow" aria-hidden />
+    <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:py-16">
+      {/* Hero Section */}
+      <section aria-labelledby="hero-title" className="text-center sm:text-left">
+        <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface2 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
+          <span>AI-Powered Energy Intelligence</span>
+          <span aria-hidden>•</span>
+          <span>India Energy Stack P2P Ready</span>
+        </div>
+        <h1 id="hero-title" className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+          See Your Energy. <br className="hidden sm:inline" />
+          <span className="text-accent">Predict Its Future.</span> Control Its Value.
+        </h1>
+        <p className="mt-3 text-lg font-medium text-ink/90 sm:text-xl">
+          &ldquo;Every Watt Has a Purpose. Every Decision Has Intelligence.&rdquo;
+        </p>
+        <p className="mt-4 max-w-3xl text-base text-muted sm:text-lg">
+          AVISHKAR is not just a solar monitoring dashboard. It is an AI-powered energy intelligence platform that predicts,
+          optimizes, and manages energy across properties — connecting location-aware potential with forward-looking dispatch.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+          <Link href="/map" className="btn btn-primary px-6 py-3 text-base">
+            Open the Map
+          </Link>
+          <Link href="/community" className="btn px-5 py-3 text-base">
+            Community &amp; VPP
+          </Link>
+          <Link href="/system" className="btn px-5 py-3 text-base">
+            System Status
+          </Link>
+        </div>
+      </section>
 
-      <main className="mission-container mission-main">
-        {/* ======================================================================
-             1. HERO MISSION STATEMENT & SATELLITE NOWCASTING PANEL
-             ====================================================================== */}
-        <section className="mission-hero" aria-labelledby="hero-title">
-          <div className="mission-hero-copy">
-            <div className="mission-kicker">
-              <span className="mission-live-dot" /> ISRO INSAT-3DR nowcasting · Beckn DEG v2.0 ready
-            </div>
-            <h1 id="hero-title">
-              India&apos;s predictive<br />
-              <span>energy mission control.</span>
-            </h1>
-            <p className="mission-hero-lede">
-              National rooftop solar intelligence, dynamic microgrid resilience, and bilateral P2P community dispatch aligned with Ministry of Power, CEA, and MNRE frameworks.
-            </p>
-            <div className="mission-hero-actions">
-              <Link href="/map" className="mission-primary-button">
-                Open energy map <span aria-hidden>↗</span>
-              </Link>
-              <Link href="/community" className="mission-outline-button">
-                Explore P2P dispatch
-              </Link>
-            </div>
-            <div className="mission-hero-note">
-              <span>●</span> Grounded in real telemetry. Zero fabricated metrics.
-            </div>
-          </div>
+      {/* Properties of Logged In User */}
+      <HomeProperties />
 
-          <div className="mission-hero-panel">
-            <div className="mission-panel-top">
-              <span>ACTIVE MISSION</span>
-              <strong>{currentGrid.state.toUpperCase()} · 15 MIN HORIZON</strong>
-            </div>
-            <div className="mission-orbit" aria-hidden>
-              <span className="orbit-ring orbit-ring-one" />
-              <span className="orbit-ring orbit-ring-two" />
-              <span className="orbit-core">⚡</span>
-              <i className="orbit-satellite">✦</i>
-            </div>
-            <div className="mission-panel-readout">
-              <span>Grid intelligence status</span>
-              <b><i className="mission-live-dot" /> NOMINAL · {currentGrid.feederFrequencyHz.toFixed(2)} Hz</b>
-            </div>
-            <div className="mission-panel-bars">
-              <span style={{ "--bar": `${Math.min(100, currentGrid.solarPenetrationPct * 1.8)}%` } as React.CSSProperties} />
-              <span style={{ "--bar": `${batterySoc}%` } as React.CSSProperties} />
-              <span style={{ "--bar": "88%" } as React.CSSProperties} />
-              <span style={{ "--bar": "66%" } as React.CSSProperties} />
-            </div>
-          </div>
-        </section>
-
-        {/* ======================================================================
-             2. SCENARIOS STRIP
-             ====================================================================== */}
-        <section className="mission-scenarios" aria-label="Featured scenarios">
-          {SCENARIOS.map((scenario) => (
-            <Link href="/map" key={scenario.place} className={`mission-scenario mission-tone-${scenario.tone}`}>
-              <div className="mission-scenario-icon">{scenario.icon}</div>
+      {/* The 3 Core Questions */}
+      <section aria-labelledby="questions-title" className="mt-16 sm:mt-20">
+        <h2 id="questions-title" className="text-2xl font-bold tracking-tight sm:text-3xl">
+          The Three Questions AVISHKAR Answers
+        </h2>
+        <p className="mt-2 text-sm text-muted">
+          Connecting pre-investment hardware feasibility with dynamic day-to-day energy optimization.
+        </p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {QUESTIONS.map((q) => (
+            <div key={q.num} className="card p-6 flex flex-col justify-between">
               <div>
-                <small>{scenario.place}</small>
-                <em>{scenario.state}</em>
-                <h2>{scenario.title}</h2>
-                <p>{scenario.detail}</p>
+                <span className="inline-block rounded-md bg-accent/15 px-2.5 py-1 text-xs font-bold text-accent">
+                  Question {q.num}
+                </span>
+                <h3 className="mt-3 text-lg font-semibold leading-snug">{q.question}</h3>
+                <p className="mt-2 text-sm text-muted">{q.desc}</p>
               </div>
-              <span className="mission-arrow" aria-hidden>↗</span>
-            </Link>
-          ))}
-        </section>
-
-        {/* ======================================================================
-             3. LIVE MISSION METRICS STRIP
-             ====================================================================== */}
-        <section className="mission-metrics" aria-label="Live mission metrics">
-          <div className="mission-metric mission-tone-amber">
-            <div className="mission-metric-top"><span>INSAT-3DR synced</span><b>LIVE</b></div>
-            <strong>{currentGrid.directDniWm2}<small>W/m²</small></strong>
-            <label>Direct solar beam (DNI)</label>
-            <div className="mission-spark"><i /><i /><i /><i /><i /><i /><i /></div>
-          </div>
-          <div className="mission-metric mission-tone-emerald">
-            <div className="mission-metric-top"><span>15.0 kWp reference</span><b>LIVE</b></div>
-            <strong>{currentGrid.activeGenerationKw.toFixed(1)}<small>kW</small></strong>
-            <label>Active generation</label>
-            <div className="mission-spark"><i /><i /><i /><i /><i /><i /><i /></div>
-          </div>
-          <div className="mission-metric mission-tone-cyan">
-            <div className="mission-metric-top"><span>CEA standard</span><b>DAILY</b></div>
-            <strong>{(currentGrid.activeGenerationKw * 5.4).toFixed(1)}<small>kg</small></strong>
-            <label>Daily CO₂ avoided</label>
-            <div className="mission-spark"><i /><i /><i /><i /><i /><i /><i /></div>
-          </div>
-          <div className="mission-metric mission-tone-purple">
-            <div className="mission-metric-top"><span>IEEE 1547 compliant</span><b>VERIFIED</b></div>
-            <strong>0.14<small>s</small></strong>
-            <label>Anti-islanding trip latency</label>
-            <div className="mission-spark"><i /><i /><i /><i /><i /><i /><i /></div>
-          </div>
-        </section>
-
-        {/* ======================================================================
-             4. MULTI-REGIONAL MICROGRID SELECTOR
-             ====================================================================== */}
-        <section style={{ marginBlock: "36px" }}>
-          <div className="mission-section-heading" style={{ marginBottom: "18px" }}>
-            <div>
-              <span className="mission-section-tag">REGIONAL MICROGRIDS</span>
-              <h2>Multi-State Discom Telemetry</h2>
             </div>
-            <p>Switch between regional utility grids to observe real tariff structures and satellite solar irradiance.</p>
-          </div>
+          ))}
+        </div>
+      </section>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-            {Object.entries(REGIONAL_MICROGRIDS).map(([key, grid]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setSelectedStateKey(key)}
-                className={`mission-action-button ${selectedStateKey === key ? "active" : ""}`}
-                style={{
-                  borderColor: selectedStateKey === key ? "var(--mission-cyan)" : "var(--line)",
-                  background: selectedStateKey === key ? "var(--surface-2)" : "var(--surface)",
-                  color: selectedStateKey === key ? "var(--ink)" : "var(--muted)",
-                  padding: "10px 16px",
-                  borderRadius: "12px",
-                }}
-              >
-                <b>{grid.state}</b> · <small>{grid.discom}</small>
-              </button>
+      {/* Core Operating Philosophy */}
+      <section aria-labelledby="philosophy-title" className="mt-16 sm:mt-20">
+        <div className="card border-accent/30 bg-surface p-6 sm:p-8">
+          <div className="sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-accent">Operating Philosophy</p>
+              <h2 id="philosophy-title" className="mt-1 text-2xl font-bold tracking-tight">
+                SEE &rarr; PREDICT &rarr; OPTIMIZE &rarr; ACT
+              </h2>
+            </div>
+            <p className="mt-2 text-sm text-muted sm:mt-0 sm:max-w-xs">
+              Every unit of energy should have an informed, economically sensible, and operationally feasible destination.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {PHILOSOPHY.map((p) => (
+              <div key={p.step} className="rounded-lg border border-line bg-surface2/60 p-4">
+                <span className="text-xs font-black tracking-widest text-accent">{p.step}</span>
+                <h3 className="mt-1 font-semibold text-ink">{p.title}</h3>
+                <p className="mt-1 text-xs text-muted leading-relaxed">{p.desc}</p>
+              </div>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div style={{ marginTop: "14px", padding: "16px 20px", borderRadius: "14px", border: "1px solid var(--line)", background: "var(--surface)" }}>
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
-              <div>
-                <strong style={{ fontSize: "16px" }}>{currentGrid.name}</strong>
-                <p style={{ margin: "4px 0 0", color: "var(--muted)", fontSize: "12px" }}>
-                  DISCOM: {currentGrid.discom} · Solar Capacity: {currentGrid.solarCapacityMw} MW · Grid Frequency: {currentGrid.feederFrequencyHz.toFixed(2)} Hz
-                </p>
-              </div>
-              <div style={{ display: "flex", gap: "18px", fontSize: "13px" }}>
-                <div>Retail Rate: <b>₹{currentGrid.discomRetailRate.toFixed(2)}/kWh</b></div>
-                <div>P2P Clearing: <b style={{ color: "var(--mission-emerald)" }}>₹{currentGrid.p2pClearingRate.toFixed(2)}/kWh</b></div>
-                <div>Solar Penetration: <b>{currentGrid.solarPenetrationPct}%</b></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ======================================================================
-             5. HiGHS CONVEX LINEAR PROGRAMMING DISPATCH MATRIX
-             ====================================================================== */}
-        <section style={{ marginBlock: "44px", padding: "28px", borderRadius: "20px", border: "1px solid var(--line)", background: "var(--surface)" }}>
-          <div className="mission-section-heading" style={{ marginBottom: "22px" }}>
-            <div>
-              <span className="mission-section-tag">OPTIMAL DISPATCH ENGINE</span>
-              <h2>HiGHS Linear Programming (LP) Energy Balance</h2>
-            </div>
-            <p>Real-time thermodynamic conservation and multi-objective optimization playground.</p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "24px", alignItems: "start" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: "8px" }}>
-                Battery State of Charge (SoC): <b>{batterySoc}%</b>
-              </label>
-              <input
-                type="range"
-                min="10"
-                max="100"
-                value={batterySoc}
-                onChange={(e) => setBatterySoc(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "var(--mission-amber)" }}
-              />
-
-              <div style={{ marginTop: "16px" }}>
-                <span style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "8px" }}>Dispatch Goal:</span>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button
-                    type="button"
-                    onClick={() => setDispatchGoal("bill")}
-                    className="mission-action-button"
-                    style={{ background: dispatchGoal === "bill" ? "var(--surface-2)" : "transparent" }}
-                  >
-                    Lower Bills
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDispatchGoal("self")}
-                    className="mission-action-button"
-                    style={{ background: dispatchGoal === "self" ? "var(--surface-2)" : "transparent" }}
-                  >
-                    Self-Consumption
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDispatchGoal("backup")}
-                    className="mission-action-button"
-                    style={{ background: dispatchGoal === "backup" ? "var(--surface-2)" : "transparent" }}
-                  >
-                    Preserve Backup
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", fontSize: "13px" }}>
-              <div style={{ padding: "12px", borderRadius: "10px", background: "var(--surface-2)" }}>
-                <span style={{ color: "var(--muted)", fontSize: "11px" }}>Solar Generation</span>
-                <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--mission-amber)" }}>{generationKw.toFixed(2)} kW</div>
-              </div>
-              <div style={{ padding: "12px", borderRadius: "10px", background: "var(--surface-2)" }}>
-                <span style={{ color: "var(--muted)", fontSize: "11px" }}>Household Load</span>
-                <div style={{ fontSize: "18px", fontWeight: 800 }}>{householdLoadKw.toFixed(2)} kW</div>
-              </div>
-              <div style={{ padding: "12px", borderRadius: "10px", background: "var(--surface-2)" }}>
-                <span style={{ color: "var(--muted)", fontSize: "11px" }}>Battery Charging</span>
-                <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--mission-cyan)" }}>{batteryChgKw.toFixed(2)} kW</div>
-              </div>
-              <div style={{ padding: "12px", borderRadius: "10px", background: "var(--surface-2)" }}>
-                <span style={{ color: "var(--muted)", fontSize: "11px" }}>Grid Export / Surplus</span>
-                <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--mission-emerald)" }}>{gridExportKw.toFixed(2)} kW</div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ marginTop: "20px", padding: "12px 16px", borderRadius: "10px", background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.2)", fontSize: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span>First-Law Invariant Verification: <b>P(gen) - P(load) - P(chg) - P(export) + P(import) ≡ {balanceVerification} kW</b></span>
-            <span style={{ color: "var(--mission-emerald)", fontWeight: 700 }}>✓ CONSERVED (0.000 kW)</span>
-          </div>
-        </section>
-
-        {/* ======================================================================
-             6. PM SURYA GHAR MUFT BIJLI YOJANA CALCULATOR
-             ====================================================================== */}
-        <section style={{ marginBlock: "44px", padding: "28px", borderRadius: "20px", border: "1px solid var(--line)", background: "var(--surface)" }}>
-          <div className="mission-section-heading" style={{ marginBottom: "22px" }}>
-            <div>
-              <span className="mission-section-tag" style={{ color: "var(--solar-amber)" }}>GOVERNMENT SUBSIDY ENGINE</span>
-              <h2>PM Surya Ghar: Muft Bijli Yojana Official Subsidy</h2>
-            </div>
-            <p>Official Central Financial Assistance (CFA) schedule and concessional solar loan estimation.</p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "24px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: "8px" }}>
-                Rooftop Solar Array Capacity: <b>{solarKw.toFixed(1)} kWp</b>
-              </label>
-              <input
-                type="range"
-                min="1.0"
-                max="10.0"
-                step="0.5"
-                value={solarKw}
-                onChange={(e) => setSolarKw(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "var(--mission-amber)" }}
-              />
-
-              <div style={{ marginTop: "14px", fontSize: "12px", color: "var(--muted)" }}>
-                • 1 kW: ₹30,000 subsidy<br />
-                • 2 kW: ₹60,000 subsidy<br />
-                • 3 kW+: ₹78,000 maximum central DBT subsidy
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
-              <div style={{ padding: "14px", borderRadius: "12px", background: "var(--surface-2)" }}>
-                <span style={{ color: "var(--muted)", fontSize: "11px" }}>Total Benchmark Cost</span>
-                <div style={{ fontSize: "18px", fontWeight: 800 }}>₹{estimatedCost.toLocaleString()}</div>
-              </div>
-              <div style={{ padding: "14px", borderRadius: "12px", background: "rgba(217, 119, 6, 0.1)", border: "1px solid rgba(217, 119, 6, 0.3)" }}>
-                <span style={{ color: "var(--solar-amber)", fontSize: "11px", fontWeight: 700 }}>Direct DBT Subsidy</span>
-                <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--solar-amber)" }}>₹{subsidyAmt.toLocaleString()}</div>
-              </div>
-              <div style={{ padding: "14px", borderRadius: "12px", background: "var(--surface-2)" }}>
-                <span style={{ color: "var(--muted)", fontSize: "11px" }}>Net Consumer Outlay</span>
-                <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--mission-emerald)" }}>₹{netConsumerCost.toLocaleString()}</div>
-              </div>
-              <div style={{ padding: "14px", borderRadius: "12px", background: "var(--surface-2)" }}>
-                <span style={{ color: "var(--muted)", fontSize: "11px" }}>Est. Annual Savings</span>
-                <div style={{ fontSize: "18px", fontWeight: 800 }}>₹{Math.round(annualBillSavings).toLocaleString()}</div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ marginTop: "18px", padding: "12px 16px", borderRadius: "10px", background: "var(--surface-2)", fontSize: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span>SBI Concessional Solar Loan (7.0% p.a., 5 yr): <b>₹{Math.round(monthlyLoanEmi).toLocaleString()}/month</b></span>
-            <span>Annual Payback: <b>{(netConsumerCost / Math.max(1, annualBillSavings)).toFixed(1)} years</b></span>
-          </div>
-        </section>
-
-        {/* ======================================================================
-             7. BECKN DEG v2.0 PEER-TO-PEER SURPLUS EXCHANGE
-             ====================================================================== */}
-        <section style={{ marginBlock: "44px", padding: "28px", borderRadius: "20px", border: "1px solid var(--line)", background: "var(--surface)" }}>
-          <div className="mission-section-heading" style={{ marginBottom: "22px" }}>
-            <div>
-              <span className="mission-section-tag" style={{ color: "var(--p2p-purple)" }}>P2P COMMUNITY DISPATCH</span>
-              <h2>Beckn DEG Protocol v2.0 Surplus Trading</h2>
-            </div>
-            <p>Decentralized Energy Grid specification for neighborhood peer-to-peer surplus power settlement.</p>
-          </div>
-
-          <div style={{ padding: "18px", borderRadius: "14px", border: "1px solid var(--line)", background: "var(--surface-2)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-              <div>
-                <strong style={{ fontSize: "15px" }}>Offer #DEG-2026-IN-4821: Local Surplus Pool</strong>
-                <p style={{ margin: "4px 0 0", color: "var(--muted)", fontSize: "12px" }}>
-                  Seller: Sector 4 Rooftop Cluster (35 kWp) · Destination: Local Community Center EV Fleet
-                </p>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                <div>Price: <b style={{ color: "var(--mission-emerald)", fontSize: "16px" }}>₹{currentGrid.p2pClearingRate.toFixed(2)}/kWh</b> (Save 42% vs DISCOM)</div>
-                <button
-                  type="button"
-                  onClick={() => setP2pBooked(!p2pBooked)}
-                  className="mission-primary-button"
-                  style={{ background: p2pBooked ? "var(--mission-emerald)" : undefined }}
-                >
-                  {p2pBooked ? "✓ Trade Confirmed" : "Accept P2P Offer"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ======================================================================
-             8. EXISTING PLATFORM PROPERTIES VIEW
-             ====================================================================== */}
-        <HomeProperties />
-
-        {/* ======================================================================
-             9. BENTO PLATFORM CAPABILITIES
-             ====================================================================== */}
-        <section className="mission-section-heading" style={{ marginTop: "44px" }}>
-          <div>
-            <span className="mission-section-tag">DECENTRALIZED ENERGY GRID</span>
-            <h2>Microgrid telemetry<br />&amp; citizen intelligence.</h2>
-          </div>
-          <p>One operating picture for measured data, forecasts, savings, resilience, and transparent energy exchange.</p>
-        </section>
-
-        <section className="mission-bento" aria-label="Platform capabilities">
-          {TILES.map((tile) => (
-            <article key={tile.title} className={`mission-bento-tile mission-tone-${tile.tone}`}>
-              <div className="mission-tile-icon">{tile.icon}</div>
-              <span className="mission-tile-label">{tile.label}</span>
-              <h3>{tile.title}</h3>
-              <p>{tile.body}</p>
-              <Link href={tile.href}>{tile.action} <span aria-hidden>↗</span></Link>
-            </article>
-          ))}
-          <article className="mission-bento-tile mission-bento-wide mission-tone-emerald">
-            <div className="mission-tile-label">THE OPERATING LOOP</div>
-            <h3>From signal to action, without the black box.</h3>
-            <div className="mission-workflow">
-              {WORKFLOW.map((step, index) => (
-                <span key={step}>
-                  <b>{String(index + 1).padStart(2, "0")}</b>
-                  {step}
-                  {index < WORKFLOW.length - 1 && <i aria-hidden>→</i>}
+      {/* The 6-Stage Complete Operating Cycle */}
+      <section aria-labelledby="workflow-title" className="mt-16 sm:mt-20">
+        <h2 id="workflow-title" className="text-2xl font-bold tracking-tight sm:text-3xl">
+          The 6-Stage Operational Workflow
+        </h2>
+        <p className="mt-2 text-sm text-muted">
+          A continuous loop combining probabilistic quantile forecasting with rigorous LP mathematical optimization.
+        </p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {WORKFLOW.map((w) => (
+            <div key={w.stage} className="card p-5">
+              <div className="flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-ink">
+                  {w.stage}
                 </span>
-              ))}
+                <h3 className="font-semibold tracking-wide text-ink">{w.name}</h3>
+              </div>
+              <p className="mt-2 text-xs text-muted leading-relaxed">{w.detail}</p>
             </div>
-          </article>
-        </section>
+          ))}
+        </div>
+      </section>
 
-        {/* ======================================================================
-             10. DATA HONESTY INVARIANTS & VERIFIABLE CITATIONS
-             ====================================================================== */}
-        <section className="mission-trust">
+      {/* 10 Core Features Grid */}
+      <section aria-labelledby="features-title" className="mt-16 sm:mt-20">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
-            <span className="mission-section-tag">DATA HONESTY INVARIANTS</span>
-            <h2>Trust is a feature.</h2>
-          </div>
-          <div className="mission-trust-list">
-            <p>
-              <b>01</b>
-              <strong>Real data or nothing</strong>
-              <span>Providers, timestamps, and caveats stay visible. Missing data is never disguised.</span>
-            </p>
-            <p>
-              <b>02</b>
-              <strong>Every value is labelled</strong>
-              <span>LIVE, FORECAST, ESTIMATED, REFERENCE, or UNAVAILABLE at a glance.</span>
-            </p>
-            <p>
-              <b>03</b>
-              <strong>Estimates show their working</strong>
-              <span>Formulas, tariffs, assumptions, and confidence travel with every recommendation.</span>
+            <h2 id="features-title" className="text-2xl font-bold tracking-tight sm:text-3xl">
+              10 Core Features of AVISHKAR
+            </h2>
+            <p className="mt-2 text-sm text-muted">
+              Built, verified, and operational across both the Python EMS and the TypeScript platform.
             </p>
           </div>
-        </section>
-      </main>
+          <Link href="/map" className="text-sm font-semibold text-accent hover:underline">
+            Try a Property &rarr;
+          </Link>
+        </div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+          {FEATURES.map((f) => (
+            <div key={f.num} className="card p-5 flex flex-col justify-between hover:border-accent/50 transition-colors">
+              <div>
+                <span className="num text-xs font-bold text-muted">{f.num}</span>
+                <h3 className="mt-1 text-base font-semibold text-ink">{f.title}</h3>
+                <p className="mt-2 text-xs text-muted leading-relaxed">{f.desc}</p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-line/60">
+                <Link href={f.href} className="text-xs font-semibold text-accent hover:underline">
+                  {f.linkText} &rarr;
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Foundation Principles */}
+      <section aria-labelledby="principles-title" className="mt-16 sm:mt-20">
+        <h2 id="principles-title" className="text-xl font-bold tracking-tight">
+          Core Data Honesty Invariants
+        </h2>
+        <p className="mt-1 text-sm text-muted">
+          Data honesty is the product: AVISHKAR never presents simulated, estimated, or demo data as live.
+        </p>
+        <ul className="mt-6 grid gap-4 sm:grid-cols-3">
+          {PRINCIPLES.map((p) => (
+            <li key={p.title} className="card p-5">
+              <h3 className="font-semibold text-ink">{p.title}</h3>
+              <p className="mt-2 text-xs text-muted leading-relaxed">{p.text}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

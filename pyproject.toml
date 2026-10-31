@@ -131,9 +131,5 @@ target-version = "py311"
 src = ["src", "tests"]
 fix = false
 show-fixes = true
-# Vendored third-party source. It is kept byte-identical to upstream so that upstream's own tests can
-# be run against it (see src/avishkar_ems/vendor/__init__.py); reformatting it to our style would
-# silently break that guarantee. `src/emhass/` is excluded the same way, by never being passed to ruff.
-exclude = ["src/avishkar_ems/vendor"]
 
 line-length = 100
