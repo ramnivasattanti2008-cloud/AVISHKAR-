@@ -1,6 +1,5 @@
 # ⚡ UrjaSetu (ऊर्जासेतु) EMS: Predictive Energy Management & Autonomous Surplus Dispatch
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-UrjaSetu%20EMS-brightgreen?style=for-the-badge&logo=streamlit)](https://trek-produces-meyer-academy.trycloudflare.com)
 [![ISRO Satellite](https://img.shields.io/badge/ISRO-INSAT--3D%2F3DR%20%26%20NavIC-orange?style=for-the-badge)](https://www.isro.gov.in/)
 [![Protocol](https://img.shields.io/badge/Open%20Grid-Beckn%20DEG%20v2.0-blue?style=for-the-badge)](https://becknprotocol.io/)
 [![Optimization](https://img.shields.io/badge/Solver-HiGHS%20Convex%20LP-purple?style=for-the-badge)](https://highs.dev/)
@@ -9,7 +8,7 @@
 
 **AVISHKAR FET Hackathon — Problem Statement #2 (*Predictive Energy Management & Surplus Dispatch*)**
 
-👉 **Live Working Deployment**: [https://trek-produces-meyer-academy.trycloudflare.com](https://trek-produces-meyer-academy.trycloudflare.com)
+👉 **Run locally**: start the web app with `pnpm -C platform/web dev`, then open [http://localhost:3000](http://localhost:3000).
 
 **UrjaSetu (ऊर्जासेतु)** is a next-generation predictive Energy Management System (EMS) designed for Indian solar microgrids, commercial facilities, and residential rooftop setups. Operating in 15-minute dispatch horizons, UrjaSetu combines **ISRO INSAT-3D/3DR geostationary satellite solar irradiance nowcasting**, **NavIC regional microgrid coordination**, **conformal P10/P50/P90 prediction bands**, **HiGHS convex Linear Programming (LP)**, and the **Beckn DEG v2.0 (India Energy Stack)** open protocol for peer-to-peer (P2P) clean energy trading.
 
