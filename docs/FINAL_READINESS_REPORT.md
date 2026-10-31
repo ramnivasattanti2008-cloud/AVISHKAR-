@@ -18,8 +18,7 @@ while the documents said otherwise.
 | 3 | **The interactive demonstration**, inside the existing application: three starting scenarios, every input editable, recalculation through the same engine. Nothing computed in the browser, no outcome hardcoded. | `platform/web/src/components/community/AllocationWorkbench.tsx` |
 | 4 | **`route_community_exchange`** in the Python EMS — the function the dashboard had been written against but which never existed. I²R feeder loss from the current the transfer draws, so doubling the power quadruples the loss; both sides must have opted in; nothing counted twice; the caller's prices only. | `src/avishkar_ems/home_balance.py` |
 | 5 | **A Linux/macOS launcher.** The repository had Windows launchers only. | `start-platform.sh` |
-| 6 | **Source-level reuse of SEM's surplus arithmetic** (2026-10-31) -- seven pure functions and one whole file vendored verbatim from `traktore-org/sem-community` (MIT, commit `067c8615`), wired into `home_balance.py` and reachable from the dashboard's "My Home EMS" tab. 49 of upstream's own tests run against the copies. It replaces a `generation - demand` surplus for metered homes and brings invariants learned from field failures: the clamp to actual generation, the import deadband, the charger's own draw, and the battery-charge reclaim. A pre-existing first-law defect (no curtailment term) was found and fixed in the doing. | `src/avishkar_ems/vendor/`, `home_balance.py`, `app/home_setup_view.py` |
-| 7 | **The checks that would have caught this session's defects**: a test that imports every view and resolves every name they import, which never skips; three browser checks for the workbench added to the project's own `pnpm browser`. | `tests/avishkar_ems/test_app_imports.py`, `platform/web/scripts/browser.mjs` |
+| 6 | **The checks that would have caught this session's defects**: a test that imports every view and resolves every name they import, which never skips; three browser checks for the workbench added to the project's own `pnpm browser`. | `tests/avishkar_ems/test_app_imports.py`, `platform/web/scripts/browser.mjs` |
 
 ## Which major features now work that did not
 
@@ -79,8 +78,7 @@ any external project:
 
 | Suite / check | Result |
 |---|---|
-| `pytest tests/avishkar_ems` | **687 passed, 1 skipped** (554 at the start of 2026-10-30) |
-| `pytest tests/avishkar_ems/test_vendored_sem_surplus.py` (upstream SEM's own tests, against our copies) | **49 passed** |
+| `pytest tests/avishkar_ems` | **612 passed, 1 skipped** (554 at session start) |
 | `platform/engine` pytest | **448 passed** in 41.5 s |
 | `pnpm -C platform/api test` (real PostGIS) | **994 passed**, 69 files |
 | `pnpm -C platform/web test` | **399 passed**, 46 files (366 at start) |

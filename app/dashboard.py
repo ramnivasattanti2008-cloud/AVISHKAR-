@@ -20,7 +20,7 @@ import streamlit as st
 from app.ui_html import html_block
 from app.home_setup_view import render_home_management_view
 from app.integrations_view import render_integrations_dashboard
-from app.urjasetu_view import render_pr_urjasetu_mission_control, render_urjasetu_dashboard
+from app.urjasetu_view import render_urjasetu_dashboard
 from plotly.subplots import make_subplots
 
 from avishkar_ems import cache
@@ -315,10 +315,7 @@ if "dashboard_mode_radio" not in st.session_state:
 
 dashboard_mode = st.sidebar.radio(
     "Navigation Mode",
-    [
-        "🏡 My Personal Home Solar & EMS",
-        "🏛️ State & National Explorer (Macro Overview)",
-    ],
+    ["🏡 My Personal Home Solar & EMS", "🏛️ State & National Explorer (Macro Overview)"],
     key="dashboard_mode_radio",
 )
 
@@ -472,36 +469,6 @@ annual_save = _pb_totals.annual_benefit()
 monthly_save = annual_save / 12.0
 pre_bill = _pb_totals.bill_without_system / _pb_days * _DAYS_PER_MONTH
 cur_bill = pre_bill - monthly_save
-
-# Shareable Demo Link Banner (Gaurav Kedia PR #3 Integration)
-st.markdown(
-    """
-    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #4338ca; border-radius: 14px; padding: 14px 20px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <div>
-                <span style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #818cf8;">⚡ Localhost Active Session • UrjaSetu EMS</span><br/>
-                <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 15px; font-weight: 700; color: #38bdf8;">
-                    http://localhost:8501
-                </span>
-                <span style="margin: 0 10px; color: #64748b;">|</span>
-                <a href="http://localhost:3000" target="_blank" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; font-weight: 700; color: #fbbf24; text-decoration: none; background: rgba(245, 158, 11, 0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.4);">
-                    ✨ Open 21st.dev Next-Gen Frontend (Port 3000) ↗
-                </a>
-                <span style="margin: 0 10px; color: #64748b;">|</span>
-                <a href="https://studio-4547798402-ec0aa.web.app" target="_blank" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; font-weight: 700; color: #34d399; text-decoration: none; background: rgba(16, 185, 129, 0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.4);">
-                    🌐 Live Firebase Web App ↗
-                </a>
-            </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; padding: 4px 12px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(16, 185, 129, 0.4);">
-                    100% Live &amp; Operational
-                </span>
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
 
 st.title(f"⚡ {my_home['owner_name']}")
 st.markdown(
@@ -908,44 +875,35 @@ with arka_exp:
                         st.rerun()
 
 # ==============================================================================
-# NAVIGATION ARCHITECTURE (LAZY-EVALUATED ZERO-FREEZE SUITE)
+# TABS ARCHITECTURE (ORDERED 12-STAGE SOLAR LIFECYCLE)
 # ==============================================================================
-TAB_NAMES = [
-    "Residential EMS",
-    "Rooftop Sizing",
-    "Solar Radar",
-    "Battery Storage",
-    "Daily Plan",
-    "Smart Appliances",
-    "EV Charging",
-    "Inverter Gateway",
-    "P2P Trading",
-    "UPI Settlement",
-    "Fleet Pooling",
-    "Health Monitor",
-    "Lifetime Savings",
-    "Surplus Engine",
-    "Mission Control",
-]
-
-selected_tab = st.radio(
-    "Navigation Suite:",
-    TAB_NAMES,
-    horizontal=True,
-    key="nav_active_tab",
-    label_visibility="collapsed",
-)
+tab_home, tab_connect, tab_sat, tab_storage, tab_plan, tab_citizen, tab_ev_grid, tab_hardware, tab_offers, tab_reg_upi, tab_fleet, tab_monitor, tab_payback, tab_integrations = st.tabs([
+    "🏡 My Home EMS",
+    "⚡ Rooftop Sizing",
+    "🛰️ Solar Radar",
+    "🔋 Battery Storage",
+    "📊 Daily Plan",
+    "🚦 Smart Appliances",
+    "🚗 EV Charging",
+    "🔌 Inverter Gateway",
+    "🤝 P2P Trading",
+    "⚖️ UPI Settlement",
+    "🌐 Fleet Pooling",
+    "🔍 Health Monitor",
+    "💰 Lifetime Savings",
+    "🚀 Surplus Engine",
+])
 
 # ==============================================================================
 # TAB 0: RESIDENTIAL HOME ENERGY MANAGEMENT & BENCHMARK (PHASE 1 - 8)
 # ==============================================================================
-if selected_tab == "Residential EMS":
+with tab_home:
     render_home_management_view()
 
 # ==============================================================================
 # TAB 1: SOLAR PRE-FEASIBILITY, ELECTRICAL CONNECTION & PM SURYA GHAR
 # ==============================================================================
-elif selected_tab == "Rooftop Sizing":
+with tab_connect:
     st.subheader("⚡ 1. Solar Pre-Feasibility, Electrical Connection & PM Surya Ghar")
     st.caption("Complete engineering blueprint: Single Line Diagram (SLD) electrical circuit, statutory PM Surya Ghar Muft Bijli Yojana subsidy, and smart meter CSV rooftop sizing.")
 
@@ -1329,7 +1287,7 @@ Generated by UrjaSetu & AVISHKAR Enterprise Energy Management System
 # ==============================================================================
 # TAB 2: ISRO / NAVIC SATELLITE RADAR & MICROGRID MAP
 # ==============================================================================
-elif selected_tab == "Solar Radar":
+with tab_sat:
     st.subheader("🛰️ 2. Indian Geospatial Solar Radar & Satellite Observation")
     st.caption(f"Real-time satellite solar irradiance and cloud nowcasting grounded in ISRO INSAT-3D/3DR observations for {my_home['location']}.")
 
@@ -1501,7 +1459,7 @@ elif selected_tab == "Solar Radar":
 # ==============================================================================
 # TAB 3: BATTERY STORAGE & ADVISOR (OUTAGE PROTECTION & PHYSICS)
 # ==============================================================================
-elif selected_tab == "Battery Storage":
+with tab_storage:
     st.subheader(f"🔋 3. Battery Storage & Family Outage Shield ({my_home['owner_name']})")
     st.caption("Active battery state of charge, room-by-room blackout survival checklist, emergency storm reserve lock, and cell physics.")
 
@@ -1617,7 +1575,7 @@ elif selected_tab == "Battery Storage":
 # ==============================================================================
 # TAB 4: PLAN FOR THE DAY (DETAILED TECHNICAL FORECAST & LP DISPATCH)
 # ==============================================================================
-elif selected_tab == "Daily Plan":
+with tab_plan:
     st.subheader(f"📊 4. Plan for the Day ({my_home['owner_name']})")
     st.caption(f"15-minute optimization schedule balancing rooftop solar, {my_home['family_size']} demand, battery charge/discharge, and grid import/export.")
 
@@ -1758,7 +1716,7 @@ elif selected_tab == "Daily Plan":
 # ==============================================================================
 # TAB 5: SMART APPLIANCES & CITIZEN ACTION GUIDE
 # ==============================================================================
-elif selected_tab == "Smart Appliances":
+with tab_citizen:
     st.subheader(f"🚦 5. Smart Appliances & Family Action Guide ({my_home['owner_name']})")
     st.caption("Maximize free rooftop sunshine, shift heavy household appliances away from evening peak grid rates, and generate instant family alerts.")
 
@@ -1892,7 +1850,7 @@ elif selected_tab == "Smart Appliances":
 # ==============================================================================
 # TAB 6: EV V2H & FEEDER TRANSFORMER GUARD
 # ==============================================================================
-elif selected_tab == "EV Charging":
+with tab_ev_grid:
     st.subheader(f"🚗 6. EV V2H & Feeder Guard ({my_home['owner_name']})")
     st.caption("Coordinating bidirectional EV charging (Tata Nexon EV, Ola, Ather) and neighborhood distribution transformer thermal protection.")
 
@@ -2007,7 +1965,7 @@ elif selected_tab == "EV Charging":
 # ==============================================================================
 # TAB 7: INDUSTRIAL INVERTER HARDWARE GATEWAY & SAFETY
 # ==============================================================================
-elif selected_tab == "Inverter Gateway":
+with tab_hardware:
     st.subheader(f"🔌 7. Hardware Inverter Gateway ({my_home['owner_name']})")
     st.caption("Direct physical coupling between the LP optimizer and physical inverters (Sungrow, Growatt, GoodWe, Solis, Victron). "
                "Reads raw Modbus registers (40001+) and latches dispatch setpoints via SunSpec Model 124 control registers.")
@@ -2108,7 +2066,7 @@ elif selected_tab == "Inverter Gateway":
 # ==============================================================================
 # TAB 8: OFFERS & BECKN DEG V2.0 PROTOCOL
 # ==============================================================================
-elif selected_tab == "P2P Trading":
+with tab_offers:
     st.subheader(f"🤝 8. P2P Surplus Energy Offers & Beckn DEG v2.0 ({my_home['owner_name']})")
     st.caption("Share and trade surplus clean solar energy with neighboring homes on the Open Network for Digital Commerce (ONDC / Beckn DEG v2.0).")
 
@@ -2225,7 +2183,7 @@ elif selected_tab == "P2P Trading":
 # ==============================================================================
 # TAB 9: DISCOM WHEELING & UPI SETTLEMENT
 # ==============================================================================
-elif selected_tab == "UPI Settlement":
+with tab_reg_upi:
     st.subheader(f"⚖️ 9. DISCOM Wheeling Ledger & Instant UPI Settlement ({my_home['state_name']})")
     st.caption(f"Compliant distribution wheeling under {my_home['state_name']} electricity regulatory frameworks ({my_home['discom']}). "
                "Calculates technical line losses, wire usage charges, and generates NPCI UPI instant settlement tokens.")
@@ -2297,7 +2255,7 @@ elif selected_tab == "UPI Settlement":
 # ==============================================================================
 # TAB 10: FLEET POOLING & MULTI-SITE DISPATCH
 # ==============================================================================
-elif selected_tab == "Fleet Pooling":
+with tab_fleet:
     st.subheader("🌐 10. Community & Neighborhood Surplus Pooling")
     st.caption("Aggregates surplus solar offers across neighborhood rooftops into bulk commercial trade blocks. "
                "Floor price equals the highest member floor so no homeowner sells at a loss; revenue splits pro rata.")
@@ -2345,7 +2303,7 @@ elif selected_tab == "Fleet Pooling":
 # ==============================================================================
 # TAB 11: FAULT MONITORING & SHIFTABLE LOADS
 # ==============================================================================
-elif selected_tab == "Health Monitor":
+with tab_monitor:
     st.subheader(f"🔍 11. Rooftop Health, Dust & Shiftable Loads ({my_home['owner_name']})")
     st.caption("Monitors rooftop PV output against modelled baseline to detect panel soiling, dust accumulation, string disconnection, and shiftable bursts.")
 
@@ -2419,7 +2377,7 @@ elif selected_tab == "Health Monitor":
 # ==============================================================================
 # TAB 12: PAYBACK, PM SURYA GHAR & BEE CARBON CREDITS
 # ==============================================================================
-elif selected_tab == "Lifetime Savings":
+with tab_payback:
     st.subheader(f"💰 12. Lifetime Payback, PM Surya Ghar & State Comparison ({my_home['owner_name']})")
     st.caption(f"Financial savings for {my_home['owner_name']}, payback years with subsidy, hold-out forecast calibration, and comparison with {my_home['state_name']} state averages.")
 
@@ -2497,12 +2455,5 @@ elif selected_tab == "Lifetime Savings":
 # ==============================================================================
 # TAB 13: MULTI-REPO OPEN-SOURCE SURPLUS INTELLIGENCE & INTEGRATIONS
 # ==============================================================================
-elif selected_tab == "Surplus Engine":
+with tab_integrations:
     render_integrations_dashboard()
-
-# ==============================================================================
-# TAB 14: URJASETU MISSION CONTROL (PR #3 INTEGRATION)
-# ==============================================================================
-elif selected_tab == "Mission Control":
-    render_pr_urjasetu_mission_control()
-
