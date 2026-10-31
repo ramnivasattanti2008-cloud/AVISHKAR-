@@ -470,6 +470,36 @@ monthly_save = annual_save / 12.0
 pre_bill = _pb_totals.bill_without_system / _pb_days * _DAYS_PER_MONTH
 cur_bill = pre_bill - monthly_save
 
+# Shareable Demo Link Banner (Gaurav Kedia PR #3 Integration)
+st.markdown(
+    """
+    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #4338ca; border-radius: 14px; padding: 14px 20px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <span style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #818cf8;">⚡ Localhost Active Session • UrjaSetu EMS</span><br/>
+                <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 15px; font-weight: 700; color: #38bdf8;">
+                    http://localhost:8501
+                </span>
+                <span style="margin: 0 10px; color: #64748b;">|</span>
+                <a href="http://localhost:3000" target="_blank" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; font-weight: 700; color: #fbbf24; text-decoration: none; background: rgba(245, 158, 11, 0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.4);">
+                    ✨ Open 21st.dev Next-Gen Frontend (Port 3000) ↗
+                </a>
+                <span style="margin: 0 10px; color: #64748b;">|</span>
+                <a href="https://studio-4547798402-ec0aa.web.app" target="_blank" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; font-weight: 700; color: #34d399; text-decoration: none; background: rgba(16, 185, 129, 0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.4);">
+                    🌐 Live Firebase Web App ↗
+                </a>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 600; padding: 4px 12px; border-radius: 12px; font-size: 12px; border: 1px solid rgba(16, 185, 129, 0.4);">
+                    100% Live &amp; Operational
+                </span>
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title(f"⚡ {my_home['owner_name']}")
 st.markdown(
     f"##### *Personal Home Energy Intelligence • {my_home['location']} ({my_home['discom']})*"

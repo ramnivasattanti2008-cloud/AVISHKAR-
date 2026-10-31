@@ -10,7 +10,7 @@ gatherUsageStats = false
 
 [client]
 toolbarMode = "minimal"
-showErrorDetails = false
+showErrorDetails = true
 
 [theme]
 primaryColor = "#d97706"
