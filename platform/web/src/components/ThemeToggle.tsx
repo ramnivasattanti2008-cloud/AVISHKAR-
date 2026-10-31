@@ -22,7 +22,7 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      className="btn"
+      className="mission-theme-toggle"
       aria-label={`Switch to ${next} theme`}
       title={`Switch to ${next} theme`}
       onClick={() => {
@@ -35,7 +35,8 @@ export function ThemeToggle() {
         listeners.forEach((l) => l());
       }}
     >
-      {theme === "dark" ? "Light" : "Dark"}
+      <span aria-hidden>{theme === "dark" ? "☀" : "◐"}</span>
+      <span className="sr-only">{theme === "dark" ? "Light" : "Dark"} mode</span>
     </button>
   );
 }

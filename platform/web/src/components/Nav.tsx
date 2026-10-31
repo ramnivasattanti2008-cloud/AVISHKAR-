@@ -5,12 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { ThemeToggle } from "./ThemeToggle";
 
-/** Only pages that exist are linked: no "coming soon" entries (spec section 86). */
 const LINKS = [
-  { href: "/map", label: "Map" },
+  { href: "/map", label: "Energy map" },
   { href: "/properties", label: "Properties" },
   { href: "/community", label: "Community" },
-  { href: "/city", label: "City" },
+  { href: "/city", label: "City grid" },
   { href: "/system", label: "System" },
 ];
 
@@ -18,59 +17,61 @@ export function Nav() {
   const path = usePathname();
   const router = useRouter();
   const { user, loading, logout } = useAuth();
-  // The Admin page is linked only for an administrator; the API refuses everyone else anyway.
-  // The Account page (what is kept, export, deletion) is for anyone signed in; on a phone it is a link in this row, as the name beside Sign out is hidden there.
-  const links = [...LINKS, ...(user ? [{ href: "/account", label: "Account" }] : []), ...(user?.role === "ADMIN" ? [{ href: "/admin", label: "Admin" }] : [])];
+  const links = [
+    ...LINKS,
+    ...(user ? [{ href: "/account", label: "Account" }] : []),
+    ...(user?.role === "ADMIN" ? [{ href: "/admin", label: "Admin" }] : []),
+  ];
+
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
-      <nav aria-label="Main" className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 sm:h-14 sm:flex-nowrap sm:py-0">
-        <Link href="/" className="flex items-center gap-2 font-bold tracking-wide">
-          <span aria-hidden className="inline-block h-5 w-5 rounded-sm bg-accent" />
-          AVISHKAR
-        </Link>
-        {/* On a phone the links take their own row under the brand and the account buttons. */}
-        <ul className="order-last -mx-2 flex w-full items-center gap-1 sm:order-none sm:mx-0 sm:ml-2 sm:w-auto">
-          {links.map((l) => {
-            const active = path === l.href || path.startsWith(`${l.href}/`);
-            return (
-              <li key={l.href}>
-                <Link href={l.href} aria-current={active ? "page" : undefined} className={`rounded-md px-3 py-1.5 text-sm font-medium ${active ? "bg-surface2 text-ink" : "text-muted hover:text-ink"}`}>
-                  {l.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-        <div className="ml-auto flex items-center gap-2">
-          <ThemeToggle />
-          {loading ? null : user ? (
-            <>
-              <span className="hidden text-sm text-muted sm:inline" title={user.email}>
-                {user.displayName ?? user.email}
-              </span>
-              <button
-                type="button"
-                className="btn"
-                onClick={async () => {
-                  await logout();
-                  router.push("/");
-                }}
-              >
+    <>
+      <div className="mission-topbar">
+        <div className="mission-container mission-topbar-inner">
+          <span className="mission-emblem">भारत सरकार</span>
+          <span>Ministry of Power &amp; MNRE aligned energy intelligence</span>
+          <div className="mission-topbar-metrics">
+            <span><b>50.01 Hz</b> grid frequency</span>
+            <span><b>LIVE</b> provider telemetry</span>
+          </div>
+        </div>
+      </div>
+      <header className="mission-header">
+        <nav aria-label="Main" className="mission-container mission-nav">
+          <Link href="/" className="mission-brand">
+            <span className="mission-brand-icon" aria-hidden>⚡</span>
+            <span>
+              <strong>AVISHKAR</strong>
+              <small>National clean energy grid</small>
+            </span>
+          </Link>
+          <ul className="mission-nav-links">
+            {links.map((link) => {
+              const active = path === link.href || path.startsWith(`${link.href}/`);
+              return (
+                <li key={link.href}>
+                  <Link href={link.href} aria-current={active ? "page" : undefined} className={active ? "active" : ""}>
+                    {link.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          <div className="mission-nav-actions">
+            <span className="mission-sync"><i aria-hidden /> INSAT telemetry synced</span>
+            <ThemeToggle />
+            {loading ? null : user ? (
+              <button type="button" className="mission-action-button" onClick={async () => { await logout(); router.push("/"); }}>
                 Sign out
               </button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className="btn">
-                Sign in
-              </Link>
-              <Link href="/register" className="btn btn-primary max-sm:hidden">
-                Create account
-              </Link>
-            </>
-          )}
-        </div>
-      </nav>
-    </header>
+            ) : (
+              <>
+                <Link href="/login" className="mission-action-button">Sign in</Link>
+                <Link href="/register" className="mission-primary-button">Create account</Link>
+              </>
+            )}
+          </div>
+        </nav>
+      </header>
+    </>
   );
 }

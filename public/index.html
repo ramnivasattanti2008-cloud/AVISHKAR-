@@ -1,2008 +1,1092 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AVISHKAR | UrjaSetu — Enterprise Solar Energy Management Platform</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff9e00'><circle cx='12' cy='12' r='5'/><path d='M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42' stroke='%23ff9e00' stroke-width='2' stroke-linecap='round'/></svg>">
-  
-  <!-- Fonts -->
+  <title>UrjaSetu (ऊर्जासेतु) | India's Next-Gen Predictive Energy Management & Surplus Dispatch</title>
+  <meta name="description" content="Government-aligned, citizen-first energy management system integrating ISRO INSAT-3DR satellite data, real-time microgrid intelligence, Beckn DEG v2.0 P2P trading, and PM Surya Ghar subsidy calculations.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%200%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- QRCode.js -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          },
-          colors: {
-            solar: {
-              gold: '#ffaa00',
-              amber: '#ffb703',
-              plasma: '#ff5400',
-              flare: '#fb8500',
-              sunlight: '#ffd166',
-              cyan: '#00f0ff',
-              emerald: '#10b981',
-              void: '#040714',
-              surface: '#090e24',
-              card: '#0f1738',
-              border: '#1a2754',
-              highlight: '#253775',
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <style>
-    body {
-      background-color: #040714;
-      color: #f1f5f9;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      overflow-x: hidden;
-    }
-
-    .solar-ambient-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: radial-gradient(circle at 50% -10%, rgba(255, 170, 0, 0.18) 0%, rgba(255, 84, 0, 0.08) 35%, rgba(4, 7, 20, 0) 75%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .grid-ambient-bg {
-      position: fixed;
-      inset: 0;
-      background-image: 
-        linear-gradient(to right, rgba(26, 39, 84, 0.25) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(26, 39, 84, 0.25) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .glass-panel {
-      background: rgba(9, 14, 36, 0.82);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(26, 39, 84, 0.8);
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
-    }
-
-    .glass-card-interactive {
-      background: rgba(15, 23, 56, 0.7);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(26, 39, 84, 0.85);
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .glass-card-interactive:hover {
-      border-color: rgba(255, 170, 0, 0.45);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px -8px rgba(255, 170, 0, 0.12);
-    }
-
-    .nav-tab-active {
-      color: #ffaa00 !important;
-      background: linear-gradient(180deg, rgba(255, 170, 0, 0.18) 0%, rgba(255, 170, 0, 0.04) 100%);
-      border-color: #ffaa00 !important;
-      font-weight: 700;
-      box-shadow: 0 0 16px rgba(255, 170, 0, 0.25);
-    }
-
-    /* Animated Solar Pulsing Orb */
-    @keyframes sunRotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    @keyframes sunCoronaPulse {
-      0%, 100% { transform: scale(1); opacity: 0.8; }
-      50% { transform: scale(1.08); opacity: 1; }
-    }
-    .sun-rotating-rays {
-      animation: sunRotate 24s linear infinite;
-      transform-origin: center;
-    }
-    .sun-corona-pulse {
-      animation: sunCoronaPulse 3.5s ease-in-out infinite;
-      transform-origin: center;
-    }
-
-    /* Circuit Power Flow Animation */
-    .circuit-path {
-      stroke-dasharray: 8 6;
-      animation: flowDash 1s linear infinite;
-    }
-    @keyframes flowDash {
-      to { strokeDashoffset: -28; }
-    }
-
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #040714;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #1a2754;
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #ffaa00;
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=9.0">
+  <!-- Motion Engines (GSAP & Lenis) -->
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.27/dist/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 </head>
+<body>
+  <!-- 21st.dev Architectural Grid Background & Ambient Lighting -->
+  <div class="grid-bg-overlay"></div>
+  <div class="ambient-light-glow"></div>
 
-<body class="min-h-screen flex flex-col font-sans relative antialiased">
-
-  <!-- Ambient Solar Lights -->
-  <div class="solar-ambient-bg"></div>
-  <div class="grid-ambient-bg"></div>
-
-  <!-- ======================================================================= -->
-  <!-- NAVIGATION HEADER                                                       -->
-  <!-- ======================================================================= -->
-  <header class="glass-panel sticky top-0 z-50 border-b border-solar-border/90">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
-      
-      <!-- Brand & Product Title with Solar Orb Icon -->
-      <div class="flex items-center space-x-3.5">
-        <div class="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-300 p-0.5 shadow-lg shadow-orange-500/25 flex items-center justify-center">
-          <div class="w-full h-full bg-solar-void rounded-[10px] flex items-center justify-center overflow-hidden relative">
-            <!-- Pulsing SVG Sun Orb -->
-            <svg class="w-7 h-7 text-amber-400 sun-corona-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="4" fill="rgba(255, 170, 0, 0.25)"></circle>
-              <g class="sun-rotating-rays">
-                <path d="M12 2v2"></path>
-                <path d="M12 20v2"></path>
-                <path d="m4.93 4.93 1.41 1.41"></path>
-                <path d="m17.66 17.66 1.41 1.41"></path>
-                <path d="M2 12h2"></path>
-                <path d="M20 12h2"></path>
-                <path d="m6.34 17.66-1.41 1.41"></path>
-                <path d="m19.07 4.93-1.41 1.41"></path>
-              </g>
-            </svg>
-          </div>
-          <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-solar-void"></span>
-        </div>
-
-        <div>
-          <div class="flex items-center space-x-2.5">
-            <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-200 bg-clip-text text-transparent">
-              AVISHKAR
-            </span>
-            <span class="text-slate-500 font-light text-lg">/</span>
-            <span class="text-lg font-bold text-slate-100 tracking-tight">UrjaSetu</span>
-            <span class="text-[10px] font-mono tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
-              v1.2 ENTERPRISE
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-400 tracking-wide font-medium">Residential Energy Management & P2P Microgrid Platform</p>
-        </div>
+  <!-- ======================================================================
+       0. NATIONAL GRID & GOVERNMENT INSTITUTIONAL TOP BAR
+       ====================================================================== -->
+  <div class="gov-top-bar">
+    <div class="container gov-top-inner">
+      <div class="gov-emblem-wrap">
+        <span>🇮🇳</span>
+        <span>भारत सरकार | Ministry of Power & MNRE Aligned</span>
+        <span class="gov-emblem-badge">Statutory Portal</span>
       </div>
-
-      <!-- Real-Time Telemetry Badges & Fast Action -->
-      <div class="flex items-center space-x-2.5 text-xs font-mono">
-        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-solar-surface border border-solar-border text-slate-300">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>GRID 230V · 50.0Hz</span>
+      <div class="gov-meta-chips">
+        <div class="gov-chip">
+          <span>CEA Grid Freq:</span> <b class="freq-val" id="top-grid-freq">50.01 Hz</b> (Normal)
         </div>
-        <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-950/40 border border-amber-500/30 text-amber-300">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span class="hidden md:inline">FIRST LAW</span> CONSERVATION
+        <div class="gov-chip">
+          <span>INSAT-3DR:</span> <b>74.0°E Active</b>
         </div>
-        
-        <!-- Home Setup Config Button -->
-        <button onclick="switchTab('tab-setup')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold hover:brightness-110 transition shadow-md shadow-amber-500/20">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-          <span>Home Setup</span>
-        </button>
+        <div class="gov-chip">
+          <span>All-India Demand:</span> <b id="top-national-demand">228,450 MW</b>
+        </div>
       </div>
     </div>
+  </div>
 
-    <!-- HORIZONTAL TAB NAVIGATION (CLEAN, NO HORIZONTAL JUNK, 15 SUITES) -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-solar-border/60">
-      <nav class="flex space-x-1.5 overflow-x-auto py-2.5 scrollbar-none text-xs font-medium">
-        <button onclick="switchTab('tab-benchmark')" id="btn-tab-benchmark" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap nav-tab-active">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          <span>Benchmark & Dispatch</span>
-        </button>
+  <!-- ======================================================================
+       1. HERO HEADER / NAVIGATION
+       ====================================================================== -->
+  <header class="site-header" id="site-header">
+    <div class="container nav-container">
+      <a href="#hero" class="brand-wrapper" aria-label="UrjaSetu Home">
+        <div class="brand-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div class="brand-title-wrap">
+          <div class="brand-title">
+            UrjaSetu <span class="brand-hindi">(ऊर्जासेतु)</span>
+            <span class="version-pill">v2.0</span>
+          </div>
+          <span class="brand-tagline" data-i18n="brand_tagline">National Clean Energy Grid</span>
+        </div>
+      </a>
 
-        <button onclick="switchTab('tab-setup')" id="btn-tab-setup" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          <span>Home Setup</span>
+      <nav aria-label="Main navigation">
+        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
         </button>
-
-        <button onclick="switchTab('tab-flow')" id="btn-tab-flow" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="12" r="3"/><path d="M8.59 16.41 15.42 12.58"/><path d="m8.59 7.59 6.83 3.83"/></svg>
-          <span>Single Line Diagram (SLD)</span>
-        </button>
-
-        <button onclick="switchTab('tab-sizing')" id="btn-tab-sizing" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-          <span>PM Surya Ghar Subsidy</span>
-        </button>
-
-        <button onclick="switchTab('tab-radar')" id="btn-tab-radar" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-          <span>Solar Radar</span>
-        </button>
-
-        <button onclick="switchTab('tab-battery')" id="btn-tab-battery" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="16" height="10" x="2" y="7" rx="2"/><line x1="22" x2="22" y1="11" y2="13"/></svg>
-          <span>Battery Storage & Physics</span>
-        </button>
-
-        <button onclick="switchTab('tab-dailyplan')" id="btn-tab-dailyplan" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-          <span>24h Daily Plan</span>
-        </button>
-
-        <button onclick="switchTab('tab-loads')" id="btn-tab-loads" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          <span>EV & Flexible Loads</span>
-        </button>
-
-        <button onclick="switchTab('tab-gateway')" id="btn-tab-gateway" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
-          <span>Inverter Gateway</span>
-        </button>
-
-        <button onclick="switchTab('tab-community')" id="btn-tab-community" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span>Community P2P Feeder</span>
-        </button>
-
-        <button onclick="switchTab('tab-upi')" id="btn-tab-upi" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01"/></svg>
-          <span>UPI Instant Settlement</span>
-        </button>
-
-        <button onclick="switchTab('tab-fleet')" id="btn-tab-fleet" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-          <span>Fleet Pooling & VPP</span>
-        </button>
-
-        <button onclick="switchTab('tab-health')" id="btn-tab-health" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          <span>Health Monitor</span>
-        </button>
-
-        <button onclick="switchTab('tab-savings')" id="btn-tab-savings" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          <span>25-Year Financials</span>
-        </button>
-
-        <button onclick="switchTab('tab-engines')" id="btn-tab-engines" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span>11 Engines Hub</span>
-        </button>
-
-        <button onclick="switchTab('tab-arka')" id="btn-tab-arka" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-transparent text-slate-300 hover:text-amber-400 hover:bg-solar-card transition whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <span>ARKA Assistant</span>
-        </button>
+        <ul class="nav-menu" id="nav-menu">
+          <li><a href="#telemetry" class="nav-link active" data-i18n="nav_radar">Radar & Flow</a></li>
+          <li><a href="#dispatch" class="nav-link" data-i18n="nav_dispatch">24H Dispatch</a></li>
+          <li><a href="#prices" class="nav-link" data-i18n="nav_tariffs">Tariffs & Ledger</a></li>
+          <li><a href="#subsidy" class="nav-link" data-i18n="nav_subsidy">PM Surya Ghar</a></li>
+          <li><a href="#citations" class="nav-link" data-i18n="nav_citations">Citations</a></li>
+        </ul>
       </nav>
+
+      <div class="header-right">
+        <div class="satellite-sync-pill" title="Geostationary Telemetry Active">
+          <div class="pulse-dot-green"></div>
+          <span data-i18n="header_sat_sync">🛰️ INSAT-3DR Synced</span>
+          <span class="live-ist-clock" id="live-ist-clock">--:--:-- IST</span>
+        </div>
+
+        <!-- 21st.dev SUN/MOON CELESTIAL THEME TOGGLE -->
+        <button class="btn-celestial-toggle" id="btn-theme-toggle" aria-label="Toggle Day / Night Mission Theme" title="Toggle Executive Day / Night Mission Mode">
+          <svg class="celestial-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="celestial-icon-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+
+        <button class="btn-lang-toggle" id="btn-language-toggle" aria-label="Toggle Language">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <b id="lang-label">EN / HI</b>
+        </button>
+
+        <a href="http://localhost:8501" target="_blank" class="btn-streamlit-action" rel="noopener">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span data-i18n="btn_streamlit">Console</span>
+        </a>
+      </div>
     </div>
   </header>
 
-  <!-- ======================================================================= -->
-  <!-- MAIN APPLICATION CONTENT                                                -->
-  <!-- ======================================================================= -->
-  <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10 w-full">
-
-    <!-- HERO SOLAR SUMMARY CARD (NO CLUTTER, HIGH IMPACT) -->
-    <div class="mb-6 p-5 sm:p-6 rounded-2xl glass-panel border border-solar-border relative overflow-hidden">
-      <div class="absolute -right-16 -top-16 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      
-      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
-        <div>
-          <div class="flex items-center space-x-3 mb-2">
-            <span id="disp-home-name" class="text-2xl font-extrabold text-slate-100 tracking-tight">Niwas Family Residence</span>
-            <span id="disp-mode-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-              SIMULATION MODE
-            </span>
-            <span id="disp-comm-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-              COMMUNITY OPT-IN: ACTIVE
-            </span>
-          </div>
-          <p class="text-xs text-slate-400">
-            <span id="disp-location">Uttar Pradesh (DVVNL)</span> · Sanctioned Load: <b class="text-slate-200" id="disp-sanctioned">3.0 kW</b> · Array: <b class="text-amber-400" id="disp-pv-spec">5.0 kWp Mono PERC</b> · Storage: <b class="text-emerald-400" id="disp-batt-spec">10.0 kWh LiFePO4</b>
-          </p>
+  <main>
+    <!-- ======================================================================
+         2. HERO SECTION / MISSION STATEMENT
+         ====================================================================== -->
+    <section class="hero-mission-section" id="hero">
+      <div class="container hero-inner">
+        <!-- 21st.dev Border Beam Badge -->
+        <div class="satellite-nowcast-floating-badge border-beam-container">
+          <div class="border-beam-effect"></div>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="2"></circle>
+            <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path>
+          </svg>
+          <span data-i18n="hero_pill">ISRO INSAT-3DR Geostationary Nowcasting • Beckn DEG v2.0 Protocol</span>
         </div>
 
-        <!-- 3 Highlight KPI Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full lg:w-auto">
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border text-center">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estimated Monthly Gain</span>
-            <div class="text-xl font-extrabold text-emerald-400 mt-0.5">₹3,770<span class="text-xs font-normal text-slate-400">/mo</span></div>
-            <span class="text-[10px] text-emerald-300">Savings minus EMI</span>
-          </div>
+        <h1 class="hero-main-headline">
+          <span class="gradient-text-hero" data-i18n="hero_h1">India's Next-Gen Predictive Energy Management & Surplus Dispatch</span>
+        </h1>
 
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border text-center">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bill Reduction</span>
-            <div class="text-xl font-extrabold text-amber-400 mt-0.5">92.4%</div>
-            <span class="text-[10px] text-slate-400">Old ₹4,200 → ₹320</span>
-          </div>
+        <p class="hero-subheadline">
+          <span data-i18n="hero_sub">AI-driven 15-minute dispatch horizons, dynamic blackout reserve floor, and decentralized peer-to-peer clean energy trading for Indian rooftop solar & microgrids.</span>
+        </p>
 
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border text-center col-span-2 sm:col-span-1">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Blackout Autonomy</span>
-            <div class="text-xl font-extrabold text-cyan-400 mt-0.5">6.7 Hours</div>
-            <span class="text-[10px] text-cyan-300">EPS Reserve 25%</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- =================================================================== -->
-    <!-- TAB 1: BENCHMARK & DISPATCH                                         -->
-    <!-- =================================================================== -->
-    <section id="tab-benchmark" class="space-y-6">
-      <div class="glass-panel p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div class="flex items-center space-x-3">
-            <div class="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6z"/></svg>
-            </div>
-            <div>
-              <h2 class="text-base font-bold text-slate-100 tracking-tight">Phase 7 Benchmark & What-If Simulation Engine</h2>
-              <p class="text-xs text-slate-400 mt-0.5">5.0 kW Solar Array · 10.0 kWh Storage · 60% Initial SoC · 2.50 kW Solar Surplus</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex flex-wrap gap-2 text-xs">
-          <button onclick="loadScenario('baseline')" class="px-3.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 font-semibold transition">
-            Phase 7 Baseline
-          </button>
-          <button onclick="loadScenario('full_battery')" class="px-3.5 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-slate-300 transition">
-            Battery Full (95%)
-          </button>
-          <button onclick="loadScenario('cloudy')" class="px-3.5 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-slate-300 transition">
-            Solar Deficit (Cloudy)
-          </button>
-          <button onclick="loadScenario('peak_tariff')" class="px-3.5 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-slate-300 transition">
-            Peak Tariff (₹12/kWh)
-          </button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Controls Column -->
-        <div class="glass-panel p-5 rounded-2xl space-y-5">
-          <div class="flex items-center justify-between border-b border-solar-border pb-3">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Operating Conditions</h3>
-            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-solar-void border border-solar-border text-slate-400">REALTIME</span>
-          </div>
-
-          <div>
-            <div class="flex justify-between items-center text-xs mb-1.5">
-              <span class="text-slate-300 font-medium">Solar PV Generation</span>
-              <span id="txt-pv" class="font-mono font-bold text-amber-400 text-sm">4.0 kW</span>
-            </div>
-            <input type="range" id="sl-pv" min="0" max="10" step="0.1" value="4.0" oninput="runDispatchCalculation()"
-              class="w-full h-2 bg-solar-void rounded-lg appearance-none cursor-pointer accent-amber-400">
-          </div>
-
-          <div>
-            <div class="flex justify-between items-center text-xs mb-1.5">
-              <span class="text-slate-300 font-medium">Household Base Load</span>
-              <span id="txt-load" class="font-mono font-bold text-cyan-400 text-sm">1.5 kW</span>
-            </div>
-            <input type="range" id="sl-load" min="0.2" max="8" step="0.1" value="1.5" oninput="runDispatchCalculation()"
-              class="w-full h-2 bg-solar-void rounded-lg appearance-none cursor-pointer accent-cyan-400">
-          </div>
-
-          <div>
-            <div class="flex justify-between items-center text-xs mb-1.5">
-              <span class="text-slate-300 font-medium">Battery State of Charge</span>
-              <span id="txt-soc" class="font-mono font-bold text-emerald-400 text-sm">60%</span>
-            </div>
-            <input type="range" id="sl-soc" min="0" max="100" step="1" value="60" oninput="runDispatchCalculation()"
-              class="w-full h-2 bg-solar-void rounded-lg appearance-none cursor-pointer accent-emerald-400">
-          </div>
-
-          <div class="grid grid-cols-2 gap-3 pt-1">
-            <div class="bg-solar-surface p-2.5 rounded-xl border border-solar-border">
-              <label class="text-[10px] uppercase font-bold text-slate-400">Grid Import</label>
-              <div class="flex items-center space-x-1 mt-1">
-                <span class="text-xs text-slate-500">₹</span>
-                <input type="number" id="in-buy" value="8.0" step="0.5" onchange="runDispatchCalculation()"
-                  class="w-full bg-transparent text-sm font-mono font-bold text-slate-100 focus:outline-none">
+        <!-- 3 Featured Scenario Cards in a Row (21st.dev Spotlight Cards) -->
+        <div class="scenarios-row">
+          <!-- Card 1: Pune -->
+          <div class="scenario-card card-spotlight active" data-scenario="pune" id="scenario-card-pune">
+            <div class="scenario-card-top-indicator"></div>
+            <div class="scenario-card-header">
+              <div class="scenario-icon-badge icon-badge-pune">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                </svg>
+              </div>
+              <div>
+                <div class="scenario-city" data-i18n="sc_pune_city">Pune Commercial Hub</div>
+                <div class="scenario-state">Maharashtra (MSEDCL)</div>
               </div>
             </div>
-            <div class="bg-solar-surface p-2.5 rounded-xl border border-solar-border">
-              <label class="text-[10px] uppercase font-bold text-slate-400">Grid Export</label>
-              <div class="flex items-center space-x-1 mt-1">
-                <span class="text-xs text-slate-500">₹</span>
-                <input type="number" id="in-sell" value="3.0" step="0.5" onchange="runDispatchCalculation()"
-                  class="w-full bg-transparent text-sm font-mono font-bold text-slate-100 focus:outline-none">
-              </div>
+            <div class="scenario-title" data-i18n="sc_pune_title">P2P Surplus Market</div>
+            <div class="scenario-desc" data-i18n="sc_pune_desc">
+              Sunny surplus commercial day with active Beckn DEG trades and peer-to-peer export.
             </div>
           </div>
 
-          <div>
-            <label class="text-[10px] uppercase font-bold text-slate-400">Optimization Goal</label>
-            <select id="sel-goal" onchange="runDispatchCalculation()"
-              class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-amber-400">
-              <option value="MINIMIZE_BILLS">Minimize Monthly DISCOM Bills</option>
-              <option value="MAXIMIZE_SELF_CONSUMPTION">Maximize Solar Self-Consumption</option>
-              <option value="REDUCE_GRID_IMPORTS">Reduce Peak Grid Imports</option>
-              <option value="PRESERVE_BACKUP_RESERVE">Preserve Emergency Backup Reserve</option>
+          <!-- Card 2: Mathura -->
+          <div class="scenario-card card-spotlight" data-scenario="mathura" id="scenario-card-mathura">
+            <div class="scenario-card-top-indicator"></div>
+            <div class="scenario-card-header">
+              <div class="scenario-icon-badge icon-badge-mathura">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="scenario-city" data-i18n="sc_mathura_city">Mathura Rural Microgrid</div>
+                <div class="scenario-state">Uttar Pradesh (UPPCL)</div>
+              </div>
+            </div>
+            <div class="scenario-title" data-i18n="sc_mathura_title">CEEW Outage Shield</div>
+            <div class="scenario-desc" data-i18n="sc_mathura_desc">
+              Monsoon blackout resilience with dynamic emergency reserve floor based on measured feeder outages.
+            </div>
+          </div>
+
+          <!-- Card 3: Jaipur -->
+          <div class="scenario-card card-spotlight" data-scenario="jaipur" id="scenario-card-jaipur">
+            <div class="scenario-card-top-indicator"></div>
+            <div class="scenario-card-header">
+              <div class="scenario-icon-badge icon-badge-jaipur">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="scenario-city" data-i18n="sc_jaipur_city">Jaipur Healthcare Clinic</div>
+                <div class="scenario-state">Rajasthan (JVVNL)</div>
+              </div>
+            </div>
+            <div class="scenario-title" data-i18n="sc_jaipur_title">EV V2H & Feeder Guard</div>
+            <div class="scenario-desc" data-i18n="sc_jaipur_desc">
+              Evening peak V2H bidirectional discharge and distribution transformer thermal overload guard.
+            </div>
+          </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="scroll-indicator">
+          <div class="scroll-mouse">
+            <div class="scroll-wheel"></div>
+          </div>
+          <span data-i18n="scroll_explore">Scroll to Explore</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         3. REAL-TIME METRICS BANNER (4-Column Bento Strip)
+         ====================================================================== -->
+    <section class="container metrics-strip-section">
+      <div class="metrics-4col-grid">
+        <!-- 1. Direct Solar DNI -->
+        <div class="metric-card-box card-spotlight accent-solar">
+          <div class="metric-card-top">
+            <div class="metric-icon-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+              </svg>
+            </div>
+            <span class="metric-badge-pill">INSAT-3DR Synced</span>
+          </div>
+          <div class="metric-value-huge counter" id="val-solar-dni" data-target="772">0</div>
+          <div class="metric-unit-label" data-i18n="lbl_dni">Direct Solar Beam (DNI) • W/m²</div>
+          <div class="metric-sparkline" id="sparkline-dni"></div>
+        </div>
+
+        <!-- 2. Active Generation -->
+        <div class="metric-card-box card-spotlight accent-generation">
+          <div class="metric-card-top">
+            <div class="metric-icon-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <span class="metric-badge-pill" id="badge-kwp-array">15.0 kWp Array</span>
+          </div>
+          <div class="metric-value-huge counter" id="val-active-gen" data-target="9.1" data-decimals="1">0</div>
+          <div class="metric-unit-label" data-i18n="lbl_gen">Active Solar Generation • kW</div>
+          <div class="metric-sparkline" id="sparkline-gen"></div>
+        </div>
+
+        <!-- 3. Daily CO2 Avoided -->
+        <div class="metric-card-box card-spotlight accent-co2">
+          <div class="metric-card-top">
+            <div class="metric-icon-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+              </svg>
+            </div>
+            <span class="metric-badge-pill">CEA 0.716 kg/kWh Standard</span>
+          </div>
+          <div class="metric-value-huge counter" id="val-co2-avoided" data-target="48.9" data-decimals="1">0</div>
+          <div class="metric-unit-label" data-i18n="lbl_co2">Daily Avoided Emissions • kg CO₂</div>
+          <div class="metric-sparkline" id="sparkline-co2"></div>
+        </div>
+
+        <!-- 4. Anti-Islanding Latency -->
+        <div class="metric-card-box card-spotlight accent-latency">
+          <div class="metric-card-top">
+            <div class="metric-icon-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <span class="metric-badge-pill">IEEE 1547 / CEA Compliant</span>
+          </div>
+          <div class="metric-value-huge" id="val-latency">0.14s</div>
+          <div class="metric-unit-label" data-i18n="lbl_latency">Anti-Islanding Trip Latency (&lt; 2.0s)</div>
+          <div class="metric-sparkline" id="sparkline-latency"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         4. DECENTRALIZED ENERGY GRID (DEG) BENTO GRID
+         ====================================================================== -->
+    <section class="container bento-section" id="telemetry">
+      <div class="section-title-wrap">
+        <div class="section-pill-tag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span data-i18n="bento_tag">Decentralized Energy Grid (DEG)</span>
+        </div>
+        <h2 class="section-h2" data-i18n="bento_h2">Microgrid Telemetry & Citizen Intelligence</h2>
+        <p class="section-subtitle" data-i18n="bento_sub">
+          High-density mission control tiles integrating geostationary satellite telemetry, live Sankey microgrid flows, citizen savings shields, and open P2P orderbooks.
+        </p>
+      </div>
+
+      <div class="bento-masonry-grid">
+        <!-- 4A. ISRO / NavIC Satellite Feeds Tile (Span 7) -->
+        <div class="bento-tile bento-span-7 card-spotlight" id="tile-satellite">
+          <div class="bento-tile-header">
+            <div class="bento-title-group">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--isro-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 11a9 9 0 0 1 9 9"></path>
+                  <path d="M4 4a16 16 0 0 1 16 16"></path>
+                  <circle cx="5" cy="19" r="1"></circle>
+                </svg>
+                <span data-i18n="tile_sat_title">ISRO / NavIC Satellite Feeds</span>
+                <span class="live-badge">
+                  <span class="live-dot"></span> LIVE
+                </span>
+              </h3>
+              <p data-i18n="tile_sat_sub">Geostationary meteorological synthesis & NavIC regional coordinates</p>
+            </div>
+            <select class="hub-dropdown-control" id="hub-selector-dropdown" aria-label="Select Hub">
+              <option value="pune">Pune Commercial Hub (Maharashtra) • MSEDCL</option>
+              <option value="mathura">Mathura Rural Microgrid (UP) • UPPCL</option>
+              <option value="jaipur">Jaipur Healthcare Clinic (Rajasthan) • JVVNL</option>
+              <option value="bengaluru">Bengaluru Smart Grid (Karnataka) • BESCOM</option>
+              <option value="delhi">Delhi NCR Solar Cluster (Delhi) • BRPL</option>
+              <option value="ahmedabad">Ahmedabad Solar City (Gujarat) • Torrent</option>
             </select>
           </div>
 
-          <div class="pt-3 border-t border-solar-border flex items-center justify-between text-xs text-slate-400">
-            <label for="cb-losses" class="flex items-center space-x-2.5 cursor-pointer">
-              <input type="checkbox" id="cb-losses" checked onchange="runDispatchCalculation()"
-                class="w-4 h-4 rounded bg-solar-void border-solar-border text-amber-500 focus:ring-0">
-              <span>Account for Inverter & Battery Losses</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Real-Time Dispatch Results Column -->
-        <div class="lg:col-span-2 space-y-5">
-          <!-- 4 Stat Badges -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="glass-panel p-3.5 rounded-xl border border-solar-border">
-              <span class="text-[10px] uppercase font-bold text-slate-400">Direct Solar Use</span>
-              <div id="m-direct" class="text-xl font-bold font-mono text-amber-400 mt-1">1.50 kW</div>
-              <span class="text-[10px] text-slate-400">100% of Home Load</span>
+          <div class="satellite-metric-pills">
+            <div class="sat-pill sat-pill-orange">
+              <span class="sat-pill-label" data-i18n="lbl_direct_beam">Direct Beam (DNI)</span>
+              <span class="sat-pill-val" id="pill-dni">772 W/m²</span>
             </div>
-            <div class="glass-panel p-3.5 rounded-xl border border-solar-border">
-              <span class="text-[10px] uppercase font-bold text-slate-400">Battery Power</span>
-              <div id="m-battery" class="text-xl font-bold font-mono text-emerald-400 mt-1">+2.50 kW</div>
-              <span id="m-battery-soc" class="text-[10px] text-emerald-300">SoC: 60% → 85%</span>
+            <div class="sat-pill sat-pill-amber">
+              <span class="sat-pill-label" data-i18n="lbl_tilted_irr">Tilted Irradiance</span>
+              <span class="sat-pill-val" id="pill-gti">710 W/m²</span>
             </div>
-            <div class="glass-panel p-3.5 rounded-xl border border-solar-border">
-              <span class="text-[10px] uppercase font-bold text-slate-400">Grid Exchange</span>
-              <div id="m-grid" class="text-xl font-bold font-mono text-cyan-400 mt-1">0.00 kW</div>
-              <span class="text-[10px] text-cyan-300">100% Grid Autonomous</span>
+            <div class="sat-pill sat-pill-blue">
+              <span class="sat-pill-label" data-i18n="lbl_cloud">Cloud Opacity</span>
+              <span class="sat-pill-val" id="pill-cloud">18%</span>
             </div>
-            <div class="glass-panel p-3.5 rounded-xl border border-solar-border">
-              <span class="text-[10px] uppercase font-bold text-slate-400">Interval Cost</span>
-              <div id="m-cost" class="text-xl font-bold font-mono text-slate-200 mt-1">₹0.00</div>
-              <span class="text-[10px] text-emerald-400">Zero Grid Import</span>
+            <div class="sat-pill sat-pill-yellow">
+              <span class="sat-pill-label" data-i18n="lbl_clearness">Clearness (kt)</span>
+              <span class="sat-pill-val" id="pill-kt">0.95</span>
             </div>
           </div>
 
-          <!-- Dynamic Bar Chart -->
-          <div class="glass-panel p-4 rounded-xl border border-solar-border">
-            <div class="flex justify-between items-center mb-3">
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Real-Time Power Allocation</h4>
-              <span class="text-[10px] font-mono text-amber-400">FIRST LAW BALANCE</span>
-            </div>
-            <div class="h-48 w-full">
-              <canvas id="dispatchChart"></canvas>
-            </div>
-          </div>
+          <!-- Solar Elevation Arc Diagram -->
+          <div class="solar-arc-visualizer-box">
+            <svg class="arc-svg-container" viewBox="0 0 500 140">
+              <defs>
+                <linearGradient id="skyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#FF6B35" stop-opacity="0.15" />
+                  <stop offset="50%" stop-color="#38BDF8" stop-opacity="0.25" />
+                  <stop offset="100%" stop-color="#FF6B35" stop-opacity="0.15" />
+                </linearGradient>
+                <radialGradient id="sunGlow">
+                  <stop offset="0%" stop-color="#FDE047" />
+                  <stop offset="100%" stop-color="#F59E0B" />
+                </radialGradient>
+                <filter id="sunBlur">
+                  <feGaussianBlur stdDeviation="3" />
+                </filter>
+              </defs>
 
-          <!-- First Law Verification Box -->
-          <div class="glass-panel p-4 rounded-xl border border-solar-border text-xs font-mono space-y-1.5">
-            <div class="flex items-center justify-between text-slate-400 border-b border-solar-border pb-1.5">
-              <span>THERMODYNAMIC ENERGY BALANCE VERIFICATION</span>
-              <span class="text-emerald-400 font-bold">DELTA &lt; 0.001 kW PASS</span>
-            </div>
-            <div id="eq-sources" class="text-amber-300 truncate">Sources: [PV: 4.00 kW + BattDischarge: 0.00 kW + GridImport: 0.00 kW] = 4.000 kW</div>
-            <div id="eq-sinks" class="text-cyan-300 truncate">Sinks:   [Load: 1.50 kW + BattCharge: 2.50 kW + Flex: 0.00 kW + GridExport: 0.00 kW] = 4.000 kW</div>
-            <div class="flex justify-between text-slate-400 pt-1">
-              <span>Calculated Residual Error:</span>
-              <span id="eq-error" class="text-emerald-400 font-bold">0.00000 kW</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+              <!-- Sky Fill -->
+              <path d="M 50 115 A 200 85 0 0 1 450 115" fill="url(#skyGrad)" opacity="0.4" />
 
-    <!-- =================================================================== -->
-    <!-- TAB: HOME SETUP & ONBOARDING (PHASE 1 INDIVIDUAL HOME CONFIG)       -->
-    <!-- =================================================================== -->
-    <section id="tab-setup" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-solar-border pb-5 mb-6">
-          <div>
-            <h2 class="text-lg font-bold text-slate-100 tracking-tight">Phase 1: Individual Home Onboarding & Setup</h2>
-            <p class="text-xs text-slate-400 mt-1">Configure your residential property, solar hardware, storage limits, and economic tariffs. Operates 100% autonomously without community enrollment.</p>
-          </div>
-          <div class="flex gap-2">
-            <button onclick="resetHomeSetupDefaults()" class="px-3.5 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-xs font-medium text-slate-300 transition">
-              Reset Baseline
-            </button>
-            <button onclick="saveHomeSetup()" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-xs font-bold text-slate-950 shadow-md shadow-amber-500/20 transition">
-              Apply & Save Configuration
-            </button>
-          </div>
-        </div>
+              <!-- Horizon Line -->
+              <line x1="20" y1="115" x2="480" y2="115" stroke="rgba(100,116,139,0.35)" stroke-width="1.5" />
+              <text x="25" y="132" fill="#64748B" font-size="10" font-weight="600" font-family="Geist, sans-serif">Dawn 06:15 IST</text>
+              <text x="475" y="132" fill="#64748B" font-size="10" font-weight="600" font-family="Geist, sans-serif" text-anchor="end">Dusk 18:30 IST</text>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- Col 1: Home & Utility -->
-          <div class="space-y-4">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center space-x-2">
-              <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-              <span>Property & Utility</span>
-            </h3>
+              <!-- Semicircular Solar Path Arc -->
+              <path d="M 50 115 A 200 85 0 0 1 450 115" fill="none" stroke="rgba(100,116,139,0.25)" stroke-width="2" stroke-dasharray="5 5" />
 
-            <div>
-              <label class="text-[11px] font-medium text-slate-300">Home / Owner Name</label>
-              <input type="text" id="cfg-home-name" value="Niwas Family Residence"
-                class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-400">
-            </div>
+              <!-- Sun Position Indicator on Arc -->
+              <g id="animated-sun-node" transform="translate(250, 30)">
+                <circle cx="0" cy="0" r="22" fill="#F59E0B" opacity="0.25" filter="url(#sunBlur)" />
+                <circle cx="0" cy="0" r="12" fill="url(#sunGlow)" />
+                <circle cx="0" cy="0" r="5" fill="#ffffff" opacity="0.9" />
+              </g>
 
-            <div>
-              <label class="text-[11px] font-medium text-slate-300">State / DISCOM</label>
-              <select id="cfg-discom" class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-amber-400">
-                <option value="DVVNL" selected>Uttar Pradesh — DVVNL (Agra/Aligarh)</option>
-                <option value="BRPL">Delhi — BSES Rajdhani Power Limited (BRPL)</option>
-                <option value="BESCOM">Karnataka — BESCOM (Bengaluru Urban)</option>
-                <option value="MSEDCL">Maharashtra — MSEDCL (Mahavitaran)</option>
-                <option value="TANGEDCO">Tamil Nadu — TANGEDCO (Chennai/Coimbatore)</option>
-                <option value="TSSPDCL">Telangana — TSSPDCL (Hyderabad)</option>
-              </select>
-            </div>
+              <text x="250" y="70" fill="var(--text-pure)" font-size="13" font-weight="700" text-anchor="middle" font-family="Geist, sans-serif" id="sun-zenith-angle-text">Solar Elevation: 73.7°</text>
+            </svg>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="arc-footer-meta">
               <div>
-                <label class="text-[11px] font-medium text-slate-300">Sanctioned Load (kW)</label>
-                <input type="number" id="cfg-sanctioned-load" value="3.0" step="0.5" min="1.0" max="50.0"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
+                Primary Satellite: <b id="sat-primary-name" style="color: var(--isro-cyan);">INSAT-3DR (74°E Slot)</b> • Zone: <b id="sat-navic-zone">Western India</b>
               </div>
-              <div>
-                <label class="text-[11px] font-medium text-slate-300">Monthly Baseline (kWh)</label>
-                <input type="number" id="cfg-monthly-kwh" value="380" step="10" min="50" max="5000"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-[11px] font-medium text-slate-300">Buy Tariff (₹/kWh)</label>
-                <input type="number" id="cfg-buy-tariff" value="8.0" step="0.25" min="2.0" max="25.0"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-              </div>
-              <div>
-                <label class="text-[11px] font-medium text-slate-300">Export Tariff (₹/kWh)</label>
-                <input type="number" id="cfg-sell-tariff" value="3.0" step="0.25" min="0.0" max="15.0"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-              </div>
-            </div>
-          </div>
-
-          <!-- Col 2: Solar & Inverter -->
-          <div class="space-y-4">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center space-x-2">
-              <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-              <span>Solar & Inverter</span>
-            </h3>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-[11px] font-medium text-slate-300">Solar Array (kWp)</label>
-                <input type="number" id="cfg-pv-kw" value="5.0" step="0.25" min="0.5" max="30.0"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-              </div>
-              <div>
-                <label class="text-[11px] font-medium text-slate-300">Inverter Rating (kW)</label>
-                <input type="number" id="cfg-inv-kw" value="5.0" step="0.5" min="1.0" max="30.0"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-              </div>
-            </div>
-
-            <div>
-              <label class="text-[11px] font-medium text-slate-300">Module Technology</label>
-              <select id="cfg-module-tech" class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-amber-400">
-                <option value="MONO_PERC" selected>Mono PERC DCR (MNRE Approved)</option>
-                <option value="TOPCON">N-Type TOPCon (High Efficiency 22.4%)</option>
-                <option value="BIFACIAL">Bifacial Dual-Glass (+15% albedo)</option>
-                <option value="POLY">Polycrystalline Standard</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="text-[11px] font-medium text-slate-300">Inverter Architecture</label>
-              <select id="cfg-inv-type" class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-amber-400">
-                <option value="HYBRID" selected>Hybrid Multi-Port (Solar + Battery + EPS)</option>
-                <option value="STRING_ON_GRID">On-Grid String Inverter (Grid-Tied Only)</option>
-                <option value="MICRO_INVERTER">Enphase Microinverters (Module-Level MPPT)</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="text-[11px] font-medium text-slate-300">Modbus Telemetry Port</label>
-              <select id="cfg-modbus-port" class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none">
-                <option value="RS485_SUNSPEC" selected>RS-485 SunSpec Model 124 (Port 502)</option>
-                <option value="VICTRON_VE">Victron VE.Direct / Color Control GX</option>
-                <option value="GROWATT_RTU">Growatt ShineServer Modbus RTU</option>
-                <option value="HUAWEI_FE">Huawei FusionSolar FE Modbus-TCP</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Col 3: Battery & Safety Policy -->
-          <div class="space-y-4">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-2">
-              <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="10" x="2" y="7" rx="2"/><line x1="22" x2="22" y1="11" y2="13"/></svg>
-              <span>Battery & Guardrails</span>
-            </h3>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-[11px] font-medium text-slate-300">Capacity (kWh)</label>
-                <input type="number" id="cfg-batt-kwh" value="10.0" step="0.5" min="0.0" max="50.0"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-              </div>
-              <div>
-                <label class="text-[11px] font-medium text-slate-300">Current SoC (%)</label>
-                <input type="number" id="cfg-batt-soc" value="60" step="1" min="0" max="100"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-              </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2">
-              <div>
-                <label class="text-[10px] text-slate-400">Min Floor</label>
-                <input type="number" id="cfg-soc-floor" value="15" step="1" min="10" max="30"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-lg p-2 text-xs font-mono text-slate-100 text-center">
-              </div>
-              <div>
-                <label class="text-[10px] text-slate-400">Backup Res.</label>
-                <input type="number" id="cfg-soc-reserve" value="25" step="1" min="15" max="50"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-lg p-2 text-xs font-mono text-slate-100 text-center">
-              </div>
-              <div>
-                <label class="text-[10px] text-slate-400">Max Ceiling</label>
-                <input type="number" id="cfg-soc-ceiling" value="95" step="1" min="80" max="100"
-                  class="w-full mt-1 bg-solar-surface border border-solar-border rounded-lg p-2 text-xs font-mono text-slate-100 text-center">
-              </div>
-            </div>
-
-            <div>
-              <label class="text-[11px] font-medium text-slate-300">Battery Chemistry</label>
-              <select id="cfg-chemistry" class="w-full mt-1 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none">
-                <option value="LFP" selected>LiFePO4 (Lithium Iron Phosphate, 6,000 cycles)</option>
-                <option value="NMC">NMC (High Energy Density, 2,500 cycles)</option>
-                <option value="LEAD_CARBON">Lead-Carbon VRLA (Tubular Gel)</option>
-              </select>
-            </div>
-
-            <!-- Standalone vs Community Opt-In -->
-            <div class="pt-2 border-t border-solar-border">
-              <label class="flex items-center space-x-2.5 cursor-pointer">
-                <input type="checkbox" id="cfg-community-optin" checked
-                  class="w-4 h-4 rounded bg-solar-void border-solar-border text-amber-500 focus:ring-0">
-                <span class="text-xs text-slate-300 font-semibold">Enable Community P2P Surplus Sharing</span>
-              </label>
-              <p class="text-[10px] text-slate-500 mt-1 pl-6">When unchecked, home operates 100% autonomously without sharing surplus to the local feeder.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 2: SINGLE LINE DIAGRAM (SLD)                                    -->
-    <!-- =================================================================== -->
-    <section id="tab-flow" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">Standardized Single Line Electrical Topology (SLD)</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Compliant with Central Electricity Authority (CEA) Technical Connectivity Standards.</p>
-          </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            CIRCUIT SYNCHRONIZED
-          </span>
-        </div>
-
-        <div class="bg-solar-void/80 border border-solar-border rounded-xl p-4 overflow-x-auto">
-          <svg viewBox="0 0 960 300" width="100%" height="300" class="min-w-[720px] font-sans">
-            <!-- Definitions: Gradients & Markers -->
-            <defs>
-              <linearGradient id="g-pv" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#451a03"/>
-                <stop offset="100%" stop-color="#78350f"/>
-              </linearGradient>
-              <linearGradient id="g-inv" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#1e1b4b"/>
-                <stop offset="100%" stop-color="#312e81"/>
-              </linearGradient>
-              <linearGradient id="g-batt" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#064e3b"/>
-                <stop offset="100%" stop-color="#047857"/>
-              </linearGradient>
-              <marker id="m-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 1 L 10 5 L 0 9 z" fill="#00f0ff"/>
-              </marker>
-              <marker id="m-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 1 L 10 5 L 0 9 z" fill="#ffaa00"/>
-              </marker>
-            </defs>
-
-            <!-- Connecting Paths -->
-            <path d="M 120 110 L 170 110" stroke="#ffaa00" stroke-width="3" class="circuit-path" marker-end="url(#m-amber)"/>
-            <text x="145" y="100" fill="#ffaa00" font-size="10" text-anchor="middle" font-weight="600">DC 600V</text>
-
-            <path d="M 280 110 L 320 110" stroke="#ffaa00" stroke-width="3" class="circuit-path" marker-end="url(#m-amber)"/>
-            <text x="300" y="100" fill="#ffaa00" font-size="10" text-anchor="middle" font-weight="600">MPPT 1/2</text>
-
-            <path d="M 380 170 L 380 205" stroke="#10b981" stroke-width="3" marker-end="url(#m-arrow)" marker-start="url(#m-arrow)"/>
-            <text x="420" y="190" fill="#10b981" font-size="10" text-anchor="middle" font-weight="600">48V DC Bus</text>
-
-            <path d="M 440 110 L 490 110" stroke="#00f0ff" stroke-width="3" class="circuit-path" marker-end="url(#m-arrow)"/>
-            <text x="465" y="100" fill="#00f0ff" font-size="10" text-anchor="middle" font-weight="600">AC 230V</text>
-
-            <path d="M 600 110 L 640 110" stroke="#00f0ff" stroke-width="3" class="circuit-path" marker-end="url(#m-arrow)"/>
-            <text x="620" y="100" fill="#00f0ff" font-size="10" text-anchor="middle" font-weight="600">Feeder</text>
-
-            <path d="M 750 110 L 790 110" stroke="#00f0ff" stroke-width="3" class="circuit-path" marker-end="url(#m-arrow)"/>
-            <path d="M 545 70 L 545 45 L 640 45" stroke="#10b981" stroke-width="2.5" marker-end="url(#m-arrow)"/>
-            <text x="590" y="38" fill="#10b981" font-size="10" text-anchor="middle" font-weight="600">EPS Critical Backup</text>
-
-            <!-- Box 1: Rooftop PV -->
-            <rect x="20" y="70" width="100" height="80" rx="8" fill="url(#g-pv)" stroke="#ffaa00" stroke-width="2"/>
-            <text x="70" y="92" fill="#ffd166" font-size="12" font-weight="bold" text-anchor="middle">Solar Array</text>
-            <text x="70" y="110" fill="#cbd5e1" font-size="10" text-anchor="middle">Mono PERC</text>
-            <text id="sld-pv-val" x="70" y="130" fill="#ffaa00" font-size="12" font-weight="bold" text-anchor="middle">4.0 kW</text>
-
-            <!-- Box 2: DC Combiner -->
-            <rect x="170" y="70" width="110" height="80" rx="8" fill="#090e24" stroke="#ff5400" stroke-width="1.5"/>
-            <text x="225" y="92" fill="#fca5a5" font-size="12" font-weight="bold" text-anchor="middle">DC Combiner</text>
-            <text x="225" y="110" fill="#cbd5e1" font-size="9" text-anchor="middle">1000V Isolator</text>
-            <text x="225" y="126" fill="#cbd5e1" font-size="9" text-anchor="middle">Class II SPD 40kA</text>
-            <text x="225" y="140" fill="#ff5400" font-size="9" text-anchor="middle">Fuses 15A</text>
-
-            <!-- Box 3: Hybrid Inverter -->
-            <rect x="320" y="55" width="120" height="110" rx="10" fill="url(#g-inv)" stroke="#6366f1" stroke-width="2"/>
-            <text x="380" y="80" fill="#c7d2fe" font-size="13" font-weight="bold" text-anchor="middle">Hybrid Inverter</text>
-            <text x="380" y="100" fill="#94a3b8" font-size="10" text-anchor="middle">Dual MPPT 97.4%</text>
-            <text x="380" y="118" fill="#94a3b8" font-size="10" text-anchor="middle">Bi-directional</text>
-            <text x="380" y="142" fill="#818cf8" font-size="11" font-weight="bold" text-anchor="middle">SunSpec Modbus</text>
-
-            <!-- Box 4: Battery -->
-            <rect x="320" y="205" width="120" height="70" rx="8" fill="url(#g-batt)" stroke="#10b981" stroke-width="2"/>
-            <text x="380" y="228" fill="#d1fae5" font-size="12" font-weight="bold" text-anchor="middle">BESS Battery</text>
-            <text x="380" y="246" fill="#a7f3d0" font-size="10" text-anchor="middle">51.2V LiFePO4</text>
-            <text id="sld-batt-val" x="380" y="264" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle">10kWh (60%)</text>
-
-            <!-- Box 5: AC Distribution Board -->
-            <rect x="490" y="70" width="110" height="80" rx="8" fill="#090e24" stroke="#10b981" stroke-width="1.5"/>
-            <text x="545" y="92" fill="#6ee7b7" font-size="12" font-weight="bold" text-anchor="middle">ACDB Panel</text>
-            <text x="545" y="110" fill="#cbd5e1" font-size="9" text-anchor="middle">AC MCB 32A</text>
-            <text x="545" y="125" fill="#cbd5e1" font-size="9" text-anchor="middle">Type 2 AC SPD</text>
-            <text x="545" y="140" fill="#34d399" font-size="9" text-anchor="middle">30mA RCD ELCB</text>
-
-            <!-- Box 6: Critical Loads -->
-            <rect x="640" y="20" width="110" height="50" rx="8" fill="#090e24" stroke="#00f0ff" stroke-width="1.5"/>
-            <text x="695" y="40" fill="#67e8f9" font-size="11" font-weight="bold" text-anchor="middle">Critical EPS</text>
-            <text x="695" y="55" fill="#cbd5e1" font-size="9" text-anchor="middle">Lights · Fans · Router</text>
-
-            <!-- Box 7: Net Meter -->
-            <rect x="640" y="80" width="110" height="65" rx="8" fill="#090e24" stroke="#f472b6" stroke-width="1.5"/>
-            <text x="695" y="102" fill="#f472b6" font-size="12" font-weight="bold" text-anchor="middle">Net Meter</text>
-            <text x="695" y="120" fill="#cbd5e1" font-size="9" text-anchor="middle">Bi-directional 4-Q</text>
-            <text x="695" y="134" fill="#cbd5e1" font-size="9" text-anchor="middle">DISCOM Smart</text>
-
-            <!-- Box 8: DISCOM Grid -->
-            <rect x="790" y="75" width="120" height="75" rx="8" fill="#090e24" stroke="#38bdf8" stroke-width="2"/>
-            <text x="850" y="98" fill="#bae6fd" font-size="12" font-weight="bold" text-anchor="middle">DISCOM Utility</text>
-            <text x="850" y="116" fill="#cbd5e1" font-size="9" text-anchor="middle">LT 230V 50Hz</text>
-            <text id="sld-grid-val" x="850" y="136" fill="#38bdf8" font-size="12" font-weight="bold" text-anchor="middle">0.00 kW</text>
-          </svg>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 3: ROOFTOP SIZING & PM SURYA GHAR                               -->
-    <!-- =================================================================== -->
-    <section id="tab-sizing" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">PM Surya Ghar: Muft Bijli Yojana Central Subsidy Calculator</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Statutory subsidy calculations mapped directly to MNRE guidelines (up to ₹78,000 DBT credited to your bank account).</p>
-          </div>
-          <button onclick="downloadDossier()" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-xs text-amber-400 font-semibold transition">
-            <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-            <span>Download Engineering Dossier</span>
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Inputs -->
-          <div class="space-y-4">
-            <div>
-              <label class="text-xs font-medium text-slate-300">Property Type</label>
-              <select id="sz-prop" class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none">
-                <option value="RES_IND">Independent House / Villa (2-3 BHK)</option>
-                <option value="RES_APT">Apartment with Dedicated Terrace</option>
-                <option value="COMM_CLINIC">Day Care Clinic / Commercial Shop</option>
-              </select>
-            </div>
-
-            <div>
-              <div class="flex justify-between items-center text-xs mb-1.5">
-                <span class="text-slate-300 font-medium">Average Monthly Bill</span>
-                <span id="sz-bill-txt" class="font-mono font-bold text-amber-400">₹4,200</span>
-              </div>
-              <input type="range" id="sz-bill" min="1000" max="15000" step="250" value="4200" oninput="runSizingCalc()"
-                class="w-full h-2 bg-solar-void rounded-lg appearance-none cursor-pointer accent-amber-400">
-            </div>
-
-            <div>
-              <label class="text-xs font-medium text-slate-300">Air Conditioning & High Loads</label>
-              <select id="sz-ac" class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none">
-                <option value="1">1 Inverter AC (Evening only)</option>
-                <option value="2" selected>2-3 Split ACs (Day & Night)</option>
-                <option value="3">ACs + Electric Vehicle (EV)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Subsidy & Hardware Sizing Result -->
-          <div class="lg:col-span-2 space-y-4">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-                <span class="text-[10px] uppercase font-bold text-slate-400">Recommended Array</span>
-                <div id="sz-res-pv" class="text-lg font-bold font-mono text-amber-400 mt-1">3.0 kWp</div>
-                <span class="text-[10px] text-slate-400">~300 sq. ft. roof</span>
-              </div>
-              <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-                <span class="text-[10px] uppercase font-bold text-slate-400">Battery Capacity</span>
-                <div id="sz-res-batt" class="text-lg font-bold font-mono text-emerald-400 mt-1">5.0 kWh</div>
-                <span class="text-[10px] text-slate-400">LiFePO4 Storage</span>
-              </div>
-              <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-                <span class="text-[10px] uppercase font-bold text-slate-400">Central DBT Subsidy</span>
-                <div id="sz-res-sub" class="text-lg font-bold font-mono text-emerald-400 mt-1">₹78,000</div>
-                <span class="text-[10px] text-emerald-300">PM Surya Ghar</span>
-              </div>
-              <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-                <span class="text-[10px] uppercase font-bold text-slate-400">Simple Payback</span>
-                <div id="sz-res-payback" class="text-lg font-bold font-mono text-cyan-400 mt-1">3.2 Yrs</div>
-                <span class="text-[10px] text-cyan-300">25-Yr System Life</span>
-              </div>
-            </div>
-
-            <!-- SBI Solar Loan Scheme (7.00%) -->
-            <div class="bg-solar-card p-4 rounded-xl border border-solar-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <span class="text-xs font-bold text-slate-200">SBI Surya Ghar Solar Loan (7.0% p.a. Concessional)</span>
-                <p class="text-[11px] text-slate-400 mt-0.5">Estimated Net Cost: <span id="sz-netcost" class="font-mono text-slate-200 font-bold">₹1,47,000</span> (Gross: <span id="sz-cost" class="line-through text-slate-500">₹2,25,000</span>)</p>
-              </div>
-              <div class="text-right">
-                <span class="text-[10px] text-slate-400 uppercase font-bold">Monthly Bank EMI</span>
-                <div id="sz-emi" class="text-xl font-bold font-mono text-amber-400">₹2,185 / mo</div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Real-Time Orbital Tracking
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- =================================================================== -->
-    <!-- TAB 4: SOLAR RADAR & IRRADIANCE TRACKER                             -->
-    <!-- =================================================================== -->
-    <section id="tab-radar" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">Geospatial Solar Radar & Satellite Observation</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Real-time solar irradiance grounded in ISRO INSAT-3D/3DR observations for Uttar Pradesh.</p>
-          </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300">
-            RADAR ACTIVE
-          </span>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Direct Normal (DNI)</span>
-            <div class="text-lg font-bold font-mono text-amber-400 mt-1">742 W/m²</div>
-            <span class="text-[10px] text-slate-400">Clear Sky Index: 0.92</span>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Global Horizontal (GHI)</span>
-            <div class="text-lg font-bold font-mono text-amber-400 mt-1">842 W/m²</div>
-            <span class="text-[10px] text-slate-400">Zenith Angle: 22.4°</span>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Panel Temperature</span>
-            <div class="text-lg font-bold font-mono text-cyan-400 mt-1">38.4 °C</div>
-            <span class="text-[10px] text-slate-400">Temp Derating: -4.8%</span>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Optimal Tilt Angle</span>
-            <div class="text-lg font-bold font-mono text-emerald-400 mt-1">28.5° South</div>
-            <span class="text-[10px] text-emerald-300">Yearly Maximum</span>
-          </div>
-        </div>
-
-        <div class="h-64 w-full">
-          <canvas id="solarRadarChart"></canvas>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 5: BATTERY STORAGE & PHYSICS                                    -->
-    <!-- =================================================================== -->
-    <section id="tab-battery" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">Battery Storage Physics & Safety Guardrails</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Strict enforcement of manufacturer limits, SoC floors, and zero-overlap command invariants.</p>
-          </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            GUARDRAILS LOCKED
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="space-y-3">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400">Configured Operating Limits</h4>
-            <div class="bg-solar-card p-3 rounded-xl border border-solar-border space-y-2 text-xs">
-              <div class="flex justify-between"><span class="text-slate-400">Minimum SoC Floor:</span><span class="font-mono text-slate-100 font-bold">15.0%</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Maximum SoC Ceiling:</span><span class="font-mono text-slate-100 font-bold">95.0%</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Emergency Reserve Floor:</span><span class="font-mono text-amber-400 font-bold">25.0%</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Max Continuous Charge:</span><span class="font-mono text-slate-100 font-bold">3.5 kW</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Max Continuous Discharge:</span><span class="font-mono text-slate-100 font-bold">3.5 kW</span></div>
-            </div>
-          </div>
-
-          <div class="space-y-3">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Cell Physics & Cycle Life</h4>
-            <div class="bg-solar-card p-3 rounded-xl border border-solar-border space-y-2 text-xs">
-              <div class="flex justify-between"><span class="text-slate-400">Chemistry:</span><span class="font-mono text-emerald-400 font-bold">LiFePO4 (LFP)</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Rated Cycle Life:</span><span class="font-mono text-slate-100 font-bold">6,000 Cycles @ 80% DoD</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Round-Trip Efficiency:</span><span class="font-mono text-slate-100 font-bold">95.0%</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Degradation Rate:</span><span class="font-mono text-slate-100 font-bold">~1.5% / Year</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Cell Temp Monitoring:</span><span class="font-mono text-emerald-400 font-bold">28.4 °C (Nominal)</span></div>
-            </div>
-          </div>
-
-          <div class="space-y-3">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-cyan-400">Safety Invariants</h4>
-            <div class="bg-solar-card p-3 rounded-xl border border-solar-border space-y-2 text-xs">
-              <div class="flex justify-between"><span class="text-slate-400">Simultaneous Command:</span><span class="font-mono text-emerald-400 font-bold">P_chg · P_dis ≡ 0</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Stale Telemetry Watchdog:</span><span class="font-mono text-slate-100 font-bold">&lt; 3.0 sec (Active)</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Anti-Islanding Trip:</span><span class="font-mono text-emerald-400 font-bold">&lt; 100 ms (IEEE 1547)</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Blackout Autonomy:</span><span class="font-mono text-amber-400 font-bold">4.8 Hours</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 6: 24-HOUR DAILY DISPATCH PLAN                                  -->
-    <!-- =================================================================== -->
-    <section id="tab-dailyplan" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">Predictive 24-Hour Dispatch Plan</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Optimized schedule of solar generation, battery charging/discharging, and peak grid avoidance.</p>
-          </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400">
-            92.4% BILL REDUCTION
-          </span>
-        </div>
-
-        <div class="h-64 w-full">
-          <canvas id="dailyPlanChart"></canvas>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 7: EV & FLEXIBLE APPLIANCES                                     -->
-    <!-- =================================================================== -->
-    <section id="tab-loads" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">EV Charging & Flexible Household Loads</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Dynamic load shifting adapting to available solar surplus (evcc compatible 4-mode EV controller).</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- EV Charger -->
-          <div class="bg-solar-card p-5 rounded-xl border border-solar-border space-y-4">
-            <div class="flex justify-between items-center">
-              <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
-                <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 10.7 2 11.1 2 11.5V16c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
-                <span>Electric Vehicle Charger</span>
+        <!-- 4B. Live Microgrid Balance Sankey Tile (Span 5) -->
+        <div class="bento-tile bento-span-5 card-spotlight" id="tile-balance">
+          <div class="bento-tile-header">
+            <div class="bento-title-group">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--grid-emerald)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span data-i18n="tile_balance_title">Live Microgrid Balance</span>
               </h3>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">CONNECTED</span>
+              <p data-i18n="tile_balance_sub">Real-Time Power Flow with animated directional wattage</p>
             </div>
-
-            <div class="grid grid-cols-4 gap-2 text-xs">
-              <button class="py-1.5 rounded-lg bg-solar-surface border border-solar-border text-slate-400 hover:text-slate-100">OFF</button>
-              <button class="py-1.5 rounded-lg bg-solar-surface border border-solar-border text-slate-400 hover:text-slate-100">NOW</button>
-              <button class="py-1.5 rounded-lg bg-solar-surface border border-solar-border text-slate-400 hover:text-slate-100">MIN+PV</button>
-              <button class="py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-400 font-bold">PV ONLY</button>
-            </div>
-
-            <div class="space-y-2 text-xs">
-              <div class="flex justify-between"><span class="text-slate-400">Target Departure:</span><span class="font-mono text-slate-200">07:30 AM (Tomorrow)</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Target Energy:</span><span class="font-mono text-slate-200">18.5 kWh</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Current Charge Rate:</span><span class="font-mono text-amber-400 font-bold">0.00 kW (Standby for Surplus)</span></div>
-            </div>
+            <span class="version-pill" id="power-flow-time-indicator">13:00 IST</span>
           </div>
 
-          <!-- Flexible Appliances -->
-          <div class="bg-solar-card p-5 rounded-xl border border-solar-border space-y-4">
-            <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
-              <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-              <span>Automated Flexible Appliances</span>
-            </h3>
+          <div class="sankey-flow-wrapper">
+            <svg class="sankey-svg" viewBox="0 0 460 220">
+              <defs>
+                <linearGradient id="gradSolar" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#059669" />
+                  <stop offset="100%" stop-color="#10B981" />
+                </linearGradient>
+                <linearGradient id="gradDemand" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#0284c7" />
+                  <stop offset="100%" stop-color="#38BDF8" />
+                </linearGradient>
+                <filter id="nodeGlow">
+                  <feGaussianBlur stdDeviation="2" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
 
-            <div class="space-y-3 text-xs">
-              <div class="flex items-center justify-between p-2.5 rounded-lg bg-solar-surface border border-solar-border">
-                <div>
-                  <div class="font-bold text-slate-200">Water Geyser (Heat Pump)</div>
-                  <div class="text-[10px] text-slate-400">2.0 kW · 1.5h Required · 12:00 - 15:00</div>
-                </div>
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">QUEUED FOR SOLAR</span>
-              </div>
+              <!-- Connection Lines with Flowing Particles -->
+              <line x1="85" y1="55" x2="230" y2="110" stroke="#059669" stroke-width="4.5" class="flowing-particle-line" id="flow-line-solar" />
+              <line x1="230" y1="110" x2="375" y2="55" stroke="#0284c7" stroke-width="4" class="flowing-particle-line" id="flow-line-demand" />
+              <line x1="230" y1="110" x2="135" y2="175" stroke="#d97706" stroke-width="2.5" class="flowing-particle-line" id="flow-line-bess" />
+              <line x1="230" y1="110" x2="325" y2="175" stroke="#7c3aed" stroke-width="1.5" class="flowing-particle-line" id="flow-line-grid" />
 
-              <div class="flex items-center justify-between p-2.5 rounded-lg bg-solar-surface border border-solar-border">
-                <div>
-                  <div class="font-bold text-slate-200">Washing Machine</div>
-                  <div class="text-[10px] text-slate-400">1.2 kW · 1.0h Required · 10:00 - 14:00</div>
-                </div>
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">COMPLETED</span>
-              </div>
+              <!-- Solar Node -->
+              <g class="sankey-node" filter="url(#nodeGlow)">
+                <rect x="25" y="30" width="120" height="50" rx="12" fill="var(--bg-surface)" stroke="#059669" stroke-width="2" />
+                <text x="85" y="50" fill="#059669" font-size="11" font-weight="700" text-anchor="middle" font-family="Geist, sans-serif">☀️ SOLAR</text>
+                <text x="85" y="70" fill="#059669" font-size="14" font-weight="800" text-anchor="middle" font-family="Geist Mono, monospace" id="sankey-solar-val">9.1 kW</text>
+              </g>
 
-              <div class="flex items-center justify-between p-2.5 rounded-lg bg-solar-surface border border-solar-border">
-                <div>
-                  <div class="font-bold text-slate-200">Agricultural Water Pump</div>
-                  <div class="text-[10px] text-slate-400">1.5 kW · 2.0h Required · 13:00 - 17:00</div>
-                </div>
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">IDLE</span>
-              </div>
+              <!-- Central Inverter Node -->
+              <g class="sankey-node">
+                <circle cx="230" cy="110" r="28" fill="var(--bg-surface)" stroke="var(--isro-cyan)" stroke-width="2.5" />
+                <polygon points="232 100 224 111 230 111 228 122 237 110 231 110 232 100" fill="var(--isro-cyan)"></polygon>
+                <text x="230" y="130" fill="var(--text-tertiary)" font-size="7.5" font-weight="700" text-anchor="middle" font-family="Geist, sans-serif">INVERTER</text>
+              </g>
+
+              <!-- Demand Node -->
+              <g class="sankey-node" filter="url(#nodeGlow)">
+                <rect x="315" y="30" width="120" height="50" rx="12" fill="var(--bg-surface)" stroke="#0284c7" stroke-width="2" />
+                <text x="375" y="50" fill="#0284c7" font-size="11" font-weight="700" text-anchor="middle" font-family="Geist, sans-serif">⚡ DEMAND</text>
+                <text x="375" y="70" fill="#0284c7" font-size="14" font-weight="800" text-anchor="middle" font-family="Geist Mono, monospace" id="sankey-demand-val">8.5 kW</text>
+              </g>
+
+              <!-- BESS Node -->
+              <g class="sankey-node" filter="url(#nodeGlow)">
+                <rect x="75" y="150" width="120" height="50" rx="12" fill="var(--bg-surface)" stroke="#d97706" stroke-width="2" />
+                <text x="135" y="170" fill="#d97706" font-size="11" font-weight="700" text-anchor="middle" font-family="Geist, sans-serif">🔋 BESS</text>
+                <text x="135" y="190" fill="#d97706" font-size="13" font-weight="800" text-anchor="middle" font-family="Geist Mono, monospace" id="sankey-bess-val">+0.6 kW</text>
+              </g>
+
+              <!-- P2P Grid Node -->
+              <g class="sankey-node" filter="url(#nodeGlow)">
+                <rect x="265" y="150" width="120" height="50" rx="12" fill="var(--bg-surface)" stroke="#7c3aed" stroke-width="2" />
+                <text x="325" y="170" fill="#7c3aed" font-size="11" font-weight="700" text-anchor="middle" font-family="Geist, sans-serif">🌐 P2P GRID</text>
+                <text x="325" y="190" fill="#7c3aed" font-size="13" font-weight="800" text-anchor="middle" font-family="Geist Mono, monospace" id="sankey-grid-val">0.0 kW</text>
+              </g>
+            </svg>
+          </div>
+
+          <div class="flow-legend-strip">
+            <span style="color: #059669;">• Generation</span>
+            <span style="color: #0284c7;">• Demand</span>
+            <span style="color: #d97706;">• Battery</span>
+            <span style="color: #7c3aed;">• P2P Grid</span>
+          </div>
+        </div>
+
+        <!-- 4C. Aam Aadmi / Citizen Guide Tile (Span 5) -->
+        <div class="bento-tile bento-span-5 card-spotlight" id="tile-citizen">
+          <div class="bento-tile-header">
+            <div class="bento-title-group">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--solar-amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span data-i18n="tile_citizen_title">Aam Aadmi / Citizen Guide</span>
+              </h3>
+              <p data-i18n="tile_citizen_sub">Bijli Bachat & Outage Shield (बिजली बचत एवं आउटेज शील्ड)</p>
             </div>
+            <span class="verified-pill">✓ Verified</span>
           </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- =================================================================== -->
-    <!-- TAB 8: INVERTER MODBUS GATEWAY                                      -->
-    <!-- =================================================================== -->
-    <section id="tab-gateway" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">Universal Inverter Hardware Modbus Gateway</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Direct register translation for SunSpec, Victron, Growatt, Huawei, Solis, and Enphase systems.</p>
-          </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            CRC-16 VERIFIED
-          </span>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs font-mono">
-            <thead class="text-[10px] text-slate-400 uppercase bg-solar-card border-b border-solar-border">
-              <tr>
-                <th class="p-3">Inverter Vendor</th>
-                <th class="p-3">Protocol</th>
-                <th class="p-3">Active Power Register</th>
-                <th class="p-3">Battery SoC Register</th>
-                <th class="p-3">Status</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-solar-border text-slate-300">
-              <tr>
-                <td class="p-3 font-bold text-slate-100">SunSpec Alliance</td>
-                <td class="p-3 text-cyan-400">Model 124 (Storage)</td>
-                <td class="p-3">Register 40084 (W)</td>
-                <td class="p-3">Register 40082 (% SoC)</td>
-                <td class="p-3 text-emerald-400">CONNECTED</td>
-              </tr>
-              <tr>
-                <td class="p-3 font-bold text-slate-100">Victron Energy</td>
-                <td class="p-3 text-cyan-400">VE.Direct / Modbus TCP</td>
-                <td class="p-3">Register 808 (P_ac)</td>
-                <td class="p-3">Register 843 (SoC)</td>
-                <td class="p-3 text-emerald-400">READY</td>
-              </tr>
-              <tr>
-                <td class="p-3 font-bold text-slate-100">Growatt</td>
-                <td class="p-3 text-cyan-400">RTU RS485</td>
-                <td class="p-3">Register 0035 (Pac)</td>
-                <td class="p-3">Register 0102 (BattSoC)</td>
-                <td class="p-3 text-emerald-400">READY</td>
-              </tr>
-              <tr>
-                <td class="p-3 font-bold text-slate-100">Huawei FusionSolar</td>
-                <td class="p-3 text-cyan-400">FE Modbus TCP</td>
-                <td class="p-3">Register 32080 (Grid_P)</td>
-                <td class="p-3">Register 37004 (SoC)</td>
-                <td class="p-3 text-emerald-400">READY</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 9: COMMUNITY P2P FEEDER EXCHANGE                                -->
-    <!-- =================================================================== -->
-    <section id="tab-community" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">Phase 8: Community Microgrid P2P Feeder Exchange</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Bilateral energy clearing respecting physical quadratic line losses (P_loss = I²·R) and social welfare division.</p>
-          </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-            PHYSICAL FEEDER ACTIVE
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="space-y-4">
+          <!-- Large Savings Hero Block -->
+          <div class="aam-aadmi-hero-savings">
             <div>
-              <label class="text-xs font-medium text-slate-300">Surplus Available (Prosumer)</label>
-              <input type="number" id="p2p-surplus" value="2.5" step="0.1" onchange="runP2PCalc()"
-                class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-            </div>
-
-            <div>
-              <label class="text-xs font-medium text-slate-300">Deficit Requested (Consumer)</label>
-              <input type="number" id="p2p-deficit" value="2.0" step="0.1" onchange="runP2PCalc()"
-                class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-            </div>
-
-            <div>
-              <label class="text-xs font-medium text-slate-300">Feeder Cable Resistance (Ω)</label>
-              <input type="number" id="p2p-res" value="0.45" step="0.05" onchange="runP2PCalc()"
-                class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-            </div>
-          </div>
-
-          <div class="md:col-span-2 space-y-4">
-            <div class="grid grid-cols-3 gap-3">
-              <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-                <span class="text-[10px] uppercase font-bold text-slate-400">Transferred Power</span>
-                <div id="p2p-trans" class="text-lg font-bold font-mono text-amber-400 mt-1">2.00 kW</div>
-              </div>
-              <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-                <span class="text-[10px] uppercase font-bold text-slate-400">Delivered Power</span>
-                <div id="p2p-deliv" class="text-lg font-bold font-mono text-emerald-400 mt-1">1.96 kW</div>
-              </div>
-              <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-                <span class="text-[10px] uppercase font-bold text-slate-400">Line Loss (I²·R)</span>
-                <div id="p2p-loss" class="text-lg font-bold font-mono text-rose-400 mt-1">0.034 kW</div>
+              <div class="savings-label" data-i18n="lbl_direct_savings">Direct Daily Savings</div>
+              <div class="savings-number-huge" id="citizen-savings-val">₹535</div>
+              <div class="savings-discom-badge" data-i18n="lbl_saved_discom">
+                ⚡ Saved vs Standard DISCOM Peak Tariff
               </div>
             </div>
 
-            <div class="bg-solar-card p-4 rounded-xl border border-solar-border text-xs text-slate-300 space-y-2">
-              <div class="flex justify-between"><span class="text-slate-400">Social Clearing Price:</span><span class="font-mono font-bold text-slate-100">₹5.50 / kWh (Midpoint of ₹8 buy & ₹3 sell)</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Seller Gain:</span><span class="font-mono text-emerald-400 font-bold">+₹2.50 / kWh above DISCOM export</span></div>
-              <div class="flex justify-between"><span class="text-slate-400">Buyer Discount:</span><span class="font-mono text-cyan-400 font-bold">-₹2.50 / kWh below DISCOM grid import</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 10: DYNAMIC UPI SETTLEMENT                                      -->
-    <!-- =================================================================== -->
-    <section id="tab-upi" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">Dynamic NPCI UPI Microgrid Payment Gateway</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Real-time QR code generation for instant zero-fee settlement across Google Pay, PhonePe, and Paytm.</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-          <div class="space-y-4">
-            <div>
-              <label class="text-xs font-medium text-slate-300">Seller UPI VPA</label>
-              <input type="text" id="upi-vpa" value="urjasetu@sbi" onchange="generateUPIQR()"
-                class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-            </div>
-
-            <div>
-              <label class="text-xs font-medium text-slate-300">Settlement Amount (₹)</label>
-              <input type="number" id="upi-amt" value="11.00" step="0.5" onchange="generateUPIQR()"
-                class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-            </div>
-
-            <div>
-              <label class="text-xs font-medium text-slate-300">Transaction Note</label>
-              <input type="text" id="upi-note" value="P2P Solar 2.0kWh Energy Settlement" onchange="generateUPIQR()"
-                class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-mono text-slate-100 focus:outline-none">
-            </div>
-
-            <div class="p-3 rounded-lg bg-solar-card border border-solar-border text-[11px] font-mono text-slate-400 break-all">
-              <span class="text-slate-500">Payload: </span><span id="upi-uri" class="text-amber-300">upi://pay?...</span>
+            <!-- 35% Outage Reserve Gauge -->
+            <div style="text-align: center;">
+              <svg class="outage-gauge-circle" viewBox="0 0 36 36">
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(100,116,139,0.2)" stroke-width="3.5" />
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="url(#gaugeGradient)" stroke-width="3.5" stroke-dasharray="35, 100" stroke-linecap="round" id="gauge-path" />
+                <defs>
+                  <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#059669" />
+                    <stop offset="100%" stop-color="#10B981" />
+                  </linearGradient>
+                </defs>
+                <text x="18" y="20.5" font-size="8" font-weight="800" text-anchor="middle" fill="var(--text-pure)" font-family="Geist Mono, monospace" id="gauge-text">35%</text>
+              </svg>
+              <div class="gauge-label" data-i18n="lbl_outage_reserve">🛡️ Outage Reserve: 35%</div>
             </div>
           </div>
 
-          <div class="flex flex-col items-center justify-center p-6 bg-solar-void rounded-2xl border border-solar-border">
-            <div id="qrcode" class="p-3 bg-white rounded-xl shadow-lg"></div>
-            <span class="text-xs font-mono text-slate-400 mt-3">Scan to Pay via any UPI App</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 11: FLEET POOLING & VPP                                         -->
-    <!-- =================================================================== -->
-    <section id="tab-fleet" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">Virtual Power Plant (VPP) & Microgrid Fleet Aggregation</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Aggregates 145 kWp / 290 kWh distributed rooftop capacity for frequency regulation and grid ancillary services.</p>
-          </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            VPP SYNCHRONIZED
-          </span>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Total Pooled Solar</span>
-            <div class="text-lg font-bold font-mono text-amber-400 mt-1">145.0 kWp</div>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Pooled Storage</span>
-            <div class="text-lg font-bold font-mono text-emerald-400 mt-1">290.0 kWh</div>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Available Fast Ramp</span>
-            <div class="text-lg font-bold font-mono text-cyan-400 mt-1">85.0 kW (50ms)</div>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Shapley Dividend</span>
-            <div class="text-lg font-bold font-mono text-amber-400 mt-1">₹482 / Day</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 12: HEALTH MONITOR                                              -->
-    <!-- =================================================================== -->
-    <section id="tab-health" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">Real-Time Telemetry & Sensor Verification</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Continuous verification of physical data honesty — zero fabricated sensor data.</p>
-          </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            0.82s FRESHNESS
-          </span>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Autarky Degree</span>
-            <div class="text-lg font-bold font-mono text-emerald-400 mt-1">100.0%</div>
-            <span class="text-[10px] text-slate-400">Grid Independence</span>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Self-Consumption</span>
-            <div class="text-lg font-bold font-mono text-amber-400 mt-1">100.0%</div>
-            <span class="text-[10px] text-slate-400">Zero Solar Curtailment</span>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Telemetry Freshness</span>
-            <div class="text-lg font-bold font-mono text-cyan-400 mt-1">0.82 sec</div>
-            <span class="text-[10px] text-emerald-300">Within 3.0s SLA</span>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Sensor Verification</span>
-            <div class="text-lg font-bold font-mono text-emerald-400 mt-1">100% Honest</div>
-            <span class="text-[10px] text-slate-400">Zero Inventions</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 13: 25-YEAR LIFETIME SAVINGS & CARBON                           -->
-    <!-- =================================================================== -->
-    <section id="tab-savings" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">25-Year Net Present Value (NPV) & Carbon Avoidance</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Comprehensive financial modeling incorporating 5.5% annual DISCOM tariff inflation.</p>
-          </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-            IRR 24.8%
-          </span>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Lifetime Cash Kept</span>
-            <div class="text-lg font-bold font-mono text-emerald-400 mt-1">₹14.82 Lakhs</div>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Avoided CO₂</span>
-            <div class="text-lg font-bold font-mono text-cyan-400 mt-1">89.1 Tons</div>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Equivalent Trees</span>
-            <div class="text-lg font-bold font-mono text-emerald-400 mt-1">1,425 Trees</div>
-          </div>
-          <div class="bg-solar-card p-3 rounded-xl border border-solar-border">
-            <span class="text-[10px] uppercase font-bold text-slate-400">LCOE Cost</span>
-            <div class="text-lg font-bold font-mono text-amber-400 mt-1">₹1.85 / kWh</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 14: 11 INTEGRATED ENGINES HUB                                   -->
-    <!-- =================================================================== -->
-    <section id="tab-engines" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="border-b border-solar-border pb-4 mb-6">
-          <h2 class="text-base font-bold text-slate-100 tracking-tight">11 Adapted Open-Source Energy Algorithms Hub</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Core computational engines adapted and rigorously tested for the Indian rooftop solar and grid environment.</p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div class="bg-solar-card p-4 rounded-xl border border-solar-border">
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-xs font-bold text-amber-400">EMHASS Core</span>
-              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">PASS</span>
+          <!-- Appliance Survival Grid 2x2 with Mini Progress Bars -->
+          <div class="appliance-survival-grid">
+            <!-- 5 LED Lights -->
+            <div class="appliance-card">
+              <div class="appliance-header">
+                <span class="appliance-name">💡 <span data-i18n="app_lights">5 LED Lights</span></span>
+                <span class="appliance-hours-huge" id="app-hours-lights">36h</span>
+              </div>
+              <div class="appliance-progress-track">
+                <div class="appliance-progress-bar" style="width: 90%; background: linear-gradient(90deg, #d97706, #f59e0b);"></div>
+              </div>
             </div>
-            <p class="text-[11px] text-slate-400">LP Linear Programming dispatch optimization for bill minimization.</p>
-          </div>
 
-          <div class="bg-solar-card p-4 rounded-xl border border-solar-border">
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-xs font-bold text-cyan-400">evcc EV Gateway</span>
-              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">PASS</span>
+            <!-- 2 Ceiling Fans -->
+            <div class="appliance-card">
+              <div class="appliance-header">
+                <span class="appliance-name">🌀 <span data-i18n="app_fans">2 Ceiling Fans</span></span>
+                <span class="appliance-hours-huge" id="app-hours-fans">24h</span>
+              </div>
+              <div class="appliance-progress-track">
+                <div class="appliance-progress-bar" style="width: 75%; background: linear-gradient(90deg, #0284c7, #38BDF8);"></div>
+              </div>
             </div>
-            <p class="text-[11px] text-slate-400">Automated EV charging with PV-only excess throttling.</p>
-          </div>
 
-          <div class="bg-solar-card p-4 rounded-xl border border-solar-border">
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-xs font-bold text-emerald-400">openEMS Controller</span>
-              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">PASS</span>
+            <!-- Inverter Fridge -->
+            <div class="appliance-card">
+              <div class="appliance-header">
+                <span class="appliance-name">❄️ <span data-i18n="app_fridge">Inverter Fridge</span></span>
+                <span class="appliance-hours-huge" id="app-hours-fridge">18h</span>
+              </div>
+              <div class="appliance-progress-track">
+                <div class="appliance-progress-bar" style="width: 60%; background: linear-gradient(90deg, #059669, #10B981);"></div>
+              </div>
             </div>
-            <p class="text-[11px] text-slate-400">Zero-overlap battery charging/discharging safety state machine.</p>
-          </div>
 
-          <div class="bg-solar-card p-4 rounded-xl border border-solar-border">
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-xs font-bold text-purple-400">SunSpec Modbus</span>
-              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">PASS</span>
+            <!-- Water Pump -->
+            <div class="appliance-card">
+              <div class="appliance-header">
+                <span class="appliance-name">💧 <span data-i18n="app_pump">Water Pump</span></span>
+                <span class="appliance-hours-huge" id="app-hours-pump">6h</span>
+              </div>
+              <div class="appliance-progress-track">
+                <div class="appliance-progress-bar" style="width: 30%; background: linear-gradient(90deg, #dc2626, #f43f5e);"></div>
+              </div>
             </div>
-            <p class="text-[11px] text-slate-400">IEEE 1547 / CEA compliant inverter frequency-watt droop control.</p>
           </div>
 
-          <div class="bg-solar-card p-4 rounded-xl border border-solar-border">
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-xs font-bold text-amber-400">Sandia Inverter Model</span>
-              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">PASS</span>
-            </div>
-            <p class="text-[11px] text-slate-400">Empirical non-linear power conversion loss curves.</p>
-          </div>
-
-          <div class="bg-solar-card p-4 rounded-xl border border-solar-border">
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-xs font-bold text-emerald-400">Shapley Value Allocator</span>
-              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">PASS</span>
-            </div>
-            <p class="text-[11px] text-slate-400">Fair cooperative game-theoretic revenue sharing for VPP microgrids.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 15: ARKA AI SOLAR & ENERGY ASSISTANT                            -->
-    <!-- =================================================================== -->
-    <section id="tab-arka" class="hidden space-y-6">
-      <div class="glass-panel p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-solar-border pb-4 mb-6">
-          <div>
-            <h2 class="text-base font-bold text-slate-100 tracking-tight">ARKA (अर्क) — Grounded Solar & Energy Assistant</h2>
-            <p class="text-xs text-slate-400 mt-0.5">Instant technical and economic advice grounded in your home's actual solar generation, battery size, and statutory rules.</p>
-          </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400">
-            KNOWLEDGE GROUNDED
-          </span>
-        </div>
-
-        <!-- Quick Question Preset Pills -->
-        <div class="flex flex-wrap gap-2 mb-4">
-          <button onclick="askArka('How much money will I save on my electricity bill every month?')" class="px-3 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-xs text-slate-300 transition">
-            Monthly Savings
-          </button>
-          <button onclick="askArka('How much subsidy do I get under PM Surya Ghar and what size do I need?')" class="px-3 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-xs text-slate-300 transition">
-            PM Surya Ghar Subsidy
-          </button>
-          <button onclick="askArka('Will my battery survive an 8-hour blackout tonight?')" class="px-3 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-xs text-slate-300 transition">
-            8-Hour Blackout Autonomy
-          </button>
-          <button onclick="askArka('When is the cheapest time to run my washing machine and water geyser?')" class="px-3 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-xs text-slate-300 transition">
-            Appliance Shift Timing
-          </button>
-          <button onclick="askArka('How do I sell surplus solar to neighbors and receive UPI payments?')" class="px-3 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-xs text-slate-300 transition">
-            P2P Neighbor Trading
+          <!-- 1-Click WhatsApp Alert Button -->
+          <button class="btn-whatsapp-alert" id="btn-whatsapp" onclick="triggerWhatsAppAlert()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+            </svg>
+            <span data-i18n="btn_whatsapp">1-Click WhatsApp Power-Cut Alert</span>
           </button>
         </div>
 
-        <!-- Interactive Chat Bubble Container -->
-        <div id="arka-chat-box" class="space-y-3 mb-4 max-h-96 overflow-y-auto p-4 rounded-xl bg-solar-surface border border-solar-border">
-          <div class="p-4 rounded-xl bg-solar-card border border-amber-500/30">
-            <div class="flex justify-between items-center text-xs font-bold text-amber-400 mb-1">
-              <span>ARKA Solar Assistant</span>
-              <span class="text-[10px] font-mono text-slate-500">READY</span>
+        <!-- 4D. Beckn DEG Protocol v2.0 Orderbook Tile (Span 7) -->
+        <div class="bento-tile bento-span-7 card-spotlight" id="tile-beckn">
+          <div class="bento-tile-header">
+            <div class="bento-title-group">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--beckn-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span data-i18n="tile_beckn_title">Beckn DEG Protocol v2.0</span>
+              </h3>
+              <p data-i18n="tile_beckn_sub">P2P Decentralized Clean Energy Orderbook (15-min Continuous Auction)</p>
             </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Hello! I am ARKA, your personal energy advisor configured for <b>Niwas Family Residence</b>. You have a <b>5.0 kWp solar array</b>, <b>10.0 kWh LiFePO4 battery</b>, and your DISCOM is <b>DVVNL</b>. Ask me anything about your solar generation, bill savings, PM Surya Ghar subsidy, or blackout backup!
+            <span class="verified-pill">✓ UPI Escrow Enabled</span>
+          </div>
+
+          <div class="orderbook-table-container">
+            <table class="beckn-order-table">
+              <thead>
+                <tr>
+                  <th>Order Ref</th>
+                  <th>Trade Action</th>
+                  <th>Energy Block</th>
+                  <th>P2P Rate</th>
+                  <th>Settlement Status</th>
+                </tr>
+              </thead>
+              <tbody id="beckn-orderbook-tbody">
+                <tr>
+                  <td><code>ORD-P2P-8821</code></td>
+                  <td><span class="pill-action-sell">SELL SURPLUS</span></td>
+                  <td>6.8 kWh</td>
+                  <td><b>₹6.80</b></td>
+                  <td><span class="status-badge-matched">✓ MATCHED</span></td>
+                </tr>
+                <tr>
+                  <td><code>ORD-P2P-8822</code></td>
+                  <td><span class="pill-action-buy">BUY OUTAGE</span></td>
+                  <td>4.2 kWh</td>
+                  <td><b>₹7.40</b></td>
+                  <td><span class="status-badge-matched">✓ MATCHED</span></td>
+                </tr>
+                <tr>
+                  <td><code>ORD-P2P-8823</code></td>
+                  <td><span class="pill-action-sell">SELL SURPLUS</span></td>
+                  <td>9.5 kWh</td>
+                  <td><b>₹6.50</b></td>
+                  <td><span class="status-badge-pending">⏳ PENDING</span></td>
+                </tr>
+                <tr>
+                  <td><code>ORD-P2P-8824</code></td>
+                  <td><span class="pill-action-ev-v2h">EV PEAK V2H</span></td>
+                  <td>12.0 kWh</td>
+                  <td><b>₹8.10</b></td>
+                  <td><span class="status-badge-locked">🔒 ESCROW LOCKED</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="discom-compliance-footer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--solar-amber)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span><b>DISCOM Sandbox Compliance:</b> Wheeling Charge: ₹0.45/kWh • Cross-Subsidy Surcharge: ₹0.30/kWh</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         5. HiGHS CONVEX LINEAR PROGRAMMING DISPATCH SECTION (#dispatch)
+         ====================================================================== -->
+    <section class="dispatch-section" id="dispatch">
+      <div class="container">
+        <div class="dispatch-panel-card card-spotlight">
+          <div class="section-title-wrap">
+            <div class="section-pill-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span data-i18n="dispatch_tag">Convex LP Solver Engine</span>
+            </div>
+            <h2 class="section-h2" data-i18n="dispatch_h2">HiGHS Convex Linear Programming Dispatch</h2>
+            <p class="section-subtitle" data-i18n="dispatch_sub">
+              24-Hour Predictive Dispatch & Optimization Curve. Click Auto-Simulate to see the linear programming solver re-balance microgrid dispatch in real time across the full day cycle.
             </p>
           </div>
-        </div>
 
-        <!-- Query Input Form -->
-        <div class="flex gap-2">
-          <input type="text" id="arka-input" placeholder="Type your question about solar, battery, subsidies, or bills..."
-            class="flex-1 bg-solar-surface border border-solar-border rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-400">
-          <button onclick="submitArkaQuery()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 font-bold text-xs text-slate-950 transition">
-            Ask ARKA
-          </button>
+          <!-- Controls Bar with 21st.dev Auto-Simulate Player -->
+          <div class="dispatch-controls-bar">
+            <!-- Battery SoC Slider -->
+            <div class="control-slider-wrap">
+              <label for="slider-soc-input">
+                <span data-i18n="lbl_soc">Midnight Battery SoC:</span>
+                <span class="slider-value-display" style="color: var(--isro-cyan);" id="soc-display-text">50%</span>
+              </label>
+              <input type="range" min="10" max="100" value="50" step="5" class="custom-range-slider" id="slider-soc-input">
+            </div>
+
+            <!-- Simulation Hour Scrubber -->
+            <div class="control-slider-wrap">
+              <label for="slider-hour-input">
+                <span data-i18n="lbl_hour">Simulation Hour:</span>
+                <span class="slider-value-display" style="color: var(--solar-amber);" id="hour-display-text">13:00 IST</span>
+              </label>
+              <input type="range" min="0" max="24" value="13" step="0.5" class="custom-range-slider" id="slider-hour-input">
+            </div>
+
+            <!-- Auto-Simulate Button -->
+            <button class="btn-auto-simulate" id="btn-auto-simulate" aria-label="Auto-Simulate 24H Cycle">
+              <svg id="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span id="play-text">▶ Run 24H Auto-Simulation</span>
+            </button>
+          </div>
+
+          <!-- Canvas Spline Chart -->
+          <div class="chart-canvas-container">
+            <canvas id="dispatchSplineCanvas"></canvas>
+          </div>
+
+          <!-- Legend -->
+          <div class="chart-legend-row">
+            <div class="legend-chip">
+              <div class="legend-color-box" style="background: var(--solar-amber);"></div>
+              <span data-i18n="leg_solar">Solar Generation (kW)</span>
+            </div>
+            <div class="legend-chip">
+              <div class="legend-color-box" style="background: var(--isro-cyan);"></div>
+              <span data-i18n="leg_load">Facility Load Profile (kW)</span>
+            </div>
+            <div class="legend-chip">
+              <div class="legend-color-box" style="background: var(--p2p-purple);"></div>
+              <span data-i18n="leg_p2p">P2P Export Surplus (kW)</span>
+            </div>
+            <div class="legend-chip">
+              <div class="legend-color-box" style="background: var(--danger-crimson); border-radius: 50%;"></div>
+              <span data-i18n="leg_hour">Active Simulation Hour</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
+    <!-- ======================================================================
+         6. TRANSPARENT TARIFF & SUBSIDY LEDGER (#prices)
+         ====================================================================== -->
+    <section class="container ledger-section" id="prices">
+      <div class="ledger-card card-spotlight">
+        <div class="ledger-grid">
+          <div class="ledger-info">
+            <div class="section-pill-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>Transparent Clean Energy Tariffs</span>
+            </div>
+            <h2>Tariffs you see before dispatch starts.</h2>
+            <p>Guaranteed DISCOM feed-in rates, Beckn DEG bilateral peer-to-peer exchange clearing tariffs, and central DBT subsidies under PM Surya Ghar Muft Bijli Yojana.</p>
+            <div class="ledger-guarantee-box">
+              <b style="display:block; margin-bottom:4px; font-weight:700;">Verifiable Smart Contract Guarantee</b>
+              Every surplus packet executes via Beckn DEG v2.0 verifiable credentials with zero hidden transmission wheeling charges or unscheduled interchange penalties.
+            </div>
+          </div>
+
+          <div class="pr-ledger-list">
+            <div class="pr-ledger-row">
+              <div>
+                <div class="pr-row-title">Solar RTS Feed-in Tariff</div>
+                <div class="pr-row-desc">Guaranteed DISCOM Net-metering export buyback</div>
+              </div>
+              <div class="pr-price-tag">₹4.20/kWh</div>
+            </div>
+            <div class="pr-ledger-row">
+              <div>
+                <div class="pr-row-title">P2P Microgrid Trade Rate</div>
+                <div class="pr-row-desc">Dynamic bilateral matching between prosumers & EV hubs</div>
+              </div>
+              <div class="pr-price-tag">₹5.85/kWh</div>
+            </div>
+            <div class="pr-ledger-row">
+              <div>
+                <div class="pr-row-title">Grid Peak Draw Tariff</div>
+                <div class="pr-row-desc">Time-of-Use evening peak rate avoided via BESS (18:00–22:00 IST)</div>
+              </div>
+              <div class="pr-price-tag">₹8.50/kWh</div>
+            </div>
+            <div class="pr-ledger-row">
+              <div>
+                <div class="pr-row-title">PM Surya Ghar Subsidy (1–2 kW)</div>
+                <div class="pr-row-desc">Direct central subsidy deposited via DBT within 30 days</div>
+              </div>
+              <div class="pr-price-tag">₹30,000–₹60,000</div>
+            </div>
+            <div class="pr-ledger-row">
+              <div>
+                <div class="pr-row-title">PM Surya Ghar Subsidy (3 kW+)</div>
+                <div class="pr-row-desc">Maximum central government subsidy grant</div>
+              </div>
+              <div class="pr-price-tag">₹78,000</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         7. PM SURYA GHAR SUBSIDY CALCULATOR SECTION (#subsidy)
+         ====================================================================== -->
+    <section class="container subsidy-section" id="subsidy">
+      <div class="subsidy-card-container card-spotlight">
+        <div class="section-title-wrap">
+          <div class="section-pill-tag section-pill-tag-saffron">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+            </svg>
+            <span>National Rooftop Solar Mission</span>
+          </div>
+          <h2 class="section-h2" data-i18n="subsidy_h2">PM Surya Ghar: Muft Bijli Yojana Official Subsidy Calculator</h2>
+          <p class="section-subtitle" data-i18n="subsidy_sub">
+            Direct Financial Assistance (DBT) calculator grounded in official MNRE guidelines and national portal specifications (<a href="https://pmsuryaghar.gov.in" target="_blank" rel="noopener" style="color: var(--isro-cyan); text-decoration: underline;">pmsuryaghar.gov.in</a>).
+          </p>
+        </div>
+
+        <div class="calc-grid-layout">
+          <!-- Left: Sliders & Rules -->
+          <div>
+            <!-- Slider 1: Monthly Units -->
+            <div class="calc-slider-field">
+              <div class="calc-slider-header">
+                <span data-i18n="calc_units_lbl">Monthly Electricity Consumption</span>
+                <span class="slider-value-display" style="color: var(--isro-cyan);" id="calc-units-text">240 Units</span>
+              </div>
+              <input type="range" min="50" max="600" value="240" step="10" class="custom-range-slider" id="slider-subsidy-units">
+              <div class="calc-slider-hint" data-i18n="calc_units_hint">Residential slab based on last DISCOM electricity bill</div>
+            </div>
+
+            <!-- Slider 2: Capacity -->
+            <div class="calc-slider-field">
+              <div class="calc-slider-header">
+                <span data-i18n="calc_cap_lbl">Proposed Solar Plant Capacity</span>
+                <span class="slider-value-display" style="color: var(--solar-amber);" id="calc-capacity-text">3.0 kW</span>
+              </div>
+              <input type="range" min="1" max="10" value="3" step="0.5" class="custom-range-slider" id="slider-subsidy-cap">
+              <div class="calc-slider-hint" data-i18n="calc_cap_hint">Requires approx 100 sq.ft shade-free roof per kW</div>
+            </div>
+
+            <!-- MNRE Rules Info Box -->
+            <div class="mnre-rules-infobox">
+              <div class="mnre-rules-title">Official MNRE Central Subsidy Slabs:</div>
+              <ul>
+                <li><b>1 kW System:</b> ₹30,000 Direct DBT</li>
+                <li><b>2 kW System:</b> ₹60,000 Direct DBT</li>
+                <li><b>3 kW+ Systems:</b> ₹78,000 (Maximum Central Capping Limit)</li>
+                <li><b>Housing Societies / RWAs:</b> ₹18,000 / kW up to 500 kW</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Right: 3 Large Results Cards -->
+          <div class="calc-results-3cards">
+            <!-- Result 1: Direct Subsidy -->
+            <div class="calc-result-box calc-result-green">
+              <div class="calc-result-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div>
+                <div class="calc-result-label" data-i18n="calc_dbt_lbl">Direct Central Subsidy (DBT)</div>
+                <div class="calc-result-huge-number text-dbt-green" id="calc-res-subsidy">₹78,000</div>
+                <div class="calc-result-desc">Credited directly to consumer bank account within 30 days</div>
+              </div>
+            </div>
+
+            <!-- Result 2: Net Cost -->
+            <div class="calc-result-box calc-result-blue">
+              <div class="calc-result-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+              </div>
+              <div>
+                <div class="calc-result-label" data-i18n="calc_net_lbl">Net Estimated Investment</div>
+                <div class="calc-result-huge-number" id="calc-res-net">₹1,17,000</div>
+                <div class="calc-result-desc">Total plant capital cost after central subsidy deduction</div>
+              </div>
+            </div>
+
+            <!-- Result 3: Annual Savings & Payback -->
+            <div class="calc-result-box calc-result-amber">
+              <div class="calc-result-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+              <div>
+                <div class="calc-result-label" data-i18n="calc_savings_lbl">Annual Bill Savings</div>
+                <div class="calc-result-huge-number text-dbt-green" id="calc-res-annual">₹35,670/yr</div>
+                <div class="calc-result-desc">Estimated full capital payback: <b id="calc-res-payback" style="color: var(--solar-amber);">3.3 Years</b></div>
+              </div>
+            </div>
+
+            <a href="https://pmsuryaghar.gov.in" target="_blank" rel="noopener" class="btn-portal-saffron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              <span data-i18n="btn_apply_portal">Apply on National Portal (pmsuryaghar.gov.in) ↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         8. CITATIONS & VERIFIABLE PORTALS SECTION (#citations)
+         ====================================================================== -->
+    <section class="container citations-section" id="citations">
+      <div class="section-title-wrap">
+        <div class="section-pill-tag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span data-i18n="citations_tag">Verifiable Research, Portals & Standards</span>
+        </div>
+        <h2 class="section-h2" data-i18n="citations_h2">Official Government Portals & Research Citations</h2>
+        <p class="section-subtitle" data-i18n="citations_sub">
+          UrjaSetu EMS is grounded in statutory regulations, official meteorological feeds, and open energy network protocols.
+        </p>
+      </div>
+
+      <div class="citations-3col-grid">
+        <!-- Citation 1: PM Surya Ghar -->
+        <a href="https://pmsuryaghar.gov.in" target="_blank" rel="noopener" class="citation-card card-spotlight">
+          <div>
+            <div class="citation-card-top">
+              <span class="citation-org-pill org-pill-mnre">Ministry of Power & MNRE</span>
+              <span class="citation-source">Govt of India</span>
+            </div>
+            <div class="citation-title">PM Surya Ghar: Muft Bijli Yojana</div>
+            <div class="citation-desc">
+              National portal for 1 Crore residential rooftop installations. Direct DBT subsidies from ₹30,000 to ₹78,000.
+            </div>
+          </div>
+          <div class="citation-external-link">
+            <span>Official Portal (pmsuryaghar.gov.in)</span> ↗
+          </div>
+        </a>
+
+        <!-- Citation 2: ISRO MOSDAC -->
+        <a href="https://www.mosdac.gov.in" target="_blank" rel="noopener" class="citation-card card-spotlight">
+          <div>
+            <div class="citation-card-top">
+              <span class="citation-org-pill org-pill-isro">ISRO / MOSDAC</span>
+              <span class="citation-source">Space Department</span>
+            </div>
+            <div class="citation-title">INSAT-3DR Geostationary Data</div>
+            <div class="citation-desc">
+              Half-hourly solar insolation, DNI, GTI, and cloud motion vectors derived from satellite imager and sounder instruments.
+            </div>
+          </div>
+          <div class="citation-external-link">
+            <span>MOSDAC Open Data (mosdac.gov.in)</span> ↗
+          </div>
+        </a>
+
+        <!-- Citation 3: Beckn Protocol -->
+        <a href="https://becknprotocol.io" target="_blank" rel="noopener" class="citation-card card-spotlight">
+          <div>
+            <div class="citation-card-top">
+              <span class="citation-org-pill org-pill-beckn">Beckn Protocol Foundation</span>
+              <span class="citation-source">Open Specification</span>
+            </div>
+            <div class="citation-title">Beckn DEG Protocol v2.0</div>
+            <div class="citation-desc">
+              Decentralized energy trading schema enabling P2P discovery, continuous auction orderbooks, and verifiable UPI smart contracts.
+            </div>
+          </div>
+          <div class="citation-external-link">
+            <span>Protocol Specification (becknprotocol.io)</span> ↗
+          </div>
+        </a>
+
+        <!-- Citation 4: CEA -->
+        <a href="https://cea.nic.in" target="_blank" rel="noopener" class="citation-card card-spotlight">
+          <div>
+            <div class="citation-card-top">
+              <span class="citation-org-pill org-pill-cea">Central Electricity Authority</span>
+              <span class="citation-source">Statutory Body</span>
+            </div>
+            <div class="citation-title">CEA Cyber Security in Power Sector 2026</div>
+            <div class="citation-desc">
+              Statutory OT security compliance, air-gapped inverter controls, and the national baseline emission factor (0.716 kg CO₂/kWh).
+            </div>
+          </div>
+          <div class="citation-external-link">
+            <span>Official Portal (cea.nic.in)</span> ↗
+          </div>
+        </a>
+
+        <!-- Citation 5: CEEW India -->
+        <a href="https://www.ceew.in" target="_blank" rel="noopener" class="citation-card card-spotlight">
+          <div>
+            <div class="citation-card-top">
+              <span class="citation-org-pill org-pill-ceew">CEEW India</span>
+              <span class="citation-source">Research Think-Tank</span>
+            </div>
+            <div class="citation-title">CEEW Smart Meter & Outage Datasets</div>
+            <div class="citation-desc">
+              Measured 3-minute smart meter blackout and load profiles from rural/urban Indian feeders (Harvard Dataverse CC0).
+            </div>
+          </div>
+          <div class="citation-external-link">
+            <span>Research Dataset (ceew.in)</span> ↗
+          </div>
+        </a>
+
+        <!-- Citation 6: SERC Tariff Orders -->
+        <div class="citation-card card-spotlight">
+          <div>
+            <div class="citation-card-top">
+              <span class="citation-org-pill org-pill-serc">SERC Regulatory Commissions</span>
+              <span class="citation-source">State Tariffs</span>
+            </div>
+            <div class="citation-title">MERC / UPERC / RERC Tariff Orders</div>
+            <div class="citation-desc">
+              Time-of-Day (ToD) tariff schedules, open access P2P wheeling charges, and banking restrictions for Maharashtra, UP, and Rajasthan.
+            </div>
+          </div>
+          <div class="citation-external-link" style="color: var(--grid-emerald);">
+            <span>Official Tariff Schedules Verified ✓</span>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <!-- ======================================================================= -->
-  <!-- FOOTER                                                                  -->
-  <!-- ======================================================================= -->
-  <footer class="glass-panel border-t border-solar-border/80 py-4 mt-8 relative z-10 text-xs text-slate-400">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-3">
-      <div class="flex items-center space-x-2">
-        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-        <span>AVISHKAR Enterprise Solar EMS · Truth-in-Data Certified · Zero Fabricated Telemetry</span>
+  <!-- ======================================================================
+       9. FOOTER
+       ====================================================================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-3col-layout">
+        <!-- Col 1: Logo & Tagline -->
+        <div>
+          <div class="footer-brand-title">UrjaSetu (ऊर्जासेतु) EMS</div>
+          <p class="footer-desc">
+            India's Next-Gen Predictive Energy Management & Autonomous Surplus Dispatch Platform.
+          </p>
+          <span class="version-pill version-pill-dark">
+            Production Release v2.0
+          </span>
+        </div>
+
+        <!-- Col 2: Tech Stack Badges -->
+        <div>
+          <div class="footer-section-title">Architecture & Standards</div>
+          <div class="footer-badges-list">
+            <span class="footer-tech-chip">⚡ Built with HiGHS Convex LP Engine</span>
+            <span class="footer-tech-chip">🛰️ ISRO INSAT-3D/3DR Geostationary Data</span>
+            <span class="footer-tech-chip">🌐 Beckn DEG Protocol v2.0</span>
+            <span class="footer-tech-chip">🏛️ PM Surya Ghar Muft Bijli Yojana Compliant</span>
+          </div>
+        </div>
+
+        <!-- Col 3: Quick Links -->
+        <div>
+          <div class="footer-section-title">Quick Navigation</div>
+          <div class="footer-quicklinks">
+            <a href="#hero" class="footer-quicklink">↑ Back to Top</a>
+            <a href="http://localhost:8501" target="_blank" rel="noopener" class="footer-quicklink">⚡ Streamlit Analytics Dashboard</a>
+            <a href="#subsidy" class="footer-quicklink">💰 PM Surya Ghar Calculator</a>
+            <a href="#citations" class="footer-quicklink">📜 Verifiable Citations</a>
+          </div>
+        </div>
       </div>
-      <div class="font-mono text-[11px] text-slate-500">
-        MNRE PM Surya Ghar & CEA IEEE 1547 Compliant
+
+      <div class="footer-bottom-bar">
+        <div>
+          AVISHKAR FET Hackathon — Problem Statement #2 (Predictive Energy Management & Surplus Dispatch)
+        </div>
+        <div style="color: var(--text-tertiary);">
+          National Telemetry & Decentralized Grid Operations
+        </div>
       </div>
     </div>
   </footer>
 
-  <!-- ======================================================================= -->
-  <!-- JAVASCRIPT CALCULATORS & REACTIVE STATE ENGINES                         -->
-  <!-- ======================================================================= -->
-  <script>
-    const ALL_TABS = [
-      'tab-benchmark', 'tab-setup', 'tab-flow', 'tab-sizing', 'tab-radar',
-      'tab-battery', 'tab-dailyplan', 'tab-loads', 'tab-gateway', 'tab-community',
-      'tab-upi', 'tab-fleet', 'tab-health', 'tab-savings', 'tab-engines', 'tab-arka'
-    ];
+  <!-- Toast Notification Modal for WhatsApp Alert -->
+  <div class="toast-notification" id="toast-notification">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toast-message">Alert dispatched!</span>
+  </div>
 
-    function switchTab(tabId) {
-      ALL_TABS.forEach(t => {
-        const el = document.getElementById(t);
-        const btn = document.getElementById('btn-' + t);
-        if (el) el.classList.add('hidden');
-        if (btn) btn.classList.remove('nav-tab-active');
-      });
-
-      const targetEl = document.getElementById(tabId);
-      const targetBtn = document.getElementById('btn-' + tabId);
-      if (targetEl) targetEl.classList.remove('hidden');
-      if (targetBtn) targetBtn.classList.add('nav-tab-active');
-
-      if (tabId === 'tab-upi') generateUPIQR();
-      if (tabId === 'tab-benchmark') runDispatchCalculation();
-      if (tabId === 'tab-radar') renderRadarChart();
-      if (tabId === 'tab-dailyplan') renderDailyPlanChart();
-    }
-
-    // Dispatch Bar Chart
-    let chartInstance = null;
-    function initChart() {
-      const ctx = document.getElementById('dispatchChart').getContext('2d');
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Direct Solar', 'Batt Charge', 'Batt Discharge', 'Flex Loads', 'EV Charge', 'Grid Export', 'Grid Import', 'Losses'],
-          datasets: [{
-            label: 'Power (kW)',
-            data: [1.5, 2.5, 0, 0, 0, 0, 0, 0.2],
-            backgroundColor: [
-              '#ffaa00',
-              '#10b981',
-              '#f43f5e',
-              '#f59e0b',
-              '#a855f7',
-              '#00f0ff',
-              '#ef4444',
-              '#64748b'
-            ],
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              grid: { color: 'rgba(26, 39, 84, 0.5)' },
-              ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
-            },
-            x: {
-              grid: { display: false },
-              ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } }
-            }
-          }
-        }
-      });
-    }
-
-    // Radar Line Chart
-    let radarChartInstance = null;
-    function renderRadarChart() {
-      if (radarChartInstance) return;
-      const ctx = document.getElementById('solarRadarChart').getContext('2d');
-      const hours = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00'];
-      const ghi = [50, 320, 680, 842, 650, 280, 40];
-      const output = [0.2, 1.6, 3.8, 4.8, 3.6, 1.4, 0.1];
-
-      radarChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: hours,
-          datasets: [
-            {
-              label: 'Solar Output (kW)',
-              data: output,
-              borderColor: '#ffaa00',
-              backgroundColor: 'rgba(255, 170, 0, 0.15)',
-              fill: true,
-              tension: 0.4
-            },
-            {
-              label: 'GHI Irradiance / 200',
-              data: ghi.map(v => v / 175),
-              borderColor: '#00f0ff',
-              borderDash: [5, 5],
-              fill: false,
-              tension: 0.4
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans', sans-serif" } } } },
-          scales: {
-            y: { grid: { color: 'rgba(26, 39, 84, 0.5)' }, ticks: { color: '#94a3b8' } },
-            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-          }
-        }
-      });
-    }
-
-    // Daily Plan Chart
-    let dailyPlanChartInstance = null;
-    function renderDailyPlanChart() {
-      if (dailyPlanChartInstance) return;
-      const ctx = document.getElementById('dailyPlanChart').getContext('2d');
-      const hours = Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`);
-      const solarGen = [0,0,0,0,0,0.1,0.5,1.8,3.2,4.4,4.9,5.0,4.7,4.0,2.8,1.4,0.4,0,0,0,0,0,0,0];
-      const loadDemand = [1.1,0.9,0.8,0.8,0.9,1.4,2.2,2.5,1.6,1.4,1.5,1.5,1.6,1.4,1.5,1.8,2.6,3.4,3.2,2.8,2.2,1.8,1.4,1.2];
-      const batterySoc = [30,25,20,18,16,15,15,22,45,72,90,95,95,95,92,85,75,55,35,25,20,18,16,15];
-
-      dailyPlanChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: hours,
-          datasets: [
-            {
-              label: 'Solar PV (kW)',
-              data: solarGen,
-              borderColor: '#ffaa00',
-              backgroundColor: 'rgba(255, 170, 0, 0.1)',
-              fill: true,
-              tension: 0.3
-            },
-            {
-              label: 'Household Demand (kW)',
-              data: loadDemand,
-              borderColor: '#00f0ff',
-              tension: 0.3
-            },
-            {
-              label: 'Battery SoC (%)',
-              data: batterySoc.map(v => v / 10),
-              borderColor: '#10b981',
-              borderDash: [4, 4],
-              tension: 0.3
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans', sans-serif" } } } },
-          scales: {
-            y: { grid: { color: 'rgba(26, 39, 84, 0.5)' }, ticks: { color: '#94a3b8' } },
-            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-          }
-        }
-      });
-    }
-
-    // First Law Dispatch Engine
-    function runDispatchCalculation() {
-      const pv = parseFloat(document.getElementById('sl-pv').value);
-      const load = parseFloat(document.getElementById('sl-load').value);
-      const soc = parseFloat(document.getElementById('sl-soc').value);
-      const buyTariff = parseFloat(document.getElementById('in-buy').value);
-      const sellTariff = parseFloat(document.getElementById('in-sell').value);
-      const goal = document.getElementById('sel-goal').value;
-      const includeLosses = document.getElementById('cb-losses').checked;
-
-      document.getElementById('txt-pv').innerText = pv.toFixed(1) + ' kW';
-      document.getElementById('txt-load').innerText = load.toFixed(1) + ' kW';
-      document.getElementById('txt-soc').innerText = soc.toFixed(0) + '%';
-
-      if (document.getElementById('sld-pv-val')) document.getElementById('sld-pv-val').textContent = pv.toFixed(1) + ' kW';
-
-      const battCapacity = parseFloat(document.getElementById('cfg-batt-kwh')?.value || '10.0');
-      const battMaxSoc = parseFloat(document.getElementById('cfg-soc-ceiling')?.value || '95.0');
-      const battMinSoc = parseFloat(document.getElementById('cfg-soc-floor')?.value || '15.0');
-      const battReserveFloor = (goal === 'PRESERVE_BACKUP_RESERVE') ? parseFloat(document.getElementById('cfg-soc-reserve')?.value || '25.0') : battMinSoc;
-      const battMaxPower = 3.5;
-
-      const battHeadroomKwh = Math.max(0.0, ((battMaxSoc - soc) / 100.0) * battCapacity);
-      const maxChargeKw = Math.min(battMaxPower, battHeadroomKwh);
-
-      const usableBattKwh = Math.max(0.0, ((soc - battReserveFloor) / 100.0) * battCapacity);
-      const maxDischargeKw = Math.min(battMaxPower, usableBattKwh);
-
-      let directSolar = Math.min(pv, load);
-      let grossSurplus = Math.max(0.0, pv - load);
-      let grossDeficit = Math.max(0.0, load - pv);
-
-      let battCharge = 0.0;
-      let battDischarge = 0.0;
-      let flexLoad = 0.0;
-      let evCharge = 0.0;
-      let gridExport = 0.0;
-      let gridImport = 0.0;
-
-      if (grossSurplus > 0) {
-        let rem = grossSurplus;
-        if (maxChargeKw > 0.01) {
-          battCharge = Math.min(rem, maxChargeKw);
-          rem -= battCharge;
-        }
-        if (rem >= 1.0) { flexLoad += 1.0; rem -= 1.0; }
-        if (rem >= 1.5) { flexLoad += 1.5; rem -= 1.5; }
-        gridExport = rem;
-      } else {
-        let deficit = grossDeficit;
-        if (maxDischargeKw > 0.01) {
-          battDischarge = Math.min(deficit, maxDischargeKw);
-          deficit -= battDischarge;
-        }
-        gridImport = deficit;
-      }
-
-      const invLoss = includeLosses ? (pv * 0.03) : 0.0;
-      const battLoss = includeLosses ? (battCharge * 0.05 + battDischarge * 0.05) : 0.0;
-      const totalLosses = invLoss + battLoss;
-
-      const pSources = pv + battDischarge + gridImport;
-      const pSinks = load + battCharge + flexLoad + evCharge + gridExport + totalLosses;
-      const errorKw = Math.abs(pSources - pSinks);
-
-      const endSoc = Math.min(battMaxSoc, Math.max(battMinSoc, soc + (battCharge * 0.95 - battDischarge) * (100.0 / battCapacity)));
-      const netCost = (gridImport * buyTariff) - (gridExport * sellTariff);
-
-      document.getElementById('m-direct').innerText = directSolar.toFixed(2) + ' kW';
-      document.getElementById('m-battery').innerText = battCharge > 0 ? `+${battCharge.toFixed(2)} kW` : (battDischarge > 0 ? `-${battDischarge.toFixed(2)} kW` : 'Idle');
-      document.getElementById('m-battery-soc').innerText = `SoC: ${soc.toFixed(0)}% → ${endSoc.toFixed(1)}%`;
-      document.getElementById('m-grid').innerText = gridExport > 0 ? `Export ${gridExport.toFixed(2)} kW` : (gridImport > 0 ? `Import ${gridImport.toFixed(2)} kW` : '0.00 kW');
-      document.getElementById('m-cost').innerText = (netCost <= 0 ? '₹' : '+₹') + netCost.toFixed(2);
-
-      if (document.getElementById('sld-batt-val')) document.getElementById('sld-batt-val').textContent = `${battCapacity.toFixed(0)}kWh (${endSoc.toFixed(0)}%)`;
-      if (document.getElementById('sld-grid-val')) document.getElementById('sld-grid-val').textContent = (gridExport > 0 ? `-${gridExport.toFixed(1)}kW` : `+${gridImport.toFixed(1)}kW`);
-
-      document.getElementById('eq-sources').innerText = `Sources: [PV: ${pv.toFixed(2)} kW + BattDischarge: ${battDischarge.toFixed(2)} kW + GridImport: ${gridImport.toFixed(2)} kW] = ${pSources.toFixed(3)} kW`;
-      document.getElementById('eq-sinks').innerText = `Sinks:   [Load: ${load.toFixed(2)} kW + BattCharge: ${battCharge.toFixed(2)} kW + Flex: ${flexLoad.toFixed(2)} kW + EV: ${evCharge.toFixed(2)} kW + GridExport: ${gridExport.toFixed(2)} kW + Losses: ${totalLosses.toFixed(2)} kW] = ${pSinks.toFixed(3)} kW`;
-      document.getElementById('eq-error').innerText = errorKw.toFixed(5) + ' kW';
-
-      if (chartInstance) {
-        chartInstance.data.datasets[0].data = [directSolar, battCharge, battDischarge, flexLoad, evCharge, gridExport, gridImport, totalLosses];
-        chartInstance.update();
-      }
-    }
-
-    function loadScenario(type) {
-      if (type === 'baseline') {
-        document.getElementById('sl-pv').value = 4.0;
-        document.getElementById('sl-load').value = 1.5;
-        document.getElementById('sl-soc').value = 60.0;
-        document.getElementById('in-buy').value = 8.0;
-        document.getElementById('in-sell').value = 3.0;
-      } else if (type === 'full_battery') {
-        document.getElementById('sl-pv').value = 4.5;
-        document.getElementById('sl-load').value = 1.5;
-        document.getElementById('sl-soc').value = 95.0;
-      } else if (type === 'cloudy') {
-        document.getElementById('sl-pv').value = 1.0;
-        document.getElementById('sl-load').value = 3.5;
-        document.getElementById('sl-soc').value = 50.0;
-      } else if (type === 'peak_tariff') {
-        document.getElementById('in-buy').value = 12.0;
-        document.getElementById('in-sell').value = 4.5;
-      }
-      runDispatchCalculation();
-    }
-
-    // Sizing Calculator
-    function runSizingCalc() {
-      const bill = parseFloat(document.getElementById('sz-bill').value);
-      document.getElementById('sz-bill-txt').innerText = '₹' + bill.toLocaleString('en-IN');
-
-      const recKw = Math.round(Math.max(1.0, Math.min(10.0, bill / 1400.0)) * 10) / 10;
-      const recBatt = Math.round(Math.max(2.5, Math.min(15.0, recKw * 1.5)) * 10) / 10;
-
-      let sub = 0;
-      if (recKw <= 1.0) sub = 30000;
-      else if (recKw <= 2.0) sub = 60000;
-      else sub = 78000;
-
-      const totalCost = (recKw * 55000) + (recBatt * 25000);
-      const netCost = totalCost - sub;
-      const annualGen = recKw * 1450;
-      const annualSavings = Math.min(annualGen * 7.5, bill * 12 * 0.85);
-      const payback = (netCost / Math.max(annualSavings, 1)).toFixed(1);
-
-      const r = 0.07 / 12;
-      const n = 84;
-      const emi = Math.round((netCost * 0.9 * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
-
-      document.getElementById('sz-res-pv').innerText = recKw.toFixed(1) + ' kWp';
-      document.getElementById('sz-res-batt').innerText = recBatt.toFixed(1) + ' kWh';
-      document.getElementById('sz-res-sub').innerText = '₹' + sub.toLocaleString('en-IN');
-      document.getElementById('sz-res-payback').innerText = payback + ' Yrs';
-
-      document.getElementById('sz-cost').innerText = '₹' + totalCost.toLocaleString('en-IN');
-      document.getElementById('sz-netcost').innerText = '₹' + netCost.toLocaleString('en-IN');
-      document.getElementById('sz-emi').innerText = '₹' + emi.toLocaleString('en-IN') + ' / mo';
-    }
-
-    function downloadDossier() {
-      const pv = document.getElementById('sz-res-pv').innerText;
-      const batt = document.getElementById('sz-res-batt').innerText;
-      const sub = document.getElementById('sz-res-sub').innerText;
-      const cost = document.getElementById('sz-cost').innerText;
-      const netCost = document.getElementById('sz-netcost').innerText;
-      const emi = document.getElementById('sz-emi').innerText;
-      const homeName = document.getElementById('cfg-home-name')?.value || 'Niwas Family Residence';
-
-      const content = `================================================================================
-URJASETU & AVISHKAR SOLAR EMS — PRE-FEASIBILITY & SUBSIDY DOSSIER
-Compliant with Ministry of New and Renewable Energy (MNRE) PM Surya Ghar Scheme
-================================================================================
-Generated for: ${homeName}
-Location: Uttar Pradesh (DVVNL)
-Sanctioned Load: 3.0 kW
-
-1. TECHNICAL ROOFTOP CONFIGURATION
---------------------------------------------------------------------------------
-- Recommended Solar PV Capacity: ${pv} (Mono PERC DCR Compliant)
-- Recommended Storage System: ${batt} (LiFePO4 Chemistry, 6000 cycles)
-- Grid Interconnection: 230V Single Phase / 415V Three Phase AC Net Metering
-
-2. FINANCIAL APPRAISAL & CENTRAL DBT SUBSIDY
---------------------------------------------------------------------------------
-- Gross System Capital Cost: ${cost}
-- PM Surya Ghar Direct Benefit Transfer (DBT): ${sub} (Credited to Bank Account)
-- Net Homeowner Investment: ${netCost}
-- Estimated Simple Payback Period: ${document.getElementById('sz-res-payback').innerText}
-
-3. SBI SURYA GHAR CONCESSIONAL SOLAR LOAN (7.00% P.A.)
---------------------------------------------------------------------------------
-- Loan Tenure: 7 Years (84 Monthly Installments)
-- Equated Monthly Installment (EMI): ${emi}
-- Statutory National Portal Registration: https://pmsuryaghar.gov.in
-
-================================================================================
-Generated by UrjaSetu & AVISHKAR Enterprise Solar Energy Management System
-================================================================================`;
-
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'UrjaSetu_Solar_Prefeasibility_Dossier.txt';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    function runP2PCalc() {
-      const surplus = parseFloat(document.getElementById('p2p-surplus').value);
-      const deficit = parseFloat(document.getElementById('p2p-deficit').value);
-      const r = parseFloat(document.getElementById('p2p-res').value);
-
-      const transferred = Math.min(surplus, deficit);
-      const current = (transferred * 1000) / 230;
-      const lineLossKw = (current * current * r) / 1000;
-      const delivered = Math.max(0.0, transferred - lineLossKw);
-
-      document.getElementById('p2p-trans').innerText = transferred.toFixed(2) + ' kW';
-      document.getElementById('p2p-deliv').innerText = delivered.toFixed(2) + ' kW';
-      document.getElementById('p2p-loss').innerText = lineLossKw.toFixed(3) + ' kW';
-    }
-
-    function generateUPIQR() {
-      const vpa = document.getElementById('upi-vpa').value;
-      const amt = parseFloat(document.getElementById('upi-amt').value).toFixed(2);
-      const note = encodeURIComponent(document.getElementById('upi-note').value);
-
-      const uri = `upi://pay?pa=${vpa}&pn=UrjaSetuSeller&am=${amt}&cu=INR&tn=${note}`;
-      document.getElementById('upi-uri').innerText = uri;
-
-      const qrContainer = document.getElementById('qrcode');
-      qrContainer.innerHTML = '';
-      new QRCode(qrContainer, {
-        text: uri,
-        width: 140,
-        height: 140,
-        colorDark: "#040714",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    }
-
-    // Home Setup Save & Reset Functions
-    function saveHomeSetup() {
-      const name = document.getElementById('cfg-home-name').value;
-      const sanctioned = parseFloat(document.getElementById('cfg-sanctioned-load').value);
-      const pv = parseFloat(document.getElementById('cfg-pv-kw').value);
-      const batt = parseFloat(document.getElementById('cfg-batt-kwh').value);
-      const buy = parseFloat(document.getElementById('cfg-buy-tariff').value);
-      const sell = parseFloat(document.getElementById('cfg-sell-tariff').value);
-      const isCommunity = document.getElementById('cfg-community-optin').checked;
-
-      // Update Top Display Ribbon
-      document.getElementById('disp-home-name').innerText = name;
-      document.getElementById('disp-sanctioned').innerText = sanctioned.toFixed(1) + ' kW';
-      document.getElementById('disp-pv-spec').innerText = pv.toFixed(1) + ' kWp Mono PERC';
-      document.getElementById('disp-batt-spec').innerText = batt.toFixed(1) + ' kWh LiFePO4';
-      document.getElementById('disp-comm-badge').innerText = isCommunity ? 'COMMUNITY OPT-IN: ACTIVE' : 'STANDALONE: 100% AUTONOMOUS';
-      document.getElementById('disp-comm-badge').className = isCommunity 
-        ? 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-        : 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/15 text-purple-400 border border-purple-500/30';
-
-      // Update Tariffs in Benchmark
-      document.getElementById('in-buy').value = buy;
-      document.getElementById('in-sell').value = sell;
-      document.getElementById('sl-pv').max = Math.max(10, pv * 1.5);
-      
-      runDispatchCalculation();
-      switchTab('tab-benchmark');
-    }
-
-    function resetHomeSetupDefaults() {
-      document.getElementById('cfg-home-name').value = 'Niwas Family Residence';
-      document.getElementById('cfg-sanctioned-load').value = '3.0';
-      document.getElementById('cfg-monthly-kwh').value = '380';
-      document.getElementById('cfg-buy-tariff').value = '8.0';
-      document.getElementById('cfg-sell-tariff').value = '3.0';
-      document.getElementById('cfg-pv-kw').value = '5.0';
-      document.getElementById('cfg-inv-kw').value = '5.0';
-      document.getElementById('cfg-batt-kwh').value = '10.0';
-      document.getElementById('cfg-batt-soc').value = '60';
-      document.getElementById('cfg-soc-floor').value = '15';
-      document.getElementById('cfg-soc-reserve').value = '25';
-      document.getElementById('cfg-soc-ceiling').value = '95';
-      document.getElementById('cfg-community-optin').checked = true;
-      saveHomeSetup();
-    }
-
-    // ARKA AI Assistant Logic
-    function askArka(question) {
-      document.getElementById('arka-input').value = question;
-      submitArkaQuery();
-    }
-
-    function submitArkaQuery() {
-      const input = document.getElementById('arka-input');
-      const q = input.value.trim();
-      if (!q) return;
-
-      const chatBox = document.getElementById('arka-chat-box');
-      
-      // User Message Bubble
-      const userDiv = document.createElement('div');
-      userDiv.className = 'p-3 rounded-xl bg-solar-card/60 border border-solar-border text-right';
-      userDiv.innerHTML = `<span class="text-[10px] font-mono text-slate-400 block mb-0.5">YOU</span><p class="text-xs text-slate-200">${q}</p>`;
-      chatBox.appendChild(userDiv);
-
-      // ARKA Response Engine
-      let answer = '';
-      const lower = q.toLowerCase();
-      if (lower.includes('save') || lower.includes('bill') || lower.includes('money')) {
-        answer = 'Based on your 5.0 kWp solar array and 10 kWh battery in Uttar Pradesh (DVVNL), your system generates approximately 600 kWh/month. Your pre-solar bill was ~₹4,200/month. With 92.4% solar self-consumption, your new electricity bill is ~₹320/month, putting <b>₹3,770/month net in-pocket savings</b> into your family budget!';
-      } else if (lower.includes('subsidy') || lower.includes('pm surya ghar')) {
-        answer = 'Under the PM Surya Ghar: Muft Bijli Yojana, residential rooftop solar up to 2 kW receives ₹30,000/kW (₹60,000 total), and systems at 3 kWp or above receive the <b>maximum Central DBT subsidy of ₹78,000</b>. This is credited directly to your bank account within 30 days of DISCOM net meter commissioning.';
-      } else if (lower.includes('blackout') || lower.includes('autonomy') || lower.includes('hours') || lower.includes('night')) {
-        answer = 'With your 10.0 kWh LiFePO4 battery starting at 60% SoC (6.0 kWh usable) and preserving your 25% emergency reserve floor (2.5 kWh), you have 3.5 kWh of active discharge. At a critical blackout load of 500W (fans, lights, Wi-Fi router, refrigerator), your home will sustain <b>6.7 hours of continuous blackout protection</b> tonight.';
-      } else if (lower.includes('appliance') || lower.includes('geyser') || lower.includes('washing')) {
-        answer = 'The best time to run your water geyser (2.0 kW) and washing machine (1.2 kW) is between <b>11:30 AM and 02:30 PM</b>. During these midday peak solar hours, your 5 kWp array produces ~4.2 kW of surplus power, powering both appliances with 100% free rooftop sunshine with zero grid draw!';
-      } else if (lower.includes('neighbor') || lower.includes('p2p') || lower.includes('sell') || lower.includes('upi')) {
-        answer = 'When your battery hits 95% full and appliances are satisfied, UrjaSetu routes surplus power across your local distribution feeder to neighboring homes at the social welfare midpoint of <b>₹5.50/kWh</b>. You earn +₹2.50/kWh more than the DISCOM export rate (₹3.00), and receive instant NPCI UPI payments directly to your registered VPA!';
-      } else {
-        answer = `Thank you for your question about "${q}". Your 5 kWp array and 10 kWh LiFePO4 battery are operating at 100% thermodynamic autarky. All system parameters are compliant with MNRE guidelines and CEA technical standards.`;
-      }
-
-      const botDiv = document.createElement('div');
-      botDiv.className = 'p-4 rounded-xl bg-solar-card border border-amber-500/30';
-      botDiv.innerHTML = `
-        <div class="flex justify-between items-center text-xs font-bold text-amber-400 mb-1">
-          <span>ARKA Solar Assistant</span>
-          <span class="text-[10px] font-mono text-emerald-400">GROUNDED TELEMETRY</span>
-        </div>
-        <p class="text-xs text-slate-300 leading-relaxed">${answer}</p>
-      `;
-      chatBox.appendChild(botDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-      input.value = '';
-    }
-
-    // Page Load Initializer
-    window.addEventListener('DOMContentLoaded', () => {
-      initChart();
-      runDispatchCalculation();
-      runSizingCalc();
-      runP2PCalc();
-      generateUPIQR();
-    });
-  </script>
+  <script src="app.js?v=9.0"></script>
 </body>
 </html>

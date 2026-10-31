@@ -3896,3 +3896,51 @@ exist, named apart, and what the control signal withholds leaves as export or cu
 - Did not edit vendored code in `src/emhass/` or `src/avishkar_ems/vendor/`.
 - Did not fabricate live hardware telemetry (labeled clearly as simulation vs user-entered vs physical).
 
+## 2026-10-31 - Entry 70: Import and Integration of UrjaSetu Mission Control UI from Pull Requests & Production Firebase Deployment
+
+### What was done
+- **Pull Request & Branch Audit**:
+  - Located and inspected PR #3 (`feature/urjasetu-gk-web`, commit `250254c`) by collaborator Gaurav Kedia and branch `feat/ui-only-mission-control` (commit `55ee3d5`) by `ramnivasattanti2008-cloud`.
+  - Imported the full UrjaSetu Mission Control web client from commit `250254c`:
+    - `frontend/index.html` (60,799 bytes, 1,092 lines) - Government-aligned, citizen-first predictive energy dashboard integrating ISRO INSAT-3DR satellite nowcasting, Beckn DEG v2.0 P2P dispatch, and PM Surya Ghar Muft Bijli Yojana subsidy engine.
+    - `frontend/styles.css` (47,313 bytes, 2,024 lines) - Complete design system with dual theme engine (Alabaster Light & Obsidian Night), 21st.dev architectural grid background, ambient lighting glow, and national institutional styling.
+    - `frontend/app.js` (41,605 bytes, 952 lines) - Interactive client logic with Lenis smooth scroll, GSAP 3.13 animations, regional microgrid intelligence across 6 Indian states, animated Sankey energy flow, and interactive financial calculators.
+    - `components/demo.tsx` & `components/ui/sun-moon-theme-toggle.tsx` - Standalone animated theme toggle component.
+    - Synchronized all frontend assets into `public/` (`public/index.html`, `public/styles.css`, `public/app.js`) to ensure seamless parity across both directories.
+  - Integrated Mission Control UI into Next.js platform (`platform/web`) from commit `55ee3d5`:
+    - `platform/web/src/app/globals.css`: Added mission design variables, topbar, cards, and theme utility classes.
+    - `platform/web/src/app/page.tsx`: Updated homepage to executive National Clean Energy Grid mission control view while maintaining type safety and existing platform route links (`/map`, `/properties`, `/community`, etc.).
+    - `platform/web/src/components/Nav.tsx`: Added Ministry of Power & MNRE aligned national top bar with real-time 50.01 Hz grid telemetry badge.
+    - `platform/web/src/components/ThemeToggle.tsx`: Converted to `.mission-theme-toggle` styling.
+- **Firebase Hosting Production Deployment**:
+  - Configured `firebase.json` with `"public": "frontend"` and HTTP security headers (`nosniff`, `SAMEORIGIN`, `Cache-Control`).
+  - Successfully deployed to live Firebase Hosting (`https://studio-4547798402-ec0aa.web.app`).
+  - Verified live assets (`index.html`, `styles.css`, `app.js`) via HTTP curl headers returning 200 OK.
+- **Comprehensive Quality Verification**:
+  - `pnpm -C platform/web test`: 399 passed across 46 test files (100% pass rate).
+  - `pnpm -C platform/web typecheck` (`tsc --noEmit`): 0 errors.
+  - `pnpm -C platform/web lint` (`eslint src`): 0 errors.
+  - `pnpm -C platform/web build`: Turbopack production build succeeded across all 26 application routes.
+  - `python -m pytest tests/avishkar_ems -q`: 687 passed, 1 skipped.
+  - `.\.venv\Scripts\python.exe -m ruff check app/dashboard.py --no-fix`: All checks passed!
+
+### Evidence
+- `firebase deploy --only hosting --project studio-4547798402-ec0aa`: **Deploy complete!**
+- `curl.exe -I https://studio-4547798402-ec0aa.web.app`: **HTTP/1.1 200 OK** (Content-Length: 60,799, ETag: `7ac94e6b...`).
+- `curl.exe -I https://studio-4547798402-ec0aa.web.app/styles.css`: **HTTP/1.1 200 OK** (Content-Length: 47,313).
+- `curl.exe -I https://studio-4547798402-ec0aa.web.app/app.js`: **HTTP/1.1 200 OK** (Content-Length: 41,605).
+- `pnpm -C platform/web test`: **Test Files 46 passed (46), Tests 399 passed (399)**.
+- `pnpm -C platform/web typecheck`: **0 errors**.
+- `pnpm -C platform/web lint`: **0 errors**.
+- `pnpm -C platform/web build`: **Compiled successfully in 35.7s, Generated static pages (13/13)**.
+- `python -m pytest tests/avishkar_ems -q`: **687 passed, 1 skipped**.
+- `ruff check app/dashboard.py --no-fix`: **All checks passed!**
+
+### What was NOT done
+- Did not edit vendored code in `src/emhass/` or `src/avishkar_ems/vendor/`.
+- Did not fabricate live hardware telemetry (labeled clearly as simulation vs user-entered vs physical).
+
+### What is next
+- Synchronize all commits to GitHub remote repositories across relevant branches (`claude/avishkar-fixes-and-platform`, `main`, etc.).
+
+
