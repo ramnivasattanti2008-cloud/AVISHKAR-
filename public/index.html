@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UrjaSetu & AVISHKAR — Residential & Community Solar EMS</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%22><text y=%2226%22 font-size=%2228%22>☀️</text></svg>">
+  <title>AVISHKAR | UrjaSetu — Solar Energy Management & P2P Microgrid Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff9e00'><circle cx='12' cy='12' r='5'/><path d='M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42' stroke='%23ff9e00' stroke-width='2' stroke-linecap='round'/></svg>">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js -->
@@ -13,351 +19,644 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
           colors: {
-            brand: {
-              50: '#e0f7fa',
-              400: '#26c6da',
-              500: '#00acc1',
-              600: '#0097a7',
-              cyan: '#00e5ff',
-              navy: '#0b132b',
-              surface: '#111c38',
-              card: '#162447',
-              border: '#1f3460'
+            solar: {
+              sun: '#ffaa00',
+              glow: '#ff5400',
+              corona: '#ffdd00',
+              plasma: '#ff3d00',
+              photon: '#00f0ff',
+              emerald: '#10b981',
+              void: '#050814',
+              surface: '#0c1328',
+              card: '#111a36',
+              border: '#1e2c56',
+              highlight: '#2a3d75',
+            }
+          },
+          animation: {
+            'spin-slow': 'spin 35s linear infinite',
+            'pulse-glow': 'pulseGlow 3s ease-in-out infinite',
+            'flow': 'flowDash 1.2s linear infinite',
+            'float': 'floatAnim 4s ease-in-out infinite',
+          },
+          keyframes: {
+            pulseGlow: {
+              '0%, 100%': { opacity: '0.6', transform: 'scale(1)' },
+              '50%': { opacity: '1', transform: 'scale(1.04)' },
+            },
+            flowDash: {
+              'to': { strokeDashoffset: '-24' }
+            },
+            floatAnim: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-6px)' }
             }
           }
         }
       }
     }
   </script>
+
   <style>
     body {
-      background-color: #070d1e;
+      background-color: #050814;
       color: #e2e8f0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
+      selection-background-color: #ff9e00;
+      selection-color: #050814;
     }
-    .tab-active {
-      border-bottom: 2px solid #00e5ff;
-      color: #00e5ff !important;
+    
+    /* Background Solar Radial Glow */
+    .solar-ambient-bg {
+      position: fixed;
+      top: -200px;
+      right: -200px;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,158,0,0.15) 0%, rgba(255,84,0,0.08) 40%, rgba(5,8,20,0) 70%);
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(50px);
+    }
+    .grid-ambient-bg {
+      position: fixed;
+      bottom: -300px;
+      left: -200px;
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,240,255,0.08) 0%, rgba(99,102,241,0.04) 50%, rgba(5,8,20,0) 75%);
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(60px);
+    }
+
+    /* Glassmorphism Classes */
+    .glass-panel {
+      background: rgba(12, 19, 40, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(42, 61, 117, 0.6);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+    .glass-panel-hover {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-panel-hover:hover {
+      border-color: rgba(255, 170, 0, 0.45);
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px -12px rgba(255, 158, 0, 0.15);
+    }
+
+    /* Active Tab Style */
+    .nav-tab-active {
+      color: #ffaa00 !important;
+      background: linear-gradient(180deg, rgba(255, 170, 0, 0.12) 0%, rgba(255, 170, 0, 0.02) 100%);
+      border-color: #ffaa00 !important;
       font-weight: 600;
     }
-    .custom-scrollbar::-webkit-scrollbar {
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #1f3460;
-      border-radius: 4px;
+    ::-webkit-scrollbar-track {
+      background: #050814;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e2c56;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ffaa00;
+    }
+
+    /* Animated Circuit Lines */
+    .circuit-path {
+      stroke-dasharray: 8 4;
+      animation: flowDash 1.2s linear infinite;
+    }
+    .circuit-path-reverse {
+      stroke-dasharray: 8 4;
+      animation: flowDashReverse 1.2s linear infinite;
+    }
+    @keyframes flowDashReverse {
+      to { strokeDashoffset: 24; }
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
 
-  <!-- TOP HEADER -->
-  <header class="bg-brand-surface border-b border-brand-border sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-amber-400 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-          <i data-lucide="sun" class="w-6 h-6 text-slate-950 font-bold"></i>
+<body class="min-h-screen flex flex-col font-sans relative antialiased">
+
+  <!-- Ambient Solar Flare Lights -->
+  <div class="solar-ambient-bg"></div>
+  <div class="grid-ambient-bg"></div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="glass-panel sticky top-0 z-50 border-b border-solar-border/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
+      
+      <!-- Brand & Product Title -->
+      <div class="flex items-center space-x-3.5">
+        <div class="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-300 p-0.5 shadow-lg shadow-orange-500/25 flex items-center justify-center">
+          <div class="w-full h-full bg-solar-void rounded-[10px] flex items-center justify-center">
+            <svg class="w-6 h-6 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2v2"></path>
+              <path d="M12 20v2"></path>
+              <path d="m4.93 4.93 1.41 1.41"></path>
+              <path d="m17.66 17.66 1.41 1.41"></path>
+              <path d="M2 12h2"></path>
+              <path d="M20 12h2"></path>
+              <path d="m6.34 17.66-1.41 1.41"></path>
+              <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+          </div>
+          <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-solar-void"></span>
         </div>
+
         <div>
-          <div class="flex items-center space-x-2">
-            <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 via-teal-300 to-amber-300 bg-clip-text text-transparent">
-              AVISHKAR | UrjaSetu
-            </h1>
-            <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800">
-              v1.2 Cloud
+          <div class="flex items-center space-x-2.5">
+            <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-200 bg-clip-text text-transparent">
+              AVISHKAR
+            </span>
+            <span class="text-slate-400 font-light text-lg">|</span>
+            <span class="text-lg font-bold text-slate-100 tracking-tight">UrjaSetu</span>
+            <span class="text-[11px] font-mono tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
+              EMS v1.2
             </span>
           </div>
-          <p class="text-xs text-slate-400">Intelligent Residential Solar & P2P Surplus Dispatch Platform</p>
+          <p class="text-[11px] text-slate-400 tracking-wide">Autonomous Solar Dispatch & P2P Microgrid Settlement</p>
         </div>
       </div>
 
-      <div class="flex items-center space-x-3 text-xs">
-        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800">
+      <!-- Real-Time Telemetry Badges -->
+      <div class="flex items-center space-x-2.5 text-xs font-mono">
+        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-solar-surface border border-solar-border text-slate-300">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-slate-300 font-medium">DISCOM Grid: 230V · 50.0Hz</span>
+          <span>GRID 230V · 50.0Hz</span>
         </div>
-        <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-800/80 text-cyan-300">
-          <i data-lucide="shield-check" class="w-4 h-4 text-cyan-400"></i>
-          <span class="font-medium">First Law Guaranteed</span>
+        <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-950/40 border border-amber-500/30 text-amber-300">
+          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>CONSERVATION LOCKED</span>
         </div>
-        <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-800/80 text-amber-300">
-          <i data-lucide="award" class="w-4 h-4 text-amber-400"></i>
-          <span class="font-medium">PM Surya Ghar Ready</span>
+        <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-cyan-300">
+          <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          <span>PM SURYA GHAR</span>
         </div>
       </div>
     </div>
 
-    <!-- NAVIGATION TABS -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60">
-      <nav class="flex space-x-6 overflow-x-auto custom-scrollbar text-sm text-slate-400 py-2.5" id="nav-tabs">
-        <button onclick="switchTab('tab-benchmark')" id="btn-tab-benchmark" class="tab-active flex items-center space-x-2 pb-1 whitespace-nowrap">
-          <i data-lucide="home" class="w-4 h-4"></i>
-          <span>🏡 My Home & Phase 7 Benchmark</span>
+    <!-- TAB SELECTOR -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-solar-border/60">
+      <nav class="flex space-x-2 overflow-x-auto custom-scrollbar py-2 text-xs font-medium text-slate-400" id="nav-tabs">
+        <button onclick="switchTab('tab-benchmark')" id="btn-tab-benchmark" class="nav-tab-active flex items-center space-x-2 px-3.5 py-1.5 rounded-lg border border-transparent transition">
+          <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Residential Benchmark & Dispatch</span>
         </button>
-        <button onclick="switchTab('tab-sizing')" id="btn-tab-sizing" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
-          <i data-lucide="calculator" class="w-4 h-4"></i>
-          <span>⚡ Rooftop Sizing & Subsidy</span>
+        <button onclick="switchTab('tab-flow')" id="btn-tab-flow" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg border border-transparent hover:text-slate-200 transition">
+          <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span>Single Line Electrical Flow</span>
         </button>
-        <button onclick="switchTab('tab-battery')" id="btn-tab-battery" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
-          <i data-lucide="battery-charging" class="w-4 h-4"></i>
-          <span>🔋 Battery Safety Envelope</span>
+        <button onclick="switchTab('tab-sizing')" id="btn-tab-sizing" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg border border-transparent hover:text-slate-200 transition">
+          <svg class="w-4 h-4 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>
+          <span>Rooftop Sizing & Subsidy</span>
         </button>
-        <button onclick="switchTab('tab-loads')" id="btn-tab-loads" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
-          <i data-lucide="car" class="w-4 h-4"></i>
-          <span>🚗 EV & Flexible Loads</span>
+        <button onclick="switchTab('tab-battery')" id="btn-tab-battery" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg border border-transparent hover:text-slate-200 transition">
+          <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><line x1="22" y1="11" x2="22" y2="13"/></svg>
+          <span>Battery Safety Guardrails</span>
         </button>
-        <button onclick="switchTab('tab-community')" id="btn-tab-community" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
-          <i data-lucide="users" class="w-4 h-4"></i>
-          <span>🌐 Community P2P Sharing</span>
+        <button onclick="switchTab('tab-community')" id="btn-tab-community" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg border border-transparent hover:text-slate-200 transition">
+          <svg class="w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Community P2P Feeder</span>
         </button>
-        <button onclick="switchTab('tab-upi')" id="btn-tab-upi" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
-          <i data-lucide="qr-code" class="w-4 h-4"></i>
-          <span>⚖️ Dynamic UPI Settlement</span>
+        <button onclick="switchTab('tab-upi')" id="btn-tab-upi" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg border border-transparent hover:text-slate-200 transition">
+          <svg class="w-4 h-4 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Dynamic UPI Clearing</span>
         </button>
-        <button onclick="switchTab('tab-engines')" id="btn-tab-engines" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
-          <i data-lucide="cpu" class="w-4 h-4"></i>
-          <span>🚀 11 Open-Source Engines</span>
+        <button onclick="switchTab('tab-engines')" id="btn-tab-engines" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg border border-transparent hover:text-slate-200 transition">
+          <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+          <span>Integrated Engines (11)</span>
         </button>
       </nav>
     </div>
   </header>
 
-  <!-- MAIN CONTENT CONTAINER -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <!-- MAIN VIEWPORT -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7 relative z-10">
 
-    <!-- ===================================================================== -->
-    <!-- TAB 1: PHASE 7 BENCHMARK & RESIDENTIAL DISPATCH                       -->
-    <!-- ===================================================================== -->
+    <!-- =================================================================== -->
+    <!-- TAB 1: RESIDENTIAL BENCHMARK & DISPATCH                            -->
+    <!-- =================================================================== -->
     <section id="tab-benchmark" class="space-y-6">
-      <!-- Title & Context -->
-      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+
+      <!-- Hero Header & Scenario Selector -->
+      <div class="glass-panel p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div class="flex items-center space-x-2">
-            <h2 class="text-lg font-bold text-slate-100">🎯 Phase 7: Reproducible Home Benchmark & What-If Simulator</h2>
-            <span class="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded">Verified Math</span>
+          <div class="flex items-center space-x-3">
+            <div class="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6z"/></svg>
+            </div>
+            <div>
+              <h2 class="text-base font-bold text-slate-100 tracking-tight">Phase 7 Benchmark & What-If Simulation Engine</h2>
+              <p class="text-xs text-slate-400 mt-0.5">5.0 kW Solar Array · 10.0 kWh Storage · 60% Initial SoC · 2.50 kW Solar Surplus</p>
+            </div>
           </div>
-          <p class="text-xs text-slate-400 mt-1">
-            Exact prompt baseline: 5 kW PV, 10 kWh LiFePO4 Battery, 60% initial SoC, 4.0 kW solar, 1.5 kW load $\to$ 2.5 kW surplus.
-          </p>
         </div>
+
         <div class="flex flex-wrap gap-2 text-xs">
-          <button onclick="loadScenario('baseline')" class="px-3 py-1.5 rounded-lg bg-cyan-600/30 hover:bg-cyan-600/50 border border-cyan-500 text-cyan-200 font-medium transition">
-            📌 Phase 7 Baseline
+          <button onclick="loadScenario('baseline')" class="px-3.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 font-semibold transition flex items-center space-x-1.5">
+            <span>Phase 7 Baseline</span>
           </button>
-          <button onclick="loadScenario('full_battery')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition">
-            🔋 Battery Full (95%)
+          <button onclick="loadScenario('full_battery')" class="px-3.5 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-slate-300 transition">
+            <span>Battery Full (95%)</span>
           </button>
-          <button onclick="loadScenario('cloudy')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition">
-            ☁️ Solar Deficit
+          <button onclick="loadScenario('cloudy')" class="px-3.5 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-slate-300 transition">
+            <span>Solar Deficit (Cloudy)</span>
           </button>
-          <button onclick="loadScenario('peak_tariff')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition">
-            ⚡ Peak Tariff (₹12)
+          <button onclick="loadScenario('peak_tariff')" class="px-3.5 py-1.5 rounded-lg bg-solar-card hover:bg-solar-highlight border border-solar-border text-slate-300 transition">
+            <span>Peak Tariff (₹12/kWh)</span>
           </button>
         </div>
       </div>
 
-      <!-- Controls & Live Sliders -->
+      <!-- Controls & Output Dashboard -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Input Sliders Card -->
-        <div class="bg-brand-surface p-5 rounded-xl border border-brand-border space-y-4">
-          <h3 class="text-sm font-semibold text-cyan-400 flex items-center space-x-2">
-            <i data-lucide="sliders" class="w-4 h-4"></i>
-            <span>Operating Conditions</span>
-          </h3>
 
+        <!-- Controls Column -->
+        <div class="glass-panel p-5 rounded-2xl space-y-5">
+          <div class="flex items-center justify-between border-b border-solar-border pb-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center space-x-2">
+              <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+              <span>Operating Parameters</span>
+            </h3>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-solar-void border border-solar-border text-slate-400">REALTIME</span>
+          </div>
+
+          <!-- Solar Generation Slider -->
           <div>
-            <div class="flex justify-between text-xs mb-1">
-              <span class="text-slate-300">☀️ Solar Generation</span>
-              <span id="txt-pv" class="font-bold text-amber-400">4.0 kW</span>
+            <div class="flex justify-between items-center text-xs mb-1.5">
+              <span class="text-slate-300 flex items-center space-x-1.5 font-medium">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span>Solar PV Generation</span>
+              </span>
+              <span id="txt-pv" class="font-mono font-bold text-amber-400 text-sm">4.0 kW</span>
             </div>
             <input type="range" id="sl-pv" min="0" max="10" step="0.1" value="4.0" oninput="runDispatchCalculation()"
-              class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400">
+              class="w-full h-2 bg-solar-void rounded-lg appearance-none cursor-pointer accent-amber-400">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+              <span>0 kW (Night)</span>
+              <span>5 kW (Rated)</span>
+              <span>10 kW (Peak)</span>
+            </div>
           </div>
 
+          <!-- Household Load Slider -->
           <div>
-            <div class="flex justify-between text-xs mb-1">
-              <span class="text-slate-300">🏠 Household Base Load</span>
-              <span id="txt-load" class="font-bold text-sky-400">1.5 kW</span>
+            <div class="flex justify-between items-center text-xs mb-1.5">
+              <span class="text-slate-300 flex items-center space-x-1.5 font-medium">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <span>Household Base Load</span>
+              </span>
+              <span id="txt-load" class="font-mono font-bold text-cyan-400 text-sm">1.5 kW</span>
             </div>
             <input type="range" id="sl-load" min="0.2" max="8" step="0.1" value="1.5" oninput="runDispatchCalculation()"
-              class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400">
+              class="w-full h-2 bg-solar-void rounded-lg appearance-none cursor-pointer accent-cyan-400">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+              <span>0.2 kW (Idle)</span>
+              <span>4.0 kW (Heavy)</span>
+              <span>8.0 kW (Max)</span>
+            </div>
           </div>
 
+          <!-- Battery SoC Slider -->
           <div>
-            <div class="flex justify-between text-xs mb-1">
-              <span class="text-slate-300">🔋 Battery State of Charge</span>
-              <span id="txt-soc" class="font-bold text-emerald-400">60%</span>
+            <div class="flex justify-between items-center text-xs mb-1.5">
+              <span class="text-slate-300 flex items-center space-x-1.5 font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Battery State of Charge</span>
+              </span>
+              <span id="txt-soc" class="font-mono font-bold text-emerald-400 text-sm">60%</span>
             </div>
             <input type="range" id="sl-soc" min="0" max="100" step="1" value="60" oninput="runDispatchCalculation()"
-              class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400">
-          </div>
-
-          <div class="grid grid-cols-2 gap-3 pt-2">
-            <div>
-              <label class="text-[11px] text-slate-400">Grid Buy (₹/kWh)</label>
-              <input type="number" id="in-buy" value="8.0" step="0.5" onchange="runDispatchCalculation()"
-                class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-200">
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-400">Grid Sell (₹/kWh)</label>
-              <input type="number" id="in-sell" value="3.0" step="0.5" onchange="runDispatchCalculation()"
-                class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-200">
+              class="w-full h-2 bg-solar-void rounded-lg appearance-none cursor-pointer accent-emerald-400">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+              <span class="text-rose-400">15% Floor</span>
+              <span class="text-amber-400">25% Reserve</span>
+              <span class="text-emerald-400">95% Ceiling</span>
             </div>
           </div>
 
+          <!-- Tariffs Grid -->
+          <div class="grid grid-cols-2 gap-3 pt-1">
+            <div class="bg-solar-surface p-2.5 rounded-xl border border-solar-border">
+              <label class="text-[10px] uppercase font-bold text-slate-400">Grid Import</label>
+              <div class="flex items-center space-x-1 mt-1">
+                <span class="text-xs text-slate-500">₹</span>
+                <input type="number" id="in-buy" value="8.0" step="0.5" onchange="runDispatchCalculation()"
+                  class="w-full bg-transparent text-sm font-mono font-bold text-slate-100 focus:outline-none">
+              </div>
+            </div>
+            <div class="bg-solar-surface p-2.5 rounded-xl border border-solar-border">
+              <label class="text-[10px] uppercase font-bold text-slate-400">Grid Export</label>
+              <div class="flex items-center space-x-1 mt-1">
+                <span class="text-xs text-slate-500">₹</span>
+                <input type="number" id="in-sell" value="3.0" step="0.5" onchange="runDispatchCalculation()"
+                  class="w-full bg-transparent text-sm font-mono font-bold text-slate-100 focus:outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Optimization Strategy -->
           <div>
-            <label class="text-[11px] text-slate-400">Optimization Goal</label>
+            <label class="text-[10px] uppercase font-bold text-slate-400">Optimization Goal</label>
             <select id="sel-goal" onchange="runDispatchCalculation()"
-              class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-200">
-              <option value="MINIMIZE_BILLS">💰 Minimize Bills (Default)</option>
-              <option value="MAXIMIZE_SELF_CONSUMPTION">☀️ Maximize Self-Consumption</option>
-              <option value="REDUCE_GRID_IMPORTS">🛡️ Reduce Grid Imports</option>
-              <option value="PRESERVE_BACKUP_RESERVE">🔋 Preserve Backup Reserve (25%)</option>
+              class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-2.5 text-xs font-semibold text-slate-200 focus:outline-none focus:border-amber-400">
+              <option value="MINIMIZE_BILLS">Minimize Monthly DISCOM Bills</option>
+              <option value="MAXIMIZE_SELF_CONSUMPTION">Maximize Solar Self-Consumption</option>
+              <option value="REDUCE_GRID_IMPORTS">Reduce Peak Grid Imports</option>
+              <option value="PRESERVE_BACKUP_RESERVE">Preserve Emergency Backup Reserve</option>
             </select>
           </div>
 
-          <div class="pt-2 flex items-center justify-between text-xs border-t border-slate-800">
-            <label for="cb-losses" class="text-slate-400 flex items-center space-x-2 cursor-pointer">
-              <input type="checkbox" id="cb-losses" checked onchange="runDispatchCalculation()" class="rounded bg-slate-900 border-slate-700 text-cyan-500">
-              <span>Account for Inverter & Battery Losses</span>
+          <!-- Losses Toggle -->
+          <div class="pt-3 border-t border-solar-border flex items-center justify-between text-xs text-slate-400">
+            <label for="cb-losses" class="flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" id="cb-losses" checked onchange="runDispatchCalculation()"
+                class="w-4 h-4 rounded bg-solar-void border-solar-border text-amber-500 focus:ring-0">
+              <span class="text-xs font-medium text-slate-300">Model Physical Conversion Losses</span>
             </label>
           </div>
         </div>
 
-        <!-- Metrics & Dispatch Flow Chart -->
-        <div class="lg:col-span-2 bg-brand-surface p-5 rounded-xl border border-brand-border space-y-4">
+        <!-- Telemetry & Visual Analytics Column -->
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- Key Metrics Quad Cards -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
-              <div class="text-[11px] text-slate-400">☀️ Solar Direct</div>
-              <div id="m-direct" class="text-lg font-bold text-amber-400">1.50 kW</div>
-              <div class="text-[10px] text-slate-500">Home consumption</div>
+            <div class="glass-panel p-4 rounded-xl border border-solar-border relative overflow-hidden">
+              <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                <span>Solar Direct</span>
+                <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
+              </div>
+              <div id="m-direct" class="text-xl font-bold font-mono text-amber-400 mt-1">1.50 kW</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">Powers home load</div>
             </div>
-            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
-              <div class="text-[11px] text-slate-400">🔋 Battery Action</div>
-              <div id="m-battery" class="text-lg font-bold text-emerald-400">+2.50 kW</div>
-              <div id="m-battery-soc" class="text-[10px] text-emerald-500">SoC: 60% → 84%</div>
+
+            <div class="glass-panel p-4 rounded-xl border border-solar-border relative overflow-hidden">
+              <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                <span>Battery Dispatch</span>
+                <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><line x1="22" y1="11" x2="22" y2="13"/></svg>
+              </div>
+              <div id="m-battery" class="text-xl font-bold font-mono text-emerald-400 mt-1">+2.50 kW</div>
+              <div id="m-battery-soc" class="text-[10px] text-emerald-400 font-mono mt-0.5">SoC: 60% → 84%</div>
             </div>
-            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
-              <div class="text-[11px] text-slate-400">🔌 Grid Flow</div>
-              <div id="m-grid" class="text-lg font-bold text-cyan-400">0.00 kW</div>
-              <div id="m-grid-desc" class="text-[10px] text-slate-500">Zero Grid Transfer</div>
+
+            <div class="glass-panel p-4 rounded-xl border border-solar-border relative overflow-hidden">
+              <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                <span>Grid Transfer</span>
+                <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              </div>
+              <div id="m-grid" class="text-xl font-bold font-mono text-cyan-400 mt-1">0.00 kW</div>
+              <div id="m-grid-desc" class="text-[10px] text-slate-500 mt-0.5">Zero Grid Transfer</div>
             </div>
-            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
-              <div class="text-[11px] text-slate-400">💰 Interval Cost</div>
-              <div id="m-cost" class="text-lg font-bold text-emerald-400">₹0.00</div>
-              <div class="text-[10px] text-emerald-500">100% Self-Sufficient</div>
+
+            <div class="glass-panel p-4 rounded-xl border border-solar-border relative overflow-hidden">
+              <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                <span>Interval Net Cost</span>
+                <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div id="m-cost" class="text-xl font-bold font-mono text-emerald-400 mt-1">₹0.00</div>
+              <div class="text-[10px] text-emerald-400 font-medium mt-0.5">100% Self-Sufficient</div>
             </div>
           </div>
 
           <!-- Dispatch Power Chart -->
-          <div class="h-52 w-full">
-            <canvas id="dispatchChart"></canvas>
+          <div class="glass-panel p-5 rounded-2xl">
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Active Power Flow Balance (kW)</h4>
+              <span class="text-[10px] font-mono text-slate-400">FIRST LAW VERIFIED</span>
+            </div>
+            <div class="h-56 w-full">
+              <canvas id="dispatchChart"></canvas>
+            </div>
           </div>
 
           <!-- Mathematical Balance Invariant Box -->
-          <div class="bg-slate-900/90 p-3.5 rounded-lg border border-slate-800 font-mono text-[11px] leading-relaxed text-slate-300">
-            <div class="text-cyan-400 font-semibold mb-1 flex items-center justify-between">
-              <span>First Law Energy Balance Equation</span>
-              <span id="badge-balance" class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">BALANCED [PASSED]</span>
+          <div class="glass-panel p-4 rounded-xl font-mono text-xs text-slate-300 space-y-1.5 border-l-4 border-l-amber-400">
+            <div class="flex justify-between items-center text-amber-400 font-bold mb-1">
+              <span>First Law Energy Conservation Proof (P_sources ≡ P_sinks)</span>
+              <span id="badge-balance" class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">INVARIANT PASSED</span>
             </div>
-            <div id="eq-sources">Sources: [PV: 4.00 kW + BattDischarge: 0.00 kW + GridImport: 0.00 kW] = 4.000 kW</div>
-            <div id="eq-sinks">Sinks:   [Load: 1.50 kW + BattCharge: 2.50 kW + Flex: 0.00 kW + EV: 0.00 kW + GridExport: 0.00 kW + Losses: 0.20 kW] = 4.000 kW</div>
-            <div class="text-slate-500 mt-1">First Law Invariant Error: ΔE = <span id="eq-error" class="text-emerald-400 font-bold">0.00000 kW</span> (Strict zero double-counting guarantee)</div>
+            <div id="eq-sources" class="text-[11px] text-slate-300">Sources: [PV: 4.00 kW + BattDischarge: 0.00 kW + GridImport: 0.00 kW] = 4.000 kW</div>
+            <div id="eq-sinks" class="text-[11px] text-slate-300">Sinks:   [Load: 1.50 kW + BattCharge: 2.50 kW + Flex: 0.00 kW + EV: 0.00 kW + GridExport: 0.00 kW + Losses: 0.20 kW] = 4.000 kW</div>
+            <div class="text-[10px] text-slate-400 pt-1 border-t border-solar-border/60 flex justify-between">
+              <span>Instantaneous Error: ΔE = <strong id="eq-error" class="text-emerald-400">0.00000 kW</strong></span>
+              <span class="text-slate-500">Tolerance: &lt; 0.0001 kW</span>
+            </div>
           </div>
+
         </div>
       </div>
     </section>
 
-    <!-- ===================================================================== -->
-    <!-- TAB 2: ROOFTOP SIZING & PM SURYA GHAR ENGINE                          -->
-    <!-- ===================================================================== -->
-    <section id="tab-sizing" class="hidden space-y-6">
-      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
-        <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
-          <span>⚡ PM Surya Ghar Muft Bijli Yojana & Rooftop Sizing Engine</span>
-          <span class="text-xs bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5 rounded">Central DBT Subsidy</span>
-        </h2>
-        <p class="text-xs text-slate-400 mt-1">
-          Calculate the optimal rooftop solar capacity, storage size, statutory government direct benefit transfer (DBT) subsidy, and SBI concessional loan EMI.
-        </p>
+    <!-- =================================================================== -->
+    <!-- TAB 2: ANIMATED SINGLE LINE ELECTRICAL FLOW SCHEMATIC               -->
+    <!-- =================================================================== -->
+    <section id="tab-flow" class="hidden space-y-6">
+      <div class="glass-panel p-6 rounded-2xl">
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <h2 class="text-base font-bold text-slate-100 tracking-tight">Single Line Diagram (SLD) Dynamic Flow Network</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Real-time particle telemetry showing photon and electron transfer across distribution buses</p>
+          </div>
+          <span class="text-xs font-mono px-3 py-1 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-400">
+            BUS VOLTAGE: 230.2 V AC
+          </span>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <!-- Animated SVG Electrical Diagram -->
+        <div class="relative w-full rounded-2xl bg-solar-void/80 border border-solar-border p-6 overflow-hidden">
+          <svg viewBox="0 0 900 360" class="w-full h-auto">
+            <defs>
+              <linearGradient id="solarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ffaa00" />
+                <stop offset="100%" stop-color="#ff5400" />
+              </linearGradient>
+              <linearGradient id="batteryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#10b981" />
+                <stop offset="100%" stop-color="#059669" />
+              </linearGradient>
+              <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00f0ff" />
+                <stop offset="100%" stop-color="#6366f1" />
+              </linearGradient>
+            </defs>
+
+            <!-- Connecting Circuit Traces -->
+            <!-- PV to Inverter -->
+            <path d="M 170 110 L 450 110" stroke="#ffaa00" stroke-width="3" fill="none" class="circuit-path" />
+            <!-- Inverter to AC Bus -->
+            <path d="M 450 110 L 450 180" stroke="#ffdd00" stroke-width="4" fill="none" />
+            <!-- AC Bus Horizontal -->
+            <line x1="180" y1="180" x2="720" y2="180" stroke="#00f0ff" stroke-width="4" stroke-linecap="round" />
+            
+            <!-- AC Bus to Battery -->
+            <path id="path-batt-flow" d="M 280 180 L 280 270" stroke="#10b981" stroke-width="3" fill="none" class="circuit-path" />
+            <!-- AC Bus to Home Load -->
+            <path d="M 450 180 L 450 270" stroke="#00f0ff" stroke-width="3" fill="none" class="circuit-path" />
+            <!-- AC Bus to EV Charger -->
+            <path d="M 620 180 L 620 270" stroke="#a855f7" stroke-width="3" fill="none" class="circuit-path" />
+            <!-- AC Bus to DISCOM Grid -->
+            <path id="path-grid-flow" d="M 720 180 L 800 180" stroke="#6366f1" stroke-width="3" fill="none" />
+
+            <!-- NODE 1: Solar Array -->
+            <g transform="translate(70, 70)">
+              <rect width="100" height="80" rx="12" fill="#111a36" stroke="#ffaa00" stroke-width="2"/>
+              <text x="50" y="35" text-anchor="middle" fill="#ffaa00" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="12">SOLAR PV</text>
+              <text id="sld-pv-val" x="50" y="55" text-anchor="middle" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="13">4.0 kW</text>
+            </g>
+
+            <!-- NODE 2: Hybrid Inverter -->
+            <g transform="translate(400, 70)">
+              <rect width="100" height="80" rx="12" fill="#111a36" stroke="#ffdd00" stroke-width="2"/>
+              <text x="50" y="35" text-anchor="middle" fill="#ffdd00" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="12">INVERTER</text>
+              <text x="50" y="55" text-anchor="middle" fill="#94a3b8" font-family="'JetBrains Mono', monospace" font-size="11">5.0 kW 97%</text>
+            </g>
+
+            <!-- NODE 3: Battery Storage -->
+            <g transform="translate(230, 270)">
+              <rect width="100" height="75" rx="12" fill="#111a36" stroke="#10b981" stroke-width="2"/>
+              <text x="50" y="32" text-anchor="middle" fill="#10b981" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="12">BATTERY</text>
+              <text id="sld-batt-val" x="50" y="52" text-anchor="middle" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="12">10kWh 60%</text>
+            </g>
+
+            <!-- NODE 4: Home Load -->
+            <g transform="translate(400, 270)">
+              <rect width="100" height="75" rx="12" fill="#111a36" stroke="#00f0ff" stroke-width="2"/>
+              <text x="50" y="32" text-anchor="middle" fill="#00f0ff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="12">HOME LOAD</text>
+              <text id="sld-load-val" x="50" y="52" text-anchor="middle" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="12">1.50 kW</text>
+            </g>
+
+            <!-- NODE 5: EV Charger -->
+            <g transform="translate(570, 270)">
+              <rect width="100" height="75" rx="12" fill="#111a36" stroke="#a855f7" stroke-width="2"/>
+              <text x="50" y="32" text-anchor="middle" fill="#a855f7" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="12">EV CHARGER</text>
+              <text id="sld-ev-val" x="50" y="52" text-anchor="middle" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="12">0.00 kW</text>
+            </g>
+
+            <!-- NODE 6: DISCOM Grid -->
+            <g transform="translate(770, 140)">
+              <rect width="90" height="80" rx="12" fill="#111a36" stroke="#6366f1" stroke-width="2"/>
+              <text x="45" y="35" text-anchor="middle" fill="#6366f1" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="12">DISCOM</text>
+              <text id="sld-grid-val" x="45" y="55" text-anchor="middle" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="12">0.00 kW</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: ROOFTOP SIZING & PM SURYA GHAR ENGINE                        -->
+    <!-- =================================================================== -->
+    <section id="tab-sizing" class="hidden space-y-6">
+      <div class="glass-panel p-6 rounded-2xl">
+        <div class="flex items-center space-x-3 mb-6">
+          <div class="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-100 tracking-tight">PM Surya Ghar Muft Bijli Yojana & Sizing Engine</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Statutory Direct Benefit Transfer (DBT) subsidy & SBI concessional loan calculator</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div class="space-y-4">
             <div>
-              <label class="text-xs text-slate-300 font-medium">1. Property Type</label>
-              <select id="sz-prop" onchange="runSizingCalc()" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200">
+              <label class="text-xs font-semibold text-slate-300">Property Architecture</label>
+              <select id="sz-prop" onchange="runSizingCalc()" class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-amber-400">
                 <option value="1">1-BHK / Small Apartment</option>
                 <option value="2">2-BHK / Independent Floor</option>
                 <option value="3" selected>3-BHK Villa / Townhouse</option>
                 <option value="4">Large Bungalow / Farmhouse</option>
               </select>
             </div>
+
             <div>
-              <div class="flex justify-between text-xs mb-1">
-                <span class="text-slate-300 font-medium">2. Average Monthly DISCOM Bill</span>
-                <span id="sz-bill-txt" class="font-bold text-cyan-400">₹4,200</span>
+              <div class="flex justify-between text-xs mb-1.5">
+                <span class="text-slate-300 font-semibold">Average Monthly DISCOM Bill</span>
+                <span id="sz-bill-txt" class="font-mono font-bold text-amber-400 text-sm">₹4,200</span>
               </div>
               <input type="range" id="sz-bill" min="1000" max="15000" step="250" value="4200" oninput="runSizingCalc()"
-                class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                class="w-full h-2 bg-solar-void rounded-lg appearance-none cursor-pointer accent-amber-400">
             </div>
+
             <div>
-              <label class="text-xs text-slate-300 font-medium">3. Air Conditioning & EV Load</label>
-              <select id="sz-ac" onchange="runSizingCalc()" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200">
+              <label class="text-xs font-semibold text-slate-300">Cooling & Mobility Loads</label>
+              <select id="sz-ac" onchange="runSizingCalc()" class="w-full mt-1.5 bg-solar-surface border border-solar-border rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-amber-400">
                 <option value="1">No AC (Ceiling Fans Only)</option>
                 <option value="2">1 Split AC (Night Use)</option>
                 <option value="3" selected>2-3 Split ACs (Day & Night)</option>
-                <option value="4">ACs + Electric Vehicle (EV)</option>
+                <option value="4">Air Conditioning + Electric Vehicle (EV)</option>
               </select>
             </div>
           </div>
 
-          <div class="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
-              <div class="text-xs text-slate-400">Recommended Solar</div>
-              <div id="sz-res-pv" class="text-2xl font-bold text-amber-400 mt-1">3.0 kWp</div>
-              <div class="text-[11px] text-slate-500 mt-1">Mono PERC DCR Panels</div>
-            </div>
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
-              <div class="text-xs text-slate-400">Recommended Battery</div>
-              <div id="sz-res-batt" class="text-2xl font-bold text-emerald-400 mt-1">5.0 kWh</div>
-              <div class="text-[11px] text-slate-500 mt-1">LiFePO4 Storage</div>
-            </div>
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
-              <div class="text-xs text-slate-400">PM Surya Ghar Subsidy</div>
-              <div id="sz-res-sub" class="text-2xl font-bold text-cyan-400 mt-1">₹78,000</div>
-              <div class="text-[11px] text-emerald-400 mt-1">Direct Bank Transfer</div>
-            </div>
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
-              <div class="text-xs text-slate-400">Payback Period</div>
-              <div id="sz-res-payback" class="text-2xl font-bold text-purple-400 mt-1">3.2 Yrs</div>
-              <div class="text-[11px] text-slate-500 mt-1">Break-even ROI</div>
+          <div class="lg:col-span-2 space-y-4">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div class="glass-panel p-4 rounded-xl text-center">
+                <div class="text-[11px] text-slate-400 font-medium">Solar Array</div>
+                <div id="sz-res-pv" class="text-2xl font-mono font-extrabold text-amber-400 mt-1">3.0 kWp</div>
+                <div class="text-[10px] text-slate-500 mt-1">Mono PERC DCR</div>
+              </div>
+              <div class="glass-panel p-4 rounded-xl text-center">
+                <div class="text-[11px] text-slate-400 font-medium">Battery Pack</div>
+                <div id="sz-res-batt" class="text-2xl font-mono font-extrabold text-emerald-400 mt-1">5.0 kWh</div>
+                <div class="text-[10px] text-slate-500 mt-1">LiFePO4 Storage</div>
+              </div>
+              <div class="glass-panel p-4 rounded-xl text-center">
+                <div class="text-[11px] text-slate-400 font-medium">DBT Subsidy</div>
+                <div id="sz-res-sub" class="text-2xl font-mono font-extrabold text-cyan-400 mt-1">₹78,000</div>
+                <div class="text-[10px] text-emerald-400 mt-1">Direct Bank Credit</div>
+              </div>
+              <div class="glass-panel p-4 rounded-xl text-center">
+                <div class="text-[11px] text-slate-400 font-medium">Simple Payback</div>
+                <div id="sz-res-payback" class="text-2xl font-mono font-extrabold text-purple-400 mt-1">3.2 Yrs</div>
+                <div class="text-[10px] text-slate-500 mt-1">ROI Breakeven</div>
+              </div>
             </div>
 
-            <!-- Concessional Loan Box -->
-            <div class="col-span-2 sm:col-span-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800 mt-2">
-              <h4 class="text-xs font-semibold text-slate-200 flex items-center space-x-2">
-                <i data-lucide="landmark" class="w-4 h-4 text-amber-400"></i>
+            <div class="glass-panel p-5 rounded-xl border border-solar-border space-y-3">
+              <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+                <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/><path d="M9 9h1"/><path d="M9 13h1"/><path d="M9 17h1"/><path d="M14 9h1"/><path d="M14 13h1"/><path d="M14 17h1"/></svg>
                 <span>SBI Surya Ghar Concessional Solar Loan (7.00% p.a. Collateral-Free)</span>
               </h4>
-              <div class="grid grid-cols-3 gap-3 mt-3 text-xs">
+              <div class="grid grid-cols-3 gap-4 text-xs font-mono">
                 <div>
-                  <span class="text-slate-400">Total System Cost:</span>
-                  <div id="sz-cost" class="font-bold text-slate-200">₹2,90,000</div>
+                  <span class="text-slate-400">Gross Project Cost:</span>
+                  <div id="sz-cost" class="text-sm font-bold text-slate-200 mt-0.5">₹2,90,000</div>
                 </div>
                 <div>
-                  <span class="text-slate-400">Net Family Out-of-Pocket:</span>
-                  <div id="sz-netcost" class="font-bold text-cyan-300">₹2,12,000</div>
+                  <span class="text-slate-400">Net Out-of-Pocket:</span>
+                  <div id="sz-netcost" class="text-sm font-bold text-cyan-300 mt-0.5">₹2,12,000</div>
                 </div>
                 <div>
-                  <span class="text-slate-400">Monthly EMI (7 Yrs):</span>
-                  <div id="sz-emi" class="font-bold text-amber-400">₹3,205 / mo</div>
+                  <span class="text-slate-400">Monthly EMI (84 Mo):</span>
+                  <div id="sz-emi" class="text-sm font-bold text-amber-400 mt-0.5">₹3,205 / mo</div>
                 </div>
               </div>
             </div>
@@ -366,52 +665,55 @@
       </div>
     </section>
 
-    <!-- ===================================================================== -->
-    <!-- TAB 3: BATTERY SAFETY ENVELOPE                                        -->
-    <!-- ===================================================================== -->
+    <!-- =================================================================== -->
+    <!-- TAB 4: BATTERY SAFETY GUARDRAILS                                    -->
+    <!-- =================================================================== -->
     <section id="tab-battery" class="hidden space-y-6">
-      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
-        <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
-          <span>🔋 Battery Storage Protective Envelope & Hardware Invariants</span>
-        </h2>
-        <p class="text-xs text-slate-400 mt-1">
-          Configured mathematical boundaries preventing overcharging, deep discharge, and inverter bridge cross-conduction.
-        </p>
+      <div class="glass-panel p-6 rounded-2xl">
+        <div class="flex items-center space-x-3 mb-6">
+          <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><line x1="22" y1="11" x2="22" y2="13"/></svg>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-100 tracking-tight">Battery Storage Safety Envelope & Hardware Invariants</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Physical guardrails preventing cell degradation and inverter bridge shoot-through</p>
+          </div>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-3">
-            <h3 class="text-sm font-semibold text-cyan-400">State-of-Charge (SoC) Protective Boundaries</h3>
-            <div class="space-y-2 text-xs text-slate-300">
-              <div class="flex justify-between p-2 rounded bg-slate-950 border border-slate-850">
-                <span>Maximum Charging Ceiling (SoC_max):</span>
-                <span class="font-mono text-emerald-400 font-bold">95.0% (Cell Protection)</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="glass-panel p-5 rounded-xl space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">State-of-Charge (SoC) Boundaries</h3>
+            <div class="space-y-2 text-xs font-mono">
+              <div class="flex justify-between p-3 rounded-lg bg-solar-void border border-solar-border">
+                <span class="text-slate-300">Charging Ceiling (SoC_max):</span>
+                <span class="text-emerald-400 font-bold">95.0% (Cell Overvoltage Guard)</span>
               </div>
-              <div class="flex justify-between p-2 rounded bg-slate-950 border border-slate-850">
-                <span>Minimum Discharge Floor (SoC_min):</span>
-                <span class="font-mono text-rose-400 font-bold">15.0% (Deep Discharge Guard)</span>
+              <div class="flex justify-between p-3 rounded-lg bg-solar-void border border-solar-border">
+                <span class="text-slate-300">Discharge Floor (SoC_min):</span>
+                <span class="text-rose-400 font-bold">15.0% (Deep Discharge Guard)</span>
               </div>
-              <div class="flex justify-between p-2 rounded bg-slate-950 border border-slate-850">
-                <span>Preferred Emergency Backup Reserve:</span>
-                <span class="font-mono text-amber-400 font-bold">25.0% (Power Outage Reserve)</span>
+              <div class="flex justify-between p-3 rounded-lg bg-solar-void border border-solar-border">
+                <span class="text-slate-300">Preferred Backup Reserve:</span>
+                <span class="text-amber-400 font-bold">25.0% (Emergency Blackout Floor)</span>
               </div>
-              <div class="flex justify-between p-2 rounded bg-slate-950 border border-slate-850">
-                <span>Maximum Charge & Discharge Power:</span>
-                <span class="font-mono text-cyan-400 font-bold">3.50 kW (C-Rate Limit)</span>
+              <div class="flex justify-between p-3 rounded-lg bg-solar-void border border-solar-border">
+                <span class="text-slate-300">Maximum Power Ramp:</span>
+                <span class="text-cyan-400 font-bold">3.50 kW (C-Rate Thermal Limit)</span>
               </div>
             </div>
           </div>
 
-          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-3">
-            <h3 class="text-sm font-semibold text-cyan-400">Non-Contradictory Command Guarantee</h3>
-            <div class="p-4 rounded bg-cyan-950/40 border border-cyan-800/80 text-xs text-slate-300 space-y-2">
-              <div class="font-mono text-cyan-300 font-bold text-sm">P_charge · P_discharge ≡ 0.000 kW²</div>
-              <p>
-                The dispatch engine structurally prohibits simultaneous charging and discharging commands.
+          <div class="glass-panel p-5 rounded-xl space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Non-Contradictory Command Guarantee</h3>
+            <div class="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-xs space-y-2.5">
+              <div class="font-mono text-emerald-300 font-bold text-sm">P_charge · P_discharge ≡ 0.000 kW²</div>
+              <p class="text-slate-300 leading-relaxed">
+                The balance engine mathematically forbids simultaneous charging and discharging commands.
                 This eliminates inverter bridge shoot-through conditions, IGBT degradation, and false power cycling.
               </p>
-              <div class="pt-2 text-emerald-400 font-semibold flex items-center space-x-1">
-                <i data-lucide="check-circle" class="w-4 h-4"></i>
-                <span>Formally Verified by Automated PyTest Suite</span>
+              <div class="pt-2 text-emerald-400 font-semibold flex items-center space-x-2">
+                <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Automated PyTest Suite Formally Verified</span>
               </div>
             </div>
           </div>
@@ -419,137 +721,74 @@
       </div>
     </section>
 
-    <!-- ===================================================================== -->
-    <!-- TAB 4: EV & FLEXIBLE LOADS                                            -->
-    <!-- ===================================================================== -->
-    <section id="tab-loads" class="hidden space-y-6">
-      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
-        <h2 class="text-lg font-bold text-slate-100">🚗 Smart EV Charging & Flexible Loads Coordinator</h2>
-        <p class="text-xs text-slate-400 mt-1">
-          Automated shifting of deferrable household appliances and electric vehicle charging to absorb zero-cost midday solar surplus.
-        </p>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
-            <h3 class="text-sm font-semibold text-amber-400">Electric Vehicle (evcc Integration)</h3>
-            <div class="grid grid-cols-2 gap-3 text-xs">
-              <div class="p-2.5 rounded bg-slate-950">
-                <span class="text-slate-400">Connection:</span>
-                <div class="font-bold text-emerald-400 mt-0.5">Connected (Type 2)</div>
-              </div>
-              <div class="p-2.5 rounded bg-slate-950">
-                <span class="text-slate-400">Battery:</span>
-                <div class="font-bold text-slate-200 mt-0.5">24.0 kWh (Tata Tiago EV)</div>
-              </div>
-              <div class="p-2.5 rounded bg-slate-950">
-                <span class="text-slate-400">Current SoC:</span>
-                <div class="font-bold text-cyan-400 mt-0.5">50% → Target: 80%</div>
-              </div>
-              <div class="p-2.5 rounded bg-slate-950">
-                <span class="text-slate-400">Departure Time:</span>
-                <div class="font-bold text-amber-400 mt-0.5">19:00 hrs</div>
-              </div>
-            </div>
-            <div>
-              <label class="text-xs text-slate-300">Charging Mode Preference</label>
-              <select class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-slate-200">
-                <option selected>☀️ PV-Only (Charge exclusively from solar surplus)</option>
-                <option>⚡ Min+PV (Guaranteed 6A + solar surplus boost)</option>
-                <option>🚀 Now (Fast charging at full 3.3 kW immediately)</option>
-                <option>🛑 Off (Charging disabled)</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
-            <h3 class="text-sm font-semibold text-cyan-400">Flexible Appliances Scheduler</h3>
-            <div class="space-y-2 text-xs">
-              <div class="p-3 rounded bg-slate-950 border border-slate-800 flex justify-between items-center">
-                <div>
-                  <div class="font-semibold text-slate-200">Smart Washing Machine</div>
-                  <div class="text-slate-400 text-[11px]">1.0 kW · 1.5h runtime · Window: 10:00 - 16:00</div>
-                </div>
-                <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px]">Priority 1</span>
-              </div>
-              <div class="p-3 rounded bg-slate-950 border border-slate-800 flex justify-between items-center">
-                <div>
-                  <div class="font-semibold text-slate-200">Heat Pump Water Heater</div>
-                  <div class="text-slate-400 text-[11px]">1.5 kW · 2.0h runtime · Window: 11:00 - 15:00</div>
-                </div>
-                <span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800 text-[10px]">Priority 2</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================================================================== -->
-    <!-- TAB 5: COMMUNITY P2P SHARING & I²R LINE LOSS                          -->
-    <!-- ===================================================================== -->
+    <!-- =================================================================== -->
+    <!-- TAB 5: COMMUNITY P2P FEEDER & I²R LINE LOSS                         -->
+    <!-- =================================================================== -->
     <section id="tab-community" class="hidden space-y-6">
-      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
-        <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
-          <span>🌐 Community Microgrid P2P Surplus Trading</span>
-          <span class="text-xs bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded">Quadratic Line Loss</span>
-        </h2>
-        <p class="text-xs text-slate-400 mt-1">
-          Opt-in peer-to-peer virtual net metering across low-voltage feeder circuits with physical $I^2R$ copper line loss accounting.
-        </p>
+      <div class="glass-panel p-6 rounded-2xl">
+        <div class="flex items-center space-x-3 mb-6">
+          <div class="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-100 tracking-tight">Community Microgrid P2P Surplus Trading</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Bilateral virtual net metering with physical I²R copper feeder loss calculations</p>
+          </div>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-          <div class="space-y-4 bg-slate-900 p-5 rounded-xl border border-slate-800">
-            <h3 class="text-sm font-semibold text-slate-200">P2P Exchange Parameters</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="space-y-4 glass-panel p-5 rounded-xl">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Exchange Parameters</h3>
             <div>
-              <label class="text-xs text-slate-400">Available Seller Surplus</label>
-              <input type="number" id="p2p-surplus" value="2.5" step="0.1" onchange="runP2PCalc()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200">
+              <label class="text-[11px] text-slate-400 font-medium">Available Seller Surplus (kW)</label>
+              <input type="number" id="p2p-surplus" value="2.5" step="0.1" onchange="runP2PCalc()" class="w-full mt-1 bg-solar-void border border-solar-border rounded-lg p-2 text-xs font-mono font-bold text-slate-200">
             </div>
             <div>
-              <label class="text-xs text-slate-400">Buyer Household Deficit</label>
-              <input type="number" id="p2p-deficit" value="2.0" step="0.1" onchange="runP2PCalc()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200">
+              <label class="text-[11px] text-slate-400 font-medium">Buyer Household Deficit (kW)</label>
+              <input type="number" id="p2p-deficit" value="2.0" step="0.1" onchange="runP2PCalc()" class="w-full mt-1 bg-solar-void border border-solar-border rounded-lg p-2 text-xs font-mono font-bold text-slate-200">
             </div>
             <div>
-              <label class="text-xs text-slate-400">Feeder Resistance (Ohms)</label>
-              <input type="number" id="p2p-res" value="0.08" step="0.01" onchange="runP2PCalc()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200">
+              <label class="text-[11px] text-slate-400 font-medium">Distribution Feeder Resistance (Ohms)</label>
+              <input type="number" id="p2p-res" value="0.08" step="0.01" onchange="runP2PCalc()" class="w-full mt-1 bg-solar-void border border-solar-border rounded-lg p-2 text-xs font-mono text-slate-200">
             </div>
             <div>
-              <label class="text-xs text-slate-400">Clearing Price (₹/kWh)</label>
-              <input type="number" id="p2p-price" value="5.50" step="0.25" onchange="runP2PCalc()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200">
+              <label class="text-[11px] text-slate-400 font-medium">Mid-Market Clearing Price (₹/kWh)</label>
+              <input type="number" id="p2p-price" value="5.50" step="0.25" onchange="runP2PCalc()" class="w-full mt-1 bg-solar-void border border-solar-border rounded-lg p-2 text-xs font-mono text-amber-400 font-bold">
             </div>
           </div>
 
           <div class="md:col-span-2 space-y-4">
             <div class="grid grid-cols-3 gap-3">
-              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
-                <div class="text-xs text-slate-400">Transferred Power</div>
-                <div id="p2p-trans" class="text-xl font-bold text-cyan-400 mt-1">2.00 kW</div>
+              <div class="glass-panel p-4 rounded-xl text-center">
+                <div class="text-[11px] text-slate-400 font-medium">Transferred</div>
+                <div id="p2p-trans" class="text-xl font-bold font-mono text-cyan-400 mt-1">2.00 kW</div>
                 <div class="text-[10px] text-slate-500">Injected by Seller</div>
               </div>
-              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
-                <div class="text-xs text-slate-400">Delivered Power</div>
-                <div id="p2p-deliv" class="text-xl font-bold text-emerald-400 mt-1">1.99 kW</div>
+              <div class="glass-panel p-4 rounded-xl text-center">
+                <div class="text-[11px] text-slate-400 font-medium">Delivered</div>
+                <div id="p2p-deliv" class="text-xl font-bold font-mono text-emerald-400 mt-1">1.99 kW</div>
                 <div class="text-[10px] text-slate-500">Delivered to Buyer</div>
               </div>
-              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
-                <div class="text-xs text-slate-400">I²R Copper Loss</div>
-                <div id="p2p-loss" class="text-xl font-bold text-rose-400 mt-1">0.006 kW</div>
+              <div class="glass-panel p-4 rounded-xl text-center">
+                <div class="text-[11px] text-slate-400 font-medium">I²R Copper Loss</div>
+                <div id="p2p-loss" class="text-xl font-bold font-mono text-rose-400 mt-1">0.006 kW</div>
                 <div class="text-[10px] text-slate-500">Dissipated Heat</div>
               </div>
             </div>
 
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs space-y-2 font-mono">
-              <div class="text-cyan-400 font-semibold font-sans">Bilateral Settlement Statement:</div>
-              <div class="flex justify-between border-b border-slate-800 py-1">
+            <div class="glass-panel p-5 rounded-xl font-mono text-xs space-y-2">
+              <div class="text-amber-400 font-bold font-sans text-xs uppercase tracking-wider mb-2">Bilateral Social Welfare Statement:</div>
+              <div class="flex justify-between border-b border-solar-border/60 py-1.5">
                 <span class="text-slate-400">Seller Gain:</span>
-                <span class="text-emerald-400 font-bold">+₹5.00/h (vs DISCOM export at ₹3.00/kWh)</span>
+                <span class="text-emerald-400 font-bold">+₹5.00/h (vs DISCOM export ₹3.00/kWh)</span>
               </div>
-              <div class="flex justify-between border-b border-slate-800 py-1">
+              <div class="flex justify-between border-b border-solar-border/60 py-1.5">
                 <span class="text-slate-400">Buyer Savings:</span>
-                <span class="text-emerald-400 font-bold">+₹5.00/h (vs DISCOM retail at ₹8.00/kWh)</span>
+                <span class="text-emerald-400 font-bold">+₹5.00/h (vs DISCOM retail ₹8.00/kWh)</span>
               </div>
-              <div class="flex justify-between pt-1">
-                <span class="text-slate-400">Net Social Welfare Gain:</span>
-                <span class="text-amber-400 font-bold">₹10.00 / hour</span>
+              <div class="flex justify-between pt-2">
+                <span class="text-slate-400">Combined Microgrid Economic Benefit:</span>
+                <span class="text-amber-400 font-bold text-sm">₹10.00 / hour</span>
               </div>
             </div>
           </div>
@@ -557,103 +796,111 @@
       </div>
     </section>
 
-    <!-- ===================================================================== -->
-    <!-- TAB 6: DYNAMIC UPI INSTANT SETTLEMENT                                 -->
-    <!-- ===================================================================== -->
+    <!-- =================================================================== -->
+    <!-- TAB 6: DYNAMIC UPI CLEARING                                         -->
+    <!-- =================================================================== -->
     <section id="tab-upi" class="hidden space-y-6">
-      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
-        <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
-          <span>⚖️ Dynamic NPCI UPI QR Settlement</span>
-          <span class="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded">Instant Mobile Payment</span>
-        </h2>
-        <p class="text-xs text-slate-400 mt-1">
-          Direct peer-to-peer bank account settlement using India's Unified Payments Interface (UPI). Scan with GPay, PhonePe, or Paytm.
-        </p>
+      <div class="glass-panel p-6 rounded-2xl">
+        <div class="flex items-center space-x-3 mb-6">
+          <div class="p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-100 tracking-tight">Dynamic NPCI UPI QR Settlement Engine</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Instant mobile clearing via Google Pay, PhonePe, and Paytm with zero intermediary commissions</p>
+          </div>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
-            <h3 class="text-sm font-semibold text-slate-200">Settlement Invoice</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="glass-panel p-5 rounded-xl space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">P2P Energy Settlement Invoice</h3>
             <div class="space-y-3 text-xs">
               <div>
-                <label class="text-slate-400">Seller VPA (UPI ID):</label>
-                <input type="text" id="upi-vpa" value="seller.solar@okhdfcbank" onchange="generateUPIQR()"
-                  class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200 font-mono">
+                <label class="text-slate-400">Seller VPA (Virtual Payment Address):</label>
+                <input type="text" id="upi-vpa" value="urjasetu.seller@okhdfcbank" onchange="generateUPIQR()"
+                  class="w-full mt-1.5 bg-solar-void border border-solar-border rounded-lg p-2.5 text-xs font-mono text-slate-200">
               </div>
               <div>
-                <label class="text-slate-400">Settlement Amount (₹):</label>
+                <label class="text-slate-400">Payable Amount (INR):</label>
                 <input type="number" id="upi-amt" value="45.50" step="0.5" onchange="generateUPIQR()"
-                  class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200 font-bold text-emerald-400">
+                  class="w-full mt-1.5 bg-solar-void border border-solar-border rounded-lg p-2.5 text-sm font-mono font-bold text-amber-400">
               </div>
               <div>
                 <label class="text-slate-400">Transaction Note:</label>
                 <input type="text" id="upi-note" value="UrjaSetu P2P Solar Energy Settlement" onchange="generateUPIQR()"
-                  class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200">
+                  class="w-full mt-1.5 bg-solar-void border border-solar-border rounded-lg p-2.5 text-xs text-slate-200">
               </div>
             </div>
           </div>
 
-          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 flex flex-col items-center justify-center text-center">
-            <div id="qrcode" class="p-3 bg-white rounded-xl shadow-lg"></div>
-            <div class="text-xs text-slate-300 font-medium mt-3">Scan with any UPI App (GPay / PhonePe / Paytm)</div>
-            <div id="upi-uri" class="text-[10px] text-slate-500 font-mono mt-1 break-all max-w-xs"></div>
+          <div class="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center">
+            <div id="qrcode" class="p-3.5 bg-white rounded-2xl shadow-xl"></div>
+            <div class="text-xs font-semibold text-slate-200 mt-4">Scan with any UPI App</div>
+            <div class="text-[11px] text-slate-400">Google Pay · PhonePe · Paytm · BHIM</div>
+            <div id="upi-uri" class="text-[10px] text-slate-500 font-mono mt-2 break-all max-w-xs"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===================================================================== -->
-    <!-- TAB 7: 11 OPEN-SOURCE ENGINES HUB                                     -->
-    <!-- ===================================================================== -->
+    <!-- =================================================================== -->
+    <!-- TAB 7: INTEGRATED ENGINES (11)                                      -->
+    <!-- =================================================================== -->
     <section id="tab-engines" class="hidden space-y-6">
-      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
-        <h2 class="text-lg font-bold text-slate-100">🚀 11 Open-Source Energy Management Engines Integrated</h2>
-        <p class="text-xs text-slate-400 mt-1">
-          Direct source-level adaptation of proven open-source energy management repositories into AVISHKAR's execution runtime.
-        </p>
+      <div class="glass-panel p-6 rounded-2xl">
+        <div class="flex items-center space-x-3 mb-6">
+          <div class="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-100 tracking-tight">11 Integrated Energy Management Engines</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Direct source-level adaptations into AVISHKAR's high-speed dispatch runtime</p>
+          </div>
+        </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 text-xs">
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
-            <div class="font-bold text-cyan-400">1. sem-community (MIT)</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
+            <div class="font-bold text-amber-400">1. sem-community (MIT)</div>
             <p class="text-slate-400">Proportional source mixing and multi-tier surplus coordinator.</p>
           </div>
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
-            <div class="font-bold text-amber-400">2. evcc (Apache-2.0)</div>
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
+            <div class="font-bold text-orange-400">2. evcc (Apache-2.0)</div>
             <p class="text-slate-400">EV charging state machine (Off, Now, Min+PV, PV Only) & phase switching.</p>
           </div>
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
             <div class="font-bold text-emerald-400">3. SolarFlow (Apache-2.0)</div>
             <p class="text-slate-400">Closed-loop PI zero-export active power setpoint limiter.</p>
           </div>
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
             <div class="font-bold text-purple-400">4. smart-energy-manager (MIT)</div>
             <p class="text-slate-400">Cheapest contiguous tariff window scheduler & multi-brand Modbus mapping.</p>
           </div>
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
             <div class="font-bold text-rose-400">5. SunCore (Apache-2.0)</div>
             <p class="text-slate-400">Stepped thermal load allocator, hysteresis bands & battery buffering.</p>
           </div>
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
-            <div class="font-bold text-sky-400">6. energy_manager (Apache-2.0)</div>
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
+            <div class="font-bold text-cyan-400">6. energy_manager (Apache-2.0)</div>
             <p class="text-slate-400">Spot price spread arbitrage scheduler (BATT-15 algorithm).</p>
           </div>
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
             <div class="font-bold text-yellow-400">7. breaker_headroom Guard</div>
             <p class="text-slate-400">Sub-second main breaker overload protection preventing physical fuse trips.</p>
           </div>
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
             <div class="font-bold text-teal-400">8. dispatch_validator</div>
             <p class="text-slate-400">Daylight-only solar forecast accuracy metrics (MAE, RMSE, nRMSE).</p>
           </div>
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
             <div class="font-bold text-indigo-400">9. microgrid_mpc</div>
             <p class="text-slate-400">Model predictive microgrid dispatch & blackout island survival estimation.</p>
           </div>
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
             <div class="font-bold text-green-400">10. solectrus_metrics (MIT)</div>
             <p class="text-slate-400">Self-consumption ratio, autarky degree & telemetry freshness score.</p>
           </div>
-          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
-            <div class="font-bold text-orange-400">11. flexcomm_sharing (GPL-3.0)</div>
+          <div class="glass-panel p-4 rounded-xl border border-solar-border space-y-1">
+            <div class="font-bold text-amber-300">11. flexcomm_sharing (GPL-3.0)</div>
             <p class="text-slate-400">Multi-building peer-to-peer virtual net metering with I²R line losses.</p>
           </div>
         </div>
@@ -663,10 +910,10 @@
   </main>
 
   <!-- FOOTER -->
-  <footer class="bg-brand-surface border-t border-brand-border py-4 text-xs text-slate-500 text-center">
+  <footer class="glass-panel border-t border-solar-border py-4 text-xs text-slate-500 text-center relative z-10">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
       <div>
-        Deployed via <strong class="text-slate-300">Google Firebase Hosting (Fast & Free)</strong> · Project ID: <code class="text-cyan-400">studio-4547798402-ec0aa</code>
+        Deployed via <strong class="text-slate-300">Google Firebase Hosting (Fast & Free CDN)</strong> · Project: <code class="text-amber-400 font-mono">studio-4547798402-ec0aa</code>
       </div>
       <div>
         AVISHKAR Solar EMS · Central Electricity Authority (CEA) Technical Standards Compliant
@@ -674,20 +921,17 @@
     </div>
   </footer>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- SCRIPT LOGIC -->
   <script>
-    // Initialize Lucide Icons
-    lucide.createIcons();
-
-    // Tab Switching
+    // Tab Navigation
     function switchTab(tabId) {
-      const tabs = ['tab-benchmark', 'tab-sizing', 'tab-battery', 'tab-loads', 'tab-community', 'tab-upi', 'tab-engines'];
+      const tabs = ['tab-benchmark', 'tab-flow', 'tab-sizing', 'tab-battery', 'tab-community', 'tab-upi', 'tab-engines'];
       tabs.forEach(t => {
         document.getElementById(t).classList.add('hidden');
-        document.getElementById('btn-' + t).classList.remove('tab-active');
+        document.getElementById('btn-' + t).classList.remove('nav-tab-active');
       });
       document.getElementById(tabId).classList.remove('hidden');
-      document.getElementById('btn-' + tabId).classList.add('tab-active');
+      document.getElementById('btn-' + tabId).classList.add('nav-tab-active');
 
       if (tabId === 'tab-upi') generateUPIQR();
       if (tabId === 'tab-benchmark') runDispatchCalculation();
@@ -705,12 +949,12 @@
             label: 'Power (kW)',
             data: [1.5, 2.5, 0, 0, 0, 0, 0, 0.2],
             backgroundColor: [
-              '#00e5ff',
+              '#ffaa00',
               '#10b981',
               '#f43f5e',
               '#f59e0b',
-              '#8b5cf6',
-              '#06b6d4',
+              '#a855f7',
+              '#00f0ff',
               '#ef4444',
               '#64748b'
             ],
@@ -726,19 +970,19 @@
           scales: {
             y: {
               beginAtZero: true,
-              grid: { color: '#1e293b' },
-              ticks: { color: '#94a3b8' }
+              grid: { color: 'rgba(30, 44, 86, 0.5)' },
+              ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
             },
             x: {
               grid: { display: false },
-              ticks: { color: '#94a3b8' }
+              ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } }
             }
           }
         }
       });
     }
 
-    // Phase 7 Dispatch Calculation Engine
+    // Mathematical Energy Balance Dispatch
     function runDispatchCalculation() {
       const pv = parseFloat(document.getElementById('sl-pv').value);
       const load = parseFloat(document.getElementById('sl-load').value);
@@ -752,7 +996,10 @@
       document.getElementById('txt-load').innerText = load.toFixed(1) + ' kW';
       document.getElementById('txt-soc').innerText = soc.toFixed(0) + '%';
 
-      // Battery parameters
+      // Update SLD View values
+      if (document.getElementById('sld-pv-val')) document.getElementById('sld-pv-val').textContent = pv.toFixed(1) + ' kW';
+      if (document.getElementById('sld-load-val')) document.getElementById('sld-load-val').textContent = load.toFixed(2) + ' kW';
+
       const battCapacity = 10.0;
       const battMaxSoc = 95.0;
       const battMinSoc = 15.0;
@@ -805,12 +1052,15 @@
       const endSoc = Math.min(battMaxSoc, Math.max(battMinSoc, soc + (battCharge * 0.95 - battDischarge) * (100.0 / battCapacity)));
       const netCost = (gridImport * buyTariff) - (gridExport * sellTariff);
 
-      // Update UI
+      // DOM Updates
       document.getElementById('m-direct').innerText = directSolar.toFixed(2) + ' kW';
       document.getElementById('m-battery').innerText = battCharge > 0 ? `+${battCharge.toFixed(2)} kW` : (battDischarge > 0 ? `-${battDischarge.toFixed(2)} kW` : 'Idle');
       document.getElementById('m-battery-soc').innerText = `SoC: ${soc.toFixed(0)}% → ${endSoc.toFixed(1)}%`;
-      document.getElementById('m-grid').innerText = gridExport > 0 ? `Export ${gridExport.toFixed(2)} kW` : (gridImport > 0 ? `Import ${gridImport.toFixed(2)} kW` : 'Zero Grid');
+      document.getElementById('m-grid').innerText = gridExport > 0 ? `Export ${gridExport.toFixed(2)} kW` : (gridImport > 0 ? `Import ${gridImport.toFixed(2)} kW` : '0.00 kW');
       document.getElementById('m-cost').innerText = (netCost <= 0 ? '₹' : '+₹') + netCost.toFixed(2);
+
+      if (document.getElementById('sld-batt-val')) document.getElementById('sld-batt-val').textContent = `10kWh ${endSoc.toFixed(0)}%`;
+      if (document.getElementById('sld-grid-val')) document.getElementById('sld-grid-val').textContent = (gridExport > 0 ? `-${gridExport.toFixed(1)}kW` : `+${gridImport.toFixed(1)}kW`);
 
       document.getElementById('eq-sources').innerText = `Sources: [PV: ${pv.toFixed(2)} kW + BattDischarge: ${battDischarge.toFixed(2)} kW + GridImport: ${gridImport.toFixed(2)} kW] = ${pSources.toFixed(3)} kW`;
       document.getElementById('eq-sinks').innerText = `Sinks:   [Load: ${load.toFixed(2)} kW + BattCharge: ${battCharge.toFixed(2)} kW + Flex: ${flexLoad.toFixed(2)} kW + EV: ${evCharge.toFixed(2)} kW + GridExport: ${gridExport.toFixed(2)} kW + Losses: ${totalLosses.toFixed(2)} kW] = ${pSinks.toFixed(3)} kW`;
@@ -822,7 +1072,7 @@
       }
     }
 
-    // Quick Benchmark Scenarios
+    // Scenarios
     function loadScenario(type) {
       if (type === 'baseline') {
         document.getElementById('sl-pv').value = 4.0;
@@ -845,7 +1095,7 @@
       runDispatchCalculation();
     }
 
-    // Rooftop Sizing & Subsidy
+    // Sizing Calculation
     function runSizingCalc() {
       const bill = parseFloat(document.getElementById('sz-bill').value);
       document.getElementById('sz-bill-txt').innerText = '₹' + bill.toLocaleString('en-IN');
@@ -878,7 +1128,7 @@
       document.getElementById('sz-emi').innerText = '₹' + emi.toLocaleString('en-IN') + ' / mo';
     }
 
-    // Community P2P Calculation
+    // P2P Calculation
     function runP2PCalc() {
       const surplus = parseFloat(document.getElementById('p2p-surplus').value);
       const deficit = parseFloat(document.getElementById('p2p-deficit').value);
@@ -894,7 +1144,7 @@
       document.getElementById('p2p-loss').innerText = lineLossKw.toFixed(3) + ' kW';
     }
 
-    // Dynamic UPI QR Generator
+    // UPI QR Generator
     function generateUPIQR() {
       const vpa = document.getElementById('upi-vpa').value;
       const amt = parseFloat(document.getElementById('upi-amt').value).toFixed(2);
@@ -909,13 +1159,13 @@
         text: uri,
         width: 140,
         height: 140,
-        colorDark: "#0b132b",
+        colorDark: "#050814",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M
       });
     }
 
-    // Window Load
+    // Initialize
     window.addEventListener('DOMContentLoaded', () => {
       initChart();
       runDispatchCalculation();
