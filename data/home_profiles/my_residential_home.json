@@ -6,7 +6,7 @@
   "inverter": {
     "brand": "VICTRON",
     "rating_kw": 5.0,
-    "efficiency_fraction": 0.97,
+    "efficiency_fraction": 0.89,
     "is_zero_export_enforced": false,
     "is_verified_hardware": false
   },

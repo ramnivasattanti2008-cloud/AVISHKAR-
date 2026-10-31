@@ -231,3 +231,13 @@ target (under 3 s) is a browser measurement the bench does not make. Full table 
 | Platform Web Production Build | **DONE** | `pnpm -C platform/web build`: Next.js 16.3.8 optimized production build generated 26 routes cleanly. |
 | Firebase Hosting Deploy | **DONE** | `firebase deploy --only hosting --project studio-4547798402-ec0aa`: deployed live to `https://studio-4547798402-ec0aa.web.app` (verified `HTTP/1.1 200 OK`). |
 | Streamlit App & Multi-Tab Stability | **DONE** | All 15 tabs tested via `AppTest` with **0 exceptions**; site switching verified with **0 exceptions**; live daemon `http://127.0.0.1:8501` returning `HTTP/1.1 200 OK`. |
+
+### Native UI Restoration & Multi-Module Bento Deployment, 2026-10-31
+
+| Item | Status | Evidence |
+|---|---|---|
+| Main Website Native UI Restoration | **DONE** | Preserved 100% of the before deployed 21st.dev design system on `frontend/index.html` (Spotlight Hero cards, Arka AI Copilot, 8 native Bento tiles for all features, HiGHS 24H dispatch, PM Surya Ghar subsidy calculator, Citations). |
+| Next.js Platform Restoration | **DONE** | Restored `platform/web/src/app/page.tsx` to the clean Next.js mission control architecture with console link and all capabilities. |
+| Platform Web Build & Verification | **DONE** | `pnpm -C platform/web typecheck` (0 errors), `pnpm -C platform/web lint` (0 errors), `pnpm -C platform/web build` (26 routes generated). |
+| Live Firebase Production Deployment | **DONE** | `firebase deploy --only hosting --project studio-4547798402-ec0aa`: deployed live to `https://studio-4547798402-ec0aa.web.app` (`HTTP/1.1 200 OK`). |
+| Streamlit Console Stability | **DONE** | Live server on `http://127.0.0.1:8501` returning `HTTP/1.1 200 OK`. `ruff check --no-fix` all checks passed. |

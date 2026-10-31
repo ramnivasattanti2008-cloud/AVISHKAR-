@@ -974,6 +974,7 @@ button, input, select {
 
 .bento-span-7 { grid-column: span 7; }
 .bento-span-5 { grid-column: span 5; }
+.bento-span-6 { grid-column: span 6; }
 
 .bento-tile {
   padding: 28px;
@@ -1989,7 +1990,7 @@ button, input, select {
 @media (max-width: 1080px) {
   .scenarios-row { grid-template-columns: 1fr; }
   .metrics-4col-grid { grid-template-columns: repeat(2, 1fr); }
-  .bento-span-7, .bento-span-5 { grid-column: span 12; }
+  .bento-span-7, .bento-span-5, .bento-span-6 { grid-column: span 12; }
   .calc-grid-layout { grid-template-columns: 1fr; }
   .ledger-grid { grid-template-columns: 1fr; }
   .citations-3col-grid { grid-template-columns: repeat(2, 1fr); }

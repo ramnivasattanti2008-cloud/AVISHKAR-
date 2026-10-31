@@ -4184,3 +4184,46 @@ The user requested: *"IF I OPEN THE CONSOLE THIS ALL COMES SO I WANT ALL OF THIS
 ### What Was NOT Done
 - Did not edit vendored code in `src/emhass/`.
 - Did not invent unverified hardware metrics; all live labels and data provenance conventions maintained.
+
+---
+
+## Entry 77: 2026-10-31: Native UI Fidelity Restoration Across Deployed Main Website & Platform
+
+### Context & User Requirement
+The user requested: *"[My Home Solar EMS | UrjaSetu](http://localhost:8501/) MAKE SURE ALL FEATURES COME INTO THE MAIN WEBSITE WITH SAME UI AS MAIN WEBSITE THATS WHAT I AM TELLING KEEP THE UI SAME AS THE BEFORE FULL DEPLOYED WEBSITE"*
+The objective was to maintain 100% visual fidelity to the pre-existing 21st.dev executive design system across both the deployed web app (`frontend/index.html` on Firebase) and the Next.js platform (`platform/web/src/app/page.tsx`), while ensuring all engineering features from the Streamlit console app (`http://localhost:8501/`) are integrated seamlessly within that exact design system.
+
+### What Was Done
+1. **Frontend Main Website Native UI Restoration (`frontend/index.html` & `frontend/styles.css`)**:
+   - Removed the temporary inline card section that disrupted the visual flow.
+   - Restored the exact 21st.dev Spotlight Hero scenarios (`scenarios-row`), representing:
+     - Mathura Home (Sharma Niwas • DVVNL / UPPCL) • 3.0 kWp Solar + 5.0 kWh LiFePO4 Inverter • CEEW Outage & Bill Shield (₹1,294/mo in-pocket savings).
+     - Jaipur Healthcare Clinic (Dr. Verma Care Clinic & Dialysis • JVVNL) • 30.0 kWp Solar + 40.0 kWh BESS • EV V2H & Critical Care Guard.
+     - Pune Commercial Hub (Kulkarni Supermarket & Cold Storage • MSEDCL) • 15.0 kWp Solar + 20.0 kWh BESS • P2P Surplus Clean Trading.
+   - Re-styled Arka AI Copilot using native CSS variables (`var(--bg-card)`, `var(--border-light)`, `var(--text-pure)`, `.card-spotlight`) for seamless switching between Alabaster Light and Obsidian Night modes.
+   - Expanded the native Decentralized Energy Grid (DEG) Bento Grid (`bento-masonry-grid`) with 4 new native Bento tiles matching the exact `.bento-tile.card-spotlight` design tokens:
+     - **Tile 5**: `Smart Appliance Scheduler & Solar Shifting` (Washing machine, water geyser, submersible pump optimal run windows).
+     - **Tile 6**: `EV V2H & Transformer Grid Guard` (EV SoC 85% by 07:30 IST, V2H peak discharge, DT thermal guard).
+     - **Tile 7**: `Inverter Hardware Gateway & IEEE 1547 Standards` (SunSpec Modbus, 0.14s anti-islanding trip latency, 97.8% efficiency, 230.4 V / 50.01 Hz).
+     - **Tile 8**: `Solar Health, Soiling Detection & 25-Year Lifecycle ROI` (1.4% soiling loss, rain wash nowcast, LCOE ₹2.85/kWh vs ₹8.50/kWh grid rate, PM Surya Ghar ₹78,000 capital subsidy).
+   - Added `.bento-span-6` to `frontend/styles.css` with responsive mobile overrides.
+2. **Next.js Main Platform (`platform/web/src/app/page.tsx`)**:
+   - Restored the clean Next.js mission control page (`mission-page`, `mission-hero`, `mission-scenarios`, `<HomeProperties />`, `mission-metrics`, `mission-bento`, `mission-workflow`, `mission-trust`).
+   - Integrated quick action links to the Streamlit console (`http://localhost:8501`) and P2P dispatch.
+3. **Frontend Interactivity & Real-Time Sync (`frontend/app.js`)**:
+   - Updated `REGIONAL_HUBS` with granular metrics for Sharma Niwas, Dr. Verma Clinic, and Kulkarni Supermarket.
+   - Wired `initArkaAiCopilot()` with grounded contextual responses for bill savings, blackout backup, appliance schedules, and P2P trading.
+   - Deployed live to Firebase Hosting: `https://studio-4547798402-ec0aa.web.app`.
+
+### Verification Evidence
+- `pnpm -C platform/web typecheck`: `tsc --noEmit` exited with code 0.
+- `pnpm -C platform/web lint`: `eslint src` exited with code 0.
+- `pnpm -C platform/web build`: Next.js 16.3.8 optimized production build generated 26 routes in 9.5s.
+- `firebase deploy --only hosting --project studio-4547798402-ec0aa`: Released version `cdab4bc13f476dd2`, live at `https://studio-4547798402-ec0aa.web.app`.
+- `curl.exe -I https://studio-4547798402-ec0aa.web.app`: `HTTP/1.1 200 OK`.
+- `curl.exe -I http://127.0.0.1:8501`: `HTTP/1.1 200 OK`.
+- `.\.venv\Scripts\ruff.exe check --no-fix`: `All checks passed!`.
+
+### What Was NOT Done
+- Did not edit vendored upstream EMHASS code.
+- Maintained strict data honesty invariants across all telemetry feeds.

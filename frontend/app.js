@@ -10,47 +10,77 @@
 // COMPREHENSIVE REGIONAL MICROGRID DATABASE
 // ============================================================================
 const REGIONAL_HUBS = {
-  pune: {
-    name: "Pune Commercial Hub", state: "Maharashtra (MSEDCL)",
-    kwp: 15.0, demandKw: 8.5, batteryKwh: 20.0,
-    satellite: "INSAT-3DR (74°E Slot)", zone: "Western India (73°E)",
-    insolation: 5.4, tariffPeak: 12.50, tariffNormal: 9.80,
-    cloudBase: 18, outageRisk: 0.15
-  },
   mathura: {
-    name: "Mathura Rural Microgrid", state: "Uttar Pradesh (UPPCL)",
+    name: "Sharma Niwas (Family Residence)",
+    location: "Krishna Nagar, Mathura • 3-BHK Villa",
+    state: "Uttar Pradesh (DVVNL / UPPCL)",
     kwp: 3.0, demandKw: 1.8, batteryKwh: 5.0,
+    sanctionedLoad: "3.0 kW",
+    monthlySavings: "₹1,294", oldBill: "₹2,228", newBill: "₹935",
+    dailySavings: "₹43.10",
     satellite: "INSAT-3D (82°E Slot)", zone: "Northern Plains (77°E)",
     insolation: 5.1, tariffPeak: 9.40, tariffNormal: 7.20,
-    cloudBase: 72, outageRisk: 0.85
+    cloudBase: 72, outageRisk: 0.85, outageReserve: 35,
+    appliances: { lights: "36h", fans: "24h", fridge: "14h", wifi: "48h" }
   },
   jaipur: {
-    name: "Jaipur Healthcare Clinic", state: "Rajasthan (JVVNL)",
+    name: "Dr. Verma Care Clinic & Dialysis",
+    location: "Malviya Nagar, Jaipur • Healthcare Clinic",
+    state: "Rajasthan (JVVNL)",
     kwp: 30.0, demandKw: 18.0, batteryKwh: 40.0,
+    sanctionedLoad: "25.0 kW",
+    monthlySavings: "₹14,850", oldBill: "₹28,400", newBill: "₹13,550",
+    dailySavings: "₹495.00",
     satellite: "INSAT-3DR / 3DS (74°E)", zone: "Thar Solar Belt (75°E)",
     insolation: 5.9, tariffPeak: 11.80, tariffNormal: 8.90,
-    cloudBase: 12, outageRisk: 0.25
+    cloudBase: 12, outageRisk: 0.25, outageReserve: 45,
+    appliances: { lights: "72h", fans: "48h", fridge: "36h", wifi: "96h" }
+  },
+  pune: {
+    name: "Kulkarni Supermarket & Cold Storage",
+    location: "Kothrud, Pune • Commercial Retail",
+    state: "Maharashtra (MSEDCL)",
+    kwp: 15.0, demandKw: 8.5, batteryKwh: 20.0,
+    sanctionedLoad: "15.0 kW",
+    monthlySavings: "₹8,420", oldBill: "₹18,250", newBill: "₹9,830",
+    dailySavings: "₹280.60",
+    satellite: "INSAT-3DR (74°E Slot)", zone: "Western India (73°E)",
+    insolation: 5.4, tariffPeak: 12.50, tariffNormal: 9.80,
+    cloudBase: 18, outageRisk: 0.15, outageReserve: 25,
+    appliances: { lights: "48h", fans: "32h", fridge: "20h", wifi: "60h" }
   },
   bengaluru: {
     name: "Bengaluru Smart Grid", state: "Karnataka (BESCOM)",
     kwp: 25.0, demandKw: 14.0, batteryKwh: 35.0,
+    sanctionedLoad: "20.0 kW",
+    monthlySavings: "₹12,400", oldBill: "₹24,200", newBill: "₹11,800",
+    dailySavings: "₹413.30",
     satellite: "INSAT-3D / 3DS (82°E)", zone: "Deccan South (77°E)",
     insolation: 5.2, tariffPeak: 10.90, tariffNormal: 8.40,
-    cloudBase: 25, outageRisk: 0.30
+    cloudBase: 25, outageRisk: 0.30, outageReserve: 30,
+    appliances: { lights: "60h", fans: "40h", fridge: "28h", wifi: "72h" }
   },
   delhi: {
     name: "Delhi NCR Solar Cluster", state: "Delhi (BRPL / BYPL)",
     kwp: 50.0, demandKw: 32.0, batteryKwh: 60.0,
+    sanctionedLoad: "40.0 kW",
+    monthlySavings: "₹24,500", oldBill: "₹48,900", newBill: "₹24,400",
+    dailySavings: "₹816.60",
     satellite: "INSAT-3D (82°E Slot)", zone: "Northern Ridge (77°E)",
     insolation: 4.9, tariffPeak: 12.00, tariffNormal: 9.10,
-    cloudBase: 35, outageRisk: 0.20
+    cloudBase: 35, outageRisk: 0.20, outageReserve: 20,
+    appliances: { lights: "96h", fans: "64h", fridge: "48h", wifi: "120h" }
   },
   ahmedabad: {
     name: "Ahmedabad Solar City", state: "Gujarat (Torrent Power)",
     kwp: 40.0, demandKw: 22.0, batteryKwh: 50.0,
+    sanctionedLoad: "30.0 kW",
+    monthlySavings: "₹19,200", oldBill: "₹38,000", newBill: "₹18,800",
+    dailySavings: "₹640.00",
     satellite: "INSAT-3DR (74°E Slot)", zone: "Saurashtra (72°E)",
     insolation: 5.6, tariffPeak: 11.20, tariffNormal: 8.60,
-    cloudBase: 15, outageRisk: 0.18
+    cloudBase: 15, outageRisk: 0.18, outageReserve: 20,
+    appliances: { lights: "80h", fans: "50h", fridge: "36h", wifi: "100h" }
   }
 };
 
@@ -205,7 +235,7 @@ const I18N = {
 };
 
 let currentLang = 'en';
-let activeHub = 'pune';
+let activeHub = 'mathura';
 let simHour = 13;
 let batterySoC = 50;
 let countersAnimated = false;
@@ -441,7 +471,6 @@ function initScenarioCards() {
       document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
       card.classList.add('active');
       activeHub = card.dataset.scenario;
-      selectPersonalPlace(activeHub);
       const dropdown = document.getElementById('hub-selector-dropdown');
       if (dropdown) dropdown.value = activeHub;
       updateHubData();
@@ -467,6 +496,20 @@ function initHubDropdown() {
 function updateHubData() {
   const hub = REGIONAL_HUBS[activeHub];
   if (!hub) return;
+
+  // 0. Update Citizen Savings & Outage Gauge
+  const citizenSavingsEl = document.getElementById('citizen-savings-val');
+  if (citizenSavingsEl && hub.monthlySavings) {
+    citizenSavingsEl.textContent = `${hub.monthlySavings}/mo (${hub.dailySavings}/day)`;
+  }
+  const appLightsEl = document.getElementById('app-hours-lights');
+  if (appLightsEl && hub.appliances) appLightsEl.textContent = hub.appliances.lights;
+  const appFansEl = document.getElementById('app-hours-fans');
+  if (appFansEl && hub.appliances) appFansEl.textContent = hub.appliances.fans;
+  const appFridgeEl = document.getElementById('app-hours-fridge');
+  if (appFridgeEl && hub.appliances) appFridgeEl.textContent = hub.appliances.fridge;
+  const appWifiEl = document.getElementById('app-hours-wifi');
+  if (appWifiEl && hub.appliances) appWifiEl.textContent = hub.appliances.wifi;
 
   // 1. Array Badge & Generation
   const arrayBadge = document.getElementById('badge-kwp-array');
@@ -904,200 +947,79 @@ function initResizeHandler() {
 }
 
 // ============================================================================
-// DOM READY INITIALIZER
-// ============================================================================
 
 // ============================================================================
-// ARKA AI PERSONAL ENERGY COPILOT (INTERACTIVE ENGINE)
+// ARKA AI COPILOT INTERACTION ENGINE
 // ============================================================================
 function initArkaAiCopilot() {
-  const inputEl = document.getElementById('arka-web-query-input');
   const askBtn = document.getElementById('btn-arka-ask');
+  const inputEl = document.getElementById('arka-web-query-input');
   const resBox = document.getElementById('arka-web-response-box');
   const headlineEl = document.getElementById('arka-res-headline');
   const bodyEl = document.getElementById('arka-res-body');
   const actionEl = document.getElementById('arka-res-action');
-  const chips = document.querySelectorAll('.arka-chip');
 
-  function handleQuery(query) {
-    if (!query || !query.trim()) return;
-    const q = query.toLowerCase();
-    let res = {
-      headline: "Arka AI Grounded Energy Briefing",
-      body: "Active solar generation across Indian microgrids is operating at nominal efficiency. Convex LP dispatch horizons optimize 15-minute battery charge, local demand, and P2P trades with zero thermodynamic imbalance.",
-      action: "💡 Recommended Action: Check your state's regional microgrid tab for live P2P clearing rates."
-    };
+  if (!askBtn || !inputEl || !resBox) return;
 
-    if (q.includes("subsidy") || q.includes("bill") || q.includes("save") || q.includes("cost") || q.includes("loan")) {
-      res = {
-        headline: "PM Surya Ghar Subsidy & Concessional Loan Analysis",
-        body: "Under PM Surya Ghar Muft Bijli Yojana, a typical 3 kWp residential rooftop solar array qualifies for a ₹78,000 maximum Central DBT subsidy. Sourced via SBI Surya Ghar concessional loans at 7.0% p.a., monthly electricity savings (₹2,700+) fully cover the loan EMI (~₹1,450/month) with net positive cashflow from Month 1.",
-        action: "💡 Recommended Action: Apply on the National Portal (pmsuryaghar.gov.in) with your DISCOM consumer number."
-      };
-    } else if (q.includes("battery") || q.includes("blackout") || q.includes("backup") || q.includes("night") || q.includes("outage")) {
-      res = {
-        headline: "Family Blackout Survival & Emergency Reserve",
-        body: "With a 5 kWh LiFePO4 battery at 65% SoC, your home holds 3.25 kWh usable backup energy. For essential emergency devices (LEDs, fans, Wi-Fi router, refrigerator ~430W), the system delivers 7.5 to 8.5 hours of continuous blackout protection.",
-        action: "💡 Recommended Action: Keep the storm reserve lock enabled if evening thunder storms or feeder maintenance are expected."
-      };
-    } else if (q.includes("appliance") || q.includes("washing") || q.includes("geyser") || q.includes("pump") || q.includes("ac")) {
-      res = {
-        headline: "Smart Appliance Shift Window (Bijli Bachat)",
-        body: "Peak free rooftop solar generation occurs between 11:00 AM and 3:00 PM. Shifting your water geyser (2 kW, 1h) and washing machine (500W, 1.5h) into this midday solar window completely avoids evening DISCOM peak charges (₹8.50 to ₹10.00/unit).",
-        action: "💡 Recommended Action: Run heavy laundry and water heating between 11:30 AM and 2:30 PM."
-      };
-    } else if (q.includes("p2p") || q.includes("neighbor") || q.includes("trade") || q.includes("sell") || q.includes("upi")) {
-      res = {
-        headline: "Beckn DEG v2.0 Peer-to-Peer Trading & UPI Settlement",
-        body: "Homeowners can commit surplus solar generation (P10 conservative band) to the Beckn decentralized open energy network. In Maharashtra and Karnataka, P2P trades clear between ₹4.50 and ₹4.80/kWh, yielding higher returns than DISCOM net-meter export rates with instant NPCI UPI settlements.",
-        action: "💡 Recommended Action: Check the P2P double-sided auction book to post surplus kilowatt-hours."
-      };
+  function handleQuery(queryText) {
+    if (!queryText || !queryText.trim()) return;
+    const q = queryText.toLowerCase();
+    const hub = REGIONAL_HUBS[activeHub] || REGIONAL_HUBS.mathura;
+
+    let headline = "Arka AI Grounded Dispatch Intelligence";
+    let body = "";
+    let action = "";
+
+    if (q.includes("save") || q.includes("bill") || q.includes("money") || q.includes("subsidy")) {
+      headline = `Monthly Bill Savings Analysis for ${hub.name}`;
+      body = `With your ${hub.kwp.toFixed(1)} kWp rooftop solar array and ${hub.batteryKwh.toFixed(1)} kWh storage, your projected monthly bill decreases from ${hub.oldBill} to ${hub.newBill}, keeping ${hub.monthlySavings} in your pocket every single month (${hub.dailySavings} saved per day). Additionally, under the PM Surya Ghar: Muft Bijli Yojana, a statutory central capital subsidy of ₹78,000 applies with an expected 3.2-year payback.`;
+      action = `⚡ Recommended Action: Keep solar self-consumption priority active between 09:00 and 15:30 IST to avoid Peak DISCOM tariff.`;
+    } else if (q.includes("blackout") || q.includes("survive") || q.includes("tonight") || q.includes("outage")) {
+      headline = `CEEW Emergency Blackout Resilience for ${hub.name}`;
+      body = `Your dynamic blackout reserve floor is held at ${hub.outageReserve || 35}% based on ${hub.state} feeder reliability data. Your ${hub.batteryKwh.toFixed(1)} kWh battery will sustain your critical essential appliances throughout an outage: LED Lights (${hub.appliances.lights}), Ceiling Fans (${hub.appliances.fans}), Refrigerator (${hub.appliances.fridge}), and Wi-Fi Router (${hub.appliances.wifi}).`;
+      action = `🛡️ Outage Shield Status: ACTIVE • Zero unserved critical load guaranteed.`;
+    } else if (q.includes("appliance") || q.includes("wash") || q.includes("geyser") || q.includes("when")) {
+      headline = `Optimal Solar Self-Consumption Windows for ${hub.name}`;
+      body = `Based on ISRO INSAT-3DR solar nowcasting, peak generation occurs between 11:30 and 14:30 IST with an insolation index of ${hub.insolation} kWh/m²/day. Schedule high-draw loads during these zero-marginal-cost windows: Automatic Washing Machine (11:30 - 13:00 IST) and Water Geyser (12:30 - 14:00 IST).`;
+      action = `⏰ Peak Shifting Benefit: Saves approximately ₹185/month in avoided peak time-of-day tariffs.`;
+    } else if (q.includes("sell") || q.includes("p2p") || q.includes("neighbor") || q.includes("upi") || q.includes("trade")) {
+      headline = `Beckn DEG v2.0 P2P Energy Trading & Instant UPI Settlement`;
+      body = `Your surplus solar generation beyond 100% battery SoC is automatically posted to the decentralized P2P orderbook at ₹7.40/kWh (saving ₹2.40/kWh for your neighbor vs DISCOM peak rate). Matched trades clear instantly via statutory sandbox smart contract, with micro-settlements routed directly to your registered UPI VPA.`;
+      action = `🤝 P2P Ledger: Active • 12.0 kWh export trade matched today under DISCOM sandbox approval.`;
+    } else {
+      headline = `Arka Energy Intelligence for ${hub.name}`;
+      body = `Currently monitoring ${hub.name} (${hub.state}) with ${hub.kwp.toFixed(1)} kWp rooftop solar and ${hub.batteryKwh.toFixed(1)} kWh storage. The system is operating in balanced mode with real-time INSAT-3DR nowcasting and dynamic reserve protection.`;
+      action = `⚡ Grid status: NOMINAL (50.01 Hz) • Anti-islanding trip latency 0.14s.`;
     }
 
-    if (headlineEl) headlineEl.textContent = res.headline;
-    if (bodyEl) bodyEl.textContent = res.body;
-    if (actionEl) actionEl.textContent = res.action;
-    if (resBox) resBox.style.display = "block";
-    if (inputEl) inputEl.value = query;
+    headlineEl.textContent = headline;
+    bodyEl.textContent = body;
+    actionEl.textContent = action;
+    resBox.style.display = 'block';
   }
 
-  if (askBtn && inputEl) {
-    askBtn.addEventListener('click', () => handleQuery(inputEl.value));
-    inputEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        handleQuery(inputEl.value);
-      }
-    });
-  }
+  askBtn.addEventListener('click', () => {
+    handleQuery(inputEl.value);
+  });
 
-  chips.forEach((chip) => {
+  inputEl.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      handleQuery(inputEl.value);
+    }
+  });
+
+  document.querySelectorAll('.arka-chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      const q = chip.getAttribute('data-q');
+      const q = chip.dataset.q;
+      inputEl.value = q;
       handleQuery(q);
     });
   });
 }
 
-
+// DOM READY INITIALIZER
 // ============================================================================
-// PERSONAL PLACES & REFERENCE HERO CARD SYNCHRONIZATION
-// ============================================================================
-const PERSONAL_PLACES_DATA = {
-  mathura: {
-    title: "Sharma Niwas (Family Residence)",
-    subtitle: "Personal Home Energy Intelligence • Krishna Nagar, Mathura, Uttar Pradesh (DVVNL (Dakshinanchal Vidyut))",
-    pill: "3-BHK Independent Villa • DVVNL (Dakshinanchal Vidyut)",
-    name: "Sharma Niwas (Family Residence)",
-    meta: "📍 Krishna Nagar, Mathura, Uttar Pradesh • ⚡ Sanctioned Load: 3.0 kW • 👨‍👩‍👧‍👦 4 Family Members (Parents + 2 Kids)",
-    savings: "₹1,294",
-    savingsSub: "/ month",
-    oldBill: "₹2,228",
-    newBill: "₹935",
-    array: "🌞 <b>My Rooftop Array:</b> 3 kWp Rooftop Solar (6 Mono PERC Panels)",
-    battery: "🔋 <b>Inverter & Storage:</b> 5 kWh LiFePO4 Inverter Storage (51.2V 100Ah)",
-    backup: "🛡️ <b>Blackout Backup Devices:</b> LED Lights, Fans, Refrigerator, Wi-Fi, Laptops",
-    cash: "💰 <b>Annual Cash Kept:</b> <span style=\"color: #34d399; font-weight: 700;\">₹15,525/year</span>"
-  },
-  jaipur: {
-    title: "Dr. Verma Care Clinic & Dialysis",
-    subtitle: "Healthcare Clinic Energy Intelligence • Malviya Nagar, Jaipur, Rajasthan (JVVNL (Jaipur Vidyut))",
-    pill: "Healthcare Clinic & Dialysis • JVVNL (Jaipur Vidyut)",
-    name: "Dr. Verma Care Clinic & Dialysis",
-    meta: "📍 Malviya Nagar, Jaipur, Rajasthan • ⚡ Sanctioned Load: 25.0 kW • 🏥 Critical Care Beds & Cold Storage",
-    savings: "₹14,850",
-    savingsSub: "/ month",
-    oldBill: "₹28,400",
-    newBill: "₹13,550",
-    array: "🌞 <b>My Rooftop Array:</b> 30 kWp Rooftop Solar (54 Bifacial Panels)",
-    battery: "🔋 <b>Inverter & Storage:</b> 40 kWh High-C LiFePO4 Hospital Storage",
-    backup: "🛡️ <b>Blackout Backup Devices:</b> Dialysis units, ICU monitors, vaccine fridge, OT lights",
-    cash: "💰 <b>Annual Cash Kept:</b> <span style=\"color: #34d399; font-weight: 700;\">₹1,78,200/year</span>"
-  },
-  pune: {
-    title: "Kulkarni Supermarket & Cold Storage",
-    subtitle: "Commercial Enterprise Energy Intelligence • Kothrud, Pune, Maharashtra (MSEDCL)",
-    pill: "Commercial Supermarket • MSEDCL",
-    name: "Kulkarni Supermarket & Cold Storage",
-    meta: "📍 Kothrud, Pune, Maharashtra • ⚡ Sanctioned Load: 15.0 kW • 🏪 Retail Floor & Deep Chillers",
-    savings: "₹8,420",
-    savingsSub: "/ month",
-    oldBill: "₹18,250",
-    newBill: "₹9,830",
-    array: "🌞 <b>My Rooftop Array:</b> 15 kWp Rooftop Solar (28 High-Yield Panels)",
-    battery: "🔋 <b>Inverter & Storage:</b> 20 kWh Commercial LiFePO4 Bank",
-    backup: "🛡️ <b>Blackout Backup Devices:</b> Deep freezers, POS checkout terminals, security cameras",
-    cash: "💰 <b>Annual Cash Kept:</b> <span style=\"color: #34d399; font-weight: 700;\">₹1,01,040/year</span>"
-  }
-};
-
-function selectPersonalPlace(placeKey) {
-  const p = PERSONAL_PLACES_DATA[placeKey];
-  if (!p) return;
-
-  document.querySelectorAll('.btn-ref-place').forEach(btn => {
-    const isAct = btn.dataset.place === placeKey;
-    btn.classList.toggle('active', isAct);
-    btn.style.border = isAct ? '1px solid #3b82f6' : '1px solid rgba(255, 255, 255, 0.08)';
-    btn.style.background = isAct ? 'rgba(30, 41, 59, 0.8)' : 'rgba(30, 41, 59, 0.4)';
-  });
-
-  const titleEl = document.getElementById('ref-hero-title');
-  if (titleEl) titleEl.textContent = p.title;
-
-  const subEl = document.getElementById('ref-hero-subtitle');
-  if (subEl) subEl.textContent = p.subtitle;
-
-  const pillEl = document.getElementById('ref-card-pill');
-  if (pillEl) pillEl.textContent = p.pill;
-
-  const nameEl = document.getElementById('ref-card-name');
-  if (nameEl) nameEl.textContent = p.name;
-
-  const metaEl = document.getElementById('ref-card-meta');
-  if (metaEl) metaEl.textContent = p.meta;
-
-  const savEl = document.getElementById('ref-card-savings');
-  if (savEl) savEl.innerHTML = `${p.savings} <span style="font-size: 13px; font-weight: 500; color: #a7f3d0;">${p.savingsSub}</span>`;
-
-  const billEl = document.getElementById('ref-card-bill');
-  if (billEl) billEl.innerHTML = `<span style="text-decoration: line-through; color: #94a3b8; font-size: 14px; margin-right: 6px;">${p.oldBill}</span> <span style="color: #38bdf8; font-size: 22px; font-weight: 900;">${p.newBill}</span>`;
-
-  const arrEl = document.getElementById('ref-spec-array');
-  if (arrEl) arrEl.innerHTML = p.array;
-
-  const batEl = document.getElementById('ref-spec-battery');
-  if (batEl) batEl.innerHTML = p.battery;
-
-  const backEl = document.getElementById('ref-spec-backup');
-  if (backEl) backEl.innerHTML = p.backup;
-
-  const cashEl = document.getElementById('ref-spec-cash');
-  if (cashEl) cashEl.innerHTML = p.cash;
-
-  // Also sync scenario cards and activeHub if matching
-  if (REGIONAL_HUBS[placeKey]) {
-    activeHub = placeKey;
-    document.querySelectorAll('.scenario-card').forEach(c => {
-      c.classList.toggle('active', c.dataset.scenario === placeKey);
-    });
-    const dropdown = document.getElementById('hub-selector-dropdown');
-    if (dropdown) dropdown.value = placeKey;
-    updateHubData();
-    drawDispatchChart();
-  }
-}
-
-function initPersonalPlaces() {
-  document.querySelectorAll('.btn-ref-place').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectPersonalPlace(btn.dataset.place);
-    });
-  });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-  initPersonalPlaces();
   initArkaAiCopilot();
   initCelestialTheme();
   initSpotlightCards();
