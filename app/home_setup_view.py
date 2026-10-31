@@ -142,6 +142,52 @@ def render_home_management_view() -> None:
         sell_val = c5.number_input("Grid Export Tariff (₹/kWh):", 0.0, 20.0, float(st.session_state.sim_sell), 0.5)
         loss_toggle = c6.checkbox("Include Physical Conversion Losses", value=True)
 
+        # ---- Live grid-meter readings (optional) -------------------------------------------------
+        # Without these the interval is a what-if over the sliders above and the surplus is simply
+        # generation minus demand. With them, the surplus is worked out from the meter by SEM's
+        # `solar_bounded_surplus` (vendored, see docs/OPEN_SOURCE_INTEGRATION_MAP.md): the export plus
+        # this EMS's own load draw, less the import and battery discharge the sun did not fund, clamped
+        # to the generation. That clamp is what stops a load running off the battery at night reading
+        # as surplus. The expander is collapsed, so the simulated path stays the default.
+        with st.expander(
+            "🔌 I have a live grid meter (optional) — compute the surplus from it instead of from the sliders",
+            expanded=False,
+        ):
+            st.caption(
+                "Enter what your meter and inverter are reading right now. Leave this closed for a "
+                "what-if: these fields change the surplus from an arithmetic guess into a reading, and "
+                "the result will say which of the two it used."
+            )
+            use_meter = st.checkbox("Use these readings for this interval", value=False, key="home_use_meter")
+            m1, m2, m3 = st.columns(3)
+            meter_export = m1.number_input("Grid export now (kW):", 0.0, 50.0, 0.0, 0.1, key="home_m_export")
+            meter_import = m2.number_input("Grid import now (kW):", 0.0, 50.0, 0.0, 0.1, key="home_m_import")
+            meter_own_draw = m3.number_input(
+                "This EMS's own controllable loads (kW):", 0.0, 50.0, 0.0, 0.1, key="home_m_draw",
+                help="Added back, because a controller that reads only the export chases its own tail as "
+                     "its loads switch on.",
+            )
+            m4, m5, m6 = st.columns(3)
+            meter_batt_dis = m4.number_input(
+                "Battery discharging now (kW):", 0.0, 50.0, 0.0, 0.1, key="home_m_bdis",
+                help="Power the sun did not make, so it comes off the pool the same way an import does.",
+            )
+            meter_batt_chg = m5.number_input(
+                "Battery charging now (kW):", 0.0, 50.0, 0.0, 0.1, key="home_m_bchg",
+                help="Above the backup reserve, this is power a higher-priority load may take instead — "
+                     "but only the share the sun is funding.",
+            )
+            meter_ev_draw = m6.number_input(
+                "Vehicle charger drawing now (kW):", 0.0, 50.0, 0.0, 0.1, key="home_m_ev",
+                help="A charger is decided before the household loads; its own grid draw is not charged "
+                     "against their pool.",
+            )
+            meter_commanded = st.checkbox(
+                "The battery is under an explicit or scheduled command (force charge, arbitrage window)",
+                value=False, key="home_m_cmd",
+                help="Such a command is honoured: nothing is reclaimed from it.",
+            )
+
         # Run Energy Balance Engine
         engine = HomeEnergyBalanceEngine(profile)
         telemetry = IntervalTelemetry(
@@ -150,7 +196,15 @@ def render_home_management_view() -> None:
             battery_soc_pct=soc_val,
             grid_import_price_inr=buy_val,
             grid_export_price_inr=sell_val,
-            measurement_mode=MeasurementMode.SIMULATION,
+            # A reading the person typed is not a measurement from hardware, and must not be labelled one.
+            measurement_mode=MeasurementMode.USER_ENTERED if use_meter else MeasurementMode.SIMULATION,
+            grid_export_kw=meter_export if use_meter else None,
+            grid_import_kw=meter_import if use_meter else None,
+            battery_discharge_kw=meter_batt_dis if use_meter else None,
+            battery_charge_kw=meter_batt_chg if use_meter else None,
+            controllable_draw_kw=meter_own_draw if use_meter else 0.0,
+            ev_draw_kw=meter_ev_draw if use_meter else 0.0,
+            battery_commanded=meter_commanded if use_meter else False,
         )
 
         result = engine.evaluate_interval(telemetry, enable_losses=loss_toggle)
@@ -175,6 +229,35 @@ def render_home_management_view() -> None:
             f"₹{result.net_cost_inr:+.2f}",
             delta="Energy Self-Sufficient" if result.net_cost_inr <= 0 else "Grid Dependent",
             delta_color="normal" if result.net_cost_inr <= 0 else "inverse",
+        )
+
+        # The two figures that exist because of the vendored surplus arithmetic. Shown side by side on
+        # purpose: they are different quantities and the page says so, because conflating them is what
+        # breaks the energy balance.
+        s1, s2, s3 = st.columns(3)
+        s1.metric(
+            "📐 Surplus, for the books",
+            f"{result.gross_surplus_kw:.2f} kW",
+            help="Generation less the home's own load. The accounting figure: everything below has to "
+                 "add up against it, which is what the first-law check proves.",
+        )
+        s2.metric(
+            "🎚️ Surplus the EMS will use",
+            f"{result.allocatable_surplus_kw:.2f} kW",
+            delta="from the meter" if telemetry.has_grid_meter else "from the sliders",
+            delta_color="off",
+            help="How much the EMS is willing to switch loads onto. With a live meter this is SEM's "
+                 "solar_bounded_surplus (vendored): clamped to what the sun is producing, so a load "
+                 "running off the battery at night is not mistaken for free solar. Whatever it withholds "
+                 "is not lost — it leaves as export or curtailment.",
+        )
+        s3.metric(
+            "🚫 Curtailed",
+            f"{result.curtailed_solar_kw:.2f} kW",
+            delta="throttled at the inverter" if result.curtailed_solar_kw > 0 else "nothing wasted",
+            delta_color="inverse" if result.curtailed_solar_kw > 0 else "off",
+            help="Generation that could not be used, stored or exported. A zero-export home with a full "
+                 "battery curtails; this used to vanish from the energy balance instead of being counted.",
         )
 
         # Mathematical Energy Balance Proof
