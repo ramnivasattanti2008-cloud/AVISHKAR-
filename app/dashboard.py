@@ -309,23 +309,18 @@ def get_cached_flex(site_key: str):
 
 
 # ------------------ SIDEBAR (PERSONAL-FIRST HIERARCHY) ------------------
-st.sidebar.markdown("### ⚡ **UrjaSetu Energy Management Platform**")
+st.sidebar.markdown("### 🏡 **My Personal Home Energy App**")
 if "dashboard_mode_radio" not in st.session_state:
-    st.session_state["dashboard_mode_radio"] = "🚀 UrjaSetu Mission Control (PR UI)"
+    st.session_state["dashboard_mode_radio"] = "🏡 My Personal Home Solar & EMS"
 
 dashboard_mode = st.sidebar.radio(
     "Navigation Mode",
     [
-        "🚀 UrjaSetu Mission Control (PR UI)",
         "🏡 My Personal Home Solar & EMS",
         "🏛️ State & National Explorer (Macro Overview)",
     ],
     key="dashboard_mode_radio",
 )
-
-if "UrjaSetu Mission Control" in dashboard_mode:
-    render_pr_urjasetu_mission_control()
-    st.stop()
 
 if "State & National" in dashboard_mode or "Unified National" in dashboard_mode:
     render_urjasetu_dashboard()
@@ -930,6 +925,7 @@ TAB_NAMES = [
     "Health Monitor",
     "Lifetime Savings",
     "Surplus Engine",
+    "Mission Control",
 ]
 
 selected_tab = st.radio(
@@ -2503,3 +2499,10 @@ elif selected_tab == "Lifetime Savings":
 # ==============================================================================
 elif selected_tab == "Surplus Engine":
     render_integrations_dashboard()
+
+# ==============================================================================
+# TAB 14: URJASETU MISSION CONTROL (PR #3 INTEGRATION)
+# ==============================================================================
+elif selected_tab == "Mission Control":
+    render_pr_urjasetu_mission_control()
+
