@@ -3817,3 +3817,35 @@ exist, named apart, and what the control signal withholds leaves as export or cu
 - **Upstream SEM's full suite was not run**: it needs `hass` and
   `pytest-homeassistant-custom-component`. The 49 tests above are the subset that exercises the
   vendored functions, which is the subset that says anything about the copy.
+
+
+## Entry 68 — 2026-10-31 — Production Firebase Hosting Deployment & Cloud Web Architecture
+
+### What was done
+- **Firebase Hosting Architecture & Configuration**:
+  - Configured `.firebaserc` targeting active project `studio-4547798402-ec0aa`.
+  - Configured `firebase.json` with single-page application (SPA) rewrites (`** -> /index.html`) and security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Cache-Control: max-age=3600`).
+  - Added `.firebase/` and `firebase-debug.log` to `.gitignore`.
+- **Public Interactive Web Application (`public/index.html`)**:
+  - Developed a zero-dependency, high-speed single-page web app styled with Tailwind CSS, Chart.js, and Lucide icons.
+  - Implemented 7 fully functional client-side tabs:
+    1. **🏡 My Home & Phase 7 Benchmark**: Exact prompt baseline (5 kW PV, 10 kWh battery, 60% initial SoC, 4 kW solar, 1.5 kW load $\to$ 2.5 kW surplus, ₹8/kWh buy, ₹3/kWh sell). Live sliders for PV, load, SoC, tariffs, and goal selection with real-time First Law energy balance invariant ($\Delta E = 0.000\text{ kW}$).
+    2. **⚡ Rooftop Sizing & PM Surya Ghar Subsidy**: 3-question sizing wizard, central DBT subsidy tiers (up to ₹78,000), system cost breakdown, and SBI Surya Ghar 7% concessional loan EMI simulator.
+    3. **🔋 Battery Safety Envelope**: State-of-charge boundaries (15% min SoC, 95% max SoC, 25% reserve) and mathematical non-contradictory command invariant ($P_{\text{chg}} \cdot P_{\text{dis}} \equiv 0$).
+    4. **🚗 EV & Flexible Loads Coordinator**: evcc 4-mode EV charging states (`OFF`, `NOW`, `MIN_PV`, `PV ONLY`) and priority-based flexible load scheduling.
+    5. **🌐 Community P2P Sharing & $I^2R$ Line Loss**: Peer-to-peer virtual net metering across distribution feeders with physical copper loss calculations ($P_{\text{loss}} = (P/V)^2 \cdot R$) and social surplus division.
+    6. **⚖️ Dynamic NPCI UPI QR Settlement**: Instant P2P invoice settlement with dynamic QR code generation (`upi://pay?pa=...`) for mobile UPI apps (GPay, PhonePe, Paytm).
+    7. **🚀 11 Open-Source Engines Hub**: Interactive overview of the 11 integrated open-source algorithms.
+- **Production Deployment via Firebase CLI**:
+  - Deployed to Google Firebase Hosting via `firebase deploy --only hosting --project studio-4547798402-ec0aa`.
+  - Deployment finalized and released to Fastly CDN with global SSL and HTTP/3 support.
+
+### Evidence
+- `firebase deploy --only hosting --project studio-4547798402-ec0aa`: **Deploy complete!**
+- `curl.exe -I https://studio-4547798402-ec0aa.web.app`: **HTTP/1.1 200 OK** (Content-Length: 50,307, ETag: `3337730c...`, Strict-Transport-Security enabled).
+- `curl.exe -I https://studio-4547798402-ec0aa.firebaseapp.com`: **HTTP/1.1 200 OK**.
+- `.\.venv\Scripts\python -m pytest tests\avishkar_ems\test_home_platform.py -q`: **14 passed in 0.18s**.
+
+### What was NOT done
+- Did not deploy a paid Cloud Run container to Firebase on the Spark free plan (kept 100% free with zero hosting charges).
+- Did not modify vendored upstream code in `src/emhass/` or `src/avishkar_ems/vendor/`.

@@ -84,3 +84,8 @@ tools/
 Thumbs.db
 *.swp
 *.swo
+
+# Firebase runtime caches and debug logs
+.firebase/
+firebase-debug.log
+firebase-debug.*.log

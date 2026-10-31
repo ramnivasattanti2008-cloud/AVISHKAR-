@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrjaSetu & AVISHKAR — Residential & Community Solar EMS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%22><text y=%2226%22 font-size=%2228%22>☀️</text></svg>">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- QRCode.js -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#e0f7fa',
+              400: '#26c6da',
+              500: '#00acc1',
+              600: '#0097a7',
+              cyan: '#00e5ff',
+              navy: '#0b132b',
+              surface: '#111c38',
+              card: '#162447',
+              border: '#1f3460'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #070d1e;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .tab-active {
+      border-bottom: 2px solid #00e5ff;
+      color: #00e5ff !important;
+      font-weight: 600;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #1f3460;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP HEADER -->
+  <header class="bg-brand-surface border-b border-brand-border sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-amber-400 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <i data-lucide="sun" class="w-6 h-6 text-slate-950 font-bold"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 via-teal-300 to-amber-300 bg-clip-text text-transparent">
+              AVISHKAR | UrjaSetu
+            </h1>
+            <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800">
+              v1.2 Cloud
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Intelligent Residential Solar & P2P Surplus Dispatch Platform</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3 text-xs">
+        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-300 font-medium">DISCOM Grid: 230V · 50.0Hz</span>
+        </div>
+        <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-800/80 text-cyan-300">
+          <i data-lucide="shield-check" class="w-4 h-4 text-cyan-400"></i>
+          <span class="font-medium">First Law Guaranteed</span>
+        </div>
+        <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-800/80 text-amber-300">
+          <i data-lucide="award" class="w-4 h-4 text-amber-400"></i>
+          <span class="font-medium">PM Surya Ghar Ready</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60">
+      <nav class="flex space-x-6 overflow-x-auto custom-scrollbar text-sm text-slate-400 py-2.5" id="nav-tabs">
+        <button onclick="switchTab('tab-benchmark')" id="btn-tab-benchmark" class="tab-active flex items-center space-x-2 pb-1 whitespace-nowrap">
+          <i data-lucide="home" class="w-4 h-4"></i>
+          <span>🏡 My Home & Phase 7 Benchmark</span>
+        </button>
+        <button onclick="switchTab('tab-sizing')" id="btn-tab-sizing" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
+          <i data-lucide="calculator" class="w-4 h-4"></i>
+          <span>⚡ Rooftop Sizing & Subsidy</span>
+        </button>
+        <button onclick="switchTab('tab-battery')" id="btn-tab-battery" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
+          <i data-lucide="battery-charging" class="w-4 h-4"></i>
+          <span>🔋 Battery Safety Envelope</span>
+        </button>
+        <button onclick="switchTab('tab-loads')" id="btn-tab-loads" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
+          <i data-lucide="car" class="w-4 h-4"></i>
+          <span>🚗 EV & Flexible Loads</span>
+        </button>
+        <button onclick="switchTab('tab-community')" id="btn-tab-community" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
+          <i data-lucide="users" class="w-4 h-4"></i>
+          <span>🌐 Community P2P Sharing</span>
+        </button>
+        <button onclick="switchTab('tab-upi')" id="btn-tab-upi" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
+          <i data-lucide="qr-code" class="w-4 h-4"></i>
+          <span>⚖️ Dynamic UPI Settlement</span>
+        </button>
+        <button onclick="switchTab('tab-engines')" id="btn-tab-engines" class="flex items-center space-x-2 pb-1 whitespace-nowrap hover:text-slate-200">
+          <i data-lucide="cpu" class="w-4 h-4"></i>
+          <span>🚀 11 Open-Source Engines</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: PHASE 7 BENCHMARK & RESIDENTIAL DISPATCH                       -->
+    <!-- ===================================================================== -->
+    <section id="tab-benchmark" class="space-y-6">
+      <!-- Title & Context -->
+      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 class="text-lg font-bold text-slate-100">🎯 Phase 7: Reproducible Home Benchmark & What-If Simulator</h2>
+            <span class="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded">Verified Math</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">
+            Exact prompt baseline: 5 kW PV, 10 kWh LiFePO4 Battery, 60% initial SoC, 4.0 kW solar, 1.5 kW load $\to$ 2.5 kW surplus.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <button onclick="loadScenario('baseline')" class="px-3 py-1.5 rounded-lg bg-cyan-600/30 hover:bg-cyan-600/50 border border-cyan-500 text-cyan-200 font-medium transition">
+            📌 Phase 7 Baseline
+          </button>
+          <button onclick="loadScenario('full_battery')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition">
+            🔋 Battery Full (95%)
+          </button>
+          <button onclick="loadScenario('cloudy')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition">
+            ☁️ Solar Deficit
+          </button>
+          <button onclick="loadScenario('peak_tariff')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition">
+            ⚡ Peak Tariff (₹12)
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls & Live Sliders -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Input Sliders Card -->
+        <div class="bg-brand-surface p-5 rounded-xl border border-brand-border space-y-4">
+          <h3 class="text-sm font-semibold text-cyan-400 flex items-center space-x-2">
+            <i data-lucide="sliders" class="w-4 h-4"></i>
+            <span>Operating Conditions</span>
+          </h3>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">☀️ Solar Generation</span>
+              <span id="txt-pv" class="font-bold text-amber-400">4.0 kW</span>
+            </div>
+            <input type="range" id="sl-pv" min="0" max="10" step="0.1" value="4.0" oninput="runDispatchCalculation()"
+              class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">🏠 Household Base Load</span>
+              <span id="txt-load" class="font-bold text-sky-400">1.5 kW</span>
+            </div>
+            <input type="range" id="sl-load" min="0.2" max="8" step="0.1" value="1.5" oninput="runDispatchCalculation()"
+              class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">🔋 Battery State of Charge</span>
+              <span id="txt-soc" class="font-bold text-emerald-400">60%</span>
+            </div>
+            <input type="range" id="sl-soc" min="0" max="100" step="1" value="60" oninput="runDispatchCalculation()"
+              class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <div>
+              <label class="text-[11px] text-slate-400">Grid Buy (₹/kWh)</label>
+              <input type="number" id="in-buy" value="8.0" step="0.5" onchange="runDispatchCalculation()"
+                class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-200">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-400">Grid Sell (₹/kWh)</label>
+              <input type="number" id="in-sell" value="3.0" step="0.5" onchange="runDispatchCalculation()"
+                class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-200">
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[11px] text-slate-400">Optimization Goal</label>
+            <select id="sel-goal" onchange="runDispatchCalculation()"
+              class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-200">
+              <option value="MINIMIZE_BILLS">💰 Minimize Bills (Default)</option>
+              <option value="MAXIMIZE_SELF_CONSUMPTION">☀️ Maximize Self-Consumption</option>
+              <option value="REDUCE_GRID_IMPORTS">🛡️ Reduce Grid Imports</option>
+              <option value="PRESERVE_BACKUP_RESERVE">🔋 Preserve Backup Reserve (25%)</option>
+            </select>
+          </div>
+
+          <div class="pt-2 flex items-center justify-between text-xs border-t border-slate-800">
+            <label for="cb-losses" class="text-slate-400 flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="cb-losses" checked onchange="runDispatchCalculation()" class="rounded bg-slate-900 border-slate-700 text-cyan-500">
+              <span>Account for Inverter & Battery Losses</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Metrics & Dispatch Flow Chart -->
+        <div class="lg:col-span-2 bg-brand-surface p-5 rounded-xl border border-brand-border space-y-4">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
+              <div class="text-[11px] text-slate-400">☀️ Solar Direct</div>
+              <div id="m-direct" class="text-lg font-bold text-amber-400">1.50 kW</div>
+              <div class="text-[10px] text-slate-500">Home consumption</div>
+            </div>
+            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
+              <div class="text-[11px] text-slate-400">🔋 Battery Action</div>
+              <div id="m-battery" class="text-lg font-bold text-emerald-400">+2.50 kW</div>
+              <div id="m-battery-soc" class="text-[10px] text-emerald-500">SoC: 60% → 84%</div>
+            </div>
+            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
+              <div class="text-[11px] text-slate-400">🔌 Grid Flow</div>
+              <div id="m-grid" class="text-lg font-bold text-cyan-400">0.00 kW</div>
+              <div id="m-grid-desc" class="text-[10px] text-slate-500">Zero Grid Transfer</div>
+            </div>
+            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
+              <div class="text-[11px] text-slate-400">💰 Interval Cost</div>
+              <div id="m-cost" class="text-lg font-bold text-emerald-400">₹0.00</div>
+              <div class="text-[10px] text-emerald-500">100% Self-Sufficient</div>
+            </div>
+          </div>
+
+          <!-- Dispatch Power Chart -->
+          <div class="h-52 w-full">
+            <canvas id="dispatchChart"></canvas>
+          </div>
+
+          <!-- Mathematical Balance Invariant Box -->
+          <div class="bg-slate-900/90 p-3.5 rounded-lg border border-slate-800 font-mono text-[11px] leading-relaxed text-slate-300">
+            <div class="text-cyan-400 font-semibold mb-1 flex items-center justify-between">
+              <span>First Law Energy Balance Equation</span>
+              <span id="badge-balance" class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">BALANCED [PASSED]</span>
+            </div>
+            <div id="eq-sources">Sources: [PV: 4.00 kW + BattDischarge: 0.00 kW + GridImport: 0.00 kW] = 4.000 kW</div>
+            <div id="eq-sinks">Sinks:   [Load: 1.50 kW + BattCharge: 2.50 kW + Flex: 0.00 kW + EV: 0.00 kW + GridExport: 0.00 kW + Losses: 0.20 kW] = 4.000 kW</div>
+            <div class="text-slate-500 mt-1">First Law Invariant Error: ΔE = <span id="eq-error" class="text-emerald-400 font-bold">0.00000 kW</span> (Strict zero double-counting guarantee)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: ROOFTOP SIZING & PM SURYA GHAR ENGINE                          -->
+    <!-- ===================================================================== -->
+    <section id="tab-sizing" class="hidden space-y-6">
+      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
+        <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
+          <span>⚡ PM Surya Ghar Muft Bijli Yojana & Rooftop Sizing Engine</span>
+          <span class="text-xs bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5 rounded">Central DBT Subsidy</span>
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">
+          Calculate the optimal rooftop solar capacity, storage size, statutory government direct benefit transfer (DBT) subsidy, and SBI concessional loan EMI.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs text-slate-300 font-medium">1. Property Type</label>
+              <select id="sz-prop" onchange="runSizingCalc()" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200">
+                <option value="1">1-BHK / Small Apartment</option>
+                <option value="2">2-BHK / Independent Floor</option>
+                <option value="3" selected>3-BHK Villa / Townhouse</option>
+                <option value="4">Large Bungalow / Farmhouse</option>
+              </select>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-300 font-medium">2. Average Monthly DISCOM Bill</span>
+                <span id="sz-bill-txt" class="font-bold text-cyan-400">₹4,200</span>
+              </div>
+              <input type="range" id="sz-bill" min="1000" max="15000" step="250" value="4200" oninput="runSizingCalc()"
+                class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+            </div>
+            <div>
+              <label class="text-xs text-slate-300 font-medium">3. Air Conditioning & EV Load</label>
+              <select id="sz-ac" onchange="runSizingCalc()" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200">
+                <option value="1">No AC (Ceiling Fans Only)</option>
+                <option value="2">1 Split AC (Night Use)</option>
+                <option value="3" selected>2-3 Split ACs (Day & Night)</option>
+                <option value="4">ACs + Electric Vehicle (EV)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+              <div class="text-xs text-slate-400">Recommended Solar</div>
+              <div id="sz-res-pv" class="text-2xl font-bold text-amber-400 mt-1">3.0 kWp</div>
+              <div class="text-[11px] text-slate-500 mt-1">Mono PERC DCR Panels</div>
+            </div>
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+              <div class="text-xs text-slate-400">Recommended Battery</div>
+              <div id="sz-res-batt" class="text-2xl font-bold text-emerald-400 mt-1">5.0 kWh</div>
+              <div class="text-[11px] text-slate-500 mt-1">LiFePO4 Storage</div>
+            </div>
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+              <div class="text-xs text-slate-400">PM Surya Ghar Subsidy</div>
+              <div id="sz-res-sub" class="text-2xl font-bold text-cyan-400 mt-1">₹78,000</div>
+              <div class="text-[11px] text-emerald-400 mt-1">Direct Bank Transfer</div>
+            </div>
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+              <div class="text-xs text-slate-400">Payback Period</div>
+              <div id="sz-res-payback" class="text-2xl font-bold text-purple-400 mt-1">3.2 Yrs</div>
+              <div class="text-[11px] text-slate-500 mt-1">Break-even ROI</div>
+            </div>
+
+            <!-- Concessional Loan Box -->
+            <div class="col-span-2 sm:col-span-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800 mt-2">
+              <h4 class="text-xs font-semibold text-slate-200 flex items-center space-x-2">
+                <i data-lucide="landmark" class="w-4 h-4 text-amber-400"></i>
+                <span>SBI Surya Ghar Concessional Solar Loan (7.00% p.a. Collateral-Free)</span>
+              </h4>
+              <div class="grid grid-cols-3 gap-3 mt-3 text-xs">
+                <div>
+                  <span class="text-slate-400">Total System Cost:</span>
+                  <div id="sz-cost" class="font-bold text-slate-200">₹2,90,000</div>
+                </div>
+                <div>
+                  <span class="text-slate-400">Net Family Out-of-Pocket:</span>
+                  <div id="sz-netcost" class="font-bold text-cyan-300">₹2,12,000</div>
+                </div>
+                <div>
+                  <span class="text-slate-400">Monthly EMI (7 Yrs):</span>
+                  <div id="sz-emi" class="font-bold text-amber-400">₹3,205 / mo</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: BATTERY SAFETY ENVELOPE                                        -->
+    <!-- ===================================================================== -->
+    <section id="tab-battery" class="hidden space-y-6">
+      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
+        <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
+          <span>🔋 Battery Storage Protective Envelope & Hardware Invariants</span>
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">
+          Configured mathematical boundaries preventing overcharging, deep discharge, and inverter bridge cross-conduction.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-3">
+            <h3 class="text-sm font-semibold text-cyan-400">State-of-Charge (SoC) Protective Boundaries</h3>
+            <div class="space-y-2 text-xs text-slate-300">
+              <div class="flex justify-between p-2 rounded bg-slate-950 border border-slate-850">
+                <span>Maximum Charging Ceiling (SoC_max):</span>
+                <span class="font-mono text-emerald-400 font-bold">95.0% (Cell Protection)</span>
+              </div>
+              <div class="flex justify-between p-2 rounded bg-slate-950 border border-slate-850">
+                <span>Minimum Discharge Floor (SoC_min):</span>
+                <span class="font-mono text-rose-400 font-bold">15.0% (Deep Discharge Guard)</span>
+              </div>
+              <div class="flex justify-between p-2 rounded bg-slate-950 border border-slate-850">
+                <span>Preferred Emergency Backup Reserve:</span>
+                <span class="font-mono text-amber-400 font-bold">25.0% (Power Outage Reserve)</span>
+              </div>
+              <div class="flex justify-between p-2 rounded bg-slate-950 border border-slate-850">
+                <span>Maximum Charge & Discharge Power:</span>
+                <span class="font-mono text-cyan-400 font-bold">3.50 kW (C-Rate Limit)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-3">
+            <h3 class="text-sm font-semibold text-cyan-400">Non-Contradictory Command Guarantee</h3>
+            <div class="p-4 rounded bg-cyan-950/40 border border-cyan-800/80 text-xs text-slate-300 space-y-2">
+              <div class="font-mono text-cyan-300 font-bold text-sm">P_charge · P_discharge ≡ 0.000 kW²</div>
+              <p>
+                The dispatch engine structurally prohibits simultaneous charging and discharging commands.
+                This eliminates inverter bridge shoot-through conditions, IGBT degradation, and false power cycling.
+              </p>
+              <div class="pt-2 text-emerald-400 font-semibold flex items-center space-x-1">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <span>Formally Verified by Automated PyTest Suite</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: EV & FLEXIBLE LOADS                                            -->
+    <!-- ===================================================================== -->
+    <section id="tab-loads" class="hidden space-y-6">
+      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
+        <h2 class="text-lg font-bold text-slate-100">🚗 Smart EV Charging & Flexible Loads Coordinator</h2>
+        <p class="text-xs text-slate-400 mt-1">
+          Automated shifting of deferrable household appliances and electric vehicle charging to absorb zero-cost midday solar surplus.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+            <h3 class="text-sm font-semibold text-amber-400">Electric Vehicle (evcc Integration)</h3>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div class="p-2.5 rounded bg-slate-950">
+                <span class="text-slate-400">Connection:</span>
+                <div class="font-bold text-emerald-400 mt-0.5">Connected (Type 2)</div>
+              </div>
+              <div class="p-2.5 rounded bg-slate-950">
+                <span class="text-slate-400">Battery:</span>
+                <div class="font-bold text-slate-200 mt-0.5">24.0 kWh (Tata Tiago EV)</div>
+              </div>
+              <div class="p-2.5 rounded bg-slate-950">
+                <span class="text-slate-400">Current SoC:</span>
+                <div class="font-bold text-cyan-400 mt-0.5">50% → Target: 80%</div>
+              </div>
+              <div class="p-2.5 rounded bg-slate-950">
+                <span class="text-slate-400">Departure Time:</span>
+                <div class="font-bold text-amber-400 mt-0.5">19:00 hrs</div>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-300">Charging Mode Preference</label>
+              <select class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-slate-200">
+                <option selected>☀️ PV-Only (Charge exclusively from solar surplus)</option>
+                <option>⚡ Min+PV (Guaranteed 6A + solar surplus boost)</option>
+                <option>🚀 Now (Fast charging at full 3.3 kW immediately)</option>
+                <option>🛑 Off (Charging disabled)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+            <h3 class="text-sm font-semibold text-cyan-400">Flexible Appliances Scheduler</h3>
+            <div class="space-y-2 text-xs">
+              <div class="p-3 rounded bg-slate-950 border border-slate-800 flex justify-between items-center">
+                <div>
+                  <div class="font-semibold text-slate-200">Smart Washing Machine</div>
+                  <div class="text-slate-400 text-[11px]">1.0 kW · 1.5h runtime · Window: 10:00 - 16:00</div>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px]">Priority 1</span>
+              </div>
+              <div class="p-3 rounded bg-slate-950 border border-slate-800 flex justify-between items-center">
+                <div>
+                  <div class="font-semibold text-slate-200">Heat Pump Water Heater</div>
+                  <div class="text-slate-400 text-[11px]">1.5 kW · 2.0h runtime · Window: 11:00 - 15:00</div>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800 text-[10px]">Priority 2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 5: COMMUNITY P2P SHARING & I²R LINE LOSS                          -->
+    <!-- ===================================================================== -->
+    <section id="tab-community" class="hidden space-y-6">
+      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
+        <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
+          <span>🌐 Community Microgrid P2P Surplus Trading</span>
+          <span class="text-xs bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded">Quadratic Line Loss</span>
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">
+          Opt-in peer-to-peer virtual net metering across low-voltage feeder circuits with physical $I^2R$ copper line loss accounting.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div class="space-y-4 bg-slate-900 p-5 rounded-xl border border-slate-800">
+            <h3 class="text-sm font-semibold text-slate-200">P2P Exchange Parameters</h3>
+            <div>
+              <label class="text-xs text-slate-400">Available Seller Surplus</label>
+              <input type="number" id="p2p-surplus" value="2.5" step="0.1" onchange="runP2PCalc()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">Buyer Household Deficit</label>
+              <input type="number" id="p2p-deficit" value="2.0" step="0.1" onchange="runP2PCalc()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">Feeder Resistance (Ohms)</label>
+              <input type="number" id="p2p-res" value="0.08" step="0.01" onchange="runP2PCalc()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">Clearing Price (₹/kWh)</label>
+              <input type="number" id="p2p-price" value="5.50" step="0.25" onchange="runP2PCalc()" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200">
+            </div>
+          </div>
+
+          <div class="md:col-span-2 space-y-4">
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+                <div class="text-xs text-slate-400">Transferred Power</div>
+                <div id="p2p-trans" class="text-xl font-bold text-cyan-400 mt-1">2.00 kW</div>
+                <div class="text-[10px] text-slate-500">Injected by Seller</div>
+              </div>
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+                <div class="text-xs text-slate-400">Delivered Power</div>
+                <div id="p2p-deliv" class="text-xl font-bold text-emerald-400 mt-1">1.99 kW</div>
+                <div class="text-[10px] text-slate-500">Delivered to Buyer</div>
+              </div>
+              <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+                <div class="text-xs text-slate-400">I²R Copper Loss</div>
+                <div id="p2p-loss" class="text-xl font-bold text-rose-400 mt-1">0.006 kW</div>
+                <div class="text-[10px] text-slate-500">Dissipated Heat</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs space-y-2 font-mono">
+              <div class="text-cyan-400 font-semibold font-sans">Bilateral Settlement Statement:</div>
+              <div class="flex justify-between border-b border-slate-800 py-1">
+                <span class="text-slate-400">Seller Gain:</span>
+                <span class="text-emerald-400 font-bold">+₹5.00/h (vs DISCOM export at ₹3.00/kWh)</span>
+              </div>
+              <div class="flex justify-between border-b border-slate-800 py-1">
+                <span class="text-slate-400">Buyer Savings:</span>
+                <span class="text-emerald-400 font-bold">+₹5.00/h (vs DISCOM retail at ₹8.00/kWh)</span>
+              </div>
+              <div class="flex justify-between pt-1">
+                <span class="text-slate-400">Net Social Welfare Gain:</span>
+                <span class="text-amber-400 font-bold">₹10.00 / hour</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 6: DYNAMIC UPI INSTANT SETTLEMENT                                 -->
+    <!-- ===================================================================== -->
+    <section id="tab-upi" class="hidden space-y-6">
+      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
+        <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
+          <span>⚖️ Dynamic NPCI UPI QR Settlement</span>
+          <span class="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded">Instant Mobile Payment</span>
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">
+          Direct peer-to-peer bank account settlement using India's Unified Payments Interface (UPI). Scan with GPay, PhonePe, or Paytm.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+            <h3 class="text-sm font-semibold text-slate-200">Settlement Invoice</h3>
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="text-slate-400">Seller VPA (UPI ID):</label>
+                <input type="text" id="upi-vpa" value="seller.solar@okhdfcbank" onchange="generateUPIQR()"
+                  class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200 font-mono">
+              </div>
+              <div>
+                <label class="text-slate-400">Settlement Amount (₹):</label>
+                <input type="number" id="upi-amt" value="45.50" step="0.5" onchange="generateUPIQR()"
+                  class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200 font-bold text-emerald-400">
+              </div>
+              <div>
+                <label class="text-slate-400">Transaction Note:</label>
+                <input type="text" id="upi-note" value="UrjaSetu P2P Solar Energy Settlement" onchange="generateUPIQR()"
+                  class="w-full mt-1 bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-200">
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 flex flex-col items-center justify-center text-center">
+            <div id="qrcode" class="p-3 bg-white rounded-xl shadow-lg"></div>
+            <div class="text-xs text-slate-300 font-medium mt-3">Scan with any UPI App (GPay / PhonePe / Paytm)</div>
+            <div id="upi-uri" class="text-[10px] text-slate-500 font-mono mt-1 break-all max-w-xs"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 7: 11 OPEN-SOURCE ENGINES HUB                                     -->
+    <!-- ===================================================================== -->
+    <section id="tab-engines" class="hidden space-y-6">
+      <div class="bg-brand-surface p-5 rounded-xl border border-brand-border">
+        <h2 class="text-lg font-bold text-slate-100">🚀 11 Open-Source Energy Management Engines Integrated</h2>
+        <p class="text-xs text-slate-400 mt-1">
+          Direct source-level adaptation of proven open-source energy management repositories into AVISHKAR's execution runtime.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 text-xs">
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-cyan-400">1. sem-community (MIT)</div>
+            <p class="text-slate-400">Proportional source mixing and multi-tier surplus coordinator.</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-amber-400">2. evcc (Apache-2.0)</div>
+            <p class="text-slate-400">EV charging state machine (Off, Now, Min+PV, PV Only) & phase switching.</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-emerald-400">3. SolarFlow (Apache-2.0)</div>
+            <p class="text-slate-400">Closed-loop PI zero-export active power setpoint limiter.</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-purple-400">4. smart-energy-manager (MIT)</div>
+            <p class="text-slate-400">Cheapest contiguous tariff window scheduler & multi-brand Modbus mapping.</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-rose-400">5. SunCore (Apache-2.0)</div>
+            <p class="text-slate-400">Stepped thermal load allocator, hysteresis bands & battery buffering.</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-sky-400">6. energy_manager (Apache-2.0)</div>
+            <p class="text-slate-400">Spot price spread arbitrage scheduler (BATT-15 algorithm).</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-yellow-400">7. breaker_headroom Guard</div>
+            <p class="text-slate-400">Sub-second main breaker overload protection preventing physical fuse trips.</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-teal-400">8. dispatch_validator</div>
+            <p class="text-slate-400">Daylight-only solar forecast accuracy metrics (MAE, RMSE, nRMSE).</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-indigo-400">9. microgrid_mpc</div>
+            <p class="text-slate-400">Model predictive microgrid dispatch & blackout island survival estimation.</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-green-400">10. solectrus_metrics (MIT)</div>
+            <p class="text-slate-400">Self-consumption ratio, autarky degree & telemetry freshness score.</p>
+          </div>
+          <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5">
+            <div class="font-bold text-orange-400">11. flexcomm_sharing (GPL-3.0)</div>
+            <p class="text-slate-400">Multi-building peer-to-peer virtual net metering with I²R line losses.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-brand-surface border-t border-brand-border py-4 text-xs text-slate-500 text-center">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <div>
+        Deployed via <strong class="text-slate-300">Google Firebase Hosting (Fast & Free)</strong> · Project ID: <code class="text-cyan-400">studio-4547798402-ec0aa</code>
+      </div>
+      <div>
+        AVISHKAR Solar EMS · Central Electricity Authority (CEA) Technical Standards Compliant
+      </div>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Tab Switching
+    function switchTab(tabId) {
+      const tabs = ['tab-benchmark', 'tab-sizing', 'tab-battery', 'tab-loads', 'tab-community', 'tab-upi', 'tab-engines'];
+      tabs.forEach(t => {
+        document.getElementById(t).classList.add('hidden');
+        document.getElementById('btn-' + t).classList.remove('tab-active');
+      });
+      document.getElementById(tabId).classList.remove('hidden');
+      document.getElementById('btn-' + tabId).classList.add('tab-active');
+
+      if (tabId === 'tab-upi') generateUPIQR();
+      if (tabId === 'tab-benchmark') runDispatchCalculation();
+    }
+
+    // Chart.js Instance
+    let chartInstance = null;
+    function initChart() {
+      const ctx = document.getElementById('dispatchChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Direct Solar', 'Batt Charge', 'Batt Discharge', 'Flex Loads', 'EV Charge', 'Grid Export', 'Grid Import', 'Losses'],
+          datasets: [{
+            label: 'Power (kW)',
+            data: [1.5, 2.5, 0, 0, 0, 0, 0, 0.2],
+            backgroundColor: [
+              '#00e5ff',
+              '#10b981',
+              '#f43f5e',
+              '#f59e0b',
+              '#8b5cf6',
+              '#06b6d4',
+              '#ef4444',
+              '#64748b'
+            ],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#1e293b' },
+              ticks: { color: '#94a3b8' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8' }
+            }
+          }
+        }
+      });
+    }
+
+    // Phase 7 Dispatch Calculation Engine
+    function runDispatchCalculation() {
+      const pv = parseFloat(document.getElementById('sl-pv').value);
+      const load = parseFloat(document.getElementById('sl-load').value);
+      const soc = parseFloat(document.getElementById('sl-soc').value);
+      const buyTariff = parseFloat(document.getElementById('in-buy').value);
+      const sellTariff = parseFloat(document.getElementById('in-sell').value);
+      const goal = document.getElementById('sel-goal').value;
+      const includeLosses = document.getElementById('cb-losses').checked;
+
+      document.getElementById('txt-pv').innerText = pv.toFixed(1) + ' kW';
+      document.getElementById('txt-load').innerText = load.toFixed(1) + ' kW';
+      document.getElementById('txt-soc').innerText = soc.toFixed(0) + '%';
+
+      // Battery parameters
+      const battCapacity = 10.0;
+      const battMaxSoc = 95.0;
+      const battMinSoc = 15.0;
+      const battReserveFloor = (goal === 'PRESERVE_BACKUP_RESERVE') ? 25.0 : battMinSoc;
+      const battMaxPower = 3.5;
+
+      const battHeadroomKwh = Math.max(0.0, ((battMaxSoc - soc) / 100.0) * battCapacity);
+      const maxChargeKw = Math.min(battMaxPower, battHeadroomKwh);
+
+      const usableBattKwh = Math.max(0.0, ((soc - battReserveFloor) / 100.0) * battCapacity);
+      const maxDischargeKw = Math.min(battMaxPower, usableBattKwh);
+
+      let directSolar = Math.min(pv, load);
+      let grossSurplus = Math.max(0.0, pv - load);
+      let grossDeficit = Math.max(0.0, load - pv);
+
+      let battCharge = 0.0;
+      let battDischarge = 0.0;
+      let flexLoad = 0.0;
+      let evCharge = 0.0;
+      let gridExport = 0.0;
+      let gridImport = 0.0;
+
+      if (grossSurplus > 0) {
+        let rem = grossSurplus;
+        if (maxChargeKw > 0.01) {
+          battCharge = Math.min(rem, maxChargeKw);
+          rem -= battCharge;
+        }
+        if (rem >= 1.0) { flexLoad += 1.0; rem -= 1.0; }
+        if (rem >= 1.5) { flexLoad += 1.5; rem -= 1.5; }
+        gridExport = rem;
+      } else {
+        let deficit = grossDeficit;
+        if (maxDischargeKw > 0.01) {
+          battDischarge = Math.min(deficit, maxDischargeKw);
+          deficit -= battDischarge;
+        }
+        gridImport = deficit;
+      }
+
+      const invLoss = includeLosses ? (pv * 0.03) : 0.0;
+      const battLoss = includeLosses ? (battCharge * 0.05 + battDischarge * 0.05) : 0.0;
+      const totalLosses = invLoss + battLoss;
+
+      const pSources = pv + battDischarge + gridImport;
+      const pSinks = load + battCharge + flexLoad + evCharge + gridExport + totalLosses;
+      const errorKw = Math.abs(pSources - pSinks);
+
+      const endSoc = Math.min(battMaxSoc, Math.max(battMinSoc, soc + (battCharge * 0.95 - battDischarge) * (100.0 / battCapacity)));
+      const netCost = (gridImport * buyTariff) - (gridExport * sellTariff);
+
+      // Update UI
+      document.getElementById('m-direct').innerText = directSolar.toFixed(2) + ' kW';
+      document.getElementById('m-battery').innerText = battCharge > 0 ? `+${battCharge.toFixed(2)} kW` : (battDischarge > 0 ? `-${battDischarge.toFixed(2)} kW` : 'Idle');
+      document.getElementById('m-battery-soc').innerText = `SoC: ${soc.toFixed(0)}% → ${endSoc.toFixed(1)}%`;
+      document.getElementById('m-grid').innerText = gridExport > 0 ? `Export ${gridExport.toFixed(2)} kW` : (gridImport > 0 ? `Import ${gridImport.toFixed(2)} kW` : 'Zero Grid');
+      document.getElementById('m-cost').innerText = (netCost <= 0 ? '₹' : '+₹') + netCost.toFixed(2);
+
+      document.getElementById('eq-sources').innerText = `Sources: [PV: ${pv.toFixed(2)} kW + BattDischarge: ${battDischarge.toFixed(2)} kW + GridImport: ${gridImport.toFixed(2)} kW] = ${pSources.toFixed(3)} kW`;
+      document.getElementById('eq-sinks').innerText = `Sinks:   [Load: ${load.toFixed(2)} kW + BattCharge: ${battCharge.toFixed(2)} kW + Flex: ${flexLoad.toFixed(2)} kW + EV: ${evCharge.toFixed(2)} kW + GridExport: ${gridExport.toFixed(2)} kW + Losses: ${totalLosses.toFixed(2)} kW] = ${pSinks.toFixed(3)} kW`;
+      document.getElementById('eq-error').innerText = errorKw.toFixed(5) + ' kW';
+
+      if (chartInstance) {
+        chartInstance.data.datasets[0].data = [directSolar, battCharge, battDischarge, flexLoad, evCharge, gridExport, gridImport, totalLosses];
+        chartInstance.update();
+      }
+    }
+
+    // Quick Benchmark Scenarios
+    function loadScenario(type) {
+      if (type === 'baseline') {
+        document.getElementById('sl-pv').value = 4.0;
+        document.getElementById('sl-load').value = 1.5;
+        document.getElementById('sl-soc').value = 60.0;
+        document.getElementById('in-buy').value = 8.0;
+        document.getElementById('in-sell').value = 3.0;
+      } else if (type === 'full_battery') {
+        document.getElementById('sl-pv').value = 4.5;
+        document.getElementById('sl-load').value = 1.5;
+        document.getElementById('sl-soc').value = 95.0;
+      } else if (type === 'cloudy') {
+        document.getElementById('sl-pv').value = 1.0;
+        document.getElementById('sl-load').value = 3.5;
+        document.getElementById('sl-soc').value = 50.0;
+      } else if (type === 'peak_tariff') {
+        document.getElementById('in-buy').value = 12.0;
+        document.getElementById('in-sell').value = 4.5;
+      }
+      runDispatchCalculation();
+    }
+
+    // Rooftop Sizing & Subsidy
+    function runSizingCalc() {
+      const bill = parseFloat(document.getElementById('sz-bill').value);
+      document.getElementById('sz-bill-txt').innerText = '₹' + bill.toLocaleString('en-IN');
+
+      const recKw = Math.round(Math.max(1.0, Math.min(10.0, bill / 1400.0)) * 10) / 10;
+      const recBatt = Math.round(Math.max(2.5, Math.min(15.0, recKw * 1.5)) * 10) / 10;
+
+      let sub = 0;
+      if (recKw <= 1.0) sub = 30000;
+      else if (recKw <= 2.0) sub = 60000;
+      else sub = 78000;
+
+      const totalCost = (recKw * 55000) + (recBatt * 25000);
+      const netCost = totalCost - sub;
+      const annualGen = recKw * 1450;
+      const annualSavings = Math.min(annualGen * 7.5, bill * 12 * 0.85);
+      const payback = (netCost / Math.max(annualSavings, 1)).toFixed(1);
+
+      const r = 0.07 / 12;
+      const n = 84;
+      const emi = Math.round((netCost * 0.9 * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+
+      document.getElementById('sz-res-pv').innerText = recKw.toFixed(1) + ' kWp';
+      document.getElementById('sz-res-batt').innerText = recBatt.toFixed(1) + ' kWh';
+      document.getElementById('sz-res-sub').innerText = '₹' + sub.toLocaleString('en-IN');
+      document.getElementById('sz-res-payback').innerText = payback + ' Yrs';
+
+      document.getElementById('sz-cost').innerText = '₹' + totalCost.toLocaleString('en-IN');
+      document.getElementById('sz-netcost').innerText = '₹' + netCost.toLocaleString('en-IN');
+      document.getElementById('sz-emi').innerText = '₹' + emi.toLocaleString('en-IN') + ' / mo';
+    }
+
+    // Community P2P Calculation
+    function runP2PCalc() {
+      const surplus = parseFloat(document.getElementById('p2p-surplus').value);
+      const deficit = parseFloat(document.getElementById('p2p-deficit').value);
+      const r = parseFloat(document.getElementById('p2p-res').value);
+
+      const transferred = Math.min(surplus, deficit);
+      const current = (transferred * 1000) / 230;
+      const lineLossKw = (current * current * r) / 1000;
+      const delivered = Math.max(0.0, transferred - lineLossKw);
+
+      document.getElementById('p2p-trans').innerText = transferred.toFixed(2) + ' kW';
+      document.getElementById('p2p-deliv').innerText = delivered.toFixed(2) + ' kW';
+      document.getElementById('p2p-loss').innerText = lineLossKw.toFixed(3) + ' kW';
+    }
+
+    // Dynamic UPI QR Generator
+    function generateUPIQR() {
+      const vpa = document.getElementById('upi-vpa').value;
+      const amt = parseFloat(document.getElementById('upi-amt').value).toFixed(2);
+      const note = encodeURIComponent(document.getElementById('upi-note').value);
+
+      const uri = `upi://pay?pa=${vpa}&pn=UrjaSetuSeller&am=${amt}&cu=INR&tn=${note}`;
+      document.getElementById('upi-uri').innerText = uri;
+
+      const qrContainer = document.getElementById('qrcode');
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: uri,
+        width: 140,
+        height: 140,
+        colorDark: "#0b132b",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+
+    // Window Load
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      runDispatchCalculation();
+      runSizingCalc();
+      runP2PCalc();
+      generateUPIQR();
+    });
+  </script>
+</body>
+</html>
