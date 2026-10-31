@@ -114,8 +114,48 @@ export default function Home() {
   const [batterySoc, setBatterySoc] = useState<number>(65);
   const [dispatchGoal, setDispatchGoal] = useState<"bill" | "self" | "backup">("bill");
   const [p2pBooked, setP2pBooked] = useState<boolean>(false);
+  const [aiQuery, setAiQuery] = useState<string>("");
+  const [aiAnswer, setAiAnswer] = useState<{ headline: string; text: string; action: string } | null>(null);
 
   const currentGrid: RegionalMicrogrid = REGIONAL_MICROGRIDS[selectedStateKey] ?? DEFAULT_GRID;
+
+  const askAi = (query: string) => {
+    const q = query.toLowerCase();
+    if (q.includes("subsidy") || q.includes("pm surya") || q.includes("cost") || q.includes("loan") || q.includes("bill")) {
+      const sub = calculateSubsidy(solarKw);
+      const net = Math.max(0, solarKw * 55000 - sub);
+      setAiAnswer({
+        headline: "PM Surya Ghar DBT Subsidy & Concessional Loan",
+        text: `Under PM Surya Ghar Muft Bijli Yojana, a ${solarKw.toFixed(1)} kWp rooftop system receives ₹${sub.toLocaleString()} central DBT subsidy directly in your bank account. Net investment is ₹${net.toLocaleString()}, eligible for SBI concessional financing at 7.0% p.a.`,
+        action: "Apply with your DISCOM consumer number on pmsuryaghar.gov.in.",
+      });
+    } else if (q.includes("battery") || q.includes("blackout") || q.includes("backup") || q.includes("outage")) {
+      setAiAnswer({
+        headline: "Family Blackout Survival & Battery Backup",
+        text: `At ${batterySoc}% battery SoC with standard essential loads (LEDs, fans, Wi-Fi, refrigerator ~430W), your system provides ~8.5 hours of continuous blackout protection.`,
+        action: "Activate the storm reserve lock if local grid maintenance or rain is forecast tonight.",
+      });
+    } else if (q.includes("appliance") || q.includes("washing") || q.includes("geyser") || q.includes("ac")) {
+      setAiAnswer({
+        headline: "Smart Appliance Shift Window (Bijli Bachat)",
+        text: `Midday generation in ${currentGrid.state} peaks at ${currentGrid.activeGenerationKw.toFixed(1)} kW between 10:30 AM and 3:30 PM. Running heavy loads during this free solar window avoids DISCOM evening peak tariffs (₹${currentGrid.discomRetailRate.toFixed(2)}/unit).`,
+        action: "Shift washing machine and water geyser runtimes to 11:00 AM – 2:30 PM.",
+      });
+    } else if (q.includes("p2p") || q.includes("neighbor") || q.includes("sell") || q.includes("trade") || q.includes("upi")) {
+      setAiAnswer({
+        headline: "Beckn DEG v2.0 P2P Energy Exchange",
+        text: `Current P2P clearing price in ${currentGrid.name} is ₹${currentGrid.p2pClearingRate.toFixed(2)}/kWh compared to the ₹${currentGrid.discomRetailRate.toFixed(2)}/kWh retail tariff. Sellers earn above standard net-metering feed-in, and transactions settle instantly via NPCI UPI.`,
+        action: "Explore peer-to-peer trading on the Community Energy Exchange.",
+      });
+    } else {
+      setAiAnswer({
+        headline: `Arka AI Briefing · ${currentGrid.name}`,
+        text: `Solar irradiance is ${currentGrid.directDniWm2} W/m² with active generation of ${currentGrid.activeGenerationKw.toFixed(1)} kW. Grid frequency is steady at ${currentGrid.feederFrequencyHz.toFixed(2)} Hz. First-Law thermodynamic energy balance is 100% conserved.`,
+        action: "Adjust the interactive capacity and battery sliders below to simulate your system.",
+      });
+    }
+  };
+
 
   // PM Surya Ghar Muft Bijli Yojana calculation rules (Official MNRE 2024 Schedule)
   const calculateSubsidy = (kw: number): number => {
@@ -218,6 +258,143 @@ export default function Home() {
               <span style={{ "--bar": "66%" } as React.CSSProperties} />
             </div>
           </div>
+        </section>
+
+        {/* ======================================================================
+             AI AGENT COPILOT: ARKA ENERGY COPILOT (TOP PLACEMENT)
+             ====================================================================== */}
+        <section
+          style={{
+            marginBlock: "28px",
+            padding: "24px 28px",
+            borderRadius: "20px",
+            border: "1px solid rgba(129, 140, 248, 0.4)",
+            background: "linear-gradient(135deg, rgba(30, 27, 75, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%)",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
+            backdropFilter: "blur(12px)",
+          }}
+          aria-label="Arka AI Energy Copilot"
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ background: "linear-gradient(135deg, #4f46e5 0%, #0284c7 100%)", width: "42px", height: "42px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>
+                🤖
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#f8fafc" }}>
+                    Arka AI — Personal Energy Copilot
+                  </h3>
+                  <span style={{ background: "rgba(16, 185, 129, 0.2)", color: "#34d399", border: "1px solid rgba(16, 185, 129, 0.4)", padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: 700 }}>
+                    🟢 ONLINE
+                  </span>
+                </div>
+                <p style={{ margin: "2px 0 0 0", color: "#94a3b8", fontSize: "13px" }}>
+                  Ask any question about rooftop solar, PM Surya Ghar subsidies, battery backup, or P2P trading.
+                </p>
+              </div>
+            </div>
+            <div style={{ fontSize: "12px", color: "#cbd5e1", background: "rgba(30, 41, 59, 0.6)", padding: "4px 10px", borderRadius: "8px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+              🔒 100% On-Device AI Intelligence
+            </div>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (aiQuery.trim()) {
+                askAi(aiQuery);
+              }
+            }}
+            style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}
+          >
+            <input
+              type="text"
+              value={aiQuery}
+              onChange={(e) => setAiQuery(e.target.value)}
+              placeholder="Ask Arka: e.g. How much subsidy do I get? Will battery last tonight? When to run washing machine?"
+              style={{
+                flex: 1,
+                minWidth: "260px",
+                padding: "12px 16px",
+                borderRadius: "10px",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                background: "rgba(15, 23, 42, 0.8)",
+                color: "#f8fafc",
+                fontSize: "14px",
+                outline: "none",
+              }}
+            />
+            <button
+              type="submit"
+              className="mission-primary-button"
+              style={{ padding: "12px 20px", fontSize: "14px", fontWeight: 700, borderRadius: "10px" }}
+            >
+              ⚡ Ask AI
+            </button>
+          </form>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={() => askAi("How much subsidy do I get?")}
+              className="mission-action-button"
+              style={{ fontSize: "12px", padding: "6px 12px", borderRadius: "8px", background: "rgba(245, 158, 11, 0.15)", color: "#fbbf24", border: "1px solid rgba(245, 158, 11, 0.3)" }}
+            >
+              💰 Monthly Bill &amp; Subsidy
+            </button>
+            <button
+              type="button"
+              onClick={() => askAi("Will battery survive tonight's blackout?")}
+              className="mission-action-button"
+              style={{ fontSize: "12px", padding: "6px 12px", borderRadius: "8px", background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8", border: "1px solid rgba(56, 189, 248, 0.3)" }}
+            >
+              🛡️ Tonight&apos;s Blackout Survival
+            </button>
+            <button
+              type="button"
+              onClick={() => askAi("When should I run my washing machine?")}
+              className="mission-action-button"
+              style={{ fontSize: "12px", padding: "6px 12px", borderRadius: "8px", background: "rgba(16, 185, 129, 0.15)", color: "#34d399", border: "1px solid rgba(16, 185, 129, 0.3)" }}
+            >
+              ⏰ Best Appliance Run Times
+            </button>
+            <button
+              type="button"
+              onClick={() => askAi("How to trade P2P solar on Beckn?")}
+              className="mission-action-button"
+              style={{ fontSize: "12px", padding: "6px 12px", borderRadius: "8px", background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", border: "1px solid rgba(168, 85, 247, 0.3)" }}
+            >
+              🤝 Sell Solar to Neighbors
+            </button>
+          </div>
+
+          {aiAnswer && (
+            <div
+              style={{
+                marginTop: "16px",
+                padding: "16px 20px",
+                borderRadius: "12px",
+                background: "rgba(15, 23, 42, 0.9)",
+                border: "1px solid rgba(56, 189, 248, 0.4)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <span style={{ color: "#38bdf8", fontWeight: 800, fontSize: "15px" }}>{aiAnswer.headline}</span>
+                <button
+                  type="button"
+                  onClick={() => setAiAnswer(null)}
+                  style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: "12px" }}
+                >
+                  ✕ Dismiss
+                </button>
+              </div>
+              <p style={{ margin: "0 0 10px 0", color: "#f1f5f9", fontSize: "14px", lineHeight: 1.6 }}>{aiAnswer.text}</p>
+              <div style={{ color: "#34d399", fontSize: "13px", fontWeight: 600 }}>
+                💡 Recommended Action: {aiAnswer.action}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ======================================================================

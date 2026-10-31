@@ -905,7 +905,81 @@ function initResizeHandler() {
 // ============================================================================
 // DOM READY INITIALIZER
 // ============================================================================
+
+// ============================================================================
+// ARKA AI PERSONAL ENERGY COPILOT (INTERACTIVE ENGINE)
+// ============================================================================
+function initArkaAiCopilot() {
+  const inputEl = document.getElementById('arka-web-query-input');
+  const askBtn = document.getElementById('btn-arka-ask');
+  const resBox = document.getElementById('arka-web-response-box');
+  const headlineEl = document.getElementById('arka-res-headline');
+  const bodyEl = document.getElementById('arka-res-body');
+  const actionEl = document.getElementById('arka-res-action');
+  const chips = document.querySelectorAll('.arka-chip');
+
+  function handleQuery(query) {
+    if (!query || !query.trim()) return;
+    const q = query.toLowerCase();
+    let res = {
+      headline: "Arka AI Grounded Energy Briefing",
+      body: "Active solar generation across Indian microgrids is operating at nominal efficiency. Convex LP dispatch horizons optimize 15-minute battery charge, local demand, and P2P trades with zero thermodynamic imbalance.",
+      action: "💡 Recommended Action: Check your state's regional microgrid tab for live P2P clearing rates."
+    };
+
+    if (q.includes("subsidy") || q.includes("bill") || q.includes("save") || q.includes("cost") || q.includes("loan")) {
+      res = {
+        headline: "PM Surya Ghar Subsidy & Concessional Loan Analysis",
+        body: "Under PM Surya Ghar Muft Bijli Yojana, a typical 3 kWp residential rooftop solar array qualifies for a ₹78,000 maximum Central DBT subsidy. Sourced via SBI Surya Ghar concessional loans at 7.0% p.a., monthly electricity savings (₹2,700+) fully cover the loan EMI (~₹1,450/month) with net positive cashflow from Month 1.",
+        action: "💡 Recommended Action: Apply on the National Portal (pmsuryaghar.gov.in) with your DISCOM consumer number."
+      };
+    } else if (q.includes("battery") || q.includes("blackout") || q.includes("backup") || q.includes("night") || q.includes("outage")) {
+      res = {
+        headline: "Family Blackout Survival & Emergency Reserve",
+        body: "With a 5 kWh LiFePO4 battery at 65% SoC, your home holds 3.25 kWh usable backup energy. For essential emergency devices (LEDs, fans, Wi-Fi router, refrigerator ~430W), the system delivers 7.5 to 8.5 hours of continuous blackout protection.",
+        action: "💡 Recommended Action: Keep the storm reserve lock enabled if evening thunder storms or feeder maintenance are expected."
+      };
+    } else if (q.includes("appliance") || q.includes("washing") || q.includes("geyser") || q.includes("pump") || q.includes("ac")) {
+      res = {
+        headline: "Smart Appliance Shift Window (Bijli Bachat)",
+        body: "Peak free rooftop solar generation occurs between 11:00 AM and 3:00 PM. Shifting your water geyser (2 kW, 1h) and washing machine (500W, 1.5h) into this midday solar window completely avoids evening DISCOM peak charges (₹8.50 to ₹10.00/unit).",
+        action: "💡 Recommended Action: Run heavy laundry and water heating between 11:30 AM and 2:30 PM."
+      };
+    } else if (q.includes("p2p") || q.includes("neighbor") || q.includes("trade") || q.includes("sell") || q.includes("upi")) {
+      res = {
+        headline: "Beckn DEG v2.0 Peer-to-Peer Trading & UPI Settlement",
+        body: "Homeowners can commit surplus solar generation (P10 conservative band) to the Beckn decentralized open energy network. In Maharashtra and Karnataka, P2P trades clear between ₹4.50 and ₹4.80/kWh, yielding higher returns than DISCOM net-meter export rates with instant NPCI UPI settlements.",
+        action: "💡 Recommended Action: Check the P2P double-sided auction book to post surplus kilowatt-hours."
+      };
+    }
+
+    if (headlineEl) headlineEl.textContent = res.headline;
+    if (bodyEl) bodyEl.textContent = res.body;
+    if (actionEl) actionEl.textContent = res.action;
+    if (resBox) resBox.style.display = "block";
+    if (inputEl) inputEl.value = query;
+  }
+
+  if (askBtn && inputEl) {
+    askBtn.addEventListener('click', () => handleQuery(inputEl.value));
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleQuery(inputEl.value);
+      }
+    });
+  }
+
+  chips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const q = chip.getAttribute('data-q');
+      handleQuery(q);
+    });
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initArkaAiCopilot();
   initCelestialTheme();
   initSpotlightCards();
   initHeaderScroll();

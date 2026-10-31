@@ -473,6 +473,60 @@ monthly_save = annual_save / 12.0
 pre_bill = _pb_totals.bill_without_system / _pb_days * _DAYS_PER_MONTH
 cur_bill = pre_bill - monthly_save
 
+# Daytime Savings Metric (Computed directly from today's forecast and tariff)
+_tod_rates = s["import_rate"].to_numpy()
+_actual_load = ex["load_kw"].to_numpy() * 0.25
+_cost_without = float((_actual_load * _tod_rates).sum())
+_cost_with = float((ex["import_kwh"] * s["import_rate"]).sum() - (ex["export_kwh"] * s["export_rate"]).sum())
+day_savings = max(0.0, _cost_without - _cost_with)
+
+# Unified Arka AI Query Execution Engine
+if "arka_chat_history" not in st.session_state:
+    st.session_state.arka_chat_history = []
+if "arka_query_input" not in st.session_state:
+    st.session_state.arka_query_input = ""
+
+
+def execute_arka_query(q_text: str):
+    """Answers user queries in plain English/Hindi grounded in real rooftop telemetry and tariffs."""
+    arka_assistant = ArkaPersonalAssistant()
+    arka_context = {
+        "owner_name": my_home["owner_name"],
+        "home_type": my_home["home_type"],
+        "location": my_home["location"],
+        "discom": my_home["discom"],
+        "solar_kw": float(site.dc_kwp),
+        "battery_kwh": float(site.battery_kwh),
+        "soc": float(ex["soc"].iloc[-1]),
+        "backup_hours": float(site.backup_hours),
+        "pre_bill": float(pre_bill),
+        "cur_bill": float(cur_bill),
+        "monthly_save": float(monthly_save),
+        "annual_save": float(annual_save),
+        "clean_kwh": float(ex["pv_kw"].sum() * 0.25),
+        "state_name": my_home["state_name"],
+        "self_consumption_pct": (lambda v: None if v is None else v * 100.0)(solar_self_consumption(ex)),
+    }
+    res = arka_assistant.answer_query(q_text, arka_context, lang=lang)
+    st.session_state.arka_chat_history.append({"query": q_text, "response": res})
+
+
+# Sidebar AI Quick Access
+with st.sidebar.expander("🤖 Ask Arka AI Copilot", expanded=False):
+    st.caption("Ask your personal AI energy copilot any question:")
+    with st.form("sidebar_arka_quick_form", clear_on_submit=True):
+        sb_typed = st.text_input("Ask Arka:", placeholder="e.g. Will battery last tonight?", label_visibility="collapsed")
+        sb_btn = st.form_submit_button("⚡ Ask AI", use_container_width=True)
+        if sb_btn and sb_typed.strip():
+            execute_arka_query(sb_typed.strip())
+            st.rerun()
+    if st.session_state.arka_chat_history:
+        last_turn = st.session_state.arka_chat_history[-1]
+        st.markdown(f"**Last Answer:** *{last_turn['response'].headline}*")
+        st.caption(last_turn["response"].answer_text[:180] + "...")
+
+
+
 # Shareable Demo Link Banner (Gaurav Kedia PR #3 Integration)
 st.markdown(
     """
@@ -548,6 +602,193 @@ st.markdown(html_block(f"""
 
 # High-Level Personal Summary Card
 st.info(plain_summary(dv, site.backup_hours, lang))
+
+# ==============================================================================
+# 🤖 ARKA AI — PERSONAL SOLAR & ENERGY ASSISTANT (TOP PROMINENT PLACEMENT)
+# ==============================================================================
+with st.container():
+    st.markdown(
+        html_block(f"""
+        <div style="background: linear-gradient(135deg, rgba(30, 27, 75, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+                    border: 1px solid rgba(129, 140, 248, 0.4); border-radius: 16px; padding: 18px 22px; margin-top: 8px; margin-bottom: 18px;
+                    backdrop-filter: blur(14px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div style="background: linear-gradient(135deg, #4f46e5 0%, #0284c7 100%); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);">
+                        🤖
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <span style="color: #f8fafc; font-size: 18px; font-weight: 800; letter-spacing: -0.3px;">Arka AI — Personal Solar & Energy Copilot</span>
+                            <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.45); padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">
+                                🟢 ONLINE &amp; GROUNDED
+                            </span>
+                        </div>
+                        <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">
+                            Trained on <b>{my_home['owner_name']}</b> live solar ({site.dc_kwp:.0f} kWp Solar • {site.battery_kwh:.0f} kWh Battery • {my_home['discom']})
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span style="color: #cbd5e1; font-size: 12px; background: rgba(30, 41, 59, 0.7); padding: 5px 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                        🔒 100% On-Device AI • Zero Cloud Leak
+                    </span>
+                </div>
+            </div>
+        </div>
+        """),
+        unsafe_allow_html=True,
+    )
+
+    # Top Search & Question Form
+    q_preset = None
+    with st.form("top_arka_input_form", clear_on_submit=True):
+        c_in1, c_in2 = st.columns([5, 1])
+        with c_in1:
+            typed_q = st.text_input(
+                "Ask Arka any question about your solar, battery, appliances, bills, or PM Surya Ghar:",
+                placeholder="Ask in English or हिन्दी: e.g. How much money do I save on my bill? Will battery survive tonight? When to run AC?",
+                label_visibility="collapsed",
+                key="top_arka_query_input",
+            )
+        with c_in2:
+            submitted = st.form_submit_button("⚡ Ask AI", use_container_width=True)
+        if submitted and typed_q.strip():
+            execute_arka_query(typed_q.strip())
+            st.rerun()
+
+    # 4 Instant Quick-Prompt Chips
+    qc1, qc2, qc3, qc4 = st.columns(4)
+    if qc1.button("💰 Monthly Bill & Subsidy", key="btn_chip_bills", use_container_width=True):
+        q_preset = "How much money will I save on my electricity bill every month?"
+    if qc2.button("🛡️ Tonight's Blackout Survival", key="btn_chip_battery", use_container_width=True):
+        q_preset = "Will my battery survive an 8-hour blackout tonight?"
+    if qc3.button("⏰ Best Appliance Run Times", key="btn_chip_appliances", use_container_width=True):
+        q_preset = "When should I run my washing machine and water geyser?"
+    if qc4.button("🤝 Sell Solar to Neighbors", key="btn_chip_p2p", use_container_width=True):
+        q_preset = "How do I sell surplus solar to neighbors and receive UPI payments?"
+
+    if q_preset:
+        execute_arka_query(q_preset)
+        st.rerun()
+
+    # Conversation History Display
+    if st.session_state.arka_chat_history:
+        for idx, turn in enumerate(st.session_state.arka_chat_history):
+            q_str = turn["query"]
+            r_obj = turn["response"]
+            clean_ans_html = r_obj.answer_text.replace("\n", "<br/>")
+
+            st.markdown(
+                html_block(f'<div class="chat-user-bubble">👤 <b>You:</b> {q_str}</div>'),
+                unsafe_allow_html=True,
+            )
+
+            st.markdown(
+                html_block(f"""
+                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #38bdf8; border-radius: 14px; padding: 18px 22px; margin-bottom: 12px; box-shadow: 0 4px 18px rgba(0,0,0,0.3);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-weight: 700; color: #38bdf8; font-size: 16px;">
+                            {r_obj.headline}
+                        </span>
+                        <span style="background: #0284c7; color: #f0f9ff; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                            ARKA AI • {r_obj.intent} • {r_obj.timestamp}
+                        </span>
+                    </div>
+                    <div style="color: #f1f5f9; font-size: 14px; margin-top: 12px; line-height: 1.6;">
+                        {clean_ans_html}
+                    </div>
+                </div>
+                """),
+                unsafe_allow_html=True,
+            )
+
+            if r_obj.action_recommendation:
+                st.info(f"💡 **Recommended Action:** {r_obj.action_recommendation}")
+            if r_obj.statutory_grounding:
+                st.caption(f"📜 **Grounded Reference:** {r_obj.statutory_grounding}")
+
+            if idx == len(st.session_state.arka_chat_history) - 1:
+                col_fol, col_clr = st.columns([4, 1])
+                with col_fol:
+                    if r_obj.suggested_followups:
+                        st.markdown("**Suggested Follow-ups:**")
+                        f_cols = st.columns(len(r_obj.suggested_followups))
+                        for f_i, f_q in enumerate(r_obj.suggested_followups):
+                            if f_cols[f_i].button(f_q, key=f"top_f_q_{idx}_{f_i}", use_container_width=True):
+                                execute_arka_query(f_q)
+                                st.rerun()
+                with col_clr:
+                    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+                    if st.button("🗑️ Clear Chat", key="btn_clear_top_arka_chat", use_container_width=True):
+                        st.session_state.arka_chat_history = []
+                        st.rerun()
+    else:
+        # Dynamic AI Energy Briefing for Today
+        peak_pv_est = float(s["pv_p50"].sum() * 0.25)
+        current_batt_kwh = float(ex["soc"].iloc[-1] * site.battery_kwh * site.one_way_eff)
+        st.info(
+            f"💡 **Arka Today's Energy Briefing for {my_home['owner_name']}**: "
+            f"Expected rooftop generation today is **{peak_pv_est:.1f} kWh** (peak solar window 11:00 AM – 3:00 PM). "
+            f"Your battery holds **{current_batt_kwh:.1f} kWh** backup energy ({site.backup_hours:.0f}h hard blackout immunity). "
+            f"Shifting heavy household appliances midday saves an estimated **₹{day_savings:.1f} today**!"
+        )
+
+    # Categorized Question Explorer Expander
+    with st.expander("🔍 Explore All 16+ Solar & Energy Topics with Arka [Click to browse]", expanded=False):
+        arka_cat = st.radio(
+            "Explore Common Questions by Topic:",
+            ["💰 Subsidies & Bills", "🔋 Battery & Blackouts", "⏰ Appliances & EV", "🛠️ Technical & Grid"],
+            horizontal=True,
+            key="top_arka_topic_radio",
+        )
+        cat_q = None
+        if arka_cat == "💰 Subsidies & Bills":
+            c1, c2, c3, c4 = st.columns(4)
+            if c1.button("💰 Monthly Bill & Savings", key="top_cat_bill", use_container_width=True):
+                cat_q = "How much money will I save on my electricity bill every month?"
+            if c2.button("🏛️ PM Surya Ghar Subsidy", key="top_cat_sub", use_container_width=True):
+                cat_q = "How much subsidy do I get under PM Surya Ghar and what size do I need?"
+            if c3.button("🏦 SBI Solar Loan & EMI", key="top_cat_loan", use_container_width=True):
+                cat_q = "Can I get an SBI Surya Ghar solar loan and what is the EMI?"
+            if c4.button("💼 Commercial & Clinic Tax", key="top_cat_tax", use_container_width=True):
+                cat_q = "What accelerated depreciation and tax benefits does a clinic get under Section 32?"
+        elif arka_cat == "🔋 Battery & Blackouts":
+            c1, c2, c3, c4 = st.columns(4)
+            if c1.button("🛡️ Blackout Protection Hours", key="top_cat_blackout", use_container_width=True):
+                cat_q = "Will my battery survive an 8-hour blackout tonight?"
+            if c2.button("🌧️ Monsoon & Rain Backup", key="top_cat_rain", use_container_width=True):
+                cat_q = "Will my solar panels work during rainy season and monsoon clouds?"
+            if c3.button("🛡️ Warranties & Insurance", key="top_cat_warranty", use_container_width=True):
+                cat_q = "What warranties and insurance protect my solar panels and inverter?"
+            if c4.button("🧹 Rooftop Dust & Cleaning", key="top_cat_dust", use_container_width=True):
+                cat_q = "Why is my generation lower? Do my rooftop solar panels need cleaning?"
+        elif arka_cat == "⏰ Appliances & EV":
+            c1, c2, c3, c4 = st.columns(4)
+            if c1.button("⏰ Washing Machine & Geyser", key="top_cat_geyser", use_container_width=True):
+                cat_q = "When should I run my washing machine and water geyser?"
+            if c2.button("🚗 EV V2H Peak Shaving", key="top_cat_ev", use_container_width=True):
+                cat_q = "Can I charge my EV scooter with free solar and use V2H in the evening?"
+            if c3.button("🤝 Sell Solar to Neighbors", key="top_cat_p2p", use_container_width=True):
+                cat_q = "How do I sell surplus solar to neighbors and receive UPI payments?"
+            if c4.button("🏢 Apartments & Virtual Solar", key="top_cat_apt", use_container_width=True):
+                cat_q = "Can tenants and apartment societies install solar under virtual net metering?"
+        else:  # 🛠️ Technical & Grid
+            c1, c2, c3, c4 = st.columns(4)
+            if c1.button("📐 Roof Area & Tilt Angle", key="top_cat_roof", use_container_width=True):
+                cat_q = "How much roof area do I need and what is the optimal tilt angle for my panels?"
+            if c2.button("🛠️ Inverter Fault Diagnostics", key="top_cat_inv", use_container_width=True):
+                cat_q = "Why is my inverter showing a red light and Riso isolation fault?"
+            if c3.button("⚡ Earthing & Lightning (< 5 Ω)", key="top_cat_earth", use_container_width=True):
+                cat_q = "Do I need earthing pits and a lightning arrester for my rooftop solar?"
+            if c4.button("⏱️ Net Metering SLA & ₹500/d", key="top_cat_sla", use_container_width=True):
+                cat_q = "Why is my DISCOM delaying my net meter installation and what is the SLA?"
+        if cat_q:
+            execute_arka_query(cat_q)
+            st.rerun()
+
+st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+
 
 # ==============================================================================
 # LIVE POWER FLOW & ENERGY DISPATCH (Real-Time Grid & Home Telemetry)
@@ -745,187 +986,24 @@ with st.container():
     st.markdown(html_block(flow_diagram_svg), unsafe_allow_html=True)
 
 # ==============================================================================
-# ARKA — PERSONAL AI SOLAR & ENERGY ASSISTANT (Surya / AI Copilot)
-# ==============================================================================
-st.markdown(html_block("<div style='margin-top: 14px;'></div>"), unsafe_allow_html=True)
-arka_exp = st.expander("💬 ☀️ **Ask ARKA (अर्क) — Your Personal Solar & Energy AI Assistant** [Click to chat]", expanded=False)
-with arka_exp:
-    c_top1, c_top2 = st.columns([3, 1])
-    with c_top1:
-        st.caption(
-            f"ARKA is your personal AI energy copilot trained on {my_home['owner_name']} rooftop solar generation, "
-            "battery backup runtimes, appliance shift timings, PM Surya Ghar subsidies, and neighbor P2P trading."
-        )
-    with c_top2:
-        if st.button("🗑️ Clear Chat", key="btn_clear_arka_chat", use_container_width=True):
-            st.session_state.arka_chat_history = []
-            st.session_state.arka_query_input = ""
-            st.rerun()
-
-    # Sleek Categorized Preset Selector (Clean & Uncluttered)
-    arka_cat = st.radio(
-        "Explore Common Questions by Topic:",
-        ["💰 Subsidies & Bills", "🔋 Battery & Blackouts", "⏰ Appliances & EV", "🛠️ Technical & Grid"],
-        horizontal=True,
-        key="arka_topic_radio",
-    )
-
-    q_preset = None
-    if arka_cat == "💰 Subsidies & Bills":
-        ch1, ch2, ch3, ch4 = st.columns(4)
-        if ch1.button("💰 Monthly Bill & Savings", use_container_width=True):
-            q_preset = "How much money will I save on my electricity bill every month?"
-        if ch2.button("🏛️ PM Surya Ghar Subsidy", use_container_width=True):
-            q_preset = "How much subsidy do I get under PM Surya Ghar and what size do I need?"
-        if ch3.button("🏦 SBI Solar Loan & EMI", use_container_width=True):
-            q_preset = "Can I get an SBI Surya Ghar solar loan and what is the EMI?"
-        if ch4.button("💼 Commercial & Clinic Tax", use_container_width=True):
-            q_preset = "What accelerated depreciation and tax benefits does a clinic get under Section 32?"
-    elif arka_cat == "🔋 Battery & Blackouts":
-        ch1, ch2, ch3, ch4 = st.columns(4)
-        if ch1.button("🛡️ Blackout Protection Hours", use_container_width=True):
-            q_preset = "Will my battery survive an 8-hour blackout tonight?"
-        if ch2.button("🌧️ Monsoon & Rain Backup", use_container_width=True):
-            q_preset = "Will my solar panels work during rainy season and monsoon clouds?"
-        if ch3.button("🛡️ Warranties & Insurance", use_container_width=True):
-            q_preset = "What warranties and insurance protect my solar panels and inverter?"
-        if ch4.button("🧹 Rooftop Dust & Cleaning", use_container_width=True):
-            q_preset = "Why is my generation lower? Do my rooftop solar panels need cleaning?"
-    elif arka_cat == "⏰ Appliances & EV":
-        ch1, ch2, ch3, ch4 = st.columns(4)
-        if ch1.button("⏰ Washing Machine & Geyser", use_container_width=True):
-            q_preset = "When should I run my washing machine and water geyser?"
-        if ch2.button("🚗 EV V2H Peak Shaving", use_container_width=True):
-            q_preset = "Can I charge my EV scooter with free solar and use V2H in the evening?"
-        if ch3.button("🤝 Sell Solar to Neighbors", use_container_width=True):
-            q_preset = "How do I sell surplus solar to neighbors and receive UPI payments?"
-        if ch4.button("🏢 Apartments & Virtual Solar", use_container_width=True):
-            q_preset = "Can tenants and apartment societies install solar under virtual net metering?"
-    else:  # 🛠️ Technical & Grid
-        ch1, ch2, ch3, ch4 = st.columns(4)
-        if ch1.button("📐 Roof Area & Tilt Angle", use_container_width=True):
-            q_preset = "How much roof area do I need and what is the optimal tilt angle for my panels?"
-        if ch2.button("🛠️ Inverter Fault Diagnostics", use_container_width=True):
-            q_preset = "Why is my inverter showing a red light and Riso isolation fault?"
-        if ch3.button("⚡ Earthing & Lightning (< 5 Ω)", use_container_width=True):
-            q_preset = "Do I need earthing pits and a lightning arrester for my rooftop solar?"
-        if ch4.button("⏱️ Net Metering SLA & ₹500/d", use_container_width=True):
-            q_preset = "Why is my DISCOM delaying my net meter installation and what is the SLA?"
-
-    if "arka_chat_history" not in st.session_state:
-        st.session_state.arka_chat_history = []
-    if "arka_query_input" not in st.session_state:
-        st.session_state.arka_query_input = ""
-
-    # Shared ARKA evaluation helper
-    def execute_arka_query(q_text: str):
-        arka_assistant = ArkaPersonalAssistant()
-        arka_context = {
-            "owner_name": my_home["owner_name"],
-            "home_type": my_home["home_type"],
-            "location": my_home["location"],
-            "discom": my_home["discom"],
-            "solar_kw": float(site.dc_kwp),
-            "battery_kwh": float(site.battery_kwh),
-            "soc": float(ex["soc"].iloc[-1]),
-            "backup_hours": float(site.backup_hours),
-            "pre_bill": float(pre_bill),
-            "cur_bill": float(cur_bill),
-            "monthly_save": float(monthly_save),
-            "annual_save": float(annual_save),
-            "clean_kwh": float(ex["pv_kw"].sum() * 0.25),
-            "state_name": my_home["state_name"],
-            # Computed from the replay, not a constant. None when the panels made nothing on the replayed day.
-            "self_consumption_pct": (lambda v: None if v is None else v * 100.0)(solar_self_consumption(ex)),
-        }
-        res = arka_assistant.answer_query(q_text, arka_context, lang=lang)
-        st.session_state.arka_chat_history.append({"query": q_text, "response": res})
-
-    if q_preset:
-        execute_arka_query(q_preset)
-        st.rerun()
-
-    # Input Form
-    with st.form("arka_input_form", clear_on_submit=True):
-        form_col1, form_col2 = st.columns([5, 1])
-        with form_col1:
-            typed_query = st.text_input(
-                "Ask ARKA any question about your home, solar, battery, appliances, or bills:",
-                placeholder="e.g. When is the cheapest time to run my AC? Will my battery survive tonight? How to claim subsidy?",
-                label_visibility="collapsed",
-            )
-        with form_col2:
-            submitted = st.form_submit_button("⚡ Ask ARKA", use_container_width=True)
-        if submitted and typed_query.strip():
-            execute_arka_query(typed_query.strip())
-            st.rerun()
-
-    # Render Conversation History
-    if st.session_state.arka_chat_history:
-        st.markdown("---")
-        for idx, turn in enumerate(st.session_state.arka_chat_history):
-            q_str = turn["query"]
-            r_obj = turn["response"]
-            clean_ans_html = r_obj.answer_text.replace("\n", "<br/>")
-
-            # User message bubble
-            st.markdown(html_block(f'<div class="chat-user-bubble">👤 <b>You:</b> {q_str}</div>'),
-                unsafe_allow_html=True,
-            )
-
-            # ARKA response card
-            st.markdown(html_block(f"""
-                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #38bdf8; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                        <span style="font-weight: 700; color: #38bdf8; font-size: 15px;">
-                            {r_obj.headline}
-                        </span>
-                        <span style="background: #0284c7; color: #f0f9ff; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
-                            ARKA AI • {r_obj.intent} • {r_obj.timestamp}
-                        </span>
-                    </div>
-                    <div style="color: #f1f5f9; font-size: 14px; margin-top: 12px; line-height: 1.6;">
-                        {clean_ans_html}
-                    </div>
-                </div>
-                """),
-                unsafe_allow_html=True,
-            )
-
-            if r_obj.action_recommendation:
-                st.info(f"💡 **ARKA Recommended Action:** {r_obj.action_recommendation}")
-
-            if r_obj.statutory_grounding:
-                st.caption(f"📜 **Grounded Reference:** {r_obj.statutory_grounding}")
-
-            # For the most recent turn, show clickable follow-ups
-            if idx == len(st.session_state.arka_chat_history) - 1 and r_obj.suggested_followups:
-                st.markdown("**Suggested Follow-ups:**")
-                f_cols = st.columns(len(r_obj.suggested_followups))
-                for f_i, f_q in enumerate(r_obj.suggested_followups):
-                    if f_cols[f_i].button(f_q, key=f"f_q_{idx}_{f_i}", use_container_width=True):
-                        execute_arka_query(f_q)
-                        st.rerun()
-
-# ==============================================================================
 # NAVIGATION ARCHITECTURE (LAZY-EVALUATED ZERO-FREEZE SUITE)
 # ==============================================================================
 TAB_NAMES = [
-    "Residential EMS",
-    "Rooftop Sizing",
-    "Solar Radar",
-    "Battery Storage",
-    "Daily Plan",
-    "Smart Appliances",
-    "EV Charging",
-    "Inverter Gateway",
-    "P2P Trading",
-    "UPI Settlement",
-    "Fleet Pooling",
-    "Health Monitor",
-    "Lifetime Savings",
-    "Surplus Engine",
-    "Mission Control",
+    "🏡 Home Overview",
+    "☀️ Rooftop Sizing & Subsidy",
+    "🛰️ Satellite Solar Radar",
+    "🔋 Battery & Blackout Shield",
+    "📅 24-Hour Smart Plan",
+    "🧺 Appliance Savings",
+    "🚗 EV Charging & Grid Guard",
+    "🔌 Inverter Hardware Gateway",
+    "🤝 Peer-to-Peer Trading",
+    "💳 UPI Instant Settlement",
+    "🏢 Community Solar Pooling",
+    "🩺 Solar Health & Cleaning",
+    "💰 25-Year Savings & ROI",
+    "⚡ Surplus Intelligence",
+    "🚀 National Mission Control",
 ]
 
 selected_tab = st.radio(
@@ -939,13 +1017,14 @@ selected_tab = st.radio(
 # ==============================================================================
 # TAB 0: RESIDENTIAL HOME ENERGY MANAGEMENT & BENCHMARK (PHASE 1 - 8)
 # ==============================================================================
-if selected_tab == "Residential EMS":
+if "Home Overview" in selected_tab or "Residential EMS" in selected_tab:
     render_home_management_view()
+
 
 # ==============================================================================
 # TAB 1: SOLAR PRE-FEASIBILITY, ELECTRICAL CONNECTION & PM SURYA GHAR
 # ==============================================================================
-elif selected_tab == "Rooftop Sizing":
+elif "Rooftop" in selected_tab or "Sizing" in selected_tab:
     st.subheader("⚡ 1. Solar Pre-Feasibility, Electrical Connection & PM Surya Ghar")
     st.caption("Complete engineering blueprint: Single Line Diagram (SLD) electrical circuit, statutory PM Surya Ghar Muft Bijli Yojana subsidy, and smart meter CSV rooftop sizing.")
 
@@ -1329,7 +1408,7 @@ Generated by UrjaSetu & AVISHKAR Enterprise Energy Management System
 # ==============================================================================
 # TAB 2: ISRO / NAVIC SATELLITE RADAR & MICROGRID MAP
 # ==============================================================================
-elif selected_tab == "Solar Radar":
+elif "Radar" in selected_tab or "Satellite" in selected_tab or "Solar Radar" in selected_tab:
     st.subheader("🛰️ 2. Indian Geospatial Solar Radar & Satellite Observation")
     st.caption(f"Real-time satellite solar irradiance and cloud nowcasting grounded in ISRO INSAT-3D/3DR observations for {my_home['location']}.")
 
@@ -1501,7 +1580,7 @@ elif selected_tab == "Solar Radar":
 # ==============================================================================
 # TAB 3: BATTERY STORAGE & ADVISOR (OUTAGE PROTECTION & PHYSICS)
 # ==============================================================================
-elif selected_tab == "Battery Storage":
+elif "Battery" in selected_tab or "Blackout" in selected_tab:
     st.subheader(f"🔋 3. Battery Storage & Family Outage Shield ({my_home['owner_name']})")
     st.caption("Active battery state of charge, room-by-room blackout survival checklist, emergency storm reserve lock, and cell physics.")
 
@@ -1617,7 +1696,7 @@ elif selected_tab == "Battery Storage":
 # ==============================================================================
 # TAB 4: PLAN FOR THE DAY (DETAILED TECHNICAL FORECAST & LP DISPATCH)
 # ==============================================================================
-elif selected_tab == "Daily Plan":
+elif "Plan" in selected_tab or "Daily" in selected_tab:
     st.subheader(f"📊 4. Plan for the Day ({my_home['owner_name']})")
     st.caption(f"15-minute optimization schedule balancing rooftop solar, {my_home['family_size']} demand, battery charge/discharge, and grid import/export.")
 
@@ -1758,7 +1837,7 @@ elif selected_tab == "Daily Plan":
 # ==============================================================================
 # TAB 5: SMART APPLIANCES & CITIZEN ACTION GUIDE
 # ==============================================================================
-elif selected_tab == "Smart Appliances":
+elif "Appliance" in selected_tab:
     st.subheader(f"🚦 5. Smart Appliances & Family Action Guide ({my_home['owner_name']})")
     st.caption("Maximize free rooftop sunshine, shift heavy household appliances away from evening peak grid rates, and generate instant family alerts.")
 
@@ -1892,7 +1971,7 @@ elif selected_tab == "Smart Appliances":
 # ==============================================================================
 # TAB 6: EV V2H & FEEDER TRANSFORMER GUARD
 # ==============================================================================
-elif selected_tab == "EV Charging":
+elif "EV" in selected_tab or "Charging" in selected_tab:
     st.subheader(f"🚗 6. EV V2H & Feeder Guard ({my_home['owner_name']})")
     st.caption("Coordinating bidirectional EV charging (Tata Nexon EV, Ola, Ather) and neighborhood distribution transformer thermal protection.")
 
@@ -2007,7 +2086,7 @@ elif selected_tab == "EV Charging":
 # ==============================================================================
 # TAB 7: INDUSTRIAL INVERTER HARDWARE GATEWAY & SAFETY
 # ==============================================================================
-elif selected_tab == "Inverter Gateway":
+elif "Inverter" in selected_tab or "Hardware" in selected_tab or "Gateway" in selected_tab:
     st.subheader(f"🔌 7. Hardware Inverter Gateway ({my_home['owner_name']})")
     st.caption("Direct physical coupling between the LP optimizer and physical inverters (Sungrow, Growatt, GoodWe, Solis, Victron). "
                "Reads raw Modbus registers (40001+) and latches dispatch setpoints via SunSpec Model 124 control registers.")
@@ -2108,7 +2187,7 @@ elif selected_tab == "Inverter Gateway":
 # ==============================================================================
 # TAB 8: OFFERS & BECKN DEG V2.0 PROTOCOL
 # ==============================================================================
-elif selected_tab == "P2P Trading":
+elif "Peer-to-Peer" in selected_tab or "Trading" in selected_tab or "P2P" in selected_tab:
     st.subheader(f"🤝 8. P2P Surplus Energy Offers & Beckn DEG v2.0 ({my_home['owner_name']})")
     st.caption("Share and trade surplus clean solar energy with neighboring homes on the Open Network for Digital Commerce (ONDC / Beckn DEG v2.0).")
 
@@ -2225,7 +2304,7 @@ elif selected_tab == "P2P Trading":
 # ==============================================================================
 # TAB 9: DISCOM WHEELING & UPI SETTLEMENT
 # ==============================================================================
-elif selected_tab == "UPI Settlement":
+elif "UPI" in selected_tab or "Settlement" in selected_tab:
     st.subheader(f"⚖️ 9. DISCOM Wheeling Ledger & Instant UPI Settlement ({my_home['state_name']})")
     st.caption(f"Compliant distribution wheeling under {my_home['state_name']} electricity regulatory frameworks ({my_home['discom']}). "
                "Calculates technical line losses, wire usage charges, and generates NPCI UPI instant settlement tokens.")
@@ -2297,7 +2376,7 @@ elif selected_tab == "UPI Settlement":
 # ==============================================================================
 # TAB 10: FLEET POOLING & MULTI-SITE DISPATCH
 # ==============================================================================
-elif selected_tab == "Fleet Pooling":
+elif "Pooling" in selected_tab or "Fleet" in selected_tab or "Community" in selected_tab:
     st.subheader("🌐 10. Community & Neighborhood Surplus Pooling")
     st.caption("Aggregates surplus solar offers across neighborhood rooftops into bulk commercial trade blocks. "
                "Floor price equals the highest member floor so no homeowner sells at a loss; revenue splits pro rata.")
@@ -2345,7 +2424,7 @@ elif selected_tab == "Fleet Pooling":
 # ==============================================================================
 # TAB 11: FAULT MONITORING & SHIFTABLE LOADS
 # ==============================================================================
-elif selected_tab == "Health Monitor":
+elif "Health" in selected_tab or "Cleaning" in selected_tab:
     st.subheader(f"🔍 11. Rooftop Health, Dust & Shiftable Loads ({my_home['owner_name']})")
     st.caption("Monitors rooftop PV output against modelled baseline to detect panel soiling, dust accumulation, string disconnection, and shiftable bursts.")
 
@@ -2419,7 +2498,7 @@ elif selected_tab == "Health Monitor":
 # ==============================================================================
 # TAB 12: PAYBACK, PM SURYA GHAR & BEE CARBON CREDITS
 # ==============================================================================
-elif selected_tab == "Lifetime Savings":
+elif "Savings" in selected_tab or "Payback" in selected_tab or "ROI" in selected_tab or "Lifetime" in selected_tab:
     st.subheader(f"💰 12. Lifetime Payback, PM Surya Ghar & State Comparison ({my_home['owner_name']})")
     st.caption(f"Financial savings for {my_home['owner_name']}, payback years with subsidy, hold-out forecast calibration, and comparison with {my_home['state_name']} state averages.")
 
@@ -2497,12 +2576,12 @@ elif selected_tab == "Lifetime Savings":
 # ==============================================================================
 # TAB 13: MULTI-REPO OPEN-SOURCE SURPLUS INTELLIGENCE & INTEGRATIONS
 # ==============================================================================
-elif selected_tab == "Surplus Engine":
+elif "Surplus" in selected_tab or "Intelligence" in selected_tab:
     render_integrations_dashboard()
 
 # ==============================================================================
 # TAB 14: URJASETU MISSION CONTROL (PR #3 INTEGRATION)
 # ==============================================================================
-elif selected_tab == "Mission Control":
+elif "Mission Control" in selected_tab or "National" in selected_tab:
     render_pr_urjasetu_mission_control()
 

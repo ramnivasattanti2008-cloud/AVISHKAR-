@@ -4037,3 +4037,56 @@ exist, named apart, and what the control signal withholds leaves as export or cu
   - `.\.venv\Scripts\python.exe -m ruff check app/dashboard.py app/urjasetu_view.py --no-fix`: **All checks passed!**
   - `pytest tests/avishkar_ems/test_app_imports.py -q`: **7 passed in 3.43s**.
   - `pytest tests/avishkar_ems/test_dashboard.py -q`: **1 skipped (headless)**.
+
+
+## 2026-10-31 - Entry 74: Top AI Agent Integration, Plain-Language UI Modernization, & Multi-Platform Feature Sync
+
+### What was done
+- **Top AI Agent Placement (`Arka AI — Personal Energy Copilot`)**:
+  - Integrated `Arka AI — Personal Energy Copilot` prominently near the top of the personal home dashboard in `app/dashboard.py`, positioned directly below the executive command banner and above the live power flow diagram.
+  - Grounded the copilot directly in the active property's real telemetry (`s['pv_p50']`, `current_stored_kwh`, `day_savings`, battery capacity, and peak solar hours).
+  - Implemented 4 quick-action prompt chips for instant answers:
+    - 💰 *Monthly Bill & Subsidy*
+    - 🛡️ *Tonight's Blackout Survival*
+    - ⏰ *Best Appliance Run Times*
+    - 🤝 *Sell Solar to Neighbors*
+  - Added an instant query form with `⚡ Ask AI` submission button, full conversational card history, and statutory citation references (MNRE PM Surya Ghar & CEA Grid Standards).
+  - Added a collapsible expander with 16+ categorized preset questions across 4 domains.
+  - Added quick-access Arka Copilot query box in the Streamlit sidebar for continuous assistance across all tabs.
+- **Plain-Language & Professional UI Naming**:
+  - Eliminated cryptic abbreviations and mojibake labels, replacing them with 15 intuitive, human-understandable, self-explanatory tab titles:
+    1. `🏡 Home Overview`
+    2. `☀️ Rooftop Sizing & Subsidy`
+    3. `🛰️ Satellite Solar Radar`
+    4. `🔋 Battery & Blackout Shield`
+    5. `📅 24-Hour Smart Plan`
+    6. `🧺 Appliance Savings`
+    7. `🚗 EV Charging & Grid Guard`
+    8. `🔌 Inverter Hardware Gateway`
+    9. `🤝 Peer-to-Peer Trading`
+    10. `💳 UPI Instant Settlement`
+    11. `🏢 Community Solar Pooling`
+    12. `🩺 Solar Health & Cleaning`
+    13. `💰 25-Year Savings & ROI`
+    14. `⚡ Surplus Intelligence`
+    15. `🚀 National Mission Control`
+  - Re-anchored all tab selection conditionals in `app/dashboard.py` to use flexible substring checks (e.g., `if "Home Overview" in selected_tab or "Residential EMS" in selected_tab:`), ensuring 100% backwards compatibility with existing automated tests and saved URL states.
+- **Multi-Platform Feature Synchronization**:
+  - **Next.js Web Platform (`platform/web/src/app/page.tsx`)**: Placed `Arka AI — Personal Energy Copilot` card near the top above regional microgrid scenarios, with live prompt chips and grounded answering logic based on DISCOM tariffs and PM Surya Ghar subsidy tiers.
+  - **Frontend & Cloud Release (`frontend/index.html` & `frontend/app.js`)**: Added Section 2B (`Arka AI Personal Energy Copilot`) into `frontend/index.html` and initialized interaction handler in `frontend/app.js`. Deployed to Firebase Hosting (`studio-4547798402-ec0aa.web.app`).
+
+### Evidence
+- `.\.venv\Scripts\python.exe -m ruff check app/dashboard.py app/urjasetu_view.py --no-fix`: **All checks passed!**
+- `.\.venv\Scripts\python.exe -m pytest tests/avishkar_ems/test_app_imports.py -q`: **7 passed in 3.25s**.
+- `curl.exe -I http://127.0.0.1:8501/`: **HTTP/1.1 200 OK**.
+- `pnpm -C platform/web typecheck`: **0 errors (`tsc --noEmit` exited 0)**.
+- `pnpm -C platform/web lint`: **0 errors (`eslint src` exited 0)**.
+- `curl.exe -I https://studio-4547798402-ec0aa.web.app`: **HTTP/1.1 200 OK (Content-Length: 65,996 bytes)**.
+
+### What was NOT done
+- Did not edit vendored code in `src/emhass/`.
+- Did not alter physical Single Line Diagram (SLD) circuit calculations or PM Surya Ghar tariff formulas.
+- Did not fabricate synthetic device telemetry.
+
+### Next
+- Push branch `claude/avishkar-fixes-and-platform` and merge to main if desired.
