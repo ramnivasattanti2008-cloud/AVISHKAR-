@@ -477,7 +477,8 @@ def render_home_management_view() -> None:
             st.write(f"• **Current SoC:** `{profile.ev_charger.current_soc_pct:.1f}%` → **Target:** `{profile.ev_charger.target_soc_pct:.1f}%`")
             st.write(f"• **Max Charge Rate:** `{profile.ev_charger.max_charge_power_kw:.2f} kW`")
             st.write(f"• **Departure Time:** `{profile.ev_charger.departure_hour:02d}:00 hrs`")
-            st.write(f"• **Preference Mode:** `{profile.ev_charger.charging_preference.value}`")
+            pref_mode = getattr(profile.ev_charger.charging_preference, "value", profile.ev_charger.charging_preference)
+            st.write(f"• **Preference Mode:** `{pref_mode}`")
 
         with flex_c:
             st.markdown("##### 🧺 Smart Flexible Appliances")

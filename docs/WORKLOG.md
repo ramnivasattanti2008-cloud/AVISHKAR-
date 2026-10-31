@@ -4090,3 +4090,51 @@ exist, named apart, and what the control signal withholds leaves as export or cu
 
 ### Next
 - Push branch `claude/avishkar-fixes-and-platform` and merge to main if desired.
+
+
+## 2026-10-31 - Entry 75: Comprehensive App Error Resolution (Sys.path, Widget Keys, On-Click Callbacks, EV Attribute Fix)
+
+### What was done
+- **Root-Cause Diagnosis & Fix for `ModuleNotFoundError: No module named 'app'`**:
+  - `app/dashboard.py` previously only inserted `_SRC` into `sys.path`. When executed outside the root directory or via Streamlit `AppTest`, `from app...` failed.
+  - Added `_ROOT` and `_APP_DIR` to `sys.path` in `app/dashboard.py` (lines 11-18).
+- **Fixed `AttributeError: 'str' object has no attribute 'value'` in Home Overview**:
+  - `app/home_setup_view.py:480` attempted to access `.value` on `profile.ev_charger.charging_preference`, which is a string in user-saved profiles.
+  - Replaced with `getattr(profile.ev_charger.charging_preference, "value", profile.ev_charger.charging_preference)` to safely handle both Enums and strings.
+- **Fixed `StreamlitWidgetAlreadyInstantiatedError` on Site Preset Buttons**:
+  - `app/dashboard.py:371-387` previously mutated `st.session_state["site_select"]` inside button bodies after `st.sidebar.selectbox` had already instantiated that key.
+  - Refactored presets into `on_click` callback handlers (`_set_site_preset`, `_load_sample_meter`) with `args`, which execute before widget instantiation and remove unnecessary `st.rerun()`.
+- **Added Explicit Unique Keys Across 54 Interactive Widgets**:
+  - Assigned deterministic keys to all sliders, selectboxes, buttons, number inputs, text inputs, toggles, and file uploaders in `app/dashboard.py`.
+  - Permanently resolved `KeyError: 'st.session_state has no key "$$ID-...-None"'` during tab navigation.
+- **Full Automated Verification with Streamlit `AppTest`**:
+  - Created automated test harnesses verifying:
+    1. Initial load of `app/dashboard.py`.
+    2. Dynamic switching across all 15 navigation tabs (all rendered markdowns and metrics verified).
+    3. Site preset button clicks across Mathura home, Jaipur clinic, and Pune retail shop.
+
+### Evidence
+- `test_all_tabs.py`: **All 15 tabs tested and passed without any exceptions!**
+  - `🏡 Home Overview`: 64 markdowns, 12 metrics rendered
+  - `☀️ Rooftop Sizing & Subsidy`: 37 markdowns, 8 metrics rendered
+  - `🛰️ Satellite Solar Radar`: 29 markdowns, 5 metrics rendered
+  - `🔋 Battery & Blackout Shield`: 30 markdowns, 6 metrics rendered
+  - `📅 24-Hour Smart Plan`: 34 markdowns, 9 metrics rendered
+  - `🧺 Appliance Savings`: 31 markdowns, 3 metrics rendered
+  - `🚗 EV Charging & Grid Guard`: 28 markdowns, 1 metrics rendered
+  - `🔌 Inverter Hardware Gateway`: 36 markdowns, 7 metrics rendered
+  - `🤝 Peer-to-Peer Trading`: 28 markdowns, 3 metrics rendered
+  - `💳 UPI Instant Settlement`: 33 markdowns, 0 metrics rendered
+  - `🏢 Community Solar Pooling`: 24 markdowns, 3 metrics rendered
+  - `🩺 Solar Health & Cleaning`: 28 markdowns, 4 metrics rendered
+  - `💰 25-Year Savings & ROI`: 32 markdowns, 8 metrics rendered
+  - `⚡ Surplus Intelligence`: 32 markdowns, 16 metrics rendered
+  - `🚀 National Mission Control`: 24 markdowns, 0 metrics rendered
+- `test_site_buttons.py`: **All sites switched cleanly without exceptions (`btn_site_clinic`, `btn_site_shop`, `btn_site_home`).**
+- `ruff check . --no-fix`: **All checks passed! (0 errors, 0 warnings)**
+- `pytest tests/avishkar_ems/test_app_imports.py -q`: **7 passed in 1.96s**
+- `curl.exe -I http://127.0.0.1:8501/`: **HTTP/1.1 200 OK**
+
+### What was NOT done
+- Did not edit vendored code in `src/emhass/`.
+- Did not fabricate live hardware telemetry.

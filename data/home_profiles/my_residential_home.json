@@ -1,0 +1,63 @@
+{
+  "home_id": "phase7_demo_home",
+  "home_name": "Phase 7 Benchmark Home",
+  "location": "Vasant Kunj, New Delhi",
+  "solar_capacity_kw": 5.0,
+  "inverter": {
+    "brand": "VICTRON",
+    "rating_kw": 5.0,
+    "efficiency_fraction": 0.97,
+    "is_zero_export_enforced": false,
+    "is_verified_hardware": false
+  },
+  "battery": {
+    "capacity_kwh": 10.0,
+    "current_soc_pct": 60.0,
+    "min_soc_pct": 15.0,
+    "max_soc_pct": 95.0,
+    "max_charge_power_kw": 3.5,
+    "max_discharge_power_kw": 3.5,
+    "charge_efficiency": 0.95,
+    "discharge_efficiency": 0.95,
+    "preferred_backup_reserve_pct": 25.0,
+    "is_verified_hardware": false,
+    "chemistry": "NOT_STATED"
+  },
+  "ev_charger": {
+    "is_connected": true,
+    "battery_capacity_kwh": 24.0,
+    "current_soc_pct": 50.0,
+    "target_soc_pct": 80.0,
+    "max_charge_power_kw": 3.3,
+    "departure_hour": 19,
+    "charging_preference": "SOLAR_ONLY",
+    "is_verified_hardware": false
+  },
+  "flexible_appliances": [
+    {
+      "appliance_id": "washing_machine",
+      "name": "Smart Washing Machine",
+      "nominal_power_kw": 1.0,
+      "required_runtime_hours": 1.5,
+      "window_start_hour": 10,
+      "window_end_hour": 16,
+      "priority": 2,
+      "is_controllable": true
+    },
+    {
+      "appliance_id": "heat_pump_water",
+      "name": "Immersion Water Heater",
+      "nominal_power_kw": 1.5,
+      "required_runtime_hours": 2.0,
+      "window_start_hour": 11,
+      "window_end_hour": 15,
+      "priority": 1,
+      "is_controllable": true
+    }
+  ],
+  "grid_purchase_tariff_inr": 8.0,
+  "grid_export_tariff_inr": 3.0,
+  "optimization_goal": "MINIMIZE_BILLS",
+  "community_opt_in": true,
+  "measurement_mode": "SIMULATION"
+}

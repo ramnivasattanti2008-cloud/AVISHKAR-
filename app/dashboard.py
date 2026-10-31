@@ -10,8 +10,13 @@ from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
 _SRC = _ROOT / "src"
+_APP_DIR = Path(__file__).resolve().parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
+if str(_APP_DIR) not in sys.path:
+    sys.path.insert(0, str(_APP_DIR))
 
 import numpy as np
 import pandas as pd
@@ -360,30 +365,49 @@ st.sidebar.markdown(
     f"☀️ **{site.dc_kwp:.0f} kWp Solar** • 🔋 **{site.battery_kwh:.0f} kWh Battery**"
 )
 
+def _set_site_preset(site_id: str, day_str: str, soc_val: float):
+    st.session_state["site_select"] = site_id
+    st.session_state["day_input"] = pd.Timestamp(day_str).date()
+    st.session_state["soc_slider"] = soc_val
+
+
+def _load_sample_meter():
+    sample_path = _ROOT / "data/real/load_tool.csv"
+    if sample_path.exists():
+        st.session_state["meter_series"] = read_meter_csv(str(sample_path), sep=";", decimal=",")
+
+
 with st.sidebar.expander("⚡ 1-Click Tour Presets (Personal Sites)", expanded=False):
     st.caption("Quickly test real household profiles and grid scenarios:")
     sc1, sc2 = st.columns(2)
-    if sc1.button("🏡 My Home", help="Sharma Niwas 3-BHK home with monsoon blackout protection"):
-        st.session_state["site_select"] = "home-mathura"
-        st.session_state["day_input"] = pd.Timestamp("2020-07-28").date()
-        st.session_state["soc_slider"] = 0.40
-        st.rerun()
-    if sc2.button("🏥 Day Clinic", help="Jaipur Day Clinic with evening peak V2H dispatch"):
-        st.session_state["site_select"] = "clinic-jaipur"
-        st.session_state["day_input"] = pd.Timestamp("2023-05-15").date()
-        st.session_state["soc_slider"] = 0.60
-        st.rerun()
+    sc1.button(
+        "🏡 My Home",
+        key="btn_site_home",
+        on_click=_set_site_preset,
+        args=("home-mathura", "2020-07-28", 0.40),
+        help="Sharma Niwas 3-BHK home with monsoon blackout protection",
+    )
+    sc2.button(
+        "🏥 Day Clinic",
+        key="btn_site_clinic",
+        on_click=_set_site_preset,
+        args=("clinic-jaipur", "2023-05-15", 0.60),
+        help="Jaipur Day Clinic with evening peak V2H dispatch",
+    )
     sc3, sc4 = st.columns(2)
-    if sc3.button("🏪 Retail Shop", help="Pune General Store with active P2P trade surplus"):
-        st.session_state["site_select"] = "shop-pune"
-        st.session_state["day_input"] = pd.Timestamp("2023-03-25").date()
-        st.session_state["soc_slider"] = 0.50
-        st.rerun()
-    if sc4.button("📂 Meter File", help="Upload custom smart meter CSV"):
-        sample_path = _ROOT / "data/real/load_tool.csv"
-        if sample_path.exists():
-            st.session_state["meter_series"] = read_meter_csv(str(sample_path), sep=";", decimal=",")
-        st.rerun()
+    sc3.button(
+        "🏪 Retail Shop",
+        key="btn_site_shop",
+        on_click=_set_site_preset,
+        args=("shop-pune", "2023-03-25", 0.50),
+        help="Pune General Store with active P2P trade surplus",
+    )
+    sc4.button(
+        "📂 Meter File",
+        key="btn_site_meter",
+        on_click=_load_sample_meter,
+        help="Upload custom smart meter CSV",
+    )
 
 test_days = pd.date_range(p.test_start, p.test_end)
 default_day = (p.test_start + pd.Timedelta(days=50)).date()
@@ -393,7 +417,7 @@ if "day_input" not in st.session_state or not (test_days[0].date() <= st.session
 st.sidebar.markdown("---")
 day = st.sidebar.date_input("Day to plan", min_value=test_days[0].date(), max_value=test_days[-1].date(), key="day_input")
 soc0 = st.sidebar.slider("Battery charge at midnight", 0.2, 1.0, step=0.05, key="soc_slider")
-lang = st.sidebar.radio("Language / भाषा", ["en", "hi"], format_func=lambda x: {"en": "English", "hi": "हिन्दी"}[x])
+lang = st.sidebar.radio("Language / भाषा", ["en", "hi"], key="sb_language_choice", format_func=lambda x: {"en": "English", "hi": "हिन्दी"}[x])
 
 st.sidebar.markdown("---")
 
@@ -515,7 +539,7 @@ def execute_arka_query(q_text: str):
 with st.sidebar.expander("🤖 Ask Arka AI Copilot", expanded=False):
     st.caption("Ask your personal AI energy copilot any question:")
     with st.form("sidebar_arka_quick_form", clear_on_submit=True):
-        sb_typed = st.text_input("Ask Arka:", placeholder="e.g. Will battery last tonight?", label_visibility="collapsed")
+        sb_typed = st.text_input("Ask Arka:", key="sb_arka_input_box", placeholder="e.g. Will battery last tonight?", label_visibility="collapsed")
         sb_btn = st.form_submit_button("⚡ Ask AI", use_container_width=True)
         if sb_btn and sb_typed.strip():
             execute_arka_query(sb_typed.strip())
@@ -1034,11 +1058,11 @@ elif "Rooftop" in selected_tab or "Sizing" in selected_tab:
         st.caption("Answer 3 simple questions to calculate the exact solar capacity, battery size, and PM Surya Ghar central subsidy for your property:")
 
         q_col1, q_col2, q_col3 = st.columns(3)
-        h_type = q_col1.selectbox("Property Type:", ["1-BHK / Small Apartment", "2-BHK / Independent Floor", "3-BHK Villa / Townhouse", "Commercial Day Clinic / Shop", "Large Bungalow / Farmhouse"], index=2)
+        h_type = q_col1.selectbox("Property Type:", ["1-BHK / Small Apartment", "2-BHK / Independent Floor", "3-BHK Villa / Townhouse", "Commercial Day Clinic / Shop", "Large Bungalow / Farmhouse"], index=2, key="sizing_prop_type")
         # Starts from what this site's own replay says it would pay with no system, rounded to the slider's step.
         _bill_start = int(min(15000, max(1000, round(pre_bill / 250.0) * 250)))
-        h_bill = q_col2.slider("Average Monthly DISCOM Bill (₹):", 1000, 15000, _bill_start, 250)
-        h_ac = q_col3.selectbox("Do you have Air Conditioning / EV?", ["No AC (Ceiling Fans Only)", "1 Split AC (Used at Night)", "2-3 Split ACs (Day & Night)", "ACs + Electric Vehicle (EV)"], index=2)
+        h_bill = q_col2.slider("Average Monthly DISCOM Bill (₹):", 1000, 15000, _bill_start, 250, key="sizing_monthly_bill")
+        h_ac = q_col3.selectbox("Do you have Air Conditioning / EV?", ["No AC (Ceiling Fans Only)", "1 Split AC (Used at Night)", "2-3 Split ACs (Day & Night)", "ACs + Electric Vehicle (EV)"], index=2, key="sizing_ac_ev")
 
         # Recommendation logic grounded in monthly bill and loads
         rec_kw = round(max(1.0, min(10.0, h_bill / 1400.0)), 1)
@@ -1062,9 +1086,9 @@ elif "Rooftop" in selected_tab or "Sizing" in selected_tab:
         st.caption("Under the PM Surya Ghar scheme, public sector banks (SBI, Canara, PNB) provide collateral-free solar loans at a concessional 7.0% interest rate:")
 
         loan_c1, loan_c2, loan_c3 = st.columns(3)
-        down_pct = loan_c1.slider("Down Payment (%):", 0, 40, 10, 5, help="Minimum 10% recommended under PM Surya Ghar guidelines")
-        loan_tenure_yrs = loan_c2.selectbox("Loan Tenure (Years):", [3, 5, 7, 10], index=1)
-        loan_interest_pct = loan_c3.number_input("Bank Interest Rate (% p.a.):", 6.5, 9.5, 7.0, 0.1)
+        down_pct = loan_c1.slider("Down Payment (%):", 0, 40, 10, 5, key="loan_down_pct", help="Minimum 10% recommended under PM Surya Ghar guidelines")
+        loan_tenure_yrs = loan_c2.selectbox("Loan Tenure (Years):", [3, 5, 7, 10], index=1, key="loan_tenure_yrs")
+        loan_interest_pct = loan_c3.number_input("Bank Interest Rate (% p.a.):", 6.5, 9.5, 7.0, 0.1, key="loan_interest_pct")
 
         loan_principal = net_fam_cost * (1.0 - (down_pct / 100.0))
         down_amt = net_fam_cost * (down_pct / 100.0)
@@ -1154,6 +1178,7 @@ Generated by UrjaSetu & AVISHKAR Enterprise Energy Management System
 ================================================================================
 """
         st.download_button(
+            key="btn_dl_feasibility_dossier",
             label="📄 Download PM Surya Ghar Pre-Feasibility Dossier (.txt)",
             data=dossier_text,
             file_name=f"UrjaSetu_Solar_Dossier_{key}.txt",
@@ -1326,9 +1351,9 @@ Generated by UrjaSetu & AVISHKAR Enterprise Energy Management System
     st.caption("Upload your smart meter CSV (from your utility or smart plug) to evaluate custom solar & battery payback.")
 
     sample_col1, sample_col2, sample_col3 = st.columns([1, 1, 2])
-    use_sample = sample_col1.button("📂 Load 35k Sample Meter Data")
-    clear_sample = sample_col2.button("🗑️ Clear Meter Data")
-    user_file = sample_col3.file_uploader("Or Upload Smart Meter CSV", type=["csv", "txt"])
+    use_sample = sample_col1.button("📂 Load 35k Sample Meter Data", key="btn_load_sample_meter")
+    clear_sample = sample_col2.button("🗑️ Clear Meter Data", key="btn_clear_meter_data")
+    user_file = sample_col3.file_uploader("Or Upload Smart Meter CSV", key="upload_meter_file", type=["csv", "txt"])
 
     if clear_sample:
         st.session_state.meter_series = None
@@ -1386,9 +1411,9 @@ Generated by UrjaSetu & AVISHKAR Enterprise Energy Management System
         solar_max = float(max(1000.0, rec_kwp * 2.0))
         batt_default = float(round(rec_kwp * 1.5, 1))
         batt_max = float(max(2000.0, batt_default * 2.0))
-        user_kwp = eq1.number_input("Solar Array Size (kWp)", min_value=1.0, max_value=solar_max, value=float(rec_kwp), step=0.5)
-        user_batt = eq2.number_input("Battery Storage (kWh)", min_value=0.0, max_value=batt_max, value=batt_default, step=1.0)
-        user_tariff = eq3.number_input("Average DISCOM Tariff (Rs/kWh)", min_value=4.0, max_value=15.0, value=7.5, step=0.5)
+        user_kwp = eq1.number_input("Solar Array Size (kWp)", min_value=1.0, max_value=solar_max, value=float(rec_kwp), step=0.5, key="custom_user_kwp")
+        user_batt = eq2.number_input("Battery Storage (kWh)", min_value=0.0, max_value=batt_max, value=batt_default, step=1.0, key="custom_user_batt")
+        user_tariff = eq3.number_input("Average DISCOM Tariff (Rs/kWh)", min_value=4.0, max_value=15.0, value=7.5, step=0.5, key="custom_user_tariff")
 
         est_annual_solar_kwh = user_kwp * 1450.0
         est_self_use = min(est_annual_solar_kwh, avg_daily_kwh * 365.0 * 0.75)
@@ -1419,12 +1444,13 @@ elif "Radar" in selected_tab or "Satellite" in selected_tab or "Solar Radar" in 
         selected_hub_key = st.selectbox(
             "📍 Satellite Telemetry Ground Station:",
             hub_keys,
+            key="sat_hub_key_select",
             index=default_hub_idx,
             format_func=lambda k: f"{INDIAN_SATELLITE_HUBS[k]['name']} ({INDIAN_SATELLITE_HUBS[k]['state']}) — {INDIAN_SATELLITE_HUBS[k]['discom']} [{INDIAN_SATELLITE_HUBS[k]['primary_satellite']}]",
         )
     with h_col2:
         st.markdown(html_block("<div style='height: 28px;'></div>"), unsafe_allow_html=True)
-        if st.button("🔄 Refresh Radar Feed"):
+        if st.button("🔄 Refresh Radar Feed", key="btn_refresh_radar_feed"):
             st.cache_data.clear()
             st.rerun()
 
@@ -1478,7 +1504,7 @@ elif "Radar" in selected_tab or "Satellite" in selected_tab or "Solar Radar" in 
     with map_head_col:
         st.markdown("##### 🗺️ 3D Indian Solar Microgrid & Peer-to-Peer Energy Flow Network")
     with map_eng_col:
-        map_engine = st.radio("Map Engine:", ["🗺️ High-Definition Plotly Radar", "🌐 3D PyDeck Mesh (WebGL)"], horizontal=True, index=0)
+        map_engine = st.radio("Map Engine:", ["🗺️ High-Definition Plotly Radar", "🌐 3D PyDeck Mesh (WebGL)"], horizontal=True, index=0, key="sat_map_engine_choice")
 
     active_sites_map = {k: v[0] for k, v in demo_sites().items()}
 
@@ -1596,10 +1622,10 @@ elif "Battery" in selected_tab or "Blackout" in selected_tab:
         st.session_state["outage_preset"] = "standard"
 
     p_col1, p_col2, p_col3 = st.columns(3)
-    if p_col1.button("🚨 Essential Life Support (230W)", use_container_width=True, help="LEDs, fans, Wi-Fi, and phone charging only"):
+    if p_col1.button("🚨 Essential Life Support (230W)", key="btn_preset_essential_loads", use_container_width=True, help="LEDs, fans, Wi-Fi, and phone charging only"):
         st.session_state["outage_preset"] = "essential"
         st.rerun()
-    if p_col2.button("🏡 Standard Household (430W)", use_container_width=True, help="LEDs, fans, Wi-Fi, and refrigerator"):
+    if p_col2.button("🏡 Standard Household (430W)", key="btn_preset_standard_loads", use_container_width=True, help="LEDs, fans, Wi-Fi, and refrigerator"):
         st.session_state["outage_preset"] = "standard"
         st.rerun()
     if p_col3.button("❄️ Full Comfort Mode (1230W)", use_container_width=True, help="All appliances including 1-Ton Bedroom AC"):
@@ -1652,7 +1678,7 @@ elif "Battery" in selected_tab or "Blackout" in selected_tab:
     st.caption("Anticipating bad weather, thunder storm, or a local DISCOM maintenance shutdown? Lock battery to 90% floor to guarantee maximum family protection.")
     lock_col1, lock_col2 = st.columns([2, 1])
     with lock_col1:
-        st.session_state.storm_lock = st.toggle("🔒 Activate Storm Outage Shield (Force 90% Battery Floor)", value=st.session_state.storm_lock)
+        st.session_state.storm_lock = st.toggle("🔒 Activate Storm Outage Shield (Force 90% Battery Floor)", key="storm_lock_toggle", value=st.session_state.storm_lock)
     with lock_col2:
         if st.session_state.storm_lock:
             st.error("🚨 **Storm Shield Active**: Battery locked at 90% floor. P2P energy export disabled.")
@@ -1663,7 +1689,7 @@ elif "Battery" in selected_tab or "Blackout" in selected_tab:
     st.markdown("---")
     st.subheader("💡 How big should my battery be?")
     st.caption("Find the sweet spot between battery investment cost and family blackout protection hours:")
-    want = st.slider("Hours of backup I want", 1, 12, min(12, max(1, int(site.backup_hours))))
+    want = st.slider("Hours of backup I want", 1, 12, min(12, max(1, int(site.backup_hours))), key="slider_backup_hours_want")
     adv = get_advice(key)
     st.dataframe(adv, use_container_width=True)
     st.info(advise_text(adv, want, lang))
@@ -1674,9 +1700,9 @@ elif "Battery" in selected_tab or "Blackout" in selected_tab:
     st.caption("Non-linear Arrhenius thermal acceleration, Depth-of-Discharge (DoD) Wöhler stress, and dynamic inverter part-load efficiency curves.")
 
     bp_c1, bp_c2, bp_c3 = st.columns(3)
-    amb_temp = bp_c1.slider("Ambient Temperature (°C)", 15.0, 50.0, 38.0, 1.0)
-    cycle_dod = bp_c2.slider("Daily Cycle Depth of Discharge (DoD %)", 20.0, 95.0, 80.0, 5.0)
-    inverter_load = bp_c3.slider("Inverter Operating Load (kW)", 0.2, float(site.ac_kw), min(1.8, float(site.ac_kw)), 0.2)
+    amb_temp = bp_c1.slider("Ambient Temperature (°C)", 15.0, 50.0, 38.0, 1.0, key="slider_amb_temp")
+    cycle_dod = bp_c2.slider("Daily Cycle Depth of Discharge (DoD %)", 20.0, 95.0, 80.0, 5.0, key="slider_cycle_dod")
+    inverter_load = bp_c3.slider("Inverter Operating Load (kW)", 0.2, float(site.ac_kw), min(1.8, float(site.ac_kw)), 0.2, key="slider_inverter_load")
 
     lfp_res = evaluate_lfp_battery_physics(
         throughput_kwh=float(site.battery_kwh * (cycle_dod / 100.0)),
@@ -1747,6 +1773,7 @@ elif "Plan" in selected_tab or "Daily" in selected_tab:
         "EV Charging Mode (evcc Standard):",
         ["PV_ONLY (Pure Solar Surplus)", "MIN_PLUS_PV (1.4 kW Guaranteed + Solar Boost)", "FAST (Max 7.4 kW Grid + Solar)", "STOP (Disabled)"],
         index=0,
+        key="plan_ev_mode_select",
     )
     ev_mode_map = {
         "PV_ONLY (Pure Solar Surplus)": EVChargingMode.PV_ONLY,
@@ -1755,9 +1782,9 @@ elif "Plan" in selected_tab or "Daily" in selected_tab:
         "STOP (Disabled)": EVChargingMode.STOP,
     }
     selected_ev_mode = ev_mode_map[ev_mode_choice]
-    flex_load_w = surp_c2.slider("Schedulable Appliance Demand (kW):", 0.0, 3.0, 1.5, 0.25, help="e.g. Washing machine or irrigation pump")
-    thermal_load_w = surp_c3.slider("Thermal Storage / Immersion (kW):", 0.0, 3.0, 1.0, 0.25, help="e.g. Immersion heat pump or water geyser")
-    zero_exp_toggle = surp_c4.toggle("Zero-Export Active Limiter", value=False, help="Curtail solar generation when export is prohibited")
+    flex_load_w = surp_c2.slider("Schedulable Appliance Demand (kW):", 0.0, 3.0, 1.5, 0.25, key="slider_flex_load_w", help="e.g. Washing machine or irrigation pump")
+    thermal_load_w = surp_c3.slider("Thermal Storage / Immersion (kW):", 0.0, 3.0, 1.0, 0.25, key="slider_thermal_load_w", help="e.g. Immersion heat pump or water geyser")
+    zero_exp_toggle = surp_c4.toggle("Zero-Export Active Limiter", key="toggle_zero_exp_active", value=False, help="Curtail solar generation when export is prohibited")
 
     # Run SurplusEngine dispatch across all 96 intervals of the day
     batt_constraints = BatterySafetyConstraints(
@@ -1942,10 +1969,10 @@ elif "Appliance" in selected_tab:
     with st.expander("🔍 Custom Appliance Calculator (Calculate for any wattage & duration)", expanded=False):
         st.caption("Calculate the lowest-cost operating window for any custom appliance grounded in today's generation forecast and tariff:")
         a1, a2, a3 = st.columns(3)
-        appl = a1.selectbox("Appliance", ["Geyser (2 kW, 1 h)", "Washing machine (0.5 kW, 1.5 h)", "Water pump (1.5 kW, 2 h)", "EV charger (3.3 kW, 4 h)"])
+        appl = a1.selectbox("Appliance", ["Geyser (2 kW, 1 h)", "Washing machine (0.5 kW, 1.5 h)", "Water pump (1.5 kW, 2 h)", "EV charger (3.3 kW, 4 h)"], key="appl_sched_select")
         kw_, hrs_ = {"Geyser (2 kW, 1 h)": (2.0, 1.0), "Washing machine (0.5 kW, 1.5 h)": (0.5, 1.5), "Water pump (1.5 kW, 2 h)": (1.5, 2.0), "EV charger (3.3 kW, 4 h)": (3.3, 4.0)}[appl]
-        lo_h = a2.slider("Earliest start hour", 0, 23, 6)
-        hi_h = a3.slider("Must finish by hour", 1, 24, 22)
+        lo_h = a2.slider("Earliest start hour", 0, 23, 6, key="slider_appl_earliest_hour")
+        hi_h = a3.slider("Must finish by hour", 1, 24, 22, key="slider_appl_finish_hour")
         bs = best_start(s, kw_, hrs_, float(lo_h), float(hi_h))
         if bs.empty:
             st.warning("That window is too short for this appliance.")
@@ -1965,7 +1992,7 @@ elif "Appliance" in selected_tab:
         f"⚠️ Power Cut Risk Today: {risk_level_str}\n"
         f"💡 Tip: Free solar power peak is 11 AM - 3 PM. Avoid running geyser/AC after 6 PM."
     )
-    st.text_area("Copy-ready WhatsApp / SMS message:", value=alert_msg, height=125)
+    st.text_area("Copy-ready WhatsApp / SMS message:", key="ta_whatsapp_alert_msg", value=alert_msg, height=125)
     st.caption("Click into the box, copy (Ctrl+C), and send directly to your household group or staff.")
 
 # ==============================================================================
@@ -2055,10 +2082,10 @@ elif "EV" in selected_tab or "Charging" in selected_tab:
         st.caption("Protects local 11kV / 415V neighborhood transformers from overheating during simultaneous midday solar backfeed.")
 
         dt_keys = list(STANDARD_DISTRIBUTION_TRANSFORMERS.keys())
-        dt_selected = st.selectbox("Neighborhood Transformer Rating", dt_keys, format_func=lambda x: f"{STANDARD_DISTRIBUTION_TRANSFORMERS[x].dt_id} ({STANDARD_DISTRIBUTION_TRANSFORMERS[x].rated_kva:.0f} kVA)")
+        dt_selected = st.selectbox("Neighborhood Transformer Rating", dt_keys, key="dt_transformer_select", format_func=lambda x: f"{STANDARD_DISTRIBUTION_TRANSFORMERS[x].dt_id} ({STANDARD_DISTRIBUTION_TRANSFORMERS[x].rated_kva:.0f} kVA)")
 
-        pv_feeder = st.slider("Total Neighborhood Solar Generation (kW)", 10.0, 300.0, 75.0, 5.0)
-        load_feeder = st.slider("Total Local Feeder Base Load (kW)", 5.0, 150.0, 25.0, 5.0)
+        pv_feeder = st.slider("Total Neighborhood Solar Generation (kW)", 10.0, 300.0, 75.0, 5.0, key="slider_feeder_pv_kw")
+        load_feeder = st.slider("Total Local Feeder Base Load (kW)", 5.0, 150.0, 25.0, 5.0, key="slider_feeder_base_load_kw")
 
         dt_status = evaluate_feeder_transformer_health(
             transformer_type=dt_selected,
@@ -2095,17 +2122,17 @@ elif "Inverter" in selected_tab or "Hardware" in selected_tab or "Gateway" in se
     with hw_col1:
         st.markdown("##### ⚙️ Gateway & Inverter Settings")
         v_keys = list(INVERTER_VENDOR_CATALOG.keys())
-        selected_vendor = st.selectbox("Inverter Protocol Profile", v_keys, format_func=lambda x: INVERTER_VENDOR_CATALOG[x].display_name)
+        selected_vendor = st.selectbox("Inverter Protocol Profile", v_keys, key="inv_vendor_protocol_select", format_func=lambda x: INVERTER_VENDOR_CATALOG[x].display_name)
         v_translator = UniversalInverterTranslator(selected_vendor)
         v_prof = v_translator.profile
         st.caption(f"Protocol: `{v_prof.protocol_type}` | Baud: `{v_prof.baud_rate} 8N1` | Default Slave: `{v_prof.default_slave_id}` | Limit Reg: `{v_prof.reg_power_limit_setpoint}`")
 
-        mode = st.radio("Hardware Interface", ["Edge Hardware Loopback Emulator", "Physical Inverter (Modbus TCP/RS-485)"])
+        mode = st.radio("Hardware Interface", ["Edge Hardware Loopback Emulator", "Physical Inverter (Modbus TCP/RS-485)"], key="inv_hw_interface_mode")
         is_emulate = (mode == "Edge Hardware Loopback Emulator")
-        ip_addr = st.text_input("Inverter IP / Serial Port", value="192.168.1.50" if not is_emulate else "127.0.0.1")
-        port_num = st.number_input("Modbus Port", min_value=1, max_value=65535, value=502)
-        unit_id = st.number_input("Unit ID / Slave Address", min_value=1, max_value=247, value=int(v_prof.default_slave_id))
-        connect_btn = st.button("🔄 Poll Live Registers")
+        ip_addr = st.text_input("Inverter IP / Serial Port", key="inv_ip_serial_port", value="192.168.1.50" if not is_emulate else "127.0.0.1")
+        port_num = st.number_input("Modbus Port", key="inv_modbus_port_num", min_value=1, max_value=65535, value=502)
+        unit_id = st.number_input("Unit ID / Slave Address", key="inv_unit_slave_id", min_value=1, max_value=247, value=int(v_prof.default_slave_id))
+        connect_btn = st.button("🔄 Poll Live Registers", key="btn_poll_modbus_registers")
 
     gw = InverterHardwareGateway(host=ip_addr, port=int(port_num), unit_id=int(unit_id), emulate=is_emulate)
     gw.connect()
@@ -2128,15 +2155,15 @@ elif "Inverter" in selected_tab or "Hardware" in selected_tab or "Gateway" in se
     st.caption("Translates LP dispatch setpoint into brand-specific Modbus RTU serial frame with CRC-16 checksum.")
 
     wc1, wc2, wc3 = st.columns(3)
-    set_limit = wc1.slider("Active Power Limit % (WMaxLimPct)", 0.0, 100.0, 100.0, 5.0)
-    set_chg = wc2.number_input("Battery Charge Setpoint (kW)", 0.0, 10.0, 0.0, 0.5)
-    set_relay = wc3.toggle("Emergency Island Contactor Relay (Trip Grid Tie)", value=False)
+    set_limit = wc1.slider("Active Power Limit % (WMaxLimPct)", 0.0, 100.0, 100.0, 5.0, key="slider_modbus_wmaxlim")
+    set_chg = wc2.number_input("Battery Charge Setpoint (kW)", 0.0, 10.0, 0.0, 0.5, key="num_modbus_batchg_kw")
+    set_relay = wc3.toggle("Emergency Island Contactor Relay (Trip Grid Tie)", key="toggle_modbus_relay", value=False)
 
     _, _, rtu_frame = v_translator.translate_power_limit(set_limit)
     crc_hex = f"0x{calculate_modbus_crc16(rtu_frame[:-2]):04X}"
     st.caption(f"Encoded Modbus RTU Frame: `0x{rtu_frame.hex().upper()}` | CRC-16 Checksum: `{crc_hex}`")
 
-    if st.button("🚀 Latch Setpoint into Modbus Hardware"):
+    if st.button("🚀 Latch Setpoint into Modbus Hardware", key="btn_latch_modbus_setpoints"):
         ok, res_msg = gw.write_dispatch_setpoint(
             active_power_limit_pct=set_limit,
             battery_charge_kw=set_chg,
@@ -2169,8 +2196,8 @@ elif "Inverter" in selected_tab or "Hardware" in selected_tab or "Gateway" in se
 
     default_v = float(np.clip(telemetry.grid_voltage_v, 180.0, 270.0))
     default_hz = float(np.clip(telemetry.grid_frequency_hz, 46.0, 53.0))
-    sim_v = st.slider("Grid Voltage Sensor (V)", 180.0, 270.0, default_v, 1.0)
-    sim_hz = st.slider("Grid Frequency Sensor (Hz)", 46.0, 53.0, default_hz, 0.1)
+    sim_v = st.slider("Grid Voltage Sensor (V)", 180.0, 270.0, default_v, 1.0, key="slider_grid_voltage_sensor")
+    sim_hz = st.slider("Grid Frequency Sensor (Hz)", 46.0, 53.0, default_hz, 0.1, key="slider_grid_frequency_sensor")
 
     ai_status = watchdog.evaluate_grid_safety(sim_v, sim_hz)
     wc_col1, wc_col2, wc_col3 = st.columns(3)
@@ -2403,7 +2430,7 @@ elif "Pooling" in selected_tab or "Fleet" in selected_tab or "Community" in sele
         st.dataframe(pd.DataFrame(p_rows), use_container_width=True, hide_index=True)
 
         st.markdown("##### 💰 Pro-Rata Settlement Simulator")
-        trade_sim_price = st.slider("Buyer Clearing Price (Rs/kWh)", float(max_fl), float(max_fl + 5.0), float(max_fl + 1.5), 0.25)
+        trade_sim_price = st.slider("Buyer Clearing Price (Rs/kWh)", float(max_fl), float(max_fl + 5.0), float(max_fl + 1.5), 0.25, key="slider_p2p_clearing_price")
         st.caption("Revenue distribution when a bulk buyer purchases the pooled block:")
         split_rows = []
         for p_item in pooled:
@@ -2465,7 +2492,7 @@ elif "Health" in selected_tab or "Cleaning" in selected_tab:
 
     st.markdown("---")
     st.markdown("##### 🔬 String Deviation & Synthetic Fault Simulation")
-    inject = st.checkbox("Inject a string fault today (output drops to 60%)", value=True)
+    inject = st.checkbox("Inject a string fault today (output drops to 60%)", key="cb_inject_string_fault", value=True)
     df = p.df.copy()
     d0 = pd.Timestamp(day).tz_localize(df.index.tz)
     win = df[(df.index >= d0 - pd.Timedelta(days=3)) & (df.index < d0 + pd.Timedelta(days=4))].copy()
@@ -2538,7 +2565,7 @@ elif "Savings" in selected_tab or "Payback" in selected_tab or "ROI" in selected
 
     st.markdown("---")
     st.markdown("##### 📊 Financial Analysis vs Baselines")
-    every = st.select_slider("Replay detail (days between sampled days)", options=[28, 14, 7], value=PAYBACK_EVERY_DEFAULT)
+    every = st.select_slider("Replay detail (days between sampled days)", options=[28, 14, 7], value=PAYBACK_EVERY_DEFAULT, key="slider_replay_sampled_days")
     table, ems_totals, trades = get_payback(key, every)
     show = table.copy()
     show["annual_benefit_inr"] = show["annual_benefit_inr"].round(0)
