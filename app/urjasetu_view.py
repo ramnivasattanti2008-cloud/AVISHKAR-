@@ -3642,3 +3642,34 @@ def render_urjasetu_dashboard() -> None:
             for s_k in sample_status_keys:
                 ind = MultiModalStatusRegistry.get(s_k)
                 st.markdown(f"- **{ind.symbol} {ind.label}**: *{ind.accessible_description}*")
+
+
+def render_pr_urjasetu_mission_control() -> None:
+    """Render the official UrjaSetu Mission Control UI imported from PR #3."""
+    import streamlit.components.v1 as components
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    frontend_dir = root / "frontend"
+    html_path = frontend_dir / "index.html"
+    css_path = frontend_dir / "styles.css"
+    js_path = frontend_dir / "app.js"
+
+    if html_path.exists():
+        html_content = html_path.read_text(encoding="utf-8")
+        if css_path.exists():
+            css_content = css_path.read_text(encoding="utf-8")
+            html_content = html_content.replace(
+                '<link rel="stylesheet" href="styles.css?v=9.0">',
+                f"<style>\n{css_content}\n</style>",
+            )
+        if js_path.exists():
+            js_content = js_path.read_text(encoding="utf-8")
+            html_content = html_content.replace(
+                '<script src="app.js?v=9.0"></script>',
+                f"<script>\n{js_content}\n</script>",
+            )
+        components.html(html_content, height=3600, scrolling=True)
+    else:
+        st.error("UrjaSetu Mission Control frontend files not found.")
+

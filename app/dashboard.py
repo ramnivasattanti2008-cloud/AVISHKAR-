@@ -20,7 +20,7 @@ import streamlit as st
 from app.ui_html import html_block
 from app.home_setup_view import render_home_management_view
 from app.integrations_view import render_integrations_dashboard
-from app.urjasetu_view import render_urjasetu_dashboard
+from app.urjasetu_view import render_pr_urjasetu_mission_control, render_urjasetu_dashboard
 from plotly.subplots import make_subplots
 
 from avishkar_ems import cache
@@ -309,15 +309,23 @@ def get_cached_flex(site_key: str):
 
 
 # ------------------ SIDEBAR (PERSONAL-FIRST HIERARCHY) ------------------
-st.sidebar.markdown("### 🏡 **My Personal Home Energy App**")
+st.sidebar.markdown("### ⚡ **UrjaSetu Energy Management Platform**")
 if "dashboard_mode_radio" not in st.session_state:
-    st.session_state["dashboard_mode_radio"] = "🏡 My Personal Home Solar & EMS"
+    st.session_state["dashboard_mode_radio"] = "🚀 UrjaSetu Mission Control (PR UI)"
 
 dashboard_mode = st.sidebar.radio(
     "Navigation Mode",
-    ["🏡 My Personal Home Solar & EMS", "🏛️ State & National Explorer (Macro Overview)"],
+    [
+        "🚀 UrjaSetu Mission Control (PR UI)",
+        "🏡 My Personal Home Solar & EMS",
+        "🏛️ State & National Explorer (Macro Overview)",
+    ],
     key="dashboard_mode_radio",
 )
+
+if "UrjaSetu Mission Control" in dashboard_mode:
+    render_pr_urjasetu_mission_control()
+    st.stop()
 
 if "State & National" in dashboard_mode or "Unified National" in dashboard_mode:
     render_urjasetu_dashboard()
